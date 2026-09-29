@@ -12,6 +12,7 @@ local ctx
 local inbox = {} -- player -> list of {From, Body, Time}
 local calling = {} -- player -> progress seconds
 local delivered = {} -- key -> true
+local lastText = 0
 
 function Phone.init(c)
 	ctx = c
@@ -24,6 +25,7 @@ function Phone.reset()
 	inbox = {}
 	calling = {}
 	delivered = {}
+	lastText = 0
 end
 
 function Phone.deliver(player: Player, from: string, body: string)
@@ -34,22 +36,29 @@ function Phone.deliver(player: Player, from: string, body: string)
 	ctx.Audio.playFor(player, "PhoneVibrate")
 end
 
--- Called by the Director every second with the current act and act time
-function Phone.update(act: string, actTime: number)
+-- Called by the Director every second with the current act and act time. A text that is due
+-- waits for a quiet moment (quiet = nothing being thought or said), one text at a time.
+function Phone.update(act: string, actTime: number, quiet: boolean?)
 	local texts = ctx.Story.Texts[act]
-	if not texts then
+	if not texts or quiet == false or os.clock() - lastText < 8 then
 		return
 	end
 	for i, t in texts do
 		local key = act .. i
 		if not delivered[key] and actTime >= t.At * ctx.Config.TimeScale then
 			delivered[key] = true
+			local sent = false
 			if ctx.Power.isOn() then -- Wi-Fi needs power
 				for _, p in ctx.Util.sessionPlayers() do
 					if not t.Role or p:GetAttribute("Role") == t.Role then
 						Phone.deliver(p, t.From, t.Body)
+						sent = true
 					end
 				end
+			end
+			if sent then
+				lastText = os.clock()
+				return
 			end
 		end
 	end

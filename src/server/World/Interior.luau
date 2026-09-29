@@ -632,12 +632,12 @@ function Interior.build(ctx, root: Instance, refs)
 	-- DOWNSTAIRS BATHROOM
 	---------------------------------------------------------------------------
 	local bath = folder("Bathroom")
-	-- vanity on the north wall, toilet on the east wall, towel on the south wall
+	-- door on the south wall (from the back hall); vanity north, toilet east, towel west
 	Kit.vanity(bath, F(19.3, G, 2.3, NZ), 4.2, 2, Color3.fromRGB(70, 90, 110), Color3.fromRGB(235, 235, 232), 1)
 	Kit.mirror(bath, F(19.3, G + 6.6, 3.62, NZ), 3.2, 3.4, WOOD_DARK)
 	item(bath, "Scissors", V(17.7, G + 3.45, 2.1), V(0.8, 0.1, 0.35), Color3.fromRGB(210, 60, 60), "Scissors", "Scissors")
 	Kit.toilet(bath, F(19.8, G, -1.6, NX))
-	Kit.towel(bath, F(16.6, G + 5.6, -3.55, PZ), 2.4, Color3.fromRGB(120, 160, 190))
+	Kit.towel(bath, F(12.55, G + 5.6, 1.2, PX), 2.4, Color3.fromRGB(120, 160, 190))
 	Kit.rug(bath, F(16.3, G, 0.2, PX), 3, 2.4, Color3.fromRGB(110, 140, 160))
 	Kit.plant(bath, F(21.0, G + 3.4, 2.6, NZ), 0.6, "snake", Color3.fromRGB(240, 240, 236))
 

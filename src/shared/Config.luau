@@ -30,9 +30,9 @@ Config.LobbyCountdown = 10
 -- Act lengths in minutes. An act ends at Max, or earlier once its exit condition is met (never before Min).
 Config.TimeScale = 1
 Config.Acts = {
-	Evening = { Min = 5, Max = 9 },
-	SmallThings = { Min = 10, Max = 13 },
-	SomeoneElse = { Min = 8, Max = 13 },
+	Evening = { Min = 4, Max = 7 },
+	SmallThings = { Min = 5, Max = 8 },
+	SomeoneElse = { Min = 6, Max = 9 },
 }
 Config.HardCapMinutes = 60
 
@@ -147,10 +147,10 @@ Config.Help = {
 Config.Director = {
 	Ceiling = { Evening = 25, SmallThings = 65, SomeoneElse = 85, Guest = 100 },
 	Gap = {
-		Evening = { 40, 75 },
-		SmallThings = { 20, 40 },
-		SomeoneElse = { 22, 45 },
-		Guest = { 35, 70 },
+		Evening = { 30, 55 },
+		SmallThings = { 16, 32 },
+		SomeoneElse = { 18, 36 },
+		Guest = { 28, 55 },
 	},
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },
@@ -160,8 +160,9 @@ Config.Director = {
 -- Inner monologue: the character thinking out loud about what to do next
 Config.Thoughts = {
 	Duration = 5, -- seconds each line stays on screen
-	IdleHint = 45, -- seconds without progress before they remind themselves of the next task
-	FirstHint = 18, -- seconds into the night before the first task nudge
+	IdleHint = 35, -- seconds without progress before they remind themselves of the next task
+	FirstHint = 12, -- seconds into the night before the first task nudge
+	QuietGap = 2.5, -- seconds of quiet after a thought or conversation before a text or banter comes in
 }
 
 Config.ChatRange = 50

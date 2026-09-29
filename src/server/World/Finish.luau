@@ -87,6 +87,14 @@ function Finish.build(ctx, root: Instance)
 				continue
 			end
 			local ops = {}
+			-- floor-level trim stops where the side runs past a stairwell (no floor to sit on there)
+			if yb < y0 + 6 and name ~= "Paint" then
+				for _, h in side.Holes do
+					if h[2] > s0 and h[1] < s1 then
+						table.insert(ops, { at = (h[1] + h[2]) / 2, w = h[2] - h[1], bottom = 0, h = yt - yb })
+					end
+				end
+			end
 			for _, op in line.Openings do
 				local o0, o1 = op.at - op.w / 2, op.at + op.w / 2
 				local ob, ot = y0 + (op.bottom or 0), y0 + (op.bottom or 0) + op.h
@@ -149,6 +157,18 @@ function Finish.build(ctx, root: Instance)
 		local artLeft = pal.Art or 0
 		for _, side in sides do
 			side.Y0 = y0
+			side.Holes = {}
+			local hall = L.HallFloor[r.Floor]
+			for _, h in (hall and hall.holes or {}) do
+				-- {x0, x1, z0, z1}: a hole touching this side cuts the trim along its span
+				local p0, p1, a0, a1 = h[1], h[2], h[3], h[4] -- side along Z: fixed X
+				if side.AlongX then
+					p0, p1, a0, a1 = h[3], h[4], h[1], h[2]
+				end
+				if side.Fixed > p0 - 0.8 and side.Fixed < p1 + 0.8 then
+					table.insert(side.Holes, { a0, a1 })
+				end
+			end
 			side.Lines = {}
 			for _, line in lines do
 				if line.Floor == r.Floor and line.AlongX == side.AlongX and math.abs(line.Fixed - side.Fixed) < 0.05

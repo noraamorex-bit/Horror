@@ -1992,7 +1992,7 @@ end
 -- Returns the model, the head model (to turn and tilt), its neck CFrame relative to cf, and the pizza box.
 function Kit.deliveryMan(parent, cf: CFrame)
 	local m = Kit.model(parent, "PizzaGuy")
-	local skin = Color3.fromRGB(198, 190, 184)
+	local skin = Color3.fromRGB(224, 192, 168)
 	local shirt = Color3.fromRGB(150, 32, 30)
 	local pants = Color3.fromRGB(34, 34, 38)
 	-- legs and shoes

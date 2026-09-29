@@ -216,18 +216,57 @@ Story.Documents = {
 -- Phone texts. Delivered over Wi-Fi (they stop when the power goes out).
 -- At = seconds since the act started. Role = only this role gets it (nil = everyone).
 ---------------------------------------------------------------------------
+-- (They wait for a quiet moment: never on top of a thought line or a conversation.)
 Story.Texts = {
 	Evening = {
-		{ At = 40, From = "Mom", Body = "Landed! Hotel is nice. Eat something real please. Love you", Role = "Host" },
-		{ At = 150, From = "Group chat", Body = "Riley: who's bringing the movie\nMorgan: we're literally at the house" },
-		{ At = 300, From = "Dad", Body = "Don't touch the thermostat. And lock the back door, it sticks.", Role = "Host" },
-		{ At = 420, From = "Hollis Creek Alerts", Body = "FLASH FLOOD WARNING in effect until 6 AM. Creek Rd closed. Avoid travel." },
+		{ At = 35, From = "Mom", Body = "Landed! Hotel is nice. Eat something real please. Love you", Role = "Host" },
+		{ At = 150, From = "Dad", Body = "Don't touch the thermostat. And lock the back door, it sticks.", Role = "Host" },
+		{ At = 250, From = "Hollis Creek Alerts", Body = "FLASH FLOOD WARNING in effect until 6 AM. Creek Rd closed. Avoid travel." },
 	},
 	SmallThings = {
-		{ At = 120, From = "Mrs. Okafor (next door)", Body = "Hi Jamie honey! Is your dad's friend still staying with you? I saw a man at the side door Tuesday. Stay dry!", Role = "Host" },
-		{ At = 260, From = "Mom", Body = "Everything ok? Did you lock up?", Role = "Host" },
-		{ At = 400, From = "Riley's mom", Body = "Roads are bad honey, stay over at Jamie's tonight ok?", Role = "Tinkerer" },
-		{ At = 480, From = "Group chat", Body = "Casey: ok who keeps walking around upstairs\nMorgan: not me lol" },
+		{ At = 60, From = "Mrs. Okafor (next door)", Body = "Hi Jamie honey! Is your dad's friend still staying with you? I saw a man at the side door Tuesday. Stay dry!", Role = "Host" },
+		{ At = 150, From = "Mom", Body = "Everything ok? Did you lock up?", Role = "Host" },
+		{ At = 230, From = "Riley's mom", Body = "Roads are bad honey, stay over at Jamie's tonight ok?", Role = "Tinkerer" },
+	},
+}
+
+---------------------------------------------------------------------------
+-- Banter: the friends talking to each other out loud (dialogue box, no choices).
+-- Slots are filled with different players standing near each other: "Host" is whoever
+-- plays Jamie, numbers are anyone else. A scene needs at least two people; lines whose
+-- slot can't be filled are dropped when Optional, otherwise the scene waits for later.
+---------------------------------------------------------------------------
+Story.Banter = {
+	Evening = {
+		{ At = 75, Lines = {
+			{ 1, "Okay. Who's picking the movie?" },
+			{ 2, "Not you. Last time we watched two hours about mold." },
+			{ 1, "It was about fungus. It was a thriller." },
+		} },
+		{ At = 190, Lines = {
+			{ 1, "How long till the pizza gets here? I'm actually starving." },
+			{ "Host", "Soon. Tony's is always slow when it rains." },
+			{ 2, "Is it just me or is it freezing in here?", Optional = true },
+		} },
+	},
+	SmallThings = {
+		{ At = 40, Lines = {
+			{ 1, "Did anyone else hear that? Upstairs." },
+			{ 2, "It's the storm. Old houses creak." },
+			{ 1, "Houses don't creak in footsteps." },
+		} },
+		{ At = 170, Lines = {
+			{ 1, "Okay, who keeps walking around upstairs?" },
+			{ 2, "Not me." },
+			{ 3, "...Not me either.", Optional = true },
+			{ "Host", "Everyone's down here. Everyone's been down here." },
+		} },
+	},
+	SomeoneElse = {
+		{ At = 30, Lines = {
+			{ 1, "The whole house doesn't just go dark on its own. Not like that." },
+			{ 2, "Stay close. Phones out. Nobody goes anywhere alone." },
+		} },
 	},
 }
 

@@ -96,7 +96,44 @@ end
 
 local KIND_COLOR = {}
 
+-- Toasts don't land on top of a thought line or a conversation: they wait until the screen
+-- has been clear for a moment, then come in one by one ("done" ticks are instant feedback).
+local pendingNotes = {}
+local pumping = false
+local showNote
+
+local function screenBusy(): boolean
+	return (ctx.Thoughts ~= nil and ctx.Thoughts.isShowing()) or (ctx.Dialogue ~= nil and ctx.Dialogue.isOpen())
+end
+
+local function pumpNotes()
+	if pumping then
+		return
+	end
+	pumping = true
+	while #pendingNotes > 0 do
+		local clearFor = 0
+		while clearFor < 1.2 do
+			task.wait(0.1)
+			clearFor = screenBusy() and 0 or clearFor + 0.1
+		end
+		local n = table.remove(pendingNotes, 1)
+		showNote(n[1], n[2])
+		task.wait(0.8)
+	end
+	pumping = false
+end
+
 function HUD.notify(text: string, kind: string?)
+	if kind ~= "done" and (screenBusy() or #pendingNotes > 0) then
+		table.insert(pendingNotes, { text, kind })
+		task.spawn(pumpNotes)
+		return
+	end
+	showNote(text, kind)
+end
+
+showNote = function(text: string, kind: string?)
 	if kind == "done" and ctx.Effects then
 		ctx.Effects.playSound("ObjectiveDone", nil, { Caption = false })
 	end

@@ -86,9 +86,13 @@ How it works: one place serves both. Public servers run the lobby (`server/Lobby
 ### Onboarding: one notice, then your own thoughts
 When the night starts each player sees **one notice** (who they are, their perk) with an **OK** button. Nothing else competes with it: the chapter card and everything after wait until it's dismissed, and the journal stays closed until the player opens it.
 
-After that the character **thinks out loud** (`Story.Thoughts`, `client/Controllers/Thoughts`): big text, one line at a time, 5 seconds each. It points the way ("Mom left me a couple of things to do. It's in my journal." / "I'm starving. Mom keeps the pizza menu on the fridge."), reacts to strange events ("Footsteps... upstairs? But we're all down here."), and comments on first pickups, hiding and being captured. A line can carry a control tip that matches the device (keyboard, touch or gamepad). If nobody makes progress for 45 s, someone remembers the next task.
+After that the character **thinks out loud** (`Story.Thoughts`, `client/Controllers/Thoughts`): big text, one line at a time, 5 seconds each. It points the way ("Mom left me a couple of things to do. It's in my journal." / "I'm starving. Mom keeps the pizza menu on the fridge."), reacts to strange events ("Footsteps... upstairs? But we're all down here."), and comments on first pickups, hiding and being captured. A line can carry a control tip that matches the device (keyboard, touch or gamepad). If nobody makes progress for 35 s, someone remembers the next task.
 
-### Act I — "Friday Night" (5–9 min)
+**Nothing talks over anything else.** Phone texts, toasts and the friends' banter wait until no thought line is on screen and no conversation is running, plus a short gap (`Config.Thoughts.QuietGap`); texts arrive at least 8 s apart. Only the instant "task done" tick skips the queue.
+
+**The friends talk out loud.** Friends in the house don't text each other — they speak, in the same dialogue box as the delivery man but in green, with no choices and without hiding the touch controls (`Story.Banter`, `Dialogue.say`). Each scene is cast from players standing together (Jamie takes the "Host" lines); with fewer than two people together it waits, and it never plays solo.
+
+### Act I — "Friday Night" (4–7 min)
 *Social and cozy, with something slightly off.*
 - Only three short objectives (`Story.Tasks`) — this is a horror game, not a chore list:
   - **Order pizza:** find the menu on the fridge → call Tony's on the kitchen phone.
@@ -98,13 +102,13 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 - **Jump scare:** while the windows are still open, the draft slams an upstairs door (loud bang, lightning, screen shake).
 - The top-right **OBJECTIVE** panel shows the current task and step; a bobbing **"!"** marks where each step happens (yellow and large for the current task), with the distance. The journal lists every step.
 - Clues planted: the unlocked back door, the warm mug, Mom's note on the fridge ("don't use the garage keypad, it's acting up"), the attic hatch that is "stuck".
-- Phone texts from Mom and Dad over Wi-Fi.
-- **The delivery.** A few seconds after the three tasks are done (or when the act runs out of time) a little Tony's Pizza car pulls up in the rain. The delivery man walks up and rings the bell, and a new objective appears: **Answer the door**. He is a real Rthro avatar (Roblox's City Life Man body, made pale, taller and thinner, in a red cap) who walks up with the Rthro walk, holds the pizza bag out at arm's length, and wears one fixed expression on his dynamic head: a wide, unblinking grin. His head follows whoever answers and slowly tilts (`Director/Delivery`; a part-built stand-in, `Kit.deliveryMan`, is used if the avatar can't load).
-- **Dialogue with choices.** Whoever answers talks to him in a dialogue box (`Services/DialogueService`, `client/Controllers/Dialogue`, script in `Story.Dialogue.Pizza`). Three times the player picks one of two lines to say ("You're not the usual guy." / "What's that supposed to mean?" / "No. My dad's upstairs."); everyone else reads along. He says Creek Road is going under and he's the last one getting through — the house is now cut off — and tells you to keep every door locked, "even the ones you don't use." Then he backs down the steps, still smiling, and drives away; the pizza ends up on the dining table. If nobody answers he knocks, rings again, and finally leaves the boxes on the porch.
+- Phone texts from Mom and Dad over Wi-Fi; the friends argue about the movie and the pizza out loud.
+- **The delivery.** A few seconds after the three tasks are done (or when the act runs out of time) a little Tony's Pizza car pulls up in the rain. The delivery man walks up and rings the bell, and a new objective appears: **Answer the door**. He is a real Rthro avatar (Roblox's City Life Man body, natural light skin, taller and thinner, in a red cap) who walks up with the Rthro walk and idles with the Rthro idle, slowed to heavy breathing. What makes him wrong is his body language: hunched over the pizza bag held out at arm's length, head lowered with the eyes rolled up at you, a stretched closed-lip smile that never changes, no blinking. His jaw moves while he talks, and his head follows whoever answers and slowly tilts (`Director/Delivery`; a part-built stand-in, `Kit.deliveryMan`, is used if the avatar can't load).
+- **Dialogue with choices.** Whoever answers talks to him in a dialogue box (`Services/DialogueService`, `client/Controllers/Dialogue`, script in `Story.Dialogue.Pizza`). Three times the player picks one of two lines to say ("You're not the usual guy." / "What's that supposed to mean?" / "No. My dad's upstairs."); everyone else reads along. He says Creek Road is going under and he's the last one getting through — the house is now cut off — and tells you to keep every door locked, "even the ones you don't use." Then he backs down the steps, still smiling, and drives away; the pizza ends up on the dining table. If nobody answers he knocks (15 s), rings again (32 s), and after 50 s leaves the boxes on the porch.
 - He is a red herring: the truth log reveals he was Tony's nephew on his last run, and the real stranger was above your heads the whole time.
 - The act ends when he has driven away.
 
-### Act II — "Small Things" (10–13 min)
+### Act II — "Small Things" (5–8 min)
 *Did you hear that?*
 The Director plays low-intensity events. Each one needs conditions to be met, for example "every player is on the ground floor", "one player is alone near a window" or "nobody can see this door".
 - Objective: **Lock up for the night** (back door, garage side door). After the footsteps upstairs, a second one appears: **Check upstairs** — walk up to the attic hatch.
@@ -113,7 +117,7 @@ The Director plays low-intensity events. Each one needs conditions to be met, fo
 - **The Window.** A lone player near a ground-floor window sees Curtis outside, lit for a moment by lightning. Nobody else sees it.
 - Texts: Mrs. Okafor asks whether "your dad's friend" is still staying with them, because she saw a man at the side door on Tuesday.
 
-### Act III — "Someone Else" (8–13 min)
+### Act III — "Someone Else" (6–9 min)
 *This isn't the storm.*
 - **The power dies**, and it's the main breaker, not the storm. Wi-Fi goes with it, so no more texts.
 - **The landline is dead.** The car keys are gone. The attic hatch now opens.
@@ -247,7 +251,7 @@ All coordinates are in studs. The front of the house faces −Z (toward the stre
        │  sink  stove     │  basement▼ │  couch  console  │
        │  island  table   │   door     ├──────┬───────────┤ z=4
   z=2  ├───────arch───────┤  stairs▲   │ BATH │ MUDROOM   ├─────────────┐
-       │                  │ (x -8..-2) ├──────┴───────────┤  GARAGE     │
+       │                  │ (x -8..-2) ├─door─┘ back hall │  GARAGE     │
        │  LIVING ROOM     │            │   DAD'S OFFICE   │  car        │
        │  TV couch fire   │   foyer    │   (locked)       │  breaker    │
   z=-30└──────────────────┴──front─────┴──────────────────┴──door───────┘
@@ -256,7 +260,9 @@ All coordinates are in studs. The front of the house faces −Z (toward the stre
                     Mrs. Okafor's house →  x≈95..130
 ```
 
-- **Ground floor (y 1–14):** Living, Kitchen/Dining, Hallway/Foyer (main stairs up, basement door), Office (key-locked), Downstairs Bath, Mudroom (door to garage), Den.
+- **Ground floor (y 1–14):** Living, Kitchen/Dining, Hallway/Foyer (main stairs up, basement door), Office (key-locked), Downstairs Bath (its door opens off the back hall, x≈15.6 on the z=−4 wall), Mudroom (door to garage), Den.
+- **Stairs** are solid flights: each step is a painted body under an oak tread with a nosing, on a sloped stringer. Players walk an invisible ramp through the middle of the treads that meets both floors flush (no lip), and the top tread collides so the ramp joins the landing. The basement stairwell is an open hole through every slab (the foundation is only a ring round the footprint), boxed in by headers; floor-level trim stops at stairwells.
+- **Structure audit** (harness): every door and arch needs floor underfoot and open air on both sides; furniture may not intrude into doorways, stair ends or walls.
 - **Upstairs (y 15–28):** Master Bedroom (+ en-suite), Jamie's Room, Upstairs Hall (attic hatch, linen wardrobe), Guest Room, Hall Bath (**cell signal at the window**), Lily's Room.
 - **Basement (y −13–0):** open storage, under-stairs hiding nook, **Boiler Room** (captives).
 - **Attic (y 29+):** plywood walkway over insulation to **the nest**: sleeping bag, lantern, wrappers, polaroids, the notebook, stolen keys.

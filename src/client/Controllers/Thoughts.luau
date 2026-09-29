@@ -73,6 +73,11 @@ local function run()
 	running = false
 end
 
+-- a line is on screen (or queued to be)
+function Thoughts.isShowing(): boolean
+	return running or #queue > 0
+end
+
 function Thoughts.say(text: string, hint: string?)
 	-- the same line twice in a row is noise
 	local last = queue[#queue]

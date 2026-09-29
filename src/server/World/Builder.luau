@@ -244,57 +244,53 @@ end
 
 --[[
 	Straight staircase along Z.
-	Visual treads (non-colliding) + an invisible collision ramp that pathfinding and players use.
+	Each step is a solid body (painted skirt + riser face) under an oak tread with a small nosing, all
+	sitting on a sloped stringer, so the flight reads as one solid piece from the side. Players and
+	pathfinding walk an invisible ramp through the middle of the treads that meets both floors flush.
 ]]
 function Builder.stairs(parent: Instance, name: string, x0: number, x1: number, zStart: number, zEnd: number, yStart: number, yEnd: number, color: Color3?)
 	local model = Instance.new("Model")
 	model.Name = name
 	model.Parent = parent
-	-- always build bottom-up, so the visible treads sit on the walking surface (the ramp)
+	-- always build bottom-up
 	if yEnd < yStart then
 		zStart, zEnd = zEnd, zStart
 		yStart, yEnd = yEnd, yStart
 	end
-	local steps = math.max(1, math.floor(math.abs(yEnd - yStart) + 0.5))
+	local steps = math.max(1, math.floor((yEnd - yStart) + 0.5))
 	local rise = (yEnd - yStart) / steps
 	local run = (zEnd - zStart) / steps
+	local dir = run > 0 and 1 or -1
 	for i = 1, steps do
-		local zA = zStart + run * (i - 1)
+		local zA = zStart + run * (i - 1) -- front of the step (the riser)
 		local zB = zStart + run * i
 		local yTop = yStart + rise * i
-		if rise < 0 then
-			-- descending: tread i is at the lower level
-			yTop = yStart + rise * i
-		end
-		Builder.box(model, "Tread", Vector3.new(x0, yTop - 0.4, zA), Vector3.new(x1, yTop, zB), color or Builder.C.Oak, Builder.M.Wood, { CanCollide = false })
-		-- riser
-		local zr = rise > 0 and zA or zB
-		Builder.box(model, "Riser", Vector3.new(x0, yTop - math.abs(rise), zr - 0.1), Vector3.new(x1, yTop - 0.4, zr + 0.1), Builder.C.Trim, Builder.M.Wood, { CanCollide = false })
+		local yLow = yStart + rise * (i - 1) - 0.2
+		Builder.box(model, "StepBody", Vector3.new(x0, yLow, math.min(zA, zB)), Vector3.new(x1, yTop - 0.3, math.max(zA, zB)), Builder.C.Trim, Builder.M.Wood, { CanCollide = false })
+		local nose = zA - dir * 0.15
+		-- the top tread is flush with the upper floor and collides, bridging the ramp's end to the landing
+		Builder.box(model, "Tread", Vector3.new(x0, yTop - 0.3, math.min(nose, zB)), Vector3.new(x1, yTop, math.max(nose, zB)), color or Builder.C.Oak, Builder.M.Wood, { CanCollide = i == steps })
 	end
-	-- stringers
-	local low = math.min(yStart, yEnd)
-	local lowZ = yStart < yEnd and zStart or zEnd
-	local highZ = yStart < yEnd and zEnd or zStart
-	local high = math.max(yStart, yEnd)
 
-	-- collision ramp through the step nosings (raised half a step)
-	local p0 = Vector3.new((x0 + x1) / 2, low, lowZ)
-	local p1 = Vector3.new((x0 + x1) / 2, high, highZ)
+	local p0 = Vector3.new((x0 + x1) / 2, yStart, zStart)
+	local p1 = Vector3.new((x0 + x1) / 2, yEnd, zEnd)
 	local len = (p1 - p0).Magnitude
-	local mid = (p0 + p1) / 2
-	local cf = CFrame.lookAt(mid, p1)
+	local cf = CFrame.lookAt((p0 + p1) / 2, p1)
+	-- walking ramp: the stair pitch line shifted half a step back, so its top face passes through the
+	-- middle of every tread and meets the lower and upper floors exactly (no lip at either end)
 	local ramp = Builder.part(model, {
 		Name = "Ramp",
-		Size = Vector3.new(x1 - x0, 1, len + 1.2),
-		CFrame = cf * CFrame.new(0, -0.5 + math.abs(rise) * 0.5, 0),
+		Size = Vector3.new(x1 - x0, 1, len),
+		CFrame = CFrame.new(0, 0, -run * 0.5) * cf * CFrame.new(0, -0.5, 0),
 		Transparency = 1,
 		CanCollide = true,
 	})
-	-- underside stringer for looks
+	-- sloped stringer under the step bodies (top face on the pitch line); trimmed at both ends so it
+	-- never pokes out under the floor slabs
 	Builder.part(model, {
 		Name = "Stringer",
-		Size = Vector3.new(x1 - x0, 0.6, len),
-		CFrame = cf * CFrame.new(0, -1.4, 0),
+		Size = Vector3.new(x1 - x0, 1.6, len - 2.4),
+		CFrame = cf * CFrame.new(0, -0.8, 0),
 		Color = Builder.C.Trim,
 		Material = Builder.M.Wood,
 		CanCollide = false,

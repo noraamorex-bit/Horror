@@ -43,7 +43,7 @@ local function currentSet(): { string }
 		return {}
 	end
 	-- a conversation owns the bottom of the screen
-	if ctx.Dialogue and ctx.Dialogue.isOpen() then
+	if ctx.Dialogue and ctx.Dialogue.blocksControls() then
 		return {}
 	end
 	if player:GetAttribute("Captured") then

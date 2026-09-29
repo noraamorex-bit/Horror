@@ -48,6 +48,8 @@ local function fresh()
 		Discovered = false,
 		ActEnding = false,
 		Participants = {},
+		ThinkBusyUntil = 0,
+		BanterDone = {},
 	}
 end
 
@@ -143,11 +145,26 @@ function Director.think(players, line: string?)
 	elseif typeof(list) == "Instance" then
 		list = { list }
 	end
+	local sent = false
 	for _, p in list do
 		if p:GetAttribute("InGame") and not p:GetAttribute("Escaped") then
 			ctx.Remotes.Thought:FireClient(p, text, hint)
+			sent = true
 		end
 	end
+	if sent then
+		-- each line holds the screen for a while; texts and banter wait for it to clear
+		state.ThinkBusyUntil = math.max(state.ThinkBusyUntil or 0, os.clock()) + ctx.Config.Thoughts.Duration + 0.5
+	end
+end
+
+-- nothing is being said: no thought line on screen and no conversation for a moment
+function Director.isQuiet(): boolean
+	local gap = ctx.Config.Thoughts.QuietGap or 2.5
+	if os.clock() < (state.ThinkBusyUntil or 0) + gap then
+		return false
+	end
+	return not ctx.Dialogue or ctx.Dialogue.quietFor() >= gap
 end
 
 -- once per player per key
@@ -669,11 +686,115 @@ local function investigateTick()
 	end
 end
 
+-- The friends talking among themselves (Story.Banter): cast the scene's slots from players
+-- standing together, then play it in the dialogue box for everyone nearby.
+local function castBanter(scene)
+	local players = ctx.Util.activePlayers()
+	if #players < 2 then
+		return nil
+	end
+	for _, anchor in players do
+		local aRoot = ctx.Util.getRoot(anchor)
+		if not aRoot then
+			continue
+		end
+		local group = {}
+		for _, p in players do
+			local r = ctx.Util.getRoot(p)
+			if r and (r.Position - aRoot.Position).Magnitude <= 45 then
+				table.insert(group, p)
+			end
+		end
+		if #group < 2 then
+			continue
+		end
+		local free = table.clone(group)
+		local cast = {}
+		local function take(pred)
+			for i, p in free do
+				if pred(p) then
+					table.remove(free, i)
+					return p
+				end
+			end
+			return nil
+		end
+		local ok = true
+		local lines = {}
+		for _, l in scene.Lines do
+			local slot = l[1]
+			if not cast[slot] then
+				if slot == "Host" then
+					cast[slot] = take(function(p)
+						return p:GetAttribute("Role") == "Host"
+					end) or take(function()
+						return true
+					end)
+				else
+					-- numbered slots prefer the friends, so Jamie is free for the "Host" lines
+					cast[slot] = take(function(p)
+						return p:GetAttribute("Role") ~= "Host"
+					end) or take(function()
+						return true
+					end)
+				end
+			end
+			if cast[slot] then
+				table.insert(lines, { Speaker = cast[slot], Text = l[2] })
+			elseif not l.Optional then
+				ok = false
+				break
+			end
+		end
+		local speakers = {}
+		for _, l in lines do
+			speakers[l.Speaker] = true
+		end
+		local n = 0
+		for _ in speakers do
+			n += 1
+		end
+		if ok and n >= 2 then
+			local audience = {}
+			for _, p in ctx.Util.sessionPlayers() do
+				local r = ctx.Util.getRoot(p)
+				if r and (r.Position - aRoot.Position).Magnitude <= 70 then
+					table.insert(audience, p)
+				end
+			end
+			return lines, audience
+		end
+	end
+	return nil
+end
+
+function Director.banterTick(actTime: number)
+	local scenes = ctx.Story.Banter and ctx.Story.Banter[state.Act]
+	if not scenes or not Director.isQuiet() then
+		return
+	end
+	for i, scene in scenes do
+		local key = state.Act .. i
+		if state.BanterDone[key] or actTime < scene.At * ctx.Config.TimeScale then
+			continue
+		end
+		local lines, audience = castBanter(scene)
+		if lines then
+			state.BanterDone[key] = true
+			task.spawn(ctx.Dialogue.say, lines, audience)
+		elseif actTime > (scene.At + 120) * ctx.Config.TimeScale then
+			state.BanterDone[key] = true -- nobody was together to say it; let it go
+		end
+		return
+	end
+end
+
 local function actTick()
 	local actTime = os.clock() - state.ActStart
 	local cfg = ctx.Config.Acts[state.Act]
 	workspace:SetAttribute("ClockMinutes", Director.clockMinutes())
-	ctx.Phone.update(state.Act, actTime)
+	ctx.Phone.update(state.Act, actTime, Director.isQuiet())
+	Director.banterTick(actTime)
 
 	-- tension decays
 	state.Tension = math.max(0, state.Tension - ctx.Config.Director.TensionDecay)

@@ -120,7 +120,6 @@ Layout.InteriorWalls = {
 	{ floor = "Ground", x1 = -40, z1 = 2, x2 = -8, z2 = 2, openings = { arch(-24, 10, 10) } },
 	{ floor = "Ground", x1 = 12, z1 = -30, x2 = 12, z2 = 30, openings = {
 		door(-20, "Office", "Dad's Office", { lock = "Key", key = "HouseKeys", locked = true, into = "+" }),
-		door(0.5, "Bathroom", "Bathroom", { lock = "Privacy", into = "+" }),
 		door(-7, "BackHall", "Back Hall", { into = "+" }),
 		door(26, "Den", "Den", { into = "+" }),
 	} },
@@ -130,9 +129,11 @@ Layout.InteriorWalls = {
 		door(9, "Basement", "Basement Door", { w = 4.4, lock = "Key", key = "BasementKey", into = "+", hinge = "max" }),
 	} },
 	{ floor = "Ground", x1 = 12, z1 = -10, x2 = 40, z2 = -10, openings = {} },
-	-- the back hall (front hall -> mudroom -> garage) runs along the office wall; the bathroom sits north of it
+	-- the back hall (front hall -> mudroom -> garage) runs along the office wall; the bathroom opens off it to the north
 	{ floor = "Ground", x1 = 22, z1 = -4, x2 = 22, z2 = 4, openings = {} },
-	{ floor = "Ground", x1 = 12, z1 = -4, x2 = 22, z2 = -4, openings = {} },
+	{ floor = "Ground", x1 = 12, z1 = -4, x2 = 22, z2 = -4, openings = {
+		door(15.6, "Bathroom", "Bathroom", { w = 3.8, lock = "Privacy", into = "+" }),
+	} },
 	{ floor = "Ground", x1 = 12, z1 = 4, x2 = 40, z2 = 4, openings = { door(31, "Mudroom", "Mudroom", { into = "-" }) } },
 
 	-- Upstairs
@@ -229,7 +230,7 @@ Layout.Switches = {
 	{ Room = "Kitchen", Pos = Vector3.new(-8.35, 5.5, 22.5), Face = "-X" },
 	{ Room = "Hallway", Pos = Vector3.new(5.5, 5.5, -29.45), Face = "+Z" },
 	{ Room = "Office", Pos = Vector3.new(12.35, 5.5, -16.8), Face = "+X" },
-	{ Room = "Bathroom", Pos = Vector3.new(12.35, 5.5, -3.2), Face = "+X" },
+	{ Room = "Bathroom", Pos = Vector3.new(18.7, 5.5, -3.65), Face = "+Z" },
 	{ Room = "MudHall", Pos = Vector3.new(14.5, 5.5, -9.65), Face = "+Z" },
 	{ Room = "Mudroom", Pos = Vector3.new(34.5, 5.5, 3.65), Face = "-Z" },
 	{ Room = "Den", Pos = Vector3.new(12.35, 5.5, 22.5), Face = "+X" },

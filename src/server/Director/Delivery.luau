@@ -17,7 +17,7 @@ local CF = CFrame.new
 local ANG = CFrame.Angles
 
 local PORCH = V(2, 1, -34.3)
-local ANSWER_TIMEOUT = 75
+local ANSWER_TIMEOUT = 50
 
 -- the route from the car door to the porch (feet positions)
 local ROUTE = { V(-5, 0.45, -71.4), V(1.2, 0.75, -67), V(2, 0.6, -61), V(2, 0.6, -41), V(2, 1, -38.4), PORCH }
@@ -54,9 +54,12 @@ local function walk(model: Model, points, speed: number, folder: Instance)
 	end
 end
 
--- The delivery man is a real R15 Rthro avatar (Roblox's "City Life Man" body, pale, stretched
--- tall and thin, a red cap, arms held out with the pizza bag, and a fixed wide grin on the
--- dynamic head). If the avatar can't be loaded, the part-built Kit model stands in.
+-- The delivery man is a real R15 Rthro avatar (Roblox's "City Life Man" body, stretched tall and
+-- thin, a red cap, arms held out with the pizza bag). What makes him wrong is how he holds
+-- himself: hunched, head lowered with the eyes rolled up at you, a smile that is too wide and
+-- never moves, no blinking, and a slow tilt of the head while he talks. His jaw works when he
+-- speaks; he idles and walks with Roblox's Rthro animations.
+-- If the avatar can't be loaded, the part-built Kit model stands in.
 local AVATAR = {
 	Head = 71693744825093, -- City Life Man - Head (dynamic)
 	Torso = 2490661289,
@@ -68,16 +71,22 @@ local AVATAR = {
 	Hat = 1028606, -- Red Baseball Cap
 }
 local WALK_ANIM = "rbxassetid://2510202577" -- Rthro Walk
-local SKIN = Color3.fromRGB(196, 190, 184)
--- the face he holds the whole time: a wide, unblinking grin
+local IDLE_ANIM = "rbxassetid://2510197257" -- Rthro Idle
+-- a natural light skin tone, a little pallid (the whole body and the head match)
+local SKIN = Color3.fromRGB(224, 192, 168)
+-- the face he holds the whole time: a stretched closed-lip smile, eyes wide and rolled up
+-- from under a lowered head
 local FACE = {
 	LeftLipCornerPuller = 1, RightLipCornerPuller = 1,
-	LeftLipStretcher = 0.6, RightLipStretcher = 0.6,
-	LeftUpperLipRaiser = 0.45, RightUpperLipRaiser = 0.45,
+	LeftLipStretcher = 0.75, RightLipStretcher = 0.75,
+	LeftUpperLipRaiser = 0.2, RightUpperLipRaiser = 0.2,
 	LeftEyeUpperLidRaiser = 1, RightEyeUpperLidRaiser = 1,
-	LeftInnerBrowRaiser = 0.5, RightInnerBrowRaiser = 0.5,
-	LeftCheekRaiser = 0.35, RightCheekRaiser = 0.35,
+	EyesLookUp = 0.45,
+	LeftOuterBrowRaiser = 0.35, RightOuterBrowRaiser = 0.35,
+	LeftCheekRaiser = 0.2, RightCheekRaiser = 0.2,
 }
+local HEAD_BOW = math.rad(-12) -- head lowered
+local LEAN = math.rad(-7) -- shoulders hunched forward
 
 local function avatarActor(folder: Instance, start: CFrame)
 	local Players = game:GetService("Players")
@@ -158,16 +167,40 @@ local function avatarActor(folder: Instance, start: CFrame)
 			weld.Parent = p
 		end
 	end
+	-- hunched: the upper body leans in over the bag
+	local waist = model:FindFirstChild("Waist", true)
+	if waist and waist:IsA("Motor6D") then
+		waist.C0 = waist.C0 * ANG(LEAN, 0, 0)
+	end
 	local neck = head:FindFirstChild("Neck") :: Motor6D?
-	local neckC0 = neck and neck.C0
+	local neckC0 = neck and neck.C0 * ANG(HEAD_BOW, 0, 0)
+	if neck and neckC0 then
+		neck.C0 = neckC0
+	end
 	local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
-	local walkTrack
-	pcall(function()
-		local anim = Instance.new("Animation")
-		anim.AnimationId = WALK_ANIM
-		walkTrack = (animator :: Animator):LoadAnimation(anim)
-		walkTrack.Looped = true
-	end)
+	local function load(id: string)
+		local track
+		pcall(function()
+			local anim = Instance.new("Animation")
+			anim.AnimationId = id
+			track = (animator :: Animator):LoadAnimation(anim)
+			track.Looped = true
+		end)
+		return track
+	end
+	local walkTrack = load(WALK_ANIM)
+	local idleTrack = load(IDLE_ANIM)
+	local function idle(on: boolean)
+		if idleTrack then
+			if on then
+				idleTrack:Play(0.4)
+				idleTrack:AdjustSpeed(0.6) -- slow, heavy breathing
+			else
+				idleTrack:Stop(0.2)
+			end
+		end
+	end
+	idle(true)
 
 	local actor = { Model = model }
 	function actor.pivot(): CFrame
@@ -187,6 +220,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 	end
 	function actor.walk(points)
 		hum.AutoRotate = true
+		idle(false)
 		if walkTrack then
 			walkTrack:Play(0.2)
 			walkTrack:AdjustSpeed(0.8)
@@ -197,6 +231,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 		if walkTrack then
 			walkTrack:Stop(0.3)
 		end
+		idle(true)
 	end
 	function actor.face(dir: Vector3)
 		hum.AutoRotate = false
@@ -214,10 +249,36 @@ local function avatarActor(folder: Instance, start: CFrame)
 			walkTrack:Play(0.2)
 			walkTrack:AdjustSpeed(-0.6)
 		end
+		idle(false)
 		moveTo(target)
 		if walkTrack then
 			walkTrack:Stop(0.3)
 		end
+		idle(true)
+	end
+	-- mouth moves while he talks (the smile stays put)
+	local fc = head:FindFirstChildWhichIsA("FaceControls", true)
+	local talking = 0
+	function actor.talk(seconds: number)
+		if not fc then
+			return
+		end
+		talking += 1
+		local mine = talking
+		task.spawn(function()
+			local t0 = os.clock()
+			while talking == mine and os.clock() - t0 < seconds and model.Parent do
+				local t = os.clock() - t0
+				local open = math.max(0, math.sin(t * 11) * 0.5 + math.sin(t * 4.3) * 0.2) * 0.45
+				pcall(function()
+					(fc :: any).JawDrop = open
+				end)
+				task.wait(0.05)
+			end
+			pcall(function()
+				(fc :: any).JawDrop = 0
+			end)
+		end)
 	end
 	return actor
 end
@@ -241,6 +302,7 @@ local function partsActor(folder: Instance, start: CFrame)
 	function actor.backAway(dist: number)
 		tweenModel(man, man:GetPivot() * CF(0, 0, dist), dist)
 	end
+	function actor.talk(_seconds: number) end
 	return actor
 end
 
@@ -375,9 +437,9 @@ function Delivery.run(ctx, D, onDone)
 			end
 			answeredBy = best
 		end
-		if waited == 25 then
+		if waited == 15 then
 			ctx.Audio.playAt("Knock", V(2, 5, -30.5), { CaptionText = "[Slow knocking at the front door]" })
-		elseif waited == 48 then
+		elseif waited == 32 then
 			ctx.Audio.playAt("Doorbell", V(2, 6, -30.5))
 		end
 	end
@@ -403,6 +465,11 @@ function Delivery.run(ctx, D, onDone)
 			Script = ctx.Story.Dialogue.Pizza,
 			Chooser = answeredBy,
 			Audience = audience,
+			OnLine = function(node, i)
+				if node.Speaker ~= "" and not (node.Narrate and node.Narrate[i]) then
+					actor.talk(ctx.Dialogue.lineTime(node.Lines[i]) * 0.8)
+				end
+			end,
 		})
 		if not alive(folder) then
 			finish()

@@ -25,9 +25,17 @@ local canChoose = false
 
 local NPC_COLOR = Color3.fromRGB(230, 90, 80)
 local YOU_COLOR = Color3.fromRGB(150, 200, 255)
+local FRIEND_COLOR = Color3.fromRGB(140, 215, 160)
+
+local ambient = false -- friends talking among themselves: the controls stay up
 
 function Dialogue.isOpen(): boolean
 	return open
+end
+
+-- a real conversation (someone at the door) takes over the bottom of the screen
+function Dialogue.blocksControls(): boolean
+	return open and not ambient
 end
 
 local function choose(i: number)
@@ -62,14 +70,15 @@ local function typeOut(text: string)
 end
 
 local function show(line)
-	local wasOpen = open
+	local wasBlocking = Dialogue.blocksControls()
 	task.defer(function()
-		if ctx.MobileControls and open ~= wasOpen then
+		if ctx.MobileControls and Dialogue.blocksControls() ~= wasBlocking then
 			ctx.MobileControls.refresh()
 		end
 	end)
 	if not line then
 		open = false
+		ambient = false
 		canChoose = false
 		ctx.UI.tween(panel, 0.25, { BackgroundTransparency = 1 })
 		task.delay(0.25, function()
@@ -80,10 +89,25 @@ local function show(line)
 		return
 	end
 	open = true
+	ambient = line.Ambient == true
 	panel.Visible = true
 	panel.BackgroundTransparency = 0.12
+	-- friends' chatter sits a little higher and narrower, clear of the touch buttons
+	if ambient then
+		panel.Position = UDim2.new(0.5, 0, 1, ctx.UI.isTouch() and -190 or -120)
+		panel.Size = UDim2.new(ctx.UI.isTouch() and 0.5 or 0.56, 0, 0, 0)
+	else
+		panel.Position = UDim2.new(0.5, 0, 1, -28)
+		panel.Size = UDim2.new(0.62, 0, 0, 0)
+	end
 	local mine = line.ChooserId == player.UserId
-	if line.IsPlayer then
+	if line.Ambient then
+		local me = line.SpeakerId == player.UserId
+		speakerLabel.Text = me and "YOU" or string.upper(line.Speaker or "")
+		speakerLabel.TextColor3 = me and YOU_COLOR or FRIEND_COLOR
+		textLabel.Font = ctx.UI.Font.Body
+		textLabel.TextColor3 = Color3.fromRGB(235, 235, 228)
+	elseif line.IsPlayer then
 		speakerLabel.Text = mine and "YOU" or string.upper(line.Speaker or "")
 		speakerLabel.TextColor3 = YOU_COLOR
 		textLabel.Font = ctx.UI.Font.Body
@@ -99,7 +123,7 @@ local function show(line)
 		textLabel.TextColor3 = Color3.fromRGB(240, 236, 228)
 	end
 	speakerLabel.Visible = speakerLabel.Text ~= ""
-	typeOut(line.IsPlayer and ("\"" .. line.Text .. "\"") or line.Text)
+	typeOut((line.IsPlayer or line.Ambient) and ("\"" .. line.Text .. "\"") or line.Text)
 	-- choices
 	local choices = line.Choices
 	canChoose = choices ~= nil and mine

@@ -250,12 +250,6 @@ function House.build(ctx, root: Instance)
 	B.box(shell, "Frieze", Vector3.new(-40.8, 27.6, -30.9), Vector3.new(40.8, 28.6, -30.4), TRIM, M.Wood, { CanCollide = false })
 	B.box(shell, "Frieze", Vector3.new(-40.8, 27.6, 30.4), Vector3.new(40.8, 28.6, 30.9), TRIM, M.Wood, { CanCollide = false })
 
-	-- baseboards along the main hallways for a finished look
-	for _, y in { L.Y.Ground, L.Y.Upstairs } do
-		B.box(shell, "Baseboard", Vector3.new(-7.7, y, -30), Vector3.new(-7.5, y + 0.6, 30), C.Trim, M.Wood, { CanCollide = false })
-		B.box(shell, "Baseboard", Vector3.new(11.5, y, -30), Vector3.new(11.7, y + 0.6, 30), C.Trim, M.Wood, { CanCollide = false })
-	end
-
 	---------------------------------------------------------------------------
 	-- Stairs and railings
 	---------------------------------------------------------------------------
@@ -266,6 +260,10 @@ function House.build(ctx, root: Instance)
 	B.railing(shell, Vector3.new(-8, 15, -6), Vector3.new(-2, 15, -6), 3.4)
 	B.block(shell, "Newel", Vector3.new(-2, 3.5, -6), Vector3.new(0.8, 5, 0.8), C.DarkWood, M.Wood)
 	local bs = L.Stairs.Basement
+	-- headers boxing in the slab edges round the basement stairwell opening
+	B.box(shell, "StairHeader", Vector3.new(5.7, -0.3, -0.4), Vector3.new(6.3, 1, 22), C.Trim, M.Wood, { CanCollide = false })
+	B.box(shell, "StairHeader", Vector3.new(6, -0.3, -0.7), Vector3.new(12, 1, -0.1), C.Trim, M.Wood, { CanCollide = false })
+	B.box(shell, "StairHeader", Vector3.new(11.5, 0, -0.4), Vector3.new(11.7, 1, 22), C.Trim, M.Wood, { CanCollide = false })
 	B.stairs(shell, "BasementStairs", bs.x0, bs.x1, bs.zStart, bs.zEnd, bs.yStart, bs.yEnd, Color3.fromRGB(120, 105, 85))
 	B.railing(shell, Vector3.new(6, -13, -0.4), Vector3.new(6, 1, 22), 3.2, Color3.fromRGB(90, 80, 70))
 
@@ -304,8 +302,17 @@ function House.build(ctx, root: Instance)
 	for _, z in { -13, -11 } do
 		B.cylinder(shell, "FluePot", Vector3.new(-42, 45.9, z), 1.4, 0.9, Color3.fromRGB(150, 90, 70), M.Concrete)
 	end
-	-- foundation skirt
-	B.box(shell, "Foundation", Vector3.new(-40.6, -0.5, -30.6), Vector3.new(66.6, 0.2, 30.6), C.Concrete, M.Concrete, { CanCollide = false })
+	-- foundation skirt: a ring around the footprint only (a solid slab would cut through the basement stairwell)
+	for _, r in {
+		{ -40.6, -30.6, 66.6, -29.8 }, -- front, house + garage
+		{ -40.6, 29.8, 40.6, 30.6 }, -- back of the house
+		{ -40.6, -29.8, -39.8, 29.8 }, -- west
+		{ 39.8, 6.6, 40.6, 29.8 }, -- east, behind the garage
+		{ 40.6, 5.8, 66.6, 6.6 }, -- back of the garage
+		{ 65.8, -29.8, 66.6, 5.8 }, -- east side of the garage
+	} do
+		B.box(shell, "Foundation", Vector3.new(r[1], -0.5, r[2]), Vector3.new(r[3], 0.2, r[4]), C.Concrete, M.Concrete, { CanCollide = false })
+	end
 
 	---------------------------------------------------------------------------
 	-- Ceiling lights and switches

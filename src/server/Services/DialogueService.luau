@@ -5,6 +5,10 @@
 	Blocks until the conversation ends. Only the Chooser picks lines (two options per turn);
 	everyone in the Audience reads along. If the chooser doesn't pick in time, the first
 	option is taken so the night keeps moving.
+
+	Dialogue.say({ {Speaker = player, Text = "..."}, ... }, audience) -> bool
+	Players talking among themselves: the same box, no choices, and it leaves the controls
+	alone (Ambient). Returns false without saying anything if a conversation is running.
 ]]
 
 local Players = game:GetService("Players")
@@ -15,10 +19,13 @@ local ctx
 local CHOICE_TIMEOUT = 30
 
 local current = nil -- { Chooser, Options, Picked }
+local ambient = nil -- { Cancel } while players are talking among themselves
+local lastEnded = 0
 
 local function lineTime(text: string): number
-	return 2.2 + #text * 0.045
+	return 1.8 + #text * 0.042
 end
+Dialogue.lineTime = lineTime
 
 local function send(audience, payload)
 	for _, p in audience do
@@ -29,7 +36,44 @@ local function send(audience, payload)
 end
 
 function Dialogue.isActive(): boolean
-	return current ~= nil
+	return current ~= nil or ambient ~= nil
+end
+
+-- seconds since the last line of any conversation left the screen (0 while one is running)
+function Dialogue.quietFor(): number
+	if current or ambient then
+		return 0
+	end
+	return os.clock() - lastEnded
+end
+
+function Dialogue.say(lines, audience): boolean
+	if current or ambient then
+		return false
+	end
+	local me = { Cancel = false }
+	ambient = me
+	for _, line in lines do
+		if me.Cancel then
+			break
+		end
+		local speaker: Player = line.Speaker
+		local roleName = speaker:GetAttribute("RoleName")
+		send(audience, {
+			-- friends go by first name ("Riley Chen" -> "Riley")
+			Speaker = type(roleName) == "string" and string.split(roleName, " ")[1] or speaker.DisplayName,
+			SpeakerId = speaker.UserId,
+			Text = line.Text,
+			Ambient = true,
+		})
+		task.wait(lineTime(line.Text))
+	end
+	send(audience, nil)
+	if ambient == me then
+		ambient = nil
+	end
+	lastEnded = os.clock()
+	return true
 end
 
 function Dialogue.run(opts)
@@ -37,6 +81,13 @@ function Dialogue.run(opts)
 	local chooser: Player = opts.Chooser
 	local audience = opts.Audience or { chooser }
 	local path = {}
+	-- let the friends finish their sentence first
+	if ambient then
+		ambient.Cancel = true
+		while ambient do
+			task.wait(0.1)
+		end
+	end
 	local node = script.Nodes[script.Start]
 	current = { Chooser = chooser, Options = nil, Picked = nil }
 	while node do
@@ -102,6 +153,7 @@ function Dialogue.run(opts)
 	end
 	send(audience, nil)
 	current = nil
+	lastEnded = os.clock()
 	return path
 end
 
@@ -109,6 +161,9 @@ end
 function Dialogue.reset()
 	if current then
 		current.Cancel = true
+	end
+	if ambient then
+		ambient.Cancel = true
 	end
 end
 
