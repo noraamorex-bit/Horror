@@ -92,6 +92,11 @@ end
 -- ground mist: big, faint smoke puffs drifting low around the camera when outdoors
 local mist: ParticleEmitter
 local mistPart: BasePart
+local splashPart: Part
+local splash: ParticleEmitter
+local splashParams = RaycastParams.new()
+splashParams.FilterType = Enum.RaycastFilterType.Exclude
+
 local function buildMist()
 	mistPart = Instance.new("Part")
 	mistPart.Name = "ClientMist"
@@ -122,6 +127,30 @@ local function buildMist()
 	mist.RotSpeed = NumberRange.new(-4, 4)
 	mist.Rate = UserInputService.TouchEnabled and 5 or 9
 	mist.Parent = mistPart
+
+	-- raindrops splashing on the ground around you (placed on the ground under the camera)
+	splashPart = Instance.new("Part")
+	splashPart.Name = "ClientSplashes"
+	splashPart.Anchored = true
+	splashPart.CanCollide = false
+	splashPart.CanQuery = false
+	splashPart.CanTouch = false
+	splashPart.Transparency = 1
+	splashPart.Size = Vector3.new(50, 0.2, 50)
+	splashPart.Parent = workspace
+	splash = Instance.new("ParticleEmitter")
+	splash.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	splash.Color = ColorSequence.new(Color3.fromRGB(200, 212, 228))
+	splash.LightInfluence = 0.7
+	splash.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+	splash.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0.05) })
+	splash.Lifetime = NumberRange.new(0.15, 0.25)
+	splash.Speed = NumberRange.new(2, 4)
+	splash.SpreadAngle = Vector2.new(60, 60)
+	splash.Acceleration = Vector3.new(0, -30, 0)
+	splash.EmissionDirection = Enum.NormalId.Top
+	splash.Rate = UserInputService.TouchEnabled and 70 or 160
+	splash.Parent = splashPart
 end
 
 function Atmosphere.lightning(intensity: number, thunderDelay: number)
@@ -253,6 +282,20 @@ function Atmosphere.start()
 		-- the ground mist follows the camera outdoors only
 		mistPart.CFrame = CFrame.new(cam.CFrame.Position.X, (inside and -500 or cam.CFrame.Position.Y - 4), cam.CFrame.Position.Z)
 		mist.Enabled = not inside
+		-- splashes on whatever ground is under the camera
+		if splash then
+			local ignore: { Instance } = { splashPart, mistPart }
+			local character = game:GetService("Players").LocalPlayer.Character
+			if character then
+				table.insert(ignore, character)
+			end
+			splashParams.FilterDescendantsInstances = ignore
+			local hit = if inside then nil else workspace:Raycast(cam.CFrame.Position, Vector3.new(0, -120, 0), splashParams)
+			splash.Enabled = hit ~= nil
+			if hit then
+				splashPart.CFrame = CFrame.new(cam.CFrame.Position.X, hit.Position.Y + 0.15, cam.CFrame.Position.Z)
+			end
+		end
 	end)
 end
 

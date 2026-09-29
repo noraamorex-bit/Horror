@@ -2216,4 +2216,30 @@ function Kit.kettle(parent, cf: CFrame, color: Color3)
 	return m
 end
 
+-- a pumpkin: ribbed body and a curly stem; cf = where it sits
+function Kit.pumpkin(parent, cf: CFrame, d: number, color: Color3?)
+	local m = Kit.model(parent, "Pumpkin")
+	local c = color or Color3.fromRGB(226, 120, 36)
+	local h = d * 0.72
+	for k = 0, 5 do
+		Kit.ellipsoid(m, "PumpkinRib", cf * CF(0, h / 2, 0) * ANG(0, k * math.pi / 6, 0), V(d, h, d * 0.62), k % 2 == 0 and c or darker(c, 0.08), M.Plastic)
+	end
+	Kit.vcyl(m, "PumpkinStem", cf * CF(0, h + 0.12, 0) * ANG(rad(12), 0, 0), 0.34, d * 0.12, Color3.fromRGB(92, 110, 60), M.Wood)
+	return m
+end
+
+-- a pot of autumn chrysanthemums
+function Kit.mums(parent, cf: CFrame, d: number, bloom: Color3)
+	local m = Kit.model(parent, "Mums")
+	Kit.lathe(m, "MumPot", cf, { { 0, d * 0.62 }, { d * 0.7, d * 0.8 }, { d * 0.78, d * 0.84 } }, Color3.fromRGB(150, 84, 58), M.Plastic)
+	Kit.ellipsoid(m, "MumLeaves", cf * CF(0, d * 0.9, 0), V(d * 1.05, d * 0.6, d * 1.05), Color3.fromRGB(56, 82, 44), M.Fabric)
+	local rng = Random.new(math.floor(d * 100))
+	for _ = 1, 14 do
+		local a = rng:NextNumber(0, math.pi * 2)
+		local r = rng:NextNumber(0, d * 0.42)
+		Kit.ball(m, "Mum", (cf * CF(math.cos(a) * r, d * 1.08 + rng:NextNumber(0, 0.1) - r * 0.25, math.sin(a) * r)).Position, d * 0.2, bloom, M.Fabric)
+	end
+	return m
+end
+
 return Kit

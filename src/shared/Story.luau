@@ -262,6 +262,59 @@ Story.Banter = {
 			{ "Host", "Everyone's down here. Everyone's been down here." },
 		} },
 	},
+	Guest = {
+		{ At = 25, Lines = {
+			{ 1, "He's in the house. He is actually in the house." },
+			{ 2, "Okay. Nobody panics. We stay together and we get help." },
+			{ 3, "And if he finds us?", Optional = true },
+			{ 2, "Then we run. Different directions." },
+		} },
+		{ At = 150, Lines = {
+			{ 1, "Keep your voice down. He hears everything." },
+			{ 2, "The car. If we get the keys we can just drive." },
+		} },
+	},
+	-- said a few seconds after an event, if two people are standing together
+	React = {
+		PlateCrash = { Lines = {
+			{ 1, "WHAT was that?!" },
+			{ 2, "Kitchen. Something fell in the kitchen." },
+			{ 1, "Nothing just falls." },
+		} },
+		CeilingThud = { Lines = {
+			{ 1, "That came from the ceiling." },
+			{ 2, "Raccoons. It's... it's probably raccoons." },
+		} },
+		WindSlam = { Lines = {
+			{ 1, "Jeez! Just the wind. Right?" },
+			{ 2, "Somebody left a window open upstairs." },
+		} },
+		FootstepsUpstairs = { Lines = {
+			{ 1, "Did you hear that? Someone's walking upstairs." },
+			{ 2, "Everybody's down here though." },
+			{ 1, "Yeah. That's what I mean." },
+		} },
+		TVAlert = { Lines = {
+			{ 1, "Who touched the TV?" },
+			{ 2, "Nobody. It changed by itself." },
+		} },
+		Flicker = { Lines = {
+			{ 1, "Please don't go out, please don't go out..." },
+			{ 2, "It's the storm. The lines are swinging." },
+		} },
+		DoorRattle = { Lines = {
+			{ 1, "Someone's trying the door." },
+			{ 2, "It's locked. It's locked, right?" },
+		} },
+		ChairDrop = { Lines = {
+			{ 1, "What knocked that over?" },
+			{ 2, "I'm not going to look. You look." },
+		} },
+		WindowBang = { Lines = {
+			{ 1, "Something hit the window!" },
+			{ 2, "Get away from the glass." },
+		} },
+	},
 	SomeoneElse = {
 		{ At = 30, Lines = {
 			{ 1, "The whole house doesn't just go dark on its own. Not like that." },
@@ -449,6 +502,32 @@ Story.Truths = {
 -- Inner monologue. Lines are "text|hint": the hint key becomes a control tip for the
 -- player's device (keyboard, touch or gamepad) on a smaller second line.
 ---------------------------------------------------------------------------
+-- First time someone walks into a room during the first act (one line each, only when quiet).
+-- Host lines are Jamie's own house; Guest lines are a friend visiting.
+Story.RoomThoughts = {
+	Host = {
+		Living = "The fire's going. This is the best room in the house on a night like this.",
+		Kitchen = "Mom stocked the fridge like we're getting snowed in for a month.",
+		Den = "Movie night headquarters. Blankets, snacks, the big TV.",
+		Jamie = "My room. Home sweet home.",
+		Lily = "Lily's room. She'd kill me if she knew we were in here.",
+		Master = "Mom and Dad's room. Feels weird being in here without them.",
+		Garage = "Freezing in here. Mom's car, Dad's workbench.",
+		Basement = "The basement. I never come down here if I can help it.",
+		Office = "Dad's office. Everything exactly where he left it.",
+	},
+	Guest = {
+		Living = "Okay, this is cozy. A real fire and everything.",
+		Kitchen = "Jamie's mom definitely bought snacks for an army.",
+		Den = "Perfect movie spot. I'm claiming the beanbag.",
+		Jamie = "Jamie's room. Messier than I expected.",
+		Lily = "Jamie's little sister's room. Better not touch anything.",
+		Master = "This is Jamie's parents' room. I shouldn't really be in here.",
+		Garage = "It's so cold out here.",
+		Basement = "Nope. Basements in storms are how movies start.",
+	},
+}
+
 Story.Thoughts = {
 	Intro = {
 		Host = {

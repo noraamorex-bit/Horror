@@ -94,23 +94,45 @@ local function blockRig(): Model
 	return model
 end
 
+-- Curtis as a Roblox avatar: the blank "Stare" head (Roblox) under a dark knit cap, a black jacket and black jeans (Roblox classic clothing), big and tall. Every catalog
+-- piece is optional: if the head can't load he keeps the classic head, and if the avatar can't
+-- be built at all the block rig stands in.
+local CURTIS = {
+	Head = 13692947484, -- Roblox: Stare - Head
+	Shirt = 382538295, -- Roblox: Guitar Tee with Black Jacket
+	Pants = 382537569, -- Roblox: Black Jeans
+}
+local function curtisDescription(withHead: boolean)
+	local desc = Instance.new("HumanoidDescription")
+	local skin = Color3.fromRGB(196, 160, 130)
+	if withHead then
+		desc.Head = CURTIS.Head
+	end
+	desc.Shirt = CURTIS.Shirt
+	desc.Pants = CURTIS.Pants
+	desc.HeadColor = skin
+	desc.LeftArmColor = skin
+	desc.RightArmColor = skin
+	desc.TorsoColor = Color3.fromRGB(40, 40, 44)
+	desc.LeftLegColor = Color3.fromRGB(34, 34, 38)
+	desc.RightLegColor = Color3.fromRGB(34, 34, 38)
+	desc.HeightScale = 1.12
+	desc.WidthScale = 1.08
+	desc.DepthScale = 1.02
+	desc.BodyTypeScale = 0
+	desc.ProportionScale = 0
+	return desc
+end
+
 local function buildRig(): Model
 	local ok, result = pcall(function()
-		local desc = Instance.new("HumanoidDescription")
-		local skin = Color3.fromRGB(196, 160, 130)
-		local jacket = Color3.fromRGB(62, 60, 50)
-		local jeans = Color3.fromRGB(45, 50, 60)
-		desc.HeadColor = skin
-		desc.TorsoColor = jacket
-		desc.LeftArmColor = jacket
-		desc.RightArmColor = jacket
-		desc.LeftLegColor = jeans
-		desc.RightLegColor = jeans
-		desc.HeightScale = 1.08
-		desc.WidthScale = 1.05
-		desc.DepthScale = 1
-		return Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
+		return Players:CreateHumanoidModelFromDescription(curtisDescription(true), Enum.HumanoidRigType.R15)
 	end)
+	if not ok then
+		ok, result = pcall(function()
+			return Players:CreateHumanoidModelFromDescription(curtisDescription(false), Enum.HumanoidRigType.R15)
+		end)
+	end
 	local model = (ok and result) or blockRig()
 	model.Name = "Curtis"
 	local hum = model:FindFirstChildOfClass("Humanoid") :: Humanoid
@@ -123,23 +145,36 @@ local function buildRig(): Model
 	hum.WalkSpeed = ctx.Config.Intruder.WalkSpeed
 	hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
-	-- a dark knit cap
 	local head = model:FindFirstChild("Head") :: BasePart
 	if head then
-		local cap = ctx.Builder.part(model, {
-			Name = "Cap",
-			Size = V(1.25, 0.55, 1.25),
-			CFrame = head.CFrame * CFrame.new(0, head.Size.Y / 2 - 0.1, 0),
-			Color = Color3.fromRGB(35, 35, 38),
-			Material = Enum.Material.Fabric,
-			Anchored = false,
-			CanCollide = false,
-			Massless = true,
-		})
-		local w = Instance.new("WeldConstraint")
-		w.Part0 = head
-		w.Part1 = cap
-		w.Parent = cap
+		-- a dark knit beanie pulled low: a rounded crown and a folded cuff
+		local hs = head.Size
+		local function knit(name: string, size: Vector3, offset: CFrame, mesh: Enum.MeshType?)
+			local p = ctx.Builder.part(model, {
+				Name = name,
+				Size = size,
+				CFrame = head.CFrame * offset,
+				Color = Color3.fromRGB(32, 32, 36),
+				Material = Enum.Material.Fabric,
+				Anchored = false,
+				CanCollide = false,
+				CanQuery = false,
+				Massless = true,
+			})
+			if mesh then
+				local m = Instance.new("SpecialMesh")
+				m.MeshType = mesh
+				m.Parent = p
+			end
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = head
+			weld.Part1 = p
+			weld.Parent = p
+			return p
+		end
+		knit("Cap", Vector3.new(hs.X * 1.1, hs.Y * 0.7, hs.Z * 1.1), CFrame.new(0, hs.Y * 0.38, 0), Enum.MeshType.Sphere)
+		local cuff = knit("CapCuff", Vector3.new(hs.Y * 0.2, hs.X * 1.14, hs.Z * 1.14), CFrame.new(0, hs.Y * 0.3, 0) * CFrame.Angles(0, 0, math.pi / 2), nil)
+		cuff.Shape = Enum.PartType.Cylinder
 	end
 	return model
 end

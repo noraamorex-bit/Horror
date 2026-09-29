@@ -600,6 +600,10 @@ local function fire(e, data)
 			warn("[Director] event " .. e.Id .. " failed: " .. tostring(err))
 		end
 	end)
+	-- friends standing together react out loud a moment later (Story.Banter.React)
+	if Director.reactBanter then
+		task.delay(3, Director.reactBanter, e.Id)
+	end
 end
 
 local function tryEvent(e, force: boolean?): boolean
@@ -769,6 +773,20 @@ local function castBanter(scene)
 	return nil
 end
 
+-- a spoken reaction to an event, if people are together to say it (once per event per night)
+function Director.reactBanter(id: string)
+	local react = ctx.Story.Banter and ctx.Story.Banter.React
+	local scene = react and react[id]
+	if not scene or state.BanterDone["React" .. id] or (ctx.Dialogue and ctx.Dialogue.isActive()) then
+		return
+	end
+	local lines, audience = castBanter(scene)
+	if lines then
+		state.BanterDone["React" .. id] = true
+		task.spawn(ctx.Dialogue.say, lines, audience)
+	end
+end
+
 function Director.banterTick(actTime: number)
 	local scenes = ctx.Story.Banter and ctx.Story.Banter[state.Act]
 	if not scenes or not Director.isQuiet() then
@@ -810,6 +828,22 @@ local function actTick()
 
 	schedule(actTime)
 	hintTick()
+	-- first visits to each room in the first act get a line of their own
+	if state.Act == "Evening" and Director.isQuiet() then
+		for _, p in ctx.Util.activePlayers() do
+			local root = ctx.Util.getRoot(p)
+			local room = root and ctx.Rooms.find(root.Position)
+			local set = ctx.Story.RoomThoughts[p:GetAttribute("Role") == "Host" and "Host" or "Guest"]
+			local line = room and set and set[room.Name]
+			if line then
+				local seen = state.Thought and state.Thought[p]
+				if not (seen and seen["Room_" .. room.Name]) then
+					Director.thinkOnce(p, "Room_" .. room.Name, line)
+					break -- one at a time
+				end
+			end
+		end
+	end
 	investigateTick()
 
 	-- hard cap

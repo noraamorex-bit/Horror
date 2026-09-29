@@ -107,6 +107,45 @@ function Exterior.build(ctx, root: Instance, refs)
 	Kit.plant(f, F(-3.6, 1, -31.6, NZ), 1.2, "leafy", Color3.fromRGB(60, 60, 64))
 	Kit.plant(f, F(7.6, 1, -31.6, NZ), 1.2, "leafy", Color3.fromRGB(60, 60, 64))
 	box("HouseNumber", 5, 8.5, -30.62, 6.6, 9.3, -30.55, Color3.fromRGB(40, 40, 40), M.Metal, { CanCollide = false })
+	-- autumn on the porch: pumpkins on the steps and by the columns, pots of mums
+	Kit.pumpkin(f, F(-0.45, 1.0, -38.5, NZ), 1.1)
+	Kit.pumpkin(f, F(4.45, 1.0, -38.55, NZ) * ANG(0, 0.7, 0), 0.8, Color3.fromRGB(236, 150, 60))
+	Kit.pumpkin(f, F(-0.5, 0.5, -39.5, NZ) * ANG(0, 1.3, 0), 0.7)
+	Kit.pumpkin(f, F(-4.2, 1, -37.2, NZ), 1.4)
+	Kit.pumpkin(f, F(-3.3, 1, -37.5, NZ) * ANG(0, 0.4, 0), 0.8, Color3.fromRGB(236, 226, 206))
+	Kit.pumpkin(f, F(8.4, 1, -37.3, NZ) * ANG(0, 2.1, 0), 1.2)
+	Kit.mums(f, F(-4.2, 1, -34.6, NZ), 1.3, Color3.fromRGB(200, 90, 40))
+	Kit.mums(f, F(8.4, 1, -34.6, NZ), 1.3, Color3.fromRGB(230, 180, 60))
+	-- the fire's lit: woodsmoke drifts off the chimney into the rain
+	local flue = B.part(f, { Name = "ChimneySmoke", Size = V(1.2, 0.2, 1.2), CFrame = CF(-42, 46.6, -12), Transparency = 1, CanCollide = false, CanQuery = false })
+	local smoke = Instance.new("ParticleEmitter")
+	smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	smoke.Color = ColorSequence.new(Color3.fromRGB(150, 150, 156), Color3.fromRGB(90, 92, 100))
+	smoke.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.55), NumberSequenceKeypoint.new(0.6, 0.8), NumberSequenceKeypoint.new(1, 1) })
+	smoke.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.2), NumberSequenceKeypoint.new(1, 7) })
+	smoke.Lifetime = NumberRange.new(5, 8)
+	smoke.Rate = 5
+	smoke.Speed = NumberRange.new(2, 3.5)
+	smoke.Acceleration = V(2.2, 0.3, 1.2)
+	smoke.SpreadAngle = Vector2.new(12, 12)
+	smoke.RotSpeed = NumberRange.new(-20, 20)
+	smoke.Rotation = NumberRange.new(0, 360)
+	smoke.EmissionDirection = Enum.NormalId.Top
+	smoke.LightInfluence = 1
+	smoke.Parent = flue
+	-- fallen leaves on the lawns (never on the walk, drive or porch)
+	do
+		local rng = Random.new(1031)
+		local LEAVES = { Color3.fromRGB(196, 96, 36), Color3.fromRGB(170, 60, 32), Color3.fromRGB(210, 150, 50), Color3.fromRGB(120, 76, 40) }
+		local areas = { { -40, -2, -62, -35 }, { 6, 40, -62, -35 }, { -40, 40, 36, 58 }, { -58, -46, -30, 30 } }
+		for _, ar in areas do
+			local n = math.floor((ar[2] - ar[1]) * (ar[4] - ar[3]) / 7)
+			for _ = 1, n do
+				local x, z = rng:NextNumber(ar[1], ar[2]), rng:NextNumber(ar[3], ar[4])
+				Kit.box(f, "Leaf", CF(x, 0.53, z) * ANG(rng:NextNumber(-0.15, 0.15), rng:NextNumber(0, 6.28), rng:NextNumber(-0.15, 0.15)), V(0.42, 0.03, 0.3), LEAVES[rng:NextInteger(1, #LEAVES)], KM.Fabric, { CanCollide = false, CanQuery = false, CastShadow = false })
+			end
+		end
+	end
 
 	box("Driveway", 43, 0, -62, 63, 1, -30.5, Color3.fromRGB(96, 96, 96), M.Concrete)
 	for z = -58, -34, 6 do
