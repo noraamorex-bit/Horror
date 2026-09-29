@@ -60,6 +60,9 @@ function Capture.captives(): { Player }
 end
 
 function Capture.release(player: Player, by: Player?)
+	if by and by ~= player then
+		by:SetAttribute("NightRescues", (tonumber(by:GetAttribute("NightRescues")) or 0) + 1)
+	end
 	local data = captives[player]
 	if not data then
 		return
@@ -95,6 +98,8 @@ function Capture.capture(player: Player)
 	if ctx.Hiding.spotOf(player) then
 		ctx.Hiding.exit(player, true)
 	end
+	ctx.Util.unseat(player)
+	player:SetAttribute("NightCaught", (tonumber(player:GetAttribute("NightCaught")) or 0) + 1)
 	ctx.PlayerState.setFlashlight(player, false)
 
 	-- he takes what matters

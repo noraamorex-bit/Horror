@@ -56,6 +56,49 @@ function Interior.build(ctx, root: Instance, refs)
 		table.insert(stashes, { Name = name, Part = part, Label = label, Floor = floor, Visible = visible == true })
 	end
 
+	-- somewhere to sit: invisible seats on each cushion of a sofa/armchair (touching them does
+	-- nothing; a "Sit" prompt puts you on the nearest free one). Jump to get up.
+	local function seats(parent, cf: CFrame, length: number, label: string)
+		local armW = 0.8
+		local inner = length - 2 * armW
+		local n = math.max(1, math.floor(inner / 2.9 + 0.5))
+		local cw = inner / n
+		local list = {}
+		for i = 1, n do
+			local seat = Instance.new("Seat")
+			seat.Name = "SofaSeat"
+			seat.Anchored = true
+			seat.CanCollide = false
+			seat.CanTouch = false
+			seat.CanQuery = false
+			seat.Transparency = 1
+			seat.Size = V(1.6, 0.2, 1.6)
+			seat.CFrame = cf * CF(-inner / 2 + cw * (i - 0.5), 2.0, -0.2)
+			seat.Parent = parent
+			table.insert(list, seat)
+		end
+		local anchor = Kit.box(parent, "SitSpot", cf * CF(0, 2.6, -0.4), V(math.max(1.5, length - 1.2), 1.2, 1.2), Color3.new(), KM.Plastic)
+		anchor.Transparency = 1
+		anchor.CanQuery = true
+		ctx.Interaction.prompt(anchor, { Action = "Sit", Object = label, Distance = 7 }, function(player)
+			local hum = ctx.Util.getHumanoid(player)
+			local root = ctx.Util.getRoot(player)
+			if not hum or not root or hum.SeatPart or player:GetAttribute("Hiding") or player:GetAttribute("Captured") then
+				return
+			end
+			table.sort(list, function(a, b)
+				return (a.Position - root.Position).Magnitude < (b.Position - root.Position).Magnitude
+			end)
+			for _, seat in list do
+				if not seat.Occupant then
+					seat:Sit(hum)
+					return
+				end
+			end
+			ctx.Audio.caption("No room left.", nil, nil, { player })
+		end)
+	end
+
 	local function paper(parent, name, cf: CFrame, size: Vector3)
 		local p = Kit.box(parent, name, cf, size, Color3.fromRGB(238, 234, 220), KM.Plastic)
 		p.CanQuery = true
@@ -159,6 +202,9 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.sofa(living, F(-24, G, -15.5, NZ), 10, SOFA, Color3.fromRGB(196, 156, 92))
 	Kit.armchair(living, F(-34, G, -21.5, PX), Color3.fromRGB(132, 86, 62))
 	Kit.armchair(living, F(-15.2, G, -22.4, NX), Color3.fromRGB(132, 86, 62))
+	seats(living, F(-24, G, -15.5, NZ), 10, "Sofa")
+	seats(living, F(-34, G, -21.5, PX), 3.9, "Armchair")
+	seats(living, F(-15.2, G, -22.4, NX), 3.9, "Armchair")
 	Kit.coffeeTable(living, F(-24, G, -21, NZ), 5.2, 3, 2.1, WOOD_MID)
 	Kit.magazines(living, F(-22.2, G + 2.1, -21.3, NZ), 3)
 	Kit.candle(living, F(-25.9, G + 2.1, -21.7, NZ), 0.7, 0.45)
@@ -730,6 +776,7 @@ function Interior.build(ctx, root: Instance, refs)
 	local den = folder("Den")
 	Kit.rug(den, F(21.5, G, 13, NZ), 16, 13, Color3.fromRGB(60, 72, 64), Color3.fromRGB(170, 150, 110))
 	Kit.sofa(den, F(21.5, G, 17.5, NZ), 10, Color3.fromRGB(110, 86, 64), Color3.fromRGB(60, 90, 70))
+	seats(den, F(21.5, G, 17.5, NZ), 10, "Sofa")
 	Kit.coffeeTable(den, F(21.5, G, 11.8, NZ), 5.6, 2.6, 2, WOOD_MID)
 	Kit.remote(den, F(20.6, G + 2, 11.6, NZ) * ANG(0, rad(20), 0))
 	Kit.controller(den, F(22.6, G + 2, 11.9, NZ) * ANG(0, rad(-15), 0))

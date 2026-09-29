@@ -52,7 +52,7 @@ local function show(payload)
 	add({ Text = "WHO MADE IT", Font = UI.Font.Bold, TextSize = 16, TextColor3 = UI.Color.Accent })
 	for _, f in payload.Fates or {} do
 		add({
-			Text = string.format("<b>%s</b> (%s) — %s%s", f.Name, f.Role, f.Fate, f.WasCaptured and "  <font color=\"#8a8a8a\">· taken to the boiler room</font>" or ""),
+			Text = string.format("<b>%s</b> (%s) — %s%s%s", f.Name, f.Role, f.Fate, f.WasCaptured and "  <font color=\"#8a8a8a\">· taken to the boiler room</font>" or "", f.Recap and ("\n<font size=\"14\" color=\"#9a948a\">" .. f.Recap .. "</font>") or ""),
 			TextSize = 17,
 		})
 	end

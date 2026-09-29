@@ -42,7 +42,20 @@ function Ending.trigger(kind: string)
 		else
 			fate = ctx.Story.Fates.Safe
 		end
+		-- a one-line recap of their night
+		local bits = {}
+		local function add(attr, one, many)
+			local n = tonumber(p:GetAttribute(attr)) or 0
+			if n > 0 then
+				table.insert(bits, n == 1 and one or string.format(many, n))
+			end
+		end
+		add("NightHides", "hid once", "hid %d times")
+		add("NightSpotted", "was spotted once", "was spotted %d times")
+		add("NightCaught", "got caught", "got caught %d times")
+		add("NightRescues", "freed a friend", "freed %d friends")
 		table.insert(fates, {
+			Recap = #bits > 0 and table.concat(bits, " · ") or "never saw him coming",
 			Name = p.DisplayName,
 			Role = p:GetAttribute("RoleName") or "",
 			Fate = fate,

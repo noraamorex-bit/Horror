@@ -249,6 +249,11 @@ Story.Banter = {
 			{ 2, "Not you. Last time we watched two hours about mold." },
 			{ 1, "It was about fungus. It was a thriller." },
 		} },
+		{ At = 130, Lines = {
+			{ 1, "Okay this fire is amazing. I'm never leaving this couch." },
+			{ 2, "You say that every time. Then you eat all the popcorn and fall asleep." },
+			{ 1, "That's called living my best life." },
+		} },
 		{ At = 190, Lines = {
 			{ 1, "How long till the pizza gets here? I'm actually starving." },
 			{ "Host", "Soon. Tony's is always slow when it rains." },
@@ -256,6 +261,12 @@ Story.Banter = {
 		} },
 	},
 	SmallThings = {
+		{ At = 110, Lines = {
+			{ 1, "Did you guys lock the back door?" },
+			{ "Host", "I... think so?" },
+			{ 1, "You think so." },
+			{ 2, "Can we please just check." },
+		} },
 		{ At = 40, Lines = {
 			{ 1, "Did anyone else hear that? Upstairs." },
 			{ 2, "It's the storm. Old houses creak." },
@@ -269,6 +280,10 @@ Story.Banter = {
 		} },
 	},
 	Guest = {
+		{ At = 90, Lines = {
+			{ 1, "My phone's at four percent." },
+			{ 2, "Then don't waste it. Upstairs bathroom window, that's where the signal is." },
+		} },
 		{ At = 25, Lines = {
 			{ 1, "He's in the house. He is actually in the house." },
 			{ 2, "Okay. Nobody panics. We stay together and we get help." },

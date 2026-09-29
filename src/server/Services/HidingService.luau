@@ -65,6 +65,8 @@ function Hiding.enter(player: Player, spot)
 	if player:GetAttribute("FlashlightOn") then
 		ctx.PlayerState.setFlashlight(player, false)
 	end
+	ctx.Util.unseat(player)
+	player:SetAttribute("NightHides", (tonumber(player:GetAttribute("NightHides")) or 0) + 1)
 	occupantOf[spot] = player
 	spotOf[player] = spot
 	breath[player] = ctx.Config.Hiding.HoldBreathMax

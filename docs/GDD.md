@@ -89,7 +89,13 @@ Eleven drawers and shelves are **stashes** (end tables, kitchen drawers, the hal
 Each has its own line in the truth log, a thought, and a spoken reaction if friends are together.
 
 ### Music and sound
-Soft piano indoors in Act I; a driving chase track ("Dark Hunter", APM) when he is chasing someone near you, low dread ("Facing the Fear", APM) while he searches close by, both scaled by how close he is; and from Act II the house creaks somewhere near you every 20-50 s.
+A music box in the rain in the lobby ("Eerie Music Box", APM); soft piano indoors in Act I; a driving chase track ("Dark Hunter", APM) when he is chasing someone near you, low dread ("Facing the Fear", APM) while he searches close by, both scaled by how close he is; and from Act II the house creaks somewhere near you every 20-50 s.
+
+### Hanging out
+The living-room sofa, both armchairs and the den sofa have seats: a **Sit** prompt puts you on the nearest free cushion (walking into them does nothing), jump to get up. Hiding or getting caught pulls you off the seat first.
+
+### Night recap
+The ending card adds a line under each player: how many times they hid, were spotted, got caught and freed a friend (or "never saw him coming").
 
 ### Getting caught
 When he grabs you, your camera snaps onto his masked face, inches away and lunging closer, with a scream hit ("Eyes Scream Horror Hit", APM), a red flash and a hard shake. Then the hand over your mouth and the fade to black. He also breathes: a slow, heavy loop on him that you only hear from a few steps away, which is how you know he is right outside your hiding spot.

@@ -236,8 +236,12 @@ function Atmosphere.start()
 	end
 
 	ctx.Remotes.Lightning.OnClientEvent:Connect(Atmosphere.lightning)
-	-- the lobby has no director: the storm runs itself there
+	-- the lobby has no director: the storm runs itself there (with a music box in the rain)
 	if ctx.Mode == "Lobby" then
+		local music = ctx.Effects.localSound("LobbyMusic")
+		if music then
+			music:Play()
+		end
 		task.spawn(function()
 			task.wait(6)
 			while true do

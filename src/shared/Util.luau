@@ -35,6 +35,18 @@ function Util.getHumanoid(player: Player): Humanoid?
 	return char:FindFirstChildOfClass("Humanoid")
 end
 
+-- get up off any seat (before we move the character somewhere else)
+function Util.unseat(player: Player)
+	local hum = Util.getHumanoid(player)
+	if hum and hum.SeatPart then
+		local weld = hum.SeatPart:FindFirstChild("SeatWeld")
+		if weld then
+			weld:Destroy()
+		end
+		hum.Sit = false
+	end
+end
+
 function Util.isAlive(player: Player): boolean
 	local hum = Util.getHumanoid(player)
 	return hum ~= nil and hum.Health > 0 and Util.getRoot(player) ~= nil

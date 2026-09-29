@@ -417,6 +417,11 @@ function Director.startAct(name: string, cause: Player?)
 
 	if name == "Evening" then
 		workspace:SetAttribute("Delivery", nil)
+		for _, p in ctx.Util.sessionPlayers() do
+			for _, a in { "NightHides", "NightSpotted", "NightCaught", "NightRescues" } do
+				p:SetAttribute(a, 0)
+			end
+		end
 		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Windows" })
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
@@ -534,6 +539,7 @@ end
 
 function Director.onSighting(player: Player)
 	Director.addTension(15)
+	player:SetAttribute("NightSpotted", (tonumber(player:GetAttribute("NightSpotted")) or 0) + 1)
 	if state.Act == "SomeoneElse" then
 		Director.logTruth("Glimpse")
 		Director.thinkOnce(player, "Glimpse", ctx.Story.Thoughts.Events.Glimpse)
