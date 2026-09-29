@@ -55,7 +55,7 @@ local function walk(model: Model, points, speed: number, folder: Instance)
 end
 
 -- The delivery man is a normal Roblox avatar: Roblox's "Man Face" head, short brown hair, the
--- red baseball cap and a bright red shirt with the TONY'S logo on the chest, dark jeans. He
+-- red pizza place visor and a bright red shirt with the TONY'S logo on the chest, dark jeans. He
 -- carries the two pizza boxes in both hands. The strangeness is in how he acts: he stands too
 -- still, head lowered, watching whoever answers and slowly tilting his head while he talks.
 -- If Roblox can't load the head, he gets the classic head and face; if even the avatar fails,
@@ -63,7 +63,7 @@ end
 local AVATAR = {
 	Head = 10725826963, -- Roblox: Man Face - Head
 	Hair = 9243976603, -- Roblox: Short Fringe - Brown
-	Hat = 1028606, -- Roblox: Red Baseball Cap
+	Hat = 129796479999584, -- UGC (Russ UGC): Classic Pizza Place Visor
 }
 local SKIN = Color3.fromRGB(234, 190, 152)
 local SHIRT_RED = Color3.fromRGB(196, 32, 28)

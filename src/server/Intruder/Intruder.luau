@@ -94,13 +94,15 @@ local function blockRig(): Model
 	return model
 end
 
--- Curtis as a Roblox avatar: the blank "Stare" head (Roblox) under a dark knit cap, a black jacket and black jeans (Roblox classic clothing), big and tall. Every catalog
+-- Curtis as a Roblox avatar: a stitched burlap sack over his head (UGC "Stitched Burlap Horror
+-- Mask" by BloodWarrior08; a dark knit beanie if it can't load), the blank "Stare" head underneath, a black jacket and black jeans (Roblox classic clothing), big and tall. Every catalog
 -- piece is optional: if the head can't load he keeps the classic head, and if the avatar can't
 -- be built at all the block rig stands in.
 local CURTIS = {
 	Head = 13692947484, -- Roblox: Stare - Head
 	Shirt = 382538295, -- Roblox: Guitar Tee with Black Jacket
 	Pants = 382537569, -- Roblox: Black Jeans
+	Mask = 127512374310237, -- UGC (BloodWarrior08): Stitched Burlap Horror Mask
 }
 local function curtisDescription(withHead: boolean)
 	local desc = Instance.new("HumanoidDescription")
@@ -108,6 +110,7 @@ local function curtisDescription(withHead: boolean)
 	if withHead then
 		desc.Head = CURTIS.Head
 	end
+	desc.HatAccessory = tostring(CURTIS.Mask)
 	desc.Shirt = CURTIS.Shirt
 	desc.Pants = CURTIS.Pants
 	desc.HeadColor = skin
@@ -146,8 +149,8 @@ local function buildRig(): Model
 	hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
 	local head = model:FindFirstChild("Head") :: BasePart
-	if head then
-		-- a dark knit beanie pulled low: a rounded crown and a folded cuff
+	if head and not model:FindFirstChildOfClass("Accessory") then
+		-- no mask loaded: a dark knit beanie pulled low: a rounded crown and a folded cuff
 		local hs = head.Size
 		local function knit(name: string, size: Vector3, offset: CFrame, mesh: Enum.MeshType?)
 			local p = ctx.Builder.part(model, {

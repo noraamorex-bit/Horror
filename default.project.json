@@ -3,10 +3,14 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "Shared": { "$path": "src/shared" }
+      "Shared": {
+        "$path": "src/shared"
+      }
     },
     "ServerScriptService": {
-      "Server": { "$path": "src/server" }
+      "Server": {
+        "$path": "src/server"
+      }
     },
     "StarterPlayer": {
       "$properties": {
@@ -19,7 +23,9 @@
         "AutoJumpEnabled": false
       },
       "StarterPlayerScripts": {
-        "Client": { "$path": "src/client" }
+        "Client": {
+          "$path": "src/client"
+        }
       }
     },
     "Lighting": {
@@ -27,8 +33,16 @@
         "Technology": "Future",
         "ClockTime": 21,
         "Brightness": 0.4,
-        "Ambient": [0.03, 0.03, 0.04],
-        "OutdoorAmbient": [0.07, 0.08, 0.11],
+        "Ambient": [
+          0.03,
+          0.03,
+          0.04
+        ],
+        "OutdoorAmbient": [
+          0.07,
+          0.08,
+          0.11
+        ],
         "EnvironmentDiffuseScale": 0.3,
         "EnvironmentSpecularScale": 0.6,
         "GlobalShadows": true,
@@ -55,6 +69,11 @@
     "Workspace": {
       "$properties": {
         "Gravity": 196.2
+      }
+    },
+    "ReplicatedFirst": {
+      "Loading": {
+        "$path": "src/first/Loading.client.luau"
       }
     }
   }

@@ -56,6 +56,42 @@ function LobbyHub.start()
 		Parent = UI.Root,
 	})
 	UI.label({ Size = UDim2.new(1, 0, 0, 50), Text = ctx.Story.Title, Font = UI.Font.Title, TextSize = 46, TextStrokeTransparency = 0.5, Parent = title })
+	-- bring friends, and keep the game one tap away
+	local row = UI.new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, inset.Y + 64),
+		Size = UDim2.fromOffset(420, 54),
+		BackgroundTransparency = 1,
+		Parent = UI.Root,
+	})
+	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = row })
+	ctx.Social.button(row, "invite")
+	ctx.Social.button(row, "favorite", { Size = UDim2.fromOffset(160, 54) })
+	-- your record, saved between visits
+	local player = game:GetService("Players").LocalPlayer
+	local record = UI.label({
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, inset.Y + 126),
+		Size = UDim2.fromOffset(520, 26),
+		Text = "",
+		Font = UI.Font.Bold,
+		TextSize = 17,
+		TextColor3 = UI.Color.Dim,
+		TextStrokeTransparency = 0.5,
+		Parent = UI.Root,
+	})
+	local function showRecord()
+		local nights = player:GetAttribute("StatNights")
+		if nights == nil then
+			record.Text = ""
+			return
+		end
+		record.Text = string.format("NIGHTS %d   ·   SURVIVED %d   ·   ENDINGS %d / %d", nights, player:GetAttribute("StatEscapes") or 0, player:GetAttribute("StatEndings") or 0, player:GetAttribute("StatEndingTotal") or 0)
+	end
+	for _, a in { "StatNights", "StatEscapes", "StatEndings" } do
+		player:GetAttributeChangedSignal(a):Connect(showRecord)
+	end
+	showRecord()
 
 	ctx.Notice.show({
 		Title = "Welcome to Hollis Creek",

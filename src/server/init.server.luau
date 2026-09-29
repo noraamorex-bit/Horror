@@ -60,6 +60,11 @@ end
 
 setupLighting()
 
+-- saved stats (nights, survivals, endings found), in the lobby and in the house
+local Stats = require(Services.StatsService)
+Stats.init(ctx)
+Stats.start()
+
 -- Lobby servers: queue circles that teleport groups into their own game server
 local mode = ctx.Mode.get()
 workspace:SetAttribute("Mode", mode)

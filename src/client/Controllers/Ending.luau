@@ -41,6 +41,11 @@ local function show(payload)
 		return UI.label(props)
 	end
 	add({ Text = payload.Title, Font = UI.Font.Title, TextSize = 64, TextColor3 = payload.Bad and UI.Color.Danger or UI.Color.Text })
+	local me = game:GetService("Players").LocalPlayer
+	if table.find(payload.FirstFor or {}, me.UserId) then
+		local found, total = me:GetAttribute("StatEndings"), me:GetAttribute("StatEndingTotal")
+		add({ Text = "NEW ENDING FOUND" .. (found and total and ("  ·  " .. found .. " / " .. total) or ""), Font = UI.Font.Bold, TextSize = 18, TextColor3 = UI.Color.Accent })
+	end
 	add({ Text = payload.Body, Font = UI.Font.Title, TextSize = 19, RichText = false })
 	add({ Text = "Survived " .. tostring(payload.Duration), TextSize = 14, TextColor3 = UI.Color.Dim })
 
@@ -63,6 +68,19 @@ local function show(payload)
 			TextSize = 16,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		})
+	end
+	-- play it again with more friends, and keep the game one tap away
+	order += 1
+	local row = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, -20, 0, 60), BackgroundTransparency = 1, Parent = scroll })
+	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = row })
+	if ctx.Social then
+		ctx.Social.button(row, "invite")
+		ctx.Social.button(row, "favorite", { Size = UDim2.fromOffset(160, 54) })
+		task.delay(8, function()
+			if screen.Parent then
+				ctx.Social.maybeAskFavorite()
+			end
+		end)
 	end
 	local countdown = add({ Text = "", TextSize = 14, TextColor3 = UI.Color.Dim })
 	task.spawn(function()

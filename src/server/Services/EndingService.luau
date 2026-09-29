@@ -51,8 +51,20 @@ function Ending.trigger(kind: string)
 		p:SetAttribute("Fate", fate)
 	end
 
+	-- saved stats; who saw this ending for the first time
+	local firstFor = {}
+	if ctx.Stats then
+		local ok, firsts = pcall(ctx.Stats.recordNight, ctx.Util.sessionPlayers(), kind)
+		if ok then
+			for userId in firsts do
+				table.insert(firstFor, userId)
+			end
+		end
+	end
+
 	local payload = {
 		Kind = kind,
+		FirstFor = firstFor,
 		Title = story.Title,
 		Body = story.Body,
 		Bad = story.Bad == true,
