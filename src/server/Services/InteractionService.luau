@@ -1,0 +1,118 @@
+--[[
+	InteractionService — every interactable in the house is a ProximityPrompt created here.
+	Prompts use the Custom style; the client draws a minimal diegetic prompt.
+
+	Interaction.prompt(part, opts, callback(player, prompt)) -> ProximityPrompt
+	opts: Action, Object, Hold, Distance, Key, LOS, AllowCaptured, AllowHiding, Name
+]]
+
+local Interaction = {}
+local ctx
+
+function Interaction.init(c)
+	ctx = c
+end
+
+local function blocked(player: Player, opts): boolean
+	if not player:GetAttribute("InGame") then
+		return true
+	end
+	if player:GetAttribute("Escaped") then
+		return true
+	end
+	if player:GetAttribute("Captured") and not opts.AllowCaptured then
+		return true
+	end
+	if player:GetAttribute("Hiding") and not opts.AllowHiding then
+		return true
+	end
+	if ctx.Ending and ctx.Ending.isOver() then
+		return true
+	end
+	return false
+end
+
+function Interaction.prompt(parent: Instance, opts, callback)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = opts.Name or "Interact"
+	prompt.ActionText = opts.Action or "Use"
+	prompt.ObjectText = opts.Object or ""
+	prompt.HoldDuration = opts.Hold or 0
+	prompt.MaxActivationDistance = opts.Distance or 7
+	prompt.KeyboardKeyCode = opts.Key or Enum.KeyCode.E
+	prompt.RequiresLineOfSight = if opts.LOS == nil then false else opts.LOS
+	prompt.Style = Enum.ProximityPromptStyle.Custom
+	prompt.Exclusivity = Enum.ProximityPromptExclusivity.OnePerButton
+	if opts.Offset then
+		local att = Instance.new("Attachment")
+		att.Name = "PromptAttachment"
+		att.Position = opts.Offset
+		att.Parent = parent
+		prompt.Parent = att
+	else
+		prompt.Parent = parent
+	end
+	local busy = false
+	prompt.Triggered:Connect(function(player)
+		if busy or blocked(player, opts) then
+			return
+		end
+		busy = true
+		local ok, err = pcall(callback, player, prompt)
+		busy = false
+		if not ok then
+			warn("[Interaction] " .. prompt.ObjectText .. " / " .. prompt.ActionText .. ": " .. tostring(err))
+		end
+	end)
+	return prompt
+end
+
+-- A readable document (fires the reader UI). onRead(player, firstTime) is optional.
+function Interaction.document(part: BasePart, docId: string, opts, onRead)
+	opts = opts or {}
+	local readers = {}
+	return Interaction.prompt(part, {
+		Action = opts.Action or "Read",
+		Object = opts.Object or ctx.Story.Documents[docId].Title,
+		Distance = opts.Distance or 7,
+		Offset = opts.Offset,
+	}, function(player)
+		ctx.Remotes.Document:FireClient(player, docId)
+		local first = not readers[player]
+		readers[player] = true
+		if onRead then
+			onRead(player, first)
+		end
+	end)
+end
+
+-- A pickup: gives item(s), destroys the world part (or a whole model).
+function Interaction.pickup(part: BasePart, item: string, opts, onTaken)
+	opts = opts or {}
+	local prompt
+	prompt = Interaction.prompt(part, {
+		Action = opts.Action or "Take",
+		Object = opts.Object or item,
+		Hold = opts.Hold or 0,
+		Distance = opts.Distance or 7,
+		Offset = opts.Offset,
+	}, function(player)
+		ctx.Inventory.give(player, item, opts.Count or 1)
+		ctx.Audio.caption("Picked up: " .. (opts.Object or item), nil, nil, { player })
+		if onTaken then
+			onTaken(player)
+		end
+		local target = opts.Destroy or part
+		target:Destroy()
+	end)
+	return prompt
+end
+
+-- Prevent a prompt from being triggered (used for dynamic availability)
+function Interaction.setEnabled(prompt: ProximityPrompt, enabled: boolean)
+	if prompt then
+		prompt.Enabled = enabled
+	end
+end
+
+return Interaction

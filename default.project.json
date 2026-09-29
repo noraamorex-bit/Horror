@@ -1,0 +1,61 @@
+{
+  "name": "HomeAlone",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "Server": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "$properties": {
+        "CameraMode": "LockFirstPerson",
+        "CharacterWalkSpeed": 10,
+        "CharacterUseJumpPower": true,
+        "CharacterJumpPower": 32,
+        "CameraMaxZoomDistance": 0.5,
+        "EnableMouseLockOption": false,
+        "AutoJumpEnabled": false
+      },
+      "StarterPlayerScripts": {
+        "Client": { "$path": "src/client" }
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "Technology": "Future",
+        "ClockTime": 21,
+        "Brightness": 0.4,
+        "Ambient": [0.03, 0.03, 0.04],
+        "OutdoorAmbient": [0.07, 0.08, 0.11],
+        "EnvironmentDiffuseScale": 0.3,
+        "EnvironmentSpecularScale": 0.6,
+        "GlobalShadows": true,
+        "ExposureCompensation": -0.2
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "AmbientReverb": "LivingRoom",
+        "RolloffScale": 1
+      }
+    },
+    "Players": {
+      "$properties": {
+        "CharacterAutoLoads": true,
+        "RespawnTime": 3
+      }
+    },
+    "TextChatService": {
+      "$properties": {
+        "ChatVersion": "TextChatService"
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "Gravity": 196.2
+      }
+    }
+  }
+}
