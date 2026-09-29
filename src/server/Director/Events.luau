@@ -595,6 +595,183 @@ Events.List = {
 			D.logTruth("ChairDrop")
 		end,
 	},
+	{
+		-- Lily's music box starts playing upstairs while nobody is in her room
+		Id = "MusicBox",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 3,
+		Tension = 10,
+		Once = true,
+		Cond = function(ctx)
+			local box = ctx.World.folder():FindFirstChild("MusicBox", true)
+			if not box then
+				return nil
+			end
+			local inLily, near = false, false
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if room and room.Name == "Lily" then
+					inLily = true
+				elseif root and (root.Position - box.Position).Magnitude < 60 then
+					near = true
+				end
+			end
+			return (near and not inLily) and box or nil
+		end,
+		Run = function(ctx, D, box)
+			ctx.Audio.playAt("MusicBox", box.Position + V(0, 0.5, 0), { Volume = 0.9 })
+			D.thinkNear(box.Position, 60, ctx.Story.Thoughts.Events.MusicBox)
+			D.logTruth("MusicBox")
+		end,
+	},
+	{
+		-- the upstairs shower turns on by itself, runs for a while, then stops
+		Id = "ShowerRan",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 3,
+		Tension = 10,
+		Once = true,
+		Cond = function(ctx)
+			local head = ctx.World.folder():FindFirstChild("ShowerHead", true)
+			if not head then
+				return nil
+			end
+			local inBath, near = false, false
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if room and room.Name == "HallBath" then
+					inBath = true
+				elseif root and (root.Position - head.Position).Magnitude < 55 then
+					near = true
+				end
+			end
+			return (near and not inBath) and head or nil
+		end,
+		Run = function(ctx, D, head)
+			local loop = ctx.Audio.loopOn("ShowerRun", head, { Volume = 0.9 })
+			local drips = head:FindFirstChildOfClass("ParticleEmitter")
+			if drips then
+				drips.Rate = 90
+			end
+			D.thinkNear(head.Position, 55, ctx.Story.Thoughts.Events.ShowerRan)
+			D.logTruth("ShowerRan")
+			task.wait(22)
+			if loop then
+				loop:Destroy()
+			end
+			if drips and drips.Parent then
+				drips.Rate = 3
+			end
+		end,
+	},
+	{
+		-- with everyone downstairs, the light in Lily's room comes on
+		Id = "LightUpstairs",
+		Acts = { SmallThings = true },
+		Weight = 2,
+		Tension = 8,
+		Once = true,
+		Cond = function(ctx)
+			if not ctx.Power.isOn() or ctx.Power.isRoomSwitchOn("Lily") then
+				return nil
+			end
+			return everyone(ctx, function(_, root)
+				return floorOf(ctx, root) == "Ground"
+			end) and true or nil
+		end,
+		Run = function(ctx, D)
+			ctx.Power.setSwitch("Lily", true)
+			D.think(nil, ctx.Story.Thoughts.Events.LightUpstairs)
+			D.logTruth("LightUpstairs")
+		end,
+	},
+	{
+		-- the unlocked back door is found swinging open, rain blowing in, wet prints on the tile
+		Id = "BackDoorOpen",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 3,
+		Tension = 12,
+		Once = true,
+		Cond = function(ctx)
+			local door = ctx.Doors.get("BackDoor")
+			if not door or door.Locked or door.IsOpen then
+				return nil
+			end
+			local inKitchen, near = false, false
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if room and room.Name == "Kitchen" then
+					inKitchen = true
+				elseif root and root.Position.Y < 12 and (root.Position - door.Position).Magnitude < 60 then
+					near = true
+				end
+			end
+			return (near and not inKitchen) and door or nil
+		end,
+		Run = function(ctx, D, door)
+			ctx.Doors.open(door, "Intruder")
+			ctx.Audio.playAt("DoorSlam", door.Position, { Volume = 0.6, Range = 90 })
+			-- wet boot prints from the door into the kitchen, fading toward the hall
+			local folder = ctx.World.folder():FindFirstChild("Kitchen") or ctx.World.folder()
+			local start = V(door.Position.X, 1.03, door.Position.Z - 2)
+			for i = 0, 6 do
+				local p = start + V((i % 2 == 0) and 0.45 or -0.45, 0, -i * 2.2)
+				local fp = ctx.Builder.block(folder, "WetPrint", p, V(0.55, 0.03, 1.2), Color3.fromRGB(60, 58, 54), Enum.Material.Glass, 0, { CanCollide = false, CanQuery = false })
+				fp.Transparency = 0.35 + i * 0.07
+				fp.Reflectance = 0.25
+			end
+			D.thinkNear(door.Position, 60, ctx.Story.Thoughts.Events.BackDoorOpen)
+			D.logTruth("BackDoorOpen")
+		end,
+	},
+	{
+		-- slow knocking from inside the wall, right next to someone who is alone
+		Id = "WallKnock",
+		Acts = { SomeoneElse = true, Guest = true },
+		Weight = 2,
+		Tension = 10,
+		Cooldown = 240,
+		Cond = function(ctx)
+			local players = ctx.Util.activePlayers()
+			for _, p in players do
+				local room, root = roomOf(ctx, p)
+				if room and root and room.Floor ~= "Basement" then
+					local alone = true
+					for _, q in players do
+						local r2 = q ~= p and ctx.Util.getRoot(q)
+						if r2 and (r2.Position - root.Position).Magnitude < 25 then
+							alone = false
+						end
+					end
+					if alone then
+						-- the closest wall of the room
+						local pos = root.Position
+						local cands = {
+							V(room.Min.X + 0.3, pos.Y, pos.Z),
+							V(room.Max.X - 0.3, pos.Y, pos.Z),
+							V(pos.X, pos.Y, room.Min.Z + 0.3),
+							V(pos.X, pos.Y, room.Max.Z - 0.3),
+						}
+						table.sort(cands, function(a, b)
+							return (a - pos).Magnitude < (b - pos).Magnitude
+						end)
+						return { Player = p, Pos = cands[1] }
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			for _ = 1, 3 do
+				ctx.Audio.playAt("Knock", data.Pos, { Volume = 0.8, Range = 30, Caption = false })
+				task.wait(1.3)
+			end
+			ctx.Audio.caption("[Three slow knocks, inside the wall]", data.Pos, 30)
+			jolt(ctx, data.Pos, 20, 8, 0.3)
+			D.think(data.Player, ctx.Story.Thoughts.Events.WallKnock)
+			D.logTruth("WallKnock")
+		end,
+	},
 }
 
 return Events

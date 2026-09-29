@@ -105,12 +105,12 @@ Story.Tasks = {
 	} },
 	-- Act III
 	Power = { Title = "Get the power back on", Steps = {
-		{ Key = "Flashlight", Text = "Find a flashlight (mudroom shelf or den drawer)", Target = { "FlashlightMud", "FlashlightDen" } },
+		{ Key = "Flashlight", Text = "Find a flashlight (search the drawers and shelves)", Target = { "Flashlight1", "Flashlight2" } },
 		{ Key = "Flip", Text = "Flip the MAIN breaker back on", Target = "Breaker" },
 	} },
 	Phone = { Title = "Call for help", Steps = {
 		{ Key = "Box", Text = "Check the phone box outside the garage", Target = "JunctionBox" },
-		{ Key = "Tape", Text = "Find electrical tape (kitchen drawer or garage bench)", Target = { "TapeKitchen", "TapeGarage" } },
+		{ Key = "Tape", Text = "Find electrical tape (search the drawers, or the garage)", Target = { "Tape1", "Tape2" } },
 		{ Key = "Splice", Text = "Splice the cut phone wires", Target = "JunctionBox" },
 		{ Key = "Call", Text = "Call 911 from the kitchen phone", Target = "Phone" },
 	} },
@@ -217,6 +217,12 @@ Story.Documents = {
 -- At = seconds since the act started. Role = only this role gets it (nil = everyone).
 ---------------------------------------------------------------------------
 -- (They wait for a quiet moment: never on top of a thought line or a conversation.)
+-- sent only on a solo night, a little after it starts
+Story.SoloTexts = {
+	{ From = "Riley", Body = "creek rd is literally underwater. we had to turn around 😭" },
+	{ From = "Morgan", Body = "so sorry!! next weekend for sure. stay dry, don't get murdered lol" },
+}
+
 Story.Texts = {
 	Evening = {
 		{ At = 35, From = "Mom", Body = "Landed! Hotel is nice. Eat something real please. Love you", Role = "Host" },
@@ -309,6 +315,23 @@ Story.Banter = {
 		ChairDrop = { Lines = {
 			{ 1, "What knocked that over?" },
 			{ 2, "I'm not going to look. You look." },
+		} },
+		MusicBox = { Lines = {
+			{ 1, "Is that... a music box?" },
+			{ 2, "Lily's. It only plays if someone winds it." },
+			{ 1, "Then who wound it?" },
+		} },
+		ShowerRan = { Lines = {
+			{ 1, "Why is the shower running?" },
+			{ 2, "I'm not going up there. Nope." },
+		} },
+		LightUpstairs = { Lines = {
+			{ 1, "Look. The light's on upstairs." },
+			{ 2, "That was off. I swear that was off." },
+		} },
+		BackDoorOpen = { Lines = {
+			{ 1, "Who left the back door open?!" },
+			{ 2, "Those aren't our footprints." },
 		} },
 		WindowBang = { Lines = {
 			{ 1, "Something hit the window!" },
@@ -477,6 +500,11 @@ Story.Truths = {
 	FootstepsUpstairs = "The footsteps upstairs were Curtis, crossing from Lily's room to the hatch. He'd been watching you from the top of the stairs.",
 	DoorAjar = "The door that opened was Curtis, moving between rooms while nobody was looking.",
 	FoodMissing = "The lasagna was eaten by Curtis. He hadn't eaten since Thursday.",
+	MusicBox = "Lily's music box was wound by Curtis from inside her closet. He wanted to see which of you would come up to check, and who would come alone.",
+	ShowerRan = "The shower that turned itself on was Curtis, rinsing mud off his boots in the upstairs bathroom. He left it running when he heard you on the stairs.",
+	LightUpstairs = "The light that came on in Lily's room was Curtis, searching her dresser for the spare house key she keeps in a jewelry box.",
+	BackDoorOpen = "The back door blew open because Curtis went out to the van for his tools and came back in through it, leaving it unlatched. Those were his wet boot prints.",
+	WallKnock = "The knocking inside the wall was Curtis in the crawl space, tapping on the plasterboard to learn which room you were in.",
 	WetShower = "The shower was wet because Curtis showered at 7:50 PM, the way he did every Friday while the family was at swim practice.",
 	SilentCall = "The silent call was Curtis, on his prepaid phone in the attic, counting your voices through the line.",
 	WindSlam = "The door that slammed upstairs really was the storm - the draft from the windows nobody had closed yet.",
@@ -539,6 +567,12 @@ Story.Thoughts = {
 			"Pizza, a movie, no parents. This is going to be a good night.",
 		},
 	},
+	-- a solo night: the friends never make it
+	SoloIntro = {
+		"Mom left me a couple of things to do. It's in my journal.|journal",
+		"Parents gone for the weekend. Riley and the others should be here any minute.",
+	},
+	SoloFriendsStuck = "They're not coming. It's just me tonight. Just me and the storm.",
 	Objectives = {
 		OrderPizza = "I'm starving. Mom keeps the pizza menu on the fridge.",
 		Popcorn = "We can't watch a movie without popcorn. There's some in the kitchen cupboard.",
@@ -582,6 +616,11 @@ Story.Thoughts = {
 		WindowBang = "Someone just slammed on the window! Get away from the window!",
 		DoorRattle = "Someone's trying the door. Someone's outside trying to get in.",
 		ChairDrop = "Did a chair just fall over? In an empty room?",
+		MusicBox = "That's Lily's music box. Lily isn't even home.",
+		ShowerRan = "The shower just turned on. Upstairs. Who is in the shower?",
+		LightUpstairs = "The light just came on in Lily's room. We're all down here.",
+		BackDoorOpen = "The back door is wide open. Rain's blowing in... and those are footprints.",
+		WallKnock = "Something is knocking. Inside the wall. Right next to me.",
 		InvestigateDone = "Just the attic hatch. The cord is swinging... it's nothing. It has to be nothing.",
 	},
 	Items = {
@@ -633,6 +672,17 @@ Story.Endings = {
 		Title = "DAWN",
 		Body = "The rain stops a little after five. Gray light, a dripping gutter, and then - finally - sirens.\n\nA neighbor on Birch Street had called about a gray van that hadn't moved in three weeks. The officer who ran the plate made the connection to the break-ins.\n\nYou lasted the whole night.",
 	},
+}
+
+-- The lobby's endings collection: display order and a hint for the ones not found yet
+Story.EndingOrder = { "Sirens", "NextDoor", "Taillights", "LockedIn", "Dawn", "GoneQuiet" }
+Story.EndingHints = {
+	Sirens = "Get a call through to 911 and hold out until they come.",
+	NextDoor = "Someone next door is still awake.",
+	Taillights = "Mom's car is in the garage. The keys are not where they should be.",
+	LockedIn = "The basement door locks from the outside.",
+	Dawn = "Just... last until morning.",
+	GoneQuiet = "What happens if he takes everyone?",
 }
 
 Story.Fates = {

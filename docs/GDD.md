@@ -77,10 +77,29 @@ The Director logs each event that actually fires, with the in-game clock time. T
 
 Real minutes are shown on an in-game clock that starts at **8:47 PM** and runs 1.5× faster than real time. Act lengths flex with what the players are doing (min/max in `Config.Acts`).
 
+### A different house every night
+Eleven drawers and shelves are **stashes** (end tables, kitchen drawers, the hall console, the mudroom shelf, the garage workbench, the bedroom nightstands). Each night two flashlights (one always downstairs), two rolls of electrical tape and a pack of batteries go into different ones; the objective markers point at wherever they ended up. Searching an empty one says "Nothing useful in here."
+
+### More small things (Act II/III)
+- **The music box:** Lily's music box starts playing upstairs while nobody is in her room.
+- **The shower:** the upstairs shower turns itself on and runs for twenty seconds.
+- **The light upstairs:** with everyone downstairs, the light in Lily's room clicks on.
+- **The back door:** the unlocked back door is found swinging open, rain blowing in, a line of wet boot prints across the kitchen tile.
+- **Knocking in the wall:** three slow knocks inside the wall right next to someone who is alone.
+Each has its own line in the truth log, a thought, and a spoken reaction if friends are together.
+
+### Music and sound
+Soft piano indoors in Act I; a driving chase track ("Dark Hunter", APM) when he is chasing someone near you, low dread ("Facing the Fear", APM) while he searches close by, both scaled by how close he is; and from Act II the house creaks somewhere near you every 20-50 s.
+
+### Solo nights
+Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that the creek road flooded and they had to turn around ("stay dry, don't get murdered lol"). Friends' banter never plays solo.
+
 ### First impression, sharing and records
 - **Loading screen** (`src/first/Loading.client.luau`, ReplicatedFirst): replaces Roblox's default. Rain streaks down a black screen, one warm window glows, and every few seconds a figure is standing in it. Title, a one-line hook, a gameplay tip and a progress bar; it fades out once the game has loaded.
 - **Invite and favorite** (`client/Controllers/Social`): an INVITE FRIENDS and a FAVORITE button under the lobby title and on the ending screen; the favorite prompt also appears once, 8 s into the first ending of a session.
 - **Saved records** (`Services/StatsService`, DataStore `PlayerStats_v1`): nights played, nights survived, and endings found. The lobby shows `NIGHTS · SURVIVED · ENDINGS x / y`; the ending card says NEW ENDING FOUND the first time you see one.
+- **Endings collection:** an ENDINGS button in the lobby lists all six endings; found ones by name, the rest as ??? with a hint.
+- **Survivors' board:** a lit sign beside the queue circles shows the top 10 players by nights survived (OrderedDataStore `NightsSurvived_v1`).
 - Store page text: `docs/STORE_PAGE.md`.
 
 ### Act 0 — Lobby
@@ -176,7 +195,7 @@ Everything loud emits a noise event (position, radius, kind): doors, the microwa
 
 ### Light & darkness
 - Every room has a switch. Lit rooms make players visible from much farther away, but they also make Curtis cautious before Act IV.
-- **Flashlight** (**F**; two in the house: mudroom shelf and den drawer). Its battery drains. You see farther, and you are **visible from across the house**.
+- **Flashlight** (**F**; two in the house, in different drawers or shelves every night: one is always downstairs). Its battery drains. You see farther, and you are **visible from across the house**.
 - After the breaker is flipped, only flashlights, phone screens, the fireplace, Lily's battery nightlight and lightning light the house.
 
 ### Nerve (composure)
@@ -230,7 +249,7 @@ He opens doors, forces privacy locks (5 s), avoids light before Act IV, and pref
 - Enable **Spatial Voice** in Game Settings for proximity voice.
 
 ### Items
-Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host), Multitool (Tinkerer), Car Keys (hook → attic nest; spare in office), Basement Key (mudroom), Electrical Tape (kitchen junk drawer), Fire Poker (breaks ground-floor windows, very loud), Scissors (bathroom).
+Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host), Multitool (Tinkerer), Car Keys (hook → attic nest; spare in office), Basement Key (mudroom), Electrical Tape (two rolls, random drawers each night), Fire Poker (breaks ground-floor windows, very loud), Scissors (bathroom).
 
 ### Controls
 | Key | Touch (phone / tablet) | Gamepad | Action |

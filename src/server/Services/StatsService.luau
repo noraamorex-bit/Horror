@@ -14,6 +14,7 @@ local DataStoreService = game:GetService("DataStoreService")
 local Stats = {}
 local ctx
 local store = nil
+local board = nil -- OrderedDataStore: nights survived, for the lobby leaderboard
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
@@ -41,6 +42,12 @@ local function mirror(player: Player)
 	player:SetAttribute("StatEscapes", d.Escapes)
 	player:SetAttribute("StatEndings", found)
 	player:SetAttribute("StatEndingTotal", endingTotal())
+	local list = {}
+	for k in d.Endings do
+		table.insert(list, k)
+	end
+	table.sort(list)
+	player:SetAttribute("StatEndingList", table.concat(list, ","))
 end
 
 local function load(player: Player)
@@ -105,6 +112,14 @@ function Stats.recordNight(players: { Player }, kind: string)
 			end
 			mirror(p)
 			save(p.UserId)
+			if board then
+				local userId, value = p.UserId, d.Escapes
+				task.spawn(function()
+					pcall(function()
+						board:SetAsync("u" .. userId, value)
+					end)
+				end)
+			end
 		end
 	end
 	return firsts
@@ -117,6 +132,36 @@ function Stats.init(c)
 		return DataStoreService:GetDataStore("PlayerStats_v1")
 	end)
 	store = ok and ds or nil
+	local ok2, ods = pcall(function()
+		return DataStoreService:GetOrderedDataStore("NightsSurvived_v1")
+	end)
+	board = ok2 and ods or nil
+end
+
+-- the top survivors, for the lobby sign: { { Name, Value } }
+function Stats.top(n: number)
+	local out = {}
+	if not board then
+		return out
+	end
+	local ok, pages = pcall(function()
+		return board:GetSortedAsync(false, n)
+	end)
+	if not ok or not pages then
+		return out
+	end
+	for _, entry in pages:GetCurrentPage() do
+		local userId = tonumber(string.sub(entry.key, 2))
+		local name = "?"
+		if userId then
+			local okName, n2 = pcall(function()
+				return Players:GetNameFromUserIdAsync(userId)
+			end)
+			name = okName and n2 or name
+		end
+		table.insert(out, { Name = name, Value = entry.value })
+	end
+	return out
 end
 
 function Stats.start()

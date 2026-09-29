@@ -49,6 +49,13 @@ function Interior.build(ctx, root: Instance, refs)
 		return p
 	end
 
+	-- Stashes: drawers and shelves that can hold a useful item. Each night the flashlights, tape
+	-- and batteries go into different ones (see the end of the build); the rest are empty.
+	local stashes = {}
+	local function stash(name: string, part: BasePart, label: string, floor: string, visible: boolean?)
+		table.insert(stashes, { Name = name, Part = part, Label = label, Floor = floor, Visible = visible == true })
+	end
+
 	local function paper(parent, name, cf: CFrame, size: Vector3)
 		local p = Kit.box(parent, name, cf, size, Color3.fromRGB(238, 234, 220), KM.Plastic)
 		p.CanQuery = true
@@ -157,7 +164,8 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.candle(living, F(-25.9, G + 2.1, -21.7, NZ), 0.7, 0.45)
 	Kit.bookStack(living, F(-26, G + 2.1, -20.4, NZ), 2, 12)
 	-- end table + lamp at the sofa's left, floor lamp at its right
-	Kit.nightstand(living, F(-30.9, G, -15.5, NZ), WOOD_MID)
+	local _, livingDrawer = Kit.nightstand(living, F(-30.9, G, -15.5, NZ), WOOD_MID)
+	stash("LivingDrawer", spot(living, "EndTableDrawer", livingDrawer.CFrame, livingDrawer.Size + V(0.1, 0.1, 0.1)), "End table drawer", "Ground")
 	lamp(living, "Living", F(-30.9, G + 2.45, -15.4, NZ), "table", Color3.fromRGB(160, 120, 80))
 	lamp(living, "Living", F(-17.6, G, -15.6, NZ), "floor")
 	target("Couch", V(-24, G + 2.5, -16))
@@ -561,11 +569,8 @@ function Interior.build(ctx, root: Instance, refs)
 		mwPrompt.HoldDuration = 0
 		mwPrompt.Enabled = true
 	end)
-	local drawer1 = spot(kitchen, "JunkDrawer", CF(PCX - 1.28, G + 3.0, 4.67), V(0.2, 0.7, 2.1))
-	target("TapeKitchen", drawer1.Position)
-	ctx.Interaction.pickup(drawer1, "ElectricalTape", { Action = "Search", Object = "Junk drawer", Keep = true })
-	local drawer2 = spot(kitchen, "Drawer", CF(PCX - 1.28, G + 3.0, 9.33), V(0.2, 0.7, 2.1))
-	ctx.Interaction.pickup(drawer2, "Batteries", { Action = "Search", Object = "Drawer (batteries)", Keep = true })
+	stash("JunkDrawer", spot(kitchen, "JunkDrawer", CF(PCX - 1.28, G + 3.0, 4.67), V(0.2, 0.7, 2.1)), "Junk drawer", "Ground")
+	stash("KitchenDrawer", spot(kitchen, "Drawer", CF(PCX - 1.28, G + 3.0, 9.33), V(0.2, 0.7, 2.1)), "Kitchen drawer", "Ground")
 	Kit.box(kitchen, "Corkboard", CF(-8.42, G + 7, 7), V(0.1, 2.4, 3.4), Color3.fromRGB(176, 136, 90), KM.Cardboard)
 	for i = 0, 3 do
 		Kit.box(kitchen, "Note", CF(-8.48, G + 6.4 + (i % 2) * 1.0, 5.9 + i * 0.7) * ANG(rad(i * 4 - 6), 0, 0), V(0.02, 0.8, 0.6), Color3.fromHSV(i * 0.15 + 0.1, 0.25, 0.95), KM.Plastic)
@@ -638,6 +643,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.mirror(hall, F(-7.62, G + 7.2, -26, PX), 3.4, 4.2, BRASS)
 	Kit.bowl(hall, F(-6.5, G + conH, -24.6, PX), 1.1, Color3.fromRGB(70, 110, 140))
 	lamp(hall, "Hallway", F(-6.55, G + conH, -27.7, PX), "table", Color3.fromRGB(200, 190, 170))
+	stash("HallConsole", spot(hall, "ConsoleDrawer", CF(-5.9, G + conH - 0.45, -26), V(0.2, 0.5, 2.6)), "Hall table drawer", "Ground")
 	Kit.umbrellaStand(hall, F(8, G, -28.5, NZ))
 	Kit.plant(hall, F(-6.6, G, -11.4, PX), 1.4, "snake")
 	sconce(hall, F(11.62, G + 7.8, -14.4, NX))
@@ -707,17 +713,7 @@ function Interior.build(ctx, root: Instance, refs)
 		Kit.box(mud, "ShelfBracket", CF(x, G + 4.7, -9.4), V(0.2, 0.7, 0.6), WOOD_DARK, KM.Wood)
 	end
 	Kit.box(mud, "Basket", CF(35.6, G + 5.8, -8.8), V(1.6, 1.0, 1.5), Color3.fromRGB(170, 130, 80), KM.Fabric)
-	local fl1 = Kit.cyl(mud, "Flashlight", CF(38.2, G + 5.55, -8.6), 1.2, 0.45, Color3.fromRGB(200, 170, 40), KM.Plastic)
-	fl1.CanQuery = true
-	Kit.cyl(mud, "FlashlightHead", CF(38.85, G + 5.55, -8.6), 0.3, 0.62, Color3.fromRGB(40, 40, 40), KM.Plastic)
-	target("FlashlightMud", fl1.Position)
-	ctx.Interaction.pickup(fl1, "Flashlight", { Object = "Flashlight" }, function()
-		for _, p in mud:GetChildren() do
-			if p.Name == "FlashlightHead" then
-				p:Destroy()
-			end
-		end
-	end)
+	stash("MudShelf", spot(mud, "ShelfSpot", CF(38.3, G + 5.6, -8.6), V(1.6, 0.7, 1.2)), "Mudroom shelf", "Ground", true)
 	Kit.box(mud, "KeyBoard", CF(35.5, G + 7.6, -9.55), V(2, 1, 0.14), WOOD_DARK, KM.Wood)
 	local bkey = Kit.box(mud, "BasementKey", CF(35.4, G + 6.9, -9.42), V(0.35, 0.6, 0.08), BRASS, KM.Metal)
 	bkey.CanQuery = true
@@ -743,9 +739,7 @@ function Interior.build(ctx, root: Instance, refs)
 		Kit.speaker(den, F(x, G, 5.35, PZ), 3.2)
 	end
 	local _, endDrawer = Kit.nightstand(den, F(15.2, G, 17.3, PX), WOOD_MID)
-	target("FlashlightDen", endDrawer.Position)
-	local denDrawer = spot(den, "EndTableDrawer", endDrawer.CFrame, endDrawer.Size + V(0.1, 0.1, 0.1))
-	ctx.Interaction.pickup(denDrawer, "Flashlight", { Action = "Search", Object = "Drawer (flashlight)", Keep = true })
+	stash("DenDrawer", spot(den, "EndTableDrawer", endDrawer.CFrame, endDrawer.Size + V(0.1, 0.1, 0.1)), "End table drawer", "Ground")
 	lamp(den, "Den", F(15.2, G + 2.45, 17.3, PX), "table", Color3.fromRGB(180, 150, 90))
 	Kit.beanbag(den, F(31, G, 11, NX) * ANG(0, rad(30), 0), Color3.fromRGB(150, 50, 50))
 	Kit.bookcase(den, F(38.5, G, 10, NX), 6, 1.2, 8, 4)
@@ -799,16 +793,7 @@ function Interior.build(ctx, root: Instance, refs)
 	end
 	item(garage, "Walkie", V(63.2, G + 3.9, -24.6), V(0.6, 1, 0.35), Color3.fromRGB(40, 40, 45), "Walkie", "Walkie-talkie")
 	item(garage, "Walkie", V(63.2, G + 3.9, -23.4), V(0.6, 1, 0.35), Color3.fromRGB(40, 40, 45), "Walkie", "Walkie-talkie")
-	Kit.vcyl(garage, "Tape", CF(63.5, G + 3.55, -19.5), 0.3, 0.9, C.Black, KM.Plastic)
-	local tape2 = spot(garage, "TapeRoll", CF(63.5, G + 3.6, -19.5), V(0.9, 0.35, 0.9))
-	target("TapeGarage", tape2.Position)
-	ctx.Interaction.pickup(tape2, "ElectricalTape", { Object = "Electrical tape" }, function()
-		for _, p in garage:GetChildren() do
-			if p.Name == "Tape" then
-				p:Destroy()
-			end
-		end
-	end)
+	stash("Workbench", spot(garage, "BenchSpot", CF(63.5, G + 3.7, -19.5), V(1.6, 0.6, 1.6)), "Workbench", "Ground", true)
 	Kit.paintCan(garage, F(62.3, G + 3.4, -17.6, NX), Color3.fromRGB(60, 110, 160))
 	Kit.shelving(garage, F(43, G, 4.5, NZ), 4.6, 1.8, 7.5, 4, 6)
 	Kit.cardboardBox(garage, F(60.5, G, 3.9, NZ), V(4, 3.2, 2.8))
@@ -889,8 +874,9 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.rug(master, F(-30, U, -14.5, PX), 12, 16, Color3.fromRGB(150, 140, 120))
 	local _, masterBedCF = bed(master, "Under the master bed", -39.15, -18.25, -30.15, -10.75, U, Color3.fromRGB(62, 76, 110), PX, NX, "Master", WOOD_DARK)
 	Kit.bedThrow(master, masterBedCF, 7.5, 9, Color3.fromRGB(196, 170, 130), Color3.fromRGB(140, 60, 50))
-	for _, z in { -20.1, -8.9 } do
-		Kit.nightstand(master, F(-38.1, U, z, PX), WOOD_DARK)
+	for i, z in { -20.1, -8.9 } do
+		local _, md = Kit.nightstand(master, F(-38.1, U, z, PX), WOOD_DARK)
+		stash("MasterDrawer" .. i, spot(master, "NightstandDrawer", md.CFrame, md.Size + V(0.1, 0.1, 0.1)), "Nightstand drawer", "Upstairs")
 		lamp(master, "Master", F(-38.1, U + 2.45, z, PX), "table", Color3.fromRGB(200, 196, 188))
 	end
 	wardrobe(master, "Master wardrobe", -27.5, -29.15, -20.5, -26.35, U, PZ, "Master", WOOD_DARK)
@@ -932,7 +918,8 @@ function Interior.build(ctx, root: Instance, refs)
 			Kit.box(jamie, "PolaroidPhoto", CF(p + V(0.02, 0.06, 0)) * tilt, V(0.45, 0.42, 0.02), Color3.fromHSV((i * 0.17) % 1, 0.35, 0.7), KM.Plastic)
 		end
 	end
-	Kit.nightstand(jamie, F(-38.1, U, 20.4, PX), WOOD_MID)
+	local _, jd = Kit.nightstand(jamie, F(-38.1, U, 20.4, PX), WOOD_MID)
+	stash("JamieDrawer", spot(jamie, "NightstandDrawer", jd.CFrame, jd.Size + V(0.1, 0.1, 0.1)), "Nightstand drawer", "Upstairs")
 	Kit.laptop(jamie, F(-38.1, U + 2.45, 20.4, PX) * ANG(0, rad(15), 0), false)
 	wardrobe(jamie, "Jamie's closet", -19.5, 26.35, -13.5, 29.15, U, NZ, "Jamie", WHITE_WOOD)
 	local _, jDeskH = Kit.desk(jamie, F(-31.5, U, 27.6, NZ), 6, 3, WOOD_LIGHT)
@@ -966,7 +953,8 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.rug(guest, F(21, U, -17, NZ), 11, 8, Color3.fromRGB(150, 120, 90))
 	local _, guestBedCF = bed(guest, "Under the guest bed", 14.1, -29.15, 20.6, -21.6, U, Color3.fromRGB(150, 130, 100), PZ, NZ, "Guest", WOOD_LIGHT)
 	Kit.bedThrow(guest, guestBedCF, 6.5, 7.55, Color3.fromRGB(110, 130, 110), Color3.fromRGB(230, 220, 200))
-	Kit.nightstand(guest, F(21.8, U, -28.1, PZ), WOOD_LIGHT)
+	local _, gd = Kit.nightstand(guest, F(21.8, U, -28.1, PZ), WOOD_LIGHT)
+	stash("GuestDrawer", spot(guest, "NightstandDrawer", gd.CFrame, gd.Size + V(0.1, 0.1, 0.1)), "Nightstand drawer", "Upstairs")
 	lamp(guest, "Guest", F(21.8, U + 2.45, -28.1, PZ), "table", Color3.fromRGB(190, 170, 130))
 	wardrobe(guest, "Guest wardrobe", 32, -9.15, 38, -6.35, U, NZ, "Guest", WOOD_LIGHT)
 	Kit.cardboardBox(guest, F(37.4, U, -27.6, PZ), V(3, 2.8, 2.6))
@@ -1037,6 +1025,11 @@ function Interior.build(ctx, root: Instance, refs)
 	end
 	Kit.ball(lily, "Ball", V(15.1, U + 0.55, 26.4), 1.1, Color3.fromRGB(220, 70, 70), KM.Plastic)
 	Kit.teddy(lily, F(16.3, U + 2.41, 28.3, NZ), 0.8, Color3.fromRGB(170, 130, 90))
+	-- her music box (it starts playing on its own one night: Events.MusicBox)
+	local musicBox = Kit.box(lily, "MusicBox", CF(18.9, U + 2.72, 28.1), V(1.1, 0.6, 0.8), Color3.fromRGB(236, 200, 214), KM.Wood)
+	Kit.box(lily, "MusicBoxLid", CF(18.9, U + 3.05, 28.1), V(1.16, 0.08, 0.86), Color3.fromRGB(214, 160, 190), KM.Wood)
+	Kit.vcyl(lily, "MusicBoxKey", CF(19.55, U + 2.72, 28.1) * ANG(0, 0, rad(90)), 0.2, 0.18, BRASS, KM.Metal)
+	musicBox.CanQuery = true
 	Kit.fishTank(lily, F(37.3, U, 9.7, PZ), 3.6, 2, 2.4, Color3.fromRGB(240, 236, 230))
 	Kit.dollhouse(lily, F(30.4, U, 9.8, PZ))
 	Kit.teddy(lily, F(34.2, U + 3.7, 27.4, NZ), 0.9, Color3.fromRGB(200, 160, 120))
@@ -1172,6 +1165,90 @@ function Interior.build(ctx, root: Instance, refs)
 	local decal = spawn:FindFirstChildOfClass("Decal")
 	if decal then
 		decal:Destroy()
+	end
+
+	---------------------------------------------------------------------------
+	-- Tonight's stashes: two flashlights (at least one downstairs, for the breaker), two rolls
+	-- of electrical tape and a pack of batteries, each in a different drawer or shelf.
+	---------------------------------------------------------------------------
+	do
+		local stashRng = Random.new()
+		local pool = table.clone(stashes)
+		local function take(pred): any
+			local options = {}
+			for i, s in pool do
+				if not pred or pred(s) then
+					table.insert(options, i)
+				end
+			end
+			if #options == 0 then
+				return nil
+			end
+			return table.remove(pool, options[stashRng:NextInteger(1, #options)])
+		end
+		local ITEM_LOOK = {
+			Flashlight = "Flashlight",
+			ElectricalTape = "Electrical tape",
+			Batteries = "Batteries",
+		}
+		local function visual(s, itemId: string)
+			if not s.Visible then
+				return nil
+			end
+			local m = Instance.new("Model")
+			m.Name = "StashItem"
+			m.Parent = s.Part.Parent
+			local at = s.Part.CFrame * CF(0, -s.Part.Size.Y / 2, 0)
+			if itemId == "Flashlight" then
+				Kit.cyl(m, "Flashlight", at * CF(0, 0.23, 0), 1.2, 0.45, Color3.fromRGB(200, 170, 40), KM.Plastic)
+				Kit.cyl(m, "FlashlightHead", at * CF(0.65, 0.23, 0), 0.3, 0.62, Color3.fromRGB(40, 40, 40), KM.Plastic)
+			elseif itemId == "ElectricalTape" then
+				Kit.vcyl(m, "Tape", at * CF(0, 0.15, 0), 0.3, 0.9, C.Black, KM.Plastic)
+			else
+				Kit.box(m, "BatteryPack", at * CF(0, 0.3, 0), V(0.9, 0.6, 0.25), Color3.fromRGB(220, 160, 40), KM.Plastic)
+			end
+			return m
+		end
+		local function place(s, itemId: string, targetName: string?)
+			if targetName then
+				target(targetName, s.Part.Position)
+			end
+			local look = visual(s, itemId)
+			ctx.Interaction.pickup(s.Part, itemId, { Action = look and "Take" or "Search", Object = look and ITEM_LOOK[itemId] or (s.Label .. " (" .. ITEM_LOOK[itemId]:lower() .. ")"), Keep = true }, function()
+				if look then
+					look:Destroy()
+				end
+			end)
+		end
+		local f1 = take(function(s)
+			return s.Floor == "Ground"
+		end)
+		if f1 then
+			place(f1, "Flashlight", "Flashlight1")
+		end
+		local f2 = take(nil)
+		if f2 then
+			place(f2, "Flashlight", "Flashlight2")
+		end
+		for i = 1, 2 do
+			local t = take(nil)
+			if t then
+				place(t, "ElectricalTape", "Tape" .. i)
+			end
+		end
+		local b = take(nil)
+		if b then
+			place(b, "Batteries", nil)
+		end
+		-- the rest turn up nothing (once)
+		for _, s in pool do
+			local p
+			p = ctx.Interaction.prompt(s.Part, { Action = "Search", Object = s.Label, Distance = 7 }, function(player)
+				ctx.Audio.playAt("Pickup", s.Part.Position, { Caption = false, Volume = 0.3 })
+				ctx.Audio.caption("Nothing useful in here.", nil, nil, { player })
+				p:Destroy()
+			end)
+		end
 	end
 
 	return refs

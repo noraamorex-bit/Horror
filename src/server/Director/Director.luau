@@ -420,11 +420,30 @@ function Director.startAct(name: string, cause: Player?)
 		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Windows" })
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
-		for _, p in ctx.Util.sessionPlayers() do
-			local lines = ctx.Story.Thoughts.Intro[p:GetAttribute("Role") == "Host" and "Host" or "Guest"]
+		local session = ctx.Util.sessionPlayers()
+		local solo = #session == 1
+		for _, p in session do
+			local lines = solo and ctx.Story.Thoughts.SoloIntro or ctx.Story.Thoughts.Intro[p:GetAttribute("Role") == "Host" and "Host" or "Guest"]
 			for _, line in lines do
 				Director.think(p, line)
 			end
+		end
+		-- alone: the friends text that the flooded road turned them back
+		if solo then
+			local myState = state
+			task.delay(24, function()
+				if state ~= myState or state.Act ~= "Evening" then
+					return
+				end
+				for _, t in ctx.Story.SoloTexts do
+					for _, p in ctx.Util.sessionPlayers() do
+						ctx.Phone.deliver(p, t.From, t.Body)
+					end
+					task.wait(3)
+				end
+				task.wait(4)
+				Director.think(nil, ctx.Story.Thoughts.SoloFriendsStuck)
+			end)
 		end
 	elseif name == "SmallThings" then
 		ctx.Objectives.set({ "LockUp" })

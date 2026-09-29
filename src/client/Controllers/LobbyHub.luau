@@ -60,13 +60,100 @@ function LobbyHub.start()
 	local row = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, inset.Y + 64),
-		Size = UDim2.fromOffset(420, 54),
+		Size = UDim2.fromOffset(560, 54),
 		BackgroundTransparency = 1,
 		Parent = UI.Root,
 	})
 	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = row })
 	ctx.Social.button(row, "invite")
 	ctx.Social.button(row, "favorite", { Size = UDim2.fromOffset(160, 54) })
+	-- the endings collection
+	local endingsBtn = UI.new("TextButton", {
+		Size = UDim2.fromOffset(150, 54),
+		Text = "ENDINGS",
+		Font = UI.Font.Bold,
+		TextSize = 19,
+		TextColor3 = Color3.new(1, 1, 1),
+		BackgroundColor3 = Color3.fromRGB(70, 60, 110),
+		Parent = row,
+	})
+	UI.corner(endingsBtn, 12)
+	UI.stroke(endingsBtn, Color3.new(1, 1, 1), 1.5, 0.6)
+	local collection = UI.new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.55),
+		Size = UDim2.fromScale(0.92, 0.8),
+		BackgroundColor3 = UI.Color.Panel,
+		BackgroundTransparency = 0.08,
+		Visible = false,
+		ZIndex = 30,
+		Parent = UI.Root,
+	})
+	UI.corner(collection, 14)
+	UI.stroke(collection, UI.Color.Accent, 1.5, 0.4)
+	UI.new("UISizeConstraint", { MaxSize = Vector2.new(560, 420), Parent = collection })
+	UI.label({ Position = UDim2.fromOffset(0, 12), Size = UDim2.new(1, 0, 0, 34), Text = "ENDINGS", Font = UI.Font.Title, TextSize = 30, ZIndex = 31, Parent = collection })
+	local list = UI.new("ScrollingFrame", {
+		Position = UDim2.fromOffset(18, 56),
+		Size = UDim2.new(1, -36, 1, -130),
+		BackgroundTransparency = 1,
+		CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		ScrollBarThickness = 4,
+		ZIndex = 31,
+		Parent = collection,
+	})
+	UI.new("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
+	local close = UI.new("TextButton", {
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -14),
+		Size = UDim2.fromOffset(160, 50),
+		Text = "CLOSE",
+		Font = UI.Font.Bold,
+		TextSize = 19,
+		TextColor3 = Color3.new(1, 1, 1),
+		BackgroundColor3 = Color3.fromRGB(60, 60, 66),
+		ZIndex = 31,
+		Parent = collection,
+	})
+	UI.corner(close, 10)
+	local function fillCollection()
+		for _, c in list:GetChildren() do
+			if c:IsA("TextLabel") then
+				c:Destroy()
+			end
+		end
+		local found = {}
+		for _, k in string.split(tostring(game:GetService("Players").LocalPlayer:GetAttribute("StatEndingList") or ""), ",") do
+			found[k] = true
+		end
+		for i, key in ctx.Story.EndingOrder do
+			local e = ctx.Story.Endings[key]
+			if e then
+				local text = found[key] and string.format("<b>%s</b>   <font color=\"#9fd49a\">found</font>", e.Title)
+					or string.format("<b>???</b>   <font color=\"#8a8a8a\">%s</font>", ctx.Story.EndingHints[key] or "")
+				UI.label({
+					LayoutOrder = i,
+					Size = UDim2.new(1, 0, 0, 0),
+					AutomaticSize = Enum.AutomaticSize.Y,
+					Text = text,
+					RichText = true,
+					TextWrapped = true,
+					TextSize = 19,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					ZIndex = 32,
+					Parent = list,
+				})
+			end
+		end
+	end
+	endingsBtn.Activated:Connect(function()
+		fillCollection()
+		collection.Visible = not collection.Visible
+	end)
+	close.Activated:Connect(function()
+		collection.Visible = false
+	end)
 	-- your record, saved between visits
 	local player = game:GetService("Players").LocalPlayer
 	local record = UI.label({

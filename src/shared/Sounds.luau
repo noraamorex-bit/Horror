@@ -22,6 +22,14 @@ Sounds.Library = {
 	-- Ambience (client, looped)
 	Rain = { Id = "rbxassetid://9112853287", Volume = 0.8, Looped = true },
 	RainWindow = { Id = "rbxassetid://9112856881", Volume = 0.6, Looped = true },
+	-- APM "Music Box Lullaby (30s)": Lily's music box, playing by itself
+	MusicBox = { Id = "rbxassetid://9047796475", Volume = 0.9, Range = 70, Caption = "[A music box is playing upstairs]" },
+	-- Roblox "BathRunning": the upstairs shower turning on
+	ShowerRun = { Id = "rbxassetid://365551014", Volume = 0.9, Looped = true, Range = 70, Caption = "[The shower is running upstairs]" },
+	-- APM "Dark Hunter C": when he is chasing someone
+	ChaseMusic = { Id = "rbxassetid://9039859905", Volume = 0.5, Looped = true },
+	-- APM "Facing the Fear (a 30)": low dread while he is searching nearby
+	TensionMusic = { Id = "rbxassetid://9044996358", Volume = 0.3, Looped = true },
 	-- APM (licensed for Roblox): "Solo Piano - Gentle Rain - Remastered", the cozy first act indoors
 	CozyPiano = { Id = "rbxassetid://9046644321", Volume = 0.22, Looped = true },
 	Wind = { Id = "rbxassetid://9120697823", Fallback = ENGINE_WIND, Volume = 0.12, Looped = true },
