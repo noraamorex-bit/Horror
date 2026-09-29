@@ -157,23 +157,23 @@ Layout.InteriorWalls = {
 	{ floor = "Basement", x1 = -40, z1 = 10, x2 = -20, z2 = 10, openings = {} },
 }
 
--- Floor finishes per room: {x0,x1,z0,z1, color key, material key}
+-- Floor finishes per room: {x0,x1,z0,z1, color key, material key, texture key (World/Textures)}
 Layout.FloorFinish = {
 	Ground = {
-		{ -40, -8, -30, 2, "Oak", "Planks" }, -- living
-		{ -40, -8, 2, 30, "Tile", "Tile" }, -- kitchen
-		{ 12, 40, -30, -10, "Walnut", "Planks" }, -- office
-		{ 12, 22, -10, 4, "Tile", "Tile" }, -- bath
-		{ 22, 40, -10, 4, "Tile", "Tile" }, -- mudroom
-		{ 12, 40, 4, 30, "Carpet", "Carpet" }, -- den
+		{ -40, -8, -30, 2, "Oak", "Planks", "WoodDark" }, -- living
+		{ -40, -8, 2, 30, "Tile", "Tile", "Marble" }, -- kitchen
+		{ 12, 40, -30, -10, "Walnut", "Planks", "Parquet" }, -- office
+		{ 12, 22, -10, 4, "Tile", "Tile", "TileWhite" }, -- bath
+		{ 22, 40, -10, 4, "Tile", "Tile", "Marble" }, -- mudroom
+		{ 12, 40, 4, 30, "Carpet", "Carpet", "Carpet" }, -- den
 	},
 	Upstairs = {
-		{ -40, -8, -30, 0, "Carpet", "Carpet" },
-		{ -40, -8, 0, 12, "Tile", "Tile" },
-		{ -40, -8, 12, 30, "BlueCarpet", "Carpet" },
-		{ 12, 40, -30, -6, "Carpet", "Carpet" },
-		{ 12, 40, -6, 8, "Tile", "Tile" },
-		{ 12, 40, 8, 30, "Carpet", "Carpet" },
+		{ -40, -8, -30, 0, "Carpet", "Carpet", "Carpet" },
+		{ -40, -8, 0, 12, "Tile", "Tile", "TileWhite" },
+		{ -40, -8, 12, 30, "BlueCarpet", "Carpet", "Carpet" },
+		{ 12, 40, -30, -6, "Carpet", "Carpet", "Carpet" },
+		{ 12, 40, -6, 8, "Tile", "Tile", "TileWhite" },
+		{ 12, 40, 8, 30, "Carpet", "Carpet", "Carpet" },
 	},
 }
 

@@ -6,6 +6,8 @@
 
 local TweenService = game:GetService("TweenService")
 
+local Textures = require(script.Parent.Textures)
+
 local House = {}
 
 function House.build(ctx, root: Instance)
@@ -44,12 +46,26 @@ function House.build(ctx, root: Instance)
 	for floorName, list in L.FloorFinish do
 		local y = L.Y[floorName]
 		for _, f in list do
-			B.box(shell, "Floor", Vector3.new(f[1], y - 0.1, f[3]), Vector3.new(f[2], y, f[4]), C[f[5]], M[f[6]])
+			local floor = B.box(shell, "Floor", Vector3.new(f[1], y - 0.1, f[3]), Vector3.new(f[2], y, f[4]), C[f[5]], M[f[6]])
+			if f[7] then
+				-- carpet takes the room's colour; wood and tile show their own
+				local tint = f[7] == "Carpet" and C[f[5]]:Lerp(Color3.new(1, 1, 1), 0.35) or nil
+				Textures.apply(floor, f[7], { Enum.NormalId.Top }, tint)
+			end
 		end
 	end
 	for floorName, hf in L.HallFloor do
 		local y = L.Y[floorName]
+		local before = {}
+		for _, c in shell:GetChildren() do
+			before[c] = true
+		end
 		B.slab(shell, "HallFloor", hf.x0, hf.x1, hf.z0, hf.z1, y, 0.1, hf.holes, C.Oak, M.Planks)
+		for _, c in shell:GetChildren() do
+			if not before[c] and c:IsA("BasePart") then
+				Textures.apply(c, "Parquet", { Enum.NormalId.Top }, Color3.fromRGB(235, 220, 205))
+			end
+		end
 	end
 	-- attic: insulation everywhere, plywood walkway from the hatch to the nest
 	B.slab(shell, "Insulation", -40, 40, -30, 30, 29.2, 0.3, { { h.x0, h.x1, h.z0, h.z1 } }, Color3.fromRGB(215, 150, 150), M.Insulation)

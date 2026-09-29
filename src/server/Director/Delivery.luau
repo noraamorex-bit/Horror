@@ -54,6 +54,196 @@ local function walk(model: Model, points, speed: number, folder: Instance)
 	end
 end
 
+-- The delivery man is a real R15 Rthro avatar (Roblox's "City Life Man" body, pale, stretched
+-- tall and thin, a red cap, arms held out with the pizza bag, and a fixed wide grin on the
+-- dynamic head). If the avatar can't be loaded, the part-built Kit model stands in.
+local AVATAR = {
+	Head = 71693744825093, -- City Life Man - Head (dynamic)
+	Torso = 2490661289,
+	LeftArm = 2490651894,
+	RightArm = 2490659002,
+	LeftLeg = 2490653036,
+	RightLeg = 2490660219,
+	Hair = 2490665888,
+	Hat = 1028606, -- Red Baseball Cap
+}
+local WALK_ANIM = "rbxassetid://2510202577" -- Rthro Walk
+local SKIN = Color3.fromRGB(196, 190, 184)
+-- the face he holds the whole time: a wide, unblinking grin
+local FACE = {
+	LeftLipCornerPuller = 1, RightLipCornerPuller = 1,
+	LeftLipStretcher = 0.6, RightLipStretcher = 0.6,
+	LeftUpperLipRaiser = 0.45, RightUpperLipRaiser = 0.45,
+	LeftEyeUpperLidRaiser = 1, RightEyeUpperLidRaiser = 1,
+	LeftInnerBrowRaiser = 0.5, RightInnerBrowRaiser = 0.5,
+	LeftCheekRaiser = 0.35, RightCheekRaiser = 0.35,
+}
+
+local function avatarActor(folder: Instance, start: CFrame)
+	local Players = game:GetService("Players")
+	local desc = Instance.new("HumanoidDescription")
+	desc.Head = AVATAR.Head
+	desc.Torso = AVATAR.Torso
+	desc.LeftArm = AVATAR.LeftArm
+	desc.RightArm = AVATAR.RightArm
+	desc.LeftLeg = AVATAR.LeftLeg
+	desc.RightLeg = AVATAR.RightLeg
+	desc.HairAccessory = tostring(AVATAR.Hair)
+	desc.HatAccessory = tostring(AVATAR.Hat)
+	desc.HeadColor = SKIN
+	desc.TorsoColor = SKIN
+	desc.LeftArmColor = SKIN
+	desc.RightArmColor = SKIN
+	desc.LeftLegColor = SKIN
+	desc.RightLegColor = SKIN
+	desc.HeightScale = 1.12
+	desc.WidthScale = 0.84
+	desc.DepthScale = 0.9
+	desc.HeadScale = 1
+	desc.BodyTypeScale = 1
+	desc.ProportionScale = 1
+	local model = Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
+	local hum = model:FindFirstChildOfClass("Humanoid") :: Humanoid
+	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
+	local head = model:FindFirstChild("Head") :: BasePart
+	local torso = model:FindFirstChild("UpperTorso") :: BasePart
+	assert(hum and root and head and torso, "avatar is missing parts")
+	model.Name = "PizzaGuy"
+	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+	hum.WalkSpeed = 6.5
+	hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+	hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+	local animate = model:FindFirstChild("Animate")
+	if animate then
+		animate:Destroy()
+	end
+	local feetOffset = hum.HipHeight + root.Size.Y / 2
+	model:PivotTo(start * CFrame.new(0, feetOffset, 0))
+	model.Parent = folder
+	pcall(function()
+		root:SetNetworkOwner(nil)
+	end)
+	-- the face
+	local fc = head:FindFirstChildWhichIsA("FaceControls", true)
+	if fc then
+		for k, v in FACE do
+			pcall(function()
+				(fc :: any)[k] = v
+			end)
+		end
+	end
+	-- arms held out in front, carrying the insulated bag
+	for _, name in { "RightShoulder", "LeftShoulder" } do
+		local joint = model:FindFirstChild(name, true)
+		if joint and joint:IsA("Motor6D") then
+			joint.C0 = joint.C0 * ANG(math.rad(78), 0, 0)
+		end
+	end
+	for _, name in { "RightElbow", "LeftElbow" } do
+		local joint = model:FindFirstChild(name, true)
+		if joint and joint:IsA("Motor6D") then
+			joint.C0 = joint.C0 * ANG(math.rad(12), 0, 0)
+		end
+	end
+	Kit.soft(model, "PizzaBag", torso.CFrame * CF(0, -0.9, -2.3), V(2.5, 0.6, 2.5), 0.1, Color3.fromRGB(150, 28, 26), Kit.M.Fabric)
+	for _, p in model:GetChildren() do
+		if p:IsA("BasePart") and p.Name == "PizzaBag" then
+			p.Anchored = false
+			p.Massless = true
+			p.CanCollide = false
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = torso
+			weld.Part1 = p
+			weld.Parent = p
+		end
+	end
+	local neck = head:FindFirstChild("Neck") :: Motor6D?
+	local neckC0 = neck and neck.C0
+	local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
+	local walkTrack
+	pcall(function()
+		local anim = Instance.new("Animation")
+		anim.AnimationId = WALK_ANIM
+		walkTrack = (animator :: Animator):LoadAnimation(anim)
+		walkTrack.Looped = true
+	end)
+
+	local actor = { Model = model }
+	function actor.pivot(): CFrame
+		return root.CFrame * CFrame.new(0, -feetOffset, 0)
+	end
+	local function moveTo(target: Vector3)
+		local flat = V(target.X, root.Position.Y, target.Z)
+		local dist = (flat - root.Position).Magnitude
+		hum:MoveTo(target)
+		local deadline = os.clock() + dist / hum.WalkSpeed + 3
+		while folder.Parent and os.clock() < deadline do
+			if (V(target.X, 0, target.Z) - V(root.Position.X, 0, root.Position.Z)).Magnitude < 1.2 then
+				break
+			end
+			task.wait(0.1)
+		end
+	end
+	function actor.walk(points)
+		hum.AutoRotate = true
+		if walkTrack then
+			walkTrack:Play(0.2)
+			walkTrack:AdjustSpeed(0.8)
+		end
+		for i = 2, #points do
+			moveTo(points[i])
+		end
+		if walkTrack then
+			walkTrack:Stop(0.3)
+		end
+	end
+	function actor.face(dir: Vector3)
+		hum.AutoRotate = false
+		root.CFrame = CFrame.lookAt(root.Position, root.Position + V(dir.X, 0, dir.Z))
+	end
+	function actor.head(yaw: number, tilt: number)
+		if neck and neckC0 then
+			neck.C0 = neckC0 * ANG(0, yaw, tilt)
+		end
+	end
+	function actor.backAway(dist: number)
+		hum.AutoRotate = false
+		local target = root.Position - root.CFrame.LookVector * dist
+		if walkTrack then
+			walkTrack:Play(0.2)
+			walkTrack:AdjustSpeed(-0.6)
+		end
+		moveTo(target)
+		if walkTrack then
+			walkTrack:Stop(0.3)
+		end
+	end
+	return actor
+end
+
+local function partsActor(folder: Instance, start: CFrame)
+	local man, headModel, neck = Kit.deliveryMan(folder, start)
+	local actor = { Model = man }
+	function actor.pivot(): CFrame
+		return man:GetPivot()
+	end
+	function actor.walk(points)
+		walk(man, points, 5.5, folder)
+	end
+	function actor.face(dir: Vector3)
+		local p = man:GetPivot().Position
+		man:PivotTo(CFrame.lookAt(p, p + V(dir.X, 0, dir.Z)))
+	end
+	function actor.head(yaw: number, tilt: number)
+		headModel:PivotTo(man:GetPivot() * neck * ANG(0, yaw, tilt) * CF(0, 0.75, 0))
+	end
+	function actor.backAway(dist: number)
+		tweenModel(man, man:GetPivot() * CF(0, 0, dist), dist)
+	end
+	return actor
+end
+
 local function pizzaBoxes(parent: Instance, base: CFrame)
 	for k = 0, 1 do
 		local cf = base * CF(0, 0.18 + k * 0.36, 0) * ANG(0, k * 0.12, 0)
@@ -116,13 +306,24 @@ function Delivery.run(ctx, D, onDone)
 	ctx.Audio.playAt("DoorClose", V(-5, 3, -72), { Caption = false })
 
 	-- he gets out and walks up to the porch
-	local man, head, neck = Kit.deliveryMan(folder, CFrame.lookAt(ROUTE[1], ROUTE[2]))
-	walk(man, ROUTE, 5.5, folder)
+	local startCF = CFrame.lookAt(ROUTE[1], ROUTE[2])
+	local okAvatar, actor = pcall(avatarActor, folder, startCF)
+	if not okAvatar then
+		warn("[Delivery] avatar unavailable, using the stand-in: " .. tostring(actor))
+		for _, c in folder:GetChildren() do
+			if c.Name == "PizzaGuy" then
+				c:Destroy()
+			end
+		end
+		actor = partsActor(folder, startCF)
+	end
+	local man = actor.Model
+	actor.walk(ROUTE)
 	if not alive(folder) then
 		finish()
 		return
 	end
-	man:PivotTo(CFrame.lookAt(PORCH, PORCH + V(0, 0, 1)))
+	actor.face(V(0, 0, 1))
 
 	-- head: slowly tilts, and follows whoever he is talking to
 	local watch: Player? = nil
@@ -136,14 +337,14 @@ function Delivery.run(ctx, D, onDone)
 			if watch then
 				local root = ctx.Util.getRoot(watch)
 				if root then
-					local rel = man:GetPivot():PointToObjectSpace(root.Position)
+					local rel = actor.pivot():PointToObjectSpace(root.Position)
 					wantYaw = math.clamp(math.atan2(-rel.X, -rel.Z), -0.8, 0.8)
 					want = 0.28 -- the tilt gets stronger while he's looking at you
 				end
 			end
 			tilt += (want - tilt) * 0.15
 			yaw += (wantYaw - yaw) * 0.2
-			head:PivotTo(man:GetPivot() * neck * ANG(0, yaw, tilt) * CF(0, 0.75, 0))
+			actor.head(yaw, tilt)
 			task.wait(0.1)
 		end
 	end)
@@ -210,7 +411,7 @@ function Delivery.run(ctx, D, onDone)
 		-- the pizza ends up on the dining table
 		pizzaBoxes(world, CF(-15, 4.8, 20.4))
 		-- he backs away, still watching, then turns and goes
-		tweenModel(man, man:GetPivot() * CF(0, 0, 2.4), 2.4)
+		actor.backAway(2.4)
 		watch = nil
 		if door and door.IsOpen then
 			ctx.Doors.close(door)
@@ -227,8 +428,8 @@ function Delivery.run(ctx, D, onDone)
 	for i = #ROUTE, 1, -1 do
 		table.insert(back, ROUTE[i])
 	end
-	back[1] = man:GetPivot().Position
-	walk(man, back, 5.5, folder)
+	back[1] = actor.pivot().Position
+	actor.walk(back)
 	if not alive(folder) then
 		finish()
 		return

@@ -6,6 +6,8 @@
 
 local CollectionService = game:GetService("CollectionService")
 
+local Textures = require(script.Parent.Textures)
+
 local Finish = {}
 
 local V = Vector3.new
@@ -13,21 +15,21 @@ local WHITE = Color3.fromRGB(238, 234, 226)
 
 -- Wall: paint colour; Mat: material; Wainscot: lower panelling colour (nil = none); Curtain colour
 local PALETTE = {
-	Living = { Wall = Color3.fromRGB(196, 176, 148), Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(120, 50, 45), Art = 2 },
+	Living = { Wall = Color3.fromRGB(196, 176, 148), Paper = "Damask", Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(120, 50, 45), Art = 2 },
 	Kitchen = { Wall = Color3.fromRGB(176, 190, 164), Mat = "Plaster", Curtain = Color3.fromRGB(215, 205, 170), Art = 1 },
-	Hallway = { Wall = Color3.fromRGB(214, 202, 178), Mat = "Plaster", Wainscot = WHITE, Curtain = Color3.fromRGB(120, 50, 45), Art = 3 },
-	Office = { Wall = Color3.fromRGB(52, 64, 88), Mat = "Plaster", Wainscot = Color3.fromRGB(92, 62, 42), WainscotMat = "Wood", Curtain = Color3.fromRGB(150, 120, 80), Art = 2 },
+	Hallway = { Wall = Color3.fromRGB(214, 202, 178), Paper = "Stripes", Mat = "Plaster", Wainscot = WHITE, Curtain = Color3.fromRGB(120, 50, 45), Art = 3 },
+	Office = { Wall = Color3.fromRGB(52, 64, 88), Paper = "Damask", Mat = "Plaster", Wainscot = Color3.fromRGB(92, 62, 42), WainscotMat = "Wood", Curtain = Color3.fromRGB(150, 120, 80), Art = 2 },
 	Bathroom = { Wall = Color3.fromRGB(170, 196, 208), Mat = "Plaster", Wainscot = Color3.fromRGB(236, 236, 232), WainscotMat = "Tile", WainscotH = 5, Art = 0 },
 	MudHall = { Wall = Color3.fromRGB(140, 152, 136), Mat = "Plaster", Wainscot = Color3.fromRGB(238, 234, 226), Art = 1 },
 	Mudroom = { Wall = Color3.fromRGB(140, 152, 136), Mat = "Plaster", Wainscot = WHITE, Art = 0 },
-	Den = { Wall = Color3.fromRGB(68, 88, 72), Mat = "Fabric", Wainscot = Color3.fromRGB(110, 78, 52), WainscotMat = "Wood", Curtain = Color3.fromRGB(200, 180, 140), Art = 2 },
-	Master = { Wall = Color3.fromRGB(150, 164, 182), Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(230, 225, 215), Art = 2 },
+	Den = { Wall = Color3.fromRGB(68, 88, 72), Paper = "Damask", Mat = "Fabric", Wainscot = Color3.fromRGB(110, 78, 52), WainscotMat = "Wood", Curtain = Color3.fromRGB(200, 180, 140), Art = 2 },
+	Master = { Wall = Color3.fromRGB(150, 164, 182), Paper = "Stripes", Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(230, 225, 215), Art = 2 },
 	MasterBath = { Wall = Color3.fromRGB(205, 210, 205), Mat = "Plaster", Wainscot = Color3.fromRGB(236, 236, 232), WainscotMat = "Tile", WainscotH = 6, Art = 0 },
 	Jamie = { Wall = Color3.fromRGB(78, 124, 134), Mat = "Plaster", Curtain = Color3.fromRGB(40, 50, 70), Art = 3 },
-	Guest = { Wall = Color3.fromRGB(214, 198, 150), Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(160, 140, 110), Art = 1 },
+	Guest = { Wall = Color3.fromRGB(214, 198, 150), Paper = "Roses", Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(160, 140, 110), Art = 1 },
 	HallBath = { Wall = Color3.fromRGB(176, 214, 196), Mat = "Plaster", Wainscot = Color3.fromRGB(236, 236, 232), WainscotMat = "Tile", WainscotH = 6, Art = 0 },
-	Lily = { Wall = Color3.fromRGB(226, 182, 196), Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(250, 235, 240), Art = 2 },
-	UpperHall = { Wall = Color3.fromRGB(214, 202, 178), Mat = "Plaster", Wainscot = WHITE, Curtain = Color3.fromRGB(120, 50, 45), Art = 3 },
+	Lily = { Wall = Color3.fromRGB(226, 182, 196), Paper = "Floral", Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(250, 235, 240), Art = 2 },
+	UpperHall = { Wall = Color3.fromRGB(214, 202, 178), Paper = "Stripes", Mat = "Plaster", Wainscot = WHITE, Curtain = Color3.fromRGB(120, 50, 45), Art = 3 },
 }
 
 local ART_COLORS = {
@@ -77,7 +79,7 @@ function Finish.build(ctx, root: Instance)
 	end
 
 	-- A horizontal band (yb..yt) of finish along a room side, with holes for openings.
-	local function band(side, yb: number, yt: number, depth: number, extraOffset: number, color: Color3, mat: Enum.Material, name: string, tag: string?)
+	local function band(side, yb: number, yt: number, depth: number, extraOffset: number, color: Color3, mat: Enum.Material, name: string, tag: string?, tex)
 		local y0 = side.Y0
 		for _, line in side.Lines do
 			local s0, s1 = math.max(side.A0, line.A0), math.min(side.A1, line.A1)
@@ -120,6 +122,10 @@ function Finish.build(ctx, root: Instance)
 					if tag then
 						CollectionService:AddTag(child, tag)
 					end
+					if tex then
+						local faces = side.AlongX and { Enum.NormalId.Front, Enum.NormalId.Back } or { Enum.NormalId.Left, Enum.NormalId.Right }
+						Textures.apply(child, tex.Key, faces, tex.Color, tex.Transparency)
+					end
 				end
 			end
 		end
@@ -155,10 +161,13 @@ function Finish.build(ctx, root: Instance)
 			end
 			local wainH = pal.WainscotH or 3.4
 			-- paint / wallpaper
-			band(side, y0, y0 + 13, 0.06, 0, pal.Wall, MATS[pal.Mat] or MATS.Plaster, "Paint")
-			-- wainscoting + chair rail
+			-- paint, or wallpaper tinted to the room's colour
+			local paper = pal.Paper and { Key = pal.Paper, Color = pal.Wall:Lerp(Color3.new(1, 1, 1), 0.45), Transparency = 0.1 } or nil
+			band(side, y0, y0 + 13, 0.06, 0, pal.Wall, MATS[pal.Mat] or MATS.Plaster, "Paint", nil, paper)
+			-- wainscoting + chair rail (tiled in the bathrooms)
 			if pal.Wainscot then
-				band(side, y0, y0 + wainH, 0.12, 0.06, pal.Wainscot, MATS[pal.WainscotMat or "Wood"], "Wainscot")
+				local tile = pal.WainscotMat == "Tile" and { Key = "TileWhite", Color = pal.Wainscot } or nil
+				band(side, y0, y0 + wainH, 0.12, 0.06, pal.Wainscot, MATS[pal.WainscotMat or "Wood"], "Wainscot", nil, tile)
 				band(side, y0 + wainH, y0 + wainH + 0.3, 0.14, 0.12, WHITE, Enum.Material.Wood, "ChairRail")
 			end
 			-- baseboard and crown molding
@@ -191,8 +200,8 @@ function Finish.build(ctx, root: Instance)
 						local c0 = bestA + bestLen / 2
 						local px = side.AlongX and c0 or side.Fixed
 						local pz = side.AlongX and side.Fixed or c0
-						for _, r in L.NoArt or {} do
-							if r[1] == r0Floor and px >= r[2] and px <= r[3] and pz >= r[4] and pz <= r[5] then
+						for _, span in L.NoArt or {} do
+							if span[1] == r0Floor and px >= span[2] and px <= span[3] and pz >= span[4] and pz <= span[5] then
 								reserved = true
 							end
 						end

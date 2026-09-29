@@ -99,7 +99,7 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 - The top-right **OBJECTIVE** panel shows the current task and step; a bobbing **"!"** marks where each step happens (yellow and large for the current task), with the distance. The journal lists every step.
 - Clues planted: the unlocked back door, the warm mug, Mom's note on the fridge ("don't use the garage keypad, it's acting up"), the attic hatch that is "stuck".
 - Phone texts from Mom and Dad over Wi-Fi.
-- **The delivery.** A few seconds after the three tasks are done (or when the act runs out of time) a little Tony's Pizza car pulls up in the rain. The delivery man walks up and rings the bell, and a new objective appears: **Answer the door**. He is too tall, too thin and too pale, and his smile goes on too long (`Kit.deliveryMan`, `Director/Delivery`).
+- **The delivery.** A few seconds after the three tasks are done (or when the act runs out of time) a little Tony's Pizza car pulls up in the rain. The delivery man walks up and rings the bell, and a new objective appears: **Answer the door**. He is a real Rthro avatar (Roblox's City Life Man body, made pale, taller and thinner, in a red cap) who walks up with the Rthro walk, holds the pizza bag out at arm's length, and wears one fixed expression on his dynamic head: a wide, unblinking grin. His head follows whoever answers and slowly tilts (`Director/Delivery`; a part-built stand-in, `Kit.deliveryMan`, is used if the avatar can't load).
 - **Dialogue with choices.** Whoever answers talks to him in a dialogue box (`Services/DialogueService`, `client/Controllers/Dialogue`, script in `Story.Dialogue.Pizza`). Three times the player picks one of two lines to say ("You're not the usual guy." / "What's that supposed to mean?" / "No. My dad's upstairs."); everyone else reads along. He says Creek Road is going under and he's the last one getting through — the house is now cut off — and tells you to keep every door locked, "even the ones you don't use." Then he backs down the steps, still smiling, and drives away; the pizza ends up on the dining table. If nobody answers he knocks, rings again, and finally leaves the boxes on the porch.
 - He is a red herring: the truth log reveals he was Tony's nephew on his last run, and the real stranger was above your heads the whole time.
 - The act ends when he has driven away.
@@ -303,6 +303,7 @@ src/
 
 ### Performance
 - Rain is emitted on the client from a few large particle volumes around the house. It never renders inside the house. Low ground mist (big faint smoke puffs) follows the camera outdoors; Atmosphere fog does the rest.
+- Walls and floors carry tiled image textures (`World/Textures`): damask, striped and floral wallpaper tinted per room, dark hardwood and parquet, marble and white tile, carpet, a subway-tile backsplash.
 - Every model is built from parts by `World/Kit` (sofas with soft cushions, turned table legs, drum lamps, shaker cabinets, fridge, range, toilets, beds, trees, cars, the delivery man...). Decorative parts never collide or block raycasts; each model adds one or two invisible colliders instead.
 - The AI thinks at 10 Hz. Paths are recomputed only on goal change, when blocked, or every 1.5 s during a chase.
 - Light fixtures use `Shadows` selectively. Parts are anchored with minimal collision geometry.

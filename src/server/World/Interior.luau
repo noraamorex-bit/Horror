@@ -10,6 +10,7 @@
 local CollectionService = game:GetService("CollectionService")
 
 local Kit = require(script.Parent.Kit)
+local Textures = require(script.Parent.Textures)
 
 local Interior = {}
 
@@ -423,7 +424,8 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.cabinets(kitchen, F(WX, G, 26.6, PX), 3.2, 2.4, CAB, COUNTER)
 	-- subway tile backsplash behind the counters
 	for _, span in { { 4, 11.2 }, { 16.8, 28.2 } } do
-		Kit.box(kitchen, "Backsplash", CF(-39.1, G + 5.9, (span[1] + span[2]) / 2), V(0.08, 4.2, span[2] - span[1]), Color3.fromRGB(240, 240, 236), KM.Tile)
+		local splash = Kit.box(kitchen, "Backsplash", CF(-39.1, G + 5.9, (span[1] + span[2]) / 2), V(0.08, 4.2, span[2] - span[1]), Color3.fromRGB(240, 240, 236), KM.Tile)
+		Textures.apply(splash, "TileWhite", { Enum.NormalId.Right }, Color3.fromRGB(236, 240, 236))
 	end
 	-- the warm mug in the sink
 	local _, mug = Kit.mug(kitchen, F(-38.2, G + 3.82, 13.4, PX), Color3.fromRGB(200, 190, 170))
