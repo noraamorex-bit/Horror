@@ -974,6 +974,32 @@ local function think(dt: number)
 		end
 	end
 	S.Visible = visible
+	-- he prefers the dark: passing through a lit, empty room nobody can see, he sometimes
+	-- reaches for the switch (rooms go dark one by one while you're elsewhere)
+	if (state == "Lurk" or state == "Patrol" or state == "Search") and #visible == 0 and ctx.Power.isOn() then
+		S.LightsClock = (S.LightsClock or 0) - dt
+		if S.LightsClock <= 0 then
+			S.LightsClock = 4
+			local room = ctx.Rooms.find(pos())
+			if room and ctx.Power.isRoomSwitchOn(room.Name) and math.random() < 0.35 then
+				local occupied = false
+				for _, p in ctx.Util.activePlayers() do
+					local r = rootOf(p)
+					if r and ctx.Rooms.find(r.Position) == room then
+						occupied = true
+					end
+				end
+				if not occupied and not Perception.anyoneSees(pos(), S.Model) then
+					ctx.Power.setSwitch(room.Name, false)
+					S.LightsClock = 45
+					if ctx.Director.logTruthRaw and not S.LoggedLights then
+						S.LoggedLights = true
+						ctx.Director.logTruthRaw("The lights that kept going off in empty rooms were Curtis. He moves easier in the dark.")
+					end
+				end
+			end
+		end
+	end
 	local handler = STATES[state]
 	if handler then
 		handler(dt, visible)

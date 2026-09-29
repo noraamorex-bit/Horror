@@ -97,6 +97,9 @@ The living-room sofa, both armchairs and the den sofa have seats: a **Sit** prom
 ### Night recap
 The ending card adds a line under each player: how many times they hid, were spotted, got caught and freed a friend (or "never saw him coming").
 
+### He likes the dark
+While lurking, patrolling or searching, if he passes through a lit room that nobody is in and nobody can see him, he sometimes switches the light off (at most every 45 s). Rooms you left lit go dark one by one. The truth log explains it once.
+
 ### Fairness
 - **Last chance:** when everyone is tied up (always true when playing alone), the bad ending waits 45 s (`Config.Capture.LastChance`) so captives can struggle free; anyone getting loose cancels it.
 - **Alone:** he chases a step slower (`SoloChaseSlowdown`) and gives up a quarter sooner.
