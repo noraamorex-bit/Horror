@@ -119,13 +119,20 @@ function Phone.start()
 		Parent = screen,
 	})
 	UI.corner(callButton, 12)
+	-- hold to call: only a touch that starts on the button, until that finger lifts
+	local holding: InputObject? = nil
 	callButton.InputBegan:Connect(function(io)
+		if holding or io.UserInputState ~= Enum.UserInputState.Begin then
+			return
+		end
 		if io.UserInputType == Enum.UserInputType.Touch or io.UserInputType == Enum.UserInputType.MouseButton1 then
+			holding = io
 			setCalling(true)
 		end
 	end)
-	callButton.InputEnded:Connect(function(io)
-		if io.UserInputType == Enum.UserInputType.Touch or io.UserInputType == Enum.UserInputType.MouseButton1 then
+	game:GetService("UserInputService").InputEnded:Connect(function(io)
+		if holding and (io == holding or io.UserInputType == Enum.UserInputType.MouseButton1 and holding.UserInputType == Enum.UserInputType.MouseButton1) then
+			holding = nil
 			setCalling(false)
 		end
 	end)

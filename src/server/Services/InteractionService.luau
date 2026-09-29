@@ -1,6 +1,6 @@
 --[[
 	InteractionService — every interactable in the house is a ProximityPrompt created here.
-	Prompts use the Custom style; the client draws a minimal diegetic prompt.
+	Prompts use Roblox's default style; secondary (R) prompts are offset below the main one.
 
 	Interaction.prompt(part, opts, callback(player, prompt)) -> ProximityPrompt
 	opts: Action, Object, Hold, Distance, Key, LOS, AllowCaptured, AllowHiding, Name
@@ -42,7 +42,12 @@ function Interaction.prompt(parent: Instance, opts, callback)
 	prompt.KeyboardKeyCode = opts.Key or Enum.KeyCode.E
 	prompt.GamepadKeyCode = opts.Key == Enum.KeyCode.R and Enum.KeyCode.ButtonY or Enum.KeyCode.ButtonX
 	prompt.RequiresLineOfSight = if opts.LOS == nil then false else opts.LOS
-	prompt.Style = Enum.ProximityPromptStyle.Custom
+	-- Roblox's standard prompt: familiar to players and properly tap-safe on phones
+	prompt.Style = Enum.ProximityPromptStyle.Default
+	if opts.Key == Enum.KeyCode.R then
+		-- secondary actions (lock, splice, smash...) sit just below the main prompt
+		prompt.UIOffset = Vector2.new(0, 80)
+	end
 	prompt.Exclusivity = Enum.ProximityPromptExclusivity.OnePerButton
 	if opts.Offset then
 		local att = Instance.new("Attachment")

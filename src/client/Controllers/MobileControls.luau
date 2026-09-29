@@ -16,6 +16,7 @@
 local Players = game:GetService("Players")
 local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local MobileControls = {}
 local ctx
@@ -110,32 +111,43 @@ local function makeButton(name: string)
 	local label = UI.label({ Position = UDim2.fromScale(0, 0.58), Size = UDim2.fromScale(1, 0.26), Text = def.Label, Font = UI.Font.Bold, TextScaled = true, Parent = b })
 	UI.new("UIPadding", { PaddingLeft = UDim.new(0.12, 0), PaddingRight = UDim.new(0.12, 0), Parent = label })
 
-	local down = false
-	b.InputBegan:Connect(function(io)
-		if io.UserInputType ~= Enum.UserInputType.Touch and io.UserInputType ~= Enum.UserInputType.MouseButton1 then
-			return
-		end
-		down = true
-		b.BackgroundTransparency = 0.1
-		if def.Kind == "toggle" and name == "Sprint" then
-			ctx.Movement.setSprintToggle(not ctx.Movement.isSprinting())
-		else
+	if def.Kind == "hold" then
+		-- hold buttons: only a touch that STARTS on the button counts (not a camera drag
+		-- sliding across it), and it lasts until that same finger lifts
+		local holding: InputObject? = nil
+		b.InputBegan:Connect(function(io)
+			if holding or io.UserInputState ~= Enum.UserInputState.Begin then
+				return
+			end
+			if io.UserInputType ~= Enum.UserInputType.Touch and io.UserInputType ~= Enum.UserInputType.MouseButton1 then
+				return
+			end
+			holding = io
+			b.BackgroundTransparency = 0.1
 			ctx.Input.fire(name, true)
-		end
-		if def.Kind == "press" then
-			ctx.Input.fire(name, false)
-		end
-	end)
-	b.InputEnded:Connect(function(io)
-		if not down or (io.UserInputType ~= Enum.UserInputType.Touch and io.UserInputType ~= Enum.UserInputType.MouseButton1) then
-			return
-		end
-		down = false
-		b.BackgroundTransparency = 0.35
-		if def.Kind == "hold" then
-			ctx.Input.fire(name, false)
-		end
-	end)
+		end)
+		UserInputService.InputEnded:Connect(function(io)
+			if holding and (io == holding or io.UserInputType == Enum.UserInputType.MouseButton1 and holding.UserInputType == Enum.UserInputType.MouseButton1) then
+				holding = nil
+				b.BackgroundTransparency = 0.35
+				ctx.Input.fire(name, false)
+			end
+		end)
+	else
+		-- tap buttons: Activated only fires for a deliberate tap (press and release on the button)
+		b.Activated:Connect(function()
+			b.BackgroundTransparency = 0.1
+			task.delay(0.12, function()
+				b.BackgroundTransparency = 0.35
+			end)
+			if def.Kind == "toggle" and name == "Sprint" then
+				ctx.Movement.setSprintToggle(not ctx.Movement.isSprinting())
+			else
+				ctx.Input.fire(name, true)
+				ctx.Input.fire(name, false)
+			end
+		end)
+	end
 	buttons[name] = { Button = b, Stroke = stroke, Def = def }
 end
 
