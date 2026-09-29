@@ -50,6 +50,7 @@ local function fresh()
 		Participants = {},
 		ThinkBusyUntil = 0,
 		BanterDone = {},
+		Evidence = {},
 	}
 end
 
@@ -505,6 +506,26 @@ local function nextAct()
 	if i and ACT_ORDER[i + 1] then
 		Director.startAct(ACT_ORDER[i + 1])
 	end
+end
+
+-- a clue read by anyone in the group counts toward the secret ending
+function Director.onDocument(player: Player, docId: string)
+	if not table.find(ctx.Story.Evidence, docId) or state.Evidence[docId] then
+		return
+	end
+	state.Evidence[docId] = true
+	local n = Director.evidenceCount()
+	for _, p in ctx.Util.sessionPlayers() do
+		ctx.Remotes.Notify:FireClient(p, string.format("Evidence %d / %d", n, #ctx.Story.Evidence), n >= ctx.Story.EvidenceNeeded and "done" or "info")
+	end
+end
+
+function Director.evidenceCount(): number
+	local n = 0
+	for _ in state.Evidence do
+		n += 1
+	end
+	return n
 end
 
 function Director.onDiscovery(player: Player, docId: string)

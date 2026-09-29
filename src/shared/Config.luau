@@ -175,6 +175,7 @@ Config.ChatRange = 50
 Config.Badges = {
 	FirstNight = 0,
 	Sirens = 0,
+	CaseClosed = 0,
 	NextDoor = 0,
 	Taillights = 0,
 	LockedIn = 0,

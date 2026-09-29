@@ -86,6 +86,9 @@ function Interaction.document(part: BasePart, docId: string, opts, onRead)
 		ctx.Remotes.Document:FireClient(player, docId)
 		local first = not readers[player]
 		readers[player] = true
+		if ctx.Director and ctx.Director.onDocument then
+			ctx.Director.onDocument(player, docId)
+		end
 		if onRead then
 			onRead(player, first)
 		end

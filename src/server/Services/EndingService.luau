@@ -25,6 +25,10 @@ function Ending.trigger(kind: string)
 		return
 	end
 	over = true
+	-- the secret ending: the police arrive and you've already worked out who he is
+	if kind == "Sirens" and ctx.Director.evidenceCount and ctx.Director.evidenceCount() >= ctx.Story.EvidenceNeeded then
+		kind = "CaseClosed"
+	end
 	workspace:SetAttribute("EndingActive", kind)
 	local story = ctx.Story.Endings[kind]
 	if ctx.Intruder then

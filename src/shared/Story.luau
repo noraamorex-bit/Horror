@@ -662,6 +662,10 @@ Story.Thoughts = {
 -- Endings
 ---------------------------------------------------------------------------
 Story.Endings = {
+	CaseClosed = {
+		Title = "CASE CLOSED",
+		Body = "The police find four soaked, shaking teenagers who have already solved it.\n\nThe coffee in the sink. The invoice from VANE HOME SERVICES. The lanyard with the eyes scratched out. The photos from the top of the stairs. Nineteen days of it, laid out on the kitchen table.\n\nCurtis Vane is picked up at the van before he can start the engine. Detective Ruiz reads your notes twice.\n\n'You kids did half my job,' she says. 'Go home. Well. Stay home.'",
+	},
 	Sirens = {
 		Title = "SIRENS",
 		Body = "Blue and red light floods the rain. Two cruisers, then a third.\n\nCurtis Vane is arrested forty minutes later, sitting in a gray van two streets away, soaked through, with nowhere left to go.\n\nOn Monday, Jamie's dad resets the garage code. It had been 4-1-9-7 since April.",
@@ -696,10 +700,16 @@ Story.SurvivalTips = {
 	Button = "GOT IT",
 }
 
+-- Evidence: the clue documents that tell you who he is. Read enough of them (between you)
+-- before the police arrive and "Sirens" becomes the secret ending "Case Closed".
+Story.Evidence = { "WarmMug", "Invoice", "LilyDrawing", "Notebook", "Polaroids", "Footprints", "TrashCan", "WetShower", "EmptyHook", "Lanyard" }
+Story.EvidenceNeeded = 7
+
 -- The lobby's endings collection: display order and a hint for the ones not found yet
-Story.EndingOrder = { "Sirens", "NextDoor", "Taillights", "LockedIn", "Dawn", "GoneQuiet" }
+Story.EndingOrder = { "Sirens", "CaseClosed", "NextDoor", "Taillights", "LockedIn", "Dawn", "GoneQuiet" }
 Story.EndingHints = {
 	Sirens = "Get a call through to 911 and hold out until they come.",
+	CaseClosed = "When the police come, have the whole story ready. Read everything.",
 	NextDoor = "Someone next door is still awake.",
 	Taillights = "Mom's car is in the garage. The keys are not where they should be.",
 	LockedIn = "The basement door locks from the outside.",

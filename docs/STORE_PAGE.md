@@ -13,7 +13,7 @@ Someone has been living in your attic for nineteen days. Tonight he comes down.
 🔦 Hide in closets and under beds, hold your breath, sneak past him in the dark
 🤝 Rescue captured friends and escape: call 911, reach the neighbor, or take the car
 🔎 No ghosts, no monsters. Every creak has a real cause, and the ending shows you what really happened
-🏆 Multiple endings to discover. How many can you find?
+🏆 7 endings to discover, including a secret one. How many can you find?
 
 Works on mobile, PC and controller. Invite your friends and survive the night together!
 
@@ -23,6 +23,6 @@ Works on mobile, PC and controller. Invite your friends and survive the night to
 - **Icon and thumbnails:** a dark house with one warm lit window and a silhouette in it, and a
   close-up of the burlap-masked intruder in a doorway. Bright contrast and a face read well at
   small sizes.
-- **Badges**: create one per ending (Sirens, NextDoor, Taillights, LockedIn, Dawn, GoneQuiet)
+- **Badges**: create one per ending (Sirens, CaseClosed, NextDoor, Taillights, LockedIn, Dawn, GoneQuiet)
   plus "FirstNight", then paste the IDs into `Config.Badges` in `src/shared/Config.luau`.
 - **Enable Spatial Voice** for proximity voice chat (the scariest way to play).

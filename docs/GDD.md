@@ -97,6 +97,9 @@ The living-room sofa, both armchairs and the den sofa have seats: a **Sit** prom
 ### Night recap
 The ending card adds a line under each player: how many times they hid, were spotted, got caught and freed a friend (or "never saw him coming").
 
+### The secret ending: Case Closed
+Ten clue documents are **evidence** (`Story.Evidence`): the warm mug, the invoice, Lily's drawing, the notebook, the polaroids, the footprints, the trash can, the wet shower, the empty key hook and the lanyard. Reading a new one shows "Evidence n / 10" to everyone. If the group has read at least 7 (`Story.EvidenceNeeded`) when the police arrive, SIRENS becomes **CASE CLOSED**: the kids have already worked out who he is.
+
 ### He likes the dark
 While lurking, patrolling or searching, if he passes through a lit room that nobody is in and nobody can see him, he sometimes switches the light off (at most every 45 s). Rooms you left lit go dark one by one. The truth log explains it once.
 
