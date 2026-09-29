@@ -324,6 +324,23 @@ local function build(root: Folder)
 	for _, span in { { -130, -5 }, { 5, 26 }, { 46, 130 } } do
 		Kit.picketFence(root, ORIGIN + V(span[1], 0.5, 18.8), ORIGIN + V(span[2], 0.5, 18.8), 3.4)
 	end
+	-- autumn on the Whitaker porch and fallen leaves on the lawns (matches the game)
+	local toStreet = CFrame.Angles(0, math.pi, 0)
+	for _, p in { { -6.5, 1.5, -35.2, 1.3 }, { -7.7, 1.5, -35.8, 0.8 }, { 6.8, 1.5, -35.3, 1.1 }, { -3.4, 1.5, -32.4, 0.8 }, { 3.4, 1.5, -32.5, 0.9 }, { -3.4, 1.0, -31.3, 0.7 } } do
+		Kit.pumpkin(root, CFrame.new(ORIGIN + V(p[1], p[2], p[3])) * toStreet * CFrame.Angles(0, p[4] * 2, 0), p[4])
+	end
+	Kit.mums(root, CFrame.new(ORIGIN + V(8.4, 1.5, -37.6)), 1.3, Color3.fromRGB(200, 90, 40))
+	Kit.mums(root, CFrame.new(ORIGIN + V(-8.4, 1.5, -37.6)), 1.3, Color3.fromRGB(230, 180, 60))
+	do
+		local rng = Random.new(77)
+		local LEAVES = { Color3.fromRGB(196, 96, 36), Color3.fromRGB(170, 60, 32), Color3.fromRGB(210, 150, 50), Color3.fromRGB(120, 76, 40) }
+		for _, ar in { { -60, -34, -30, 18 }, { -34, -3, -3.5, 18 }, { 3, 27, -3.5, 18 }, { 45, 60, -30, 18 } } do
+			for _ = 1, math.floor((ar[2] - ar[1]) * (ar[4] - ar[3]) / 7) do
+				local x, z = rng:NextNumber(ar[1], ar[2]), rng:NextNumber(ar[3], ar[4])
+				Kit.box(root, "Leaf", CFrame.new(ORIGIN + V(x, 0.53, z)) * CFrame.Angles(rng:NextNumber(-0.15, 0.15), rng:NextNumber(0, 6.28), 0), V(0.42, 0.03, 0.3), LEAVES[rng:NextInteger(1, #LEAVES)], Kit.M.Fabric, { CanCollide = false, CanQuery = false, CastShadow = false })
+			end
+		end
+	end
 	Kit.mailbox(root, CFrame.lookAt(ORIGIN + V(5.4, 0.5, 20.6), ORIGIN + V(5.4, 0.5, 22)))
 	Kit.hydrant(root, CFrame.new(ORIGIN + V(-34, 0.75, 22.5)))
 	for i, t in { { -48, -50 }, { 58, -52 }, { -58, 2 }, { 62, 4 }, { -118, 8 }, { 118, 10 }, { -20, 70 }, { 40, 72 }, { -90, 72 } } do
