@@ -53,6 +53,8 @@ local M = {
 	Plaster = mat("Plaster", "SmoothPlastic"),
 	Asphalt = mat("Asphalt", "Concrete"),
 	Tile = mat("CeramicTiles", "Slate"),
+	Siding = Enum.Material.WoodPlanks,
+	Roof = mat("RoofShingles", "Slate"),
 }
 Kit.M = M
 
@@ -2239,6 +2241,219 @@ function Kit.mums(parent, cf: CFrame, d: number, bloom: Color3)
 		local r = rng:NextNumber(0, d * 0.42)
 		Kit.ball(m, "Mum", (cf * CF(math.cos(a) * r, d * 1.08 + rng:NextNumber(0, 0.1) - r * 0.25, math.sin(a) * r)).Position, d * 0.2, bloom, M.Fabric)
 	end
+	return m
+end
+
+---------------------------------------------------------------------------
+-- The neighborhood
+---------------------------------------------------------------------------
+
+-- A suburban house seen from the street (not enterable). cf = centre of the footprint at
+-- ground level, front facing local -Z. opts: W, D, Stories (1|2), Siding, Roof, Trim, Door,
+-- Shutter, Lit = { [windowIndex] = true } (front windows numbered left to right, ground floor
+-- first), Garage (bool, on the right), Porch (bool), Chimney (bool), Seed
+function Kit.suburbHouse(parent, cf: CFrame, opts)
+	local m = Kit.model(parent, opts.Name or "House")
+	local W, D = opts.W or 34, opts.D or 24
+	local stories = opts.Stories or 2
+	local H = stories * 11
+	local siding = opts.Siding or Color3.fromRGB(150, 160, 170)
+	local trim = opts.Trim or Color3.fromRGB(236, 232, 224)
+	local roof = opts.Roof or Color3.fromRGB(52, 50, 54)
+	local shutter = opts.Shutter or Color3.fromRGB(40, 44, 50)
+	local base = 1.2
+	-- foundation, body, band between floors
+	Kit.box(m, "Foundation", cf * CF(0, base / 2, 0), V(W + 0.8, base, D + 0.8), Color3.fromRGB(120, 116, 110), M.Concrete)
+	Kit.solid(m, "Body", cf * CF(0, base + H / 2, 0), V(W, H, D), siding, M.Siding)
+	Kit.box(m, "Corner", cf * CF(-W / 2, base + H / 2, -D / 2), V(0.6, H, 0.6), trim, M.Wood)
+	Kit.box(m, "Corner", cf * CF(W / 2, base + H / 2, -D / 2), V(0.6, H, 0.6), trim, M.Wood)
+	if stories == 2 then
+		Kit.box(m, "Band", cf * CF(0, base + 11, -D / 2 - 0.1), V(W + 0.2, 0.4, 0.3), trim, M.Wood)
+	end
+	-- gable roof along X with a little overhang
+	local rise = 7
+	for _, s in { -1, 1 } do
+		Kit.wedge(m, "Roof", cf * CF(0, base + H + rise / 2, s * (D / 4 + 0.5)) * ANG(0, s < 0 and 0 or math.pi, 0), V(W + 2, rise, D / 2 + 1), roof, M.Roof, { CanCollide = true })
+	end
+	Kit.box(m, "Fascia", cf * CF(0, base + H - 0.2, -D / 2 - 1.05), V(W + 2, 0.5, 0.2), trim, M.Wood)
+	if opts.Chimney then
+		Kit.box(m, "Chimney", cf * CF(W / 2 - 4, base + H + rise - 1, D / 6), V(2.6, 9, 2.6), Color3.fromRGB(116, 62, 50), M.Brick)
+	end
+	-- front windows (left to right, ground floor first), the door in the middle
+	local lit = opts.Lit or {}
+	local garage = opts.Garage == true
+	local usable = garage and (W - 12) or W
+	local x0 = -W / 2
+	local cols = math.max(2, math.floor(usable / 8))
+	local idx = 0
+	for floor = 1, stories do
+		for c = 1, cols do
+			local x = x0 + usable * (c - 0.5) / cols
+			-- the door takes the middle of the ground floor
+			if not (floor == 1 and math.abs(x - (x0 + usable / 2)) < 3) then
+				idx += 1
+				local y = base + (floor - 1) * 11 + 6
+				local wcf = cf * CF(x, y, -D / 2 - 0.15)
+				Kit.box(m, "WindowFrame", wcf, V(3.8, 5, 0.3), trim, M.Wood)
+				if lit[idx] then
+					Kit.box(m, "WindowLit", wcf * CF(0, 0, -0.1), V(3.2, 4.4, 0.1), Color3.fromRGB(255, 196, 132), M.Neon)
+					Kit.box(m, "Curtain", wcf * CF(-1.1, 0, -0.16), V(0.9, 4.4, 0.05), Color3.fromRGB(170, 110, 80), M.Fabric)
+				else
+					Kit.box(m, "WindowDark", wcf * CF(0, 0, -0.1), V(3.2, 4.4, 0.1), Color3.fromRGB(22, 26, 32), M.Glass, { Reflectance = 0.2 })
+				end
+				Kit.box(m, "Mullion", wcf * CF(0, 0, -0.17), V(0.18, 4.4, 0.05), trim, M.Wood)
+				Kit.box(m, "Mullion", wcf * CF(0, 0, -0.17), V(3.2, 0.18, 0.05), trim, M.Wood)
+				for _, sx in { -1, 1 } do
+					Kit.box(m, "Shutter", wcf * CF(sx * 2.45, 0, -0.05), V(1.1, 5, 0.12), shutter, M.Wood)
+				end
+			end
+		end
+	end
+	-- the door, steps and a porch light
+	local dx = x0 + usable / 2
+	local dcf = cf * CF(dx, base + 4.3, -D / 2 - 0.15)
+	Kit.box(m, "DoorFrame", dcf, V(4.4, 8.8, 0.3), trim, M.Wood)
+	Kit.box(m, "Door", dcf * CF(0, -0.2, -0.12), V(3.6, 8.2, 0.12), opts.Door or Color3.fromRGB(110, 40, 36), M.Wood)
+	Kit.ball(m, "Knob", (dcf * CF(1.2, -0.4, -0.25)).Position, 0.3, C.Brass, M.Metal)
+	Kit.box(m, "Step", cf * CF(dx, 0.3, -D / 2 - 1.4), V(6, 0.6, 2.6), Color3.fromRGB(140, 136, 130), M.Concrete)
+	if opts.Porch then
+		Kit.box(m, "PorchRoof", cf * CF(dx, base + 9.6, -D / 2 - 2.6), V(8, 0.5, 5.2), roof, M.Roof)
+		for _, sx in { -1, 1 } do
+			Kit.vcyl(m, "PorchPost", cf * CF(dx + sx * 3.6, base + 4.7, -D / 2 - 4.8), 9.4, 0.5, trim, M.Wood)
+		end
+	end
+	local lamp = Kit.box(m, "PorchLamp", dcf * CF(-3, 1.2, -0.4), V(0.6, 0.9, 0.6), lit.Porch == false and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(255, 200, 130), lit.Porch == false and M.Plastic or M.Neon)
+	if opts.PorchLight ~= false then
+		local l = Instance.new("PointLight")
+		l.Range = 14
+		l.Brightness = 1
+		l.Color = Color3.fromRGB(255, 190, 120)
+		l.Shadows = false
+		l.Parent = lamp
+	end
+	if garage then
+		local gx = W / 2 - 6
+		Kit.box(m, "GarageFrame", cf * CF(gx, base + 4, -D / 2 - 0.15), V(10.6, 8.4, 0.3), trim, M.Wood)
+		local gd = Kit.box(m, "GarageDoor", cf * CF(gx, base + 3.9, -D / 2 - 0.25), V(10, 7.8, 0.12), Color3.fromRGB(226, 222, 214), M.Metal)
+		for k = 1, 3 do
+			Kit.box(m, "GarageSeam", gd.CFrame * CF(0, -3.9 + k * 1.95, -0.07), V(10, 0.08, 0.03), Color3.fromRGB(180, 176, 168), M.Metal)
+		end
+	end
+	return m
+end
+
+-- a wooden telephone pole with a crossarm; returns the model and the two wire points
+function Kit.telephonePole(parent, pos: Vector3, h: number?)
+	local m = Kit.model(parent, "TelephonePole")
+	local height = h or 26
+	Kit.vcyl(m, "Pole", CF(pos + V(0, height / 2, 0)), height, 0.9, Color3.fromRGB(88, 70, 52), M.Wood, { CanCollide = true })
+	Kit.box(m, "Crossarm", CF(pos + V(0, height - 2, 0)), V(0.5, 0.5, 7), Color3.fromRGB(88, 70, 52), M.Wood)
+	for _, z in { -3, 3 } do
+		Kit.vcyl(m, "Insulator", CF(pos + V(0, height - 1.55, z)), 0.5, 0.3, Color3.fromRGB(120, 160, 140), M.Glass)
+	end
+	Kit.vcyl(m, "Transformer", CF(pos + V(0.9, height - 6, 0)), 2.6, 1.6, Color3.fromRGB(110, 114, 118), M.Metal)
+	return m, pos + V(0, height - 1.3, -3), pos + V(0, height - 1.3, 3)
+end
+
+-- a sagging overhead wire from a to b
+function Kit.wire(parent, a: Vector3, b: Vector3, sag: number)
+	local m = Kit.model(parent, "Wire")
+	local n = 8
+	local function at(t: number): Vector3
+		return a:Lerp(b, t) - V(0, math.sin(t * math.pi) * sag, 0)
+	end
+	for k = 0, n - 1 do
+		local p0, p1 = at(k / n), at((k + 1) / n)
+		Kit.box(m, "WireSeg", CFrame.lookAt((p0 + p1) / 2, p1), V(0.08, 0.08, (p1 - p0).Magnitude + 0.05), Color3.fromRGB(20, 20, 22), M.Plastic, { CastShadow = false })
+	end
+	return m
+end
+
+-- a striped road barricade with two amber blinkers; returns the blinker parts
+function Kit.barricade(parent, cf: CFrame, w: number)
+	local m = Kit.model(parent, "Barricade")
+	local blinkers = {}
+	for _, s in { -1, 1 } do
+		for _, e in { -1, 1 } do
+			Kit.box(m, "BarricadeLeg", cf * CF(s * (w / 2 - 0.4), 1.9, e * 0.8) * ANG(e * 0.25, 0, 0), V(0.3, 3.9, 0.3), Color3.fromRGB(230, 230, 226), M.Wood)
+		end
+	end
+	for k, y in { 3.2, 2.1 } do
+		local board = Kit.box(m, "BarricadeBoard", cf * CF(0, y, 0), V(w, 0.7, 0.2), Color3.fromRGB(236, 236, 232), M.Wood, { CanCollide = true })
+		for i = 0, math.floor(w / 1.2) - 1 do
+			Kit.box(m, "Stripe", board.CFrame * CF(-w / 2 + 0.6 + i * 1.2, 0, -0.11) * ANG(0, 0, rad(k == 1 and 40 or -40)), V(0.35, 0.95, 0.02), Color3.fromRGB(220, 110, 30), M.Plastic)
+		end
+	end
+	for _, s in { -1, 1 } do
+		local b = Kit.ball(m, "Blinker", (cf * CF(s * (w / 2 - 0.4), 4.1, 0)).Position, 0.5, Color3.fromRGB(255, 170, 40), M.Neon)
+		table.insert(blinkers, b)
+	end
+	return m, blinkers
+end
+
+-- a road sign on a post; `text` on both faces
+function Kit.roadSign(parent, cf: CFrame, text: string, color: Color3?, textColor: Color3?, w: number?, h: number?)
+	local m = Kit.model(parent, "RoadSign")
+	local sw, sh = w or 5, h or 1.4
+	Kit.vcyl(m, "SignPost", cf * CF(0, 4.5, 0), 9, 0.25, Color3.fromRGB(140, 140, 144), M.Metal)
+	local sign = Kit.box(m, "Sign", cf * CF(0, 8.4, 0), V(sw, sh, 0.12), color or Color3.fromRGB(30, 110, 60), M.Metal)
+	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = face
+		gui.CanvasSize = Vector2.new(sw * 50, sh * 50)
+		gui.LightInfluence = 1
+		gui.Parent = sign
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.GothamBold
+		label.TextScaled = true
+		label.TextColor3 = textColor or Color3.new(1, 1, 1)
+		label.Text = text
+		label.Parent = gui
+	end
+	return m
+end
+
+-- a bus shelter with a bench and a timetable
+function Kit.busStop(parent, cf: CFrame)
+	local m = Kit.model(parent, "BusStop")
+	local metal = Color3.fromRGB(60, 64, 70)
+	for _, s in { -1, 1 } do
+		for _, e in { -1, 1 } do
+			Kit.vcyl(m, "ShelterPost", cf * CF(s * 4.5, 4, e * 1.6), 8, 0.25, metal, M.Metal, { CanCollide = true })
+		end
+		Kit.box(m, "ShelterSide", cf * CF(s * 4.5, 4.3, 0), V(0.1, 5.5, 3), Color3.fromRGB(170, 190, 200), M.Glass, { Transparency = 0.6 })
+	end
+	Kit.box(m, "ShelterBack", cf * CF(0, 4.3, 1.6), V(9, 5.5, 0.1), Color3.fromRGB(170, 190, 200), M.Glass, { Transparency = 0.6 })
+	Kit.box(m, "ShelterRoof", cf * CF(0, 8.1, 0), V(10, 0.3, 4), metal, M.Metal, { CanCollide = true })
+	Kit.bench(m, cf * CF(0, 0, 0.9), 6, Color3.fromRGB(90, 70, 50))
+	Kit.box(m, "Timetable", cf * CF(-3.2, 5, 1.52), V(1.6, 2.2, 0.05), Color3.fromRGB(236, 236, 230), M.Plastic)
+	return m
+end
+
+-- a bicycle standing on its wheels; cf = between the wheels at ground level, facing local -Z
+function Kit.bicycle(parent, cf: CFrame, color: Color3)
+	local m = Kit.model(parent, "Bicycle")
+	local r = 1.25
+	for _, z in { -1.7, 1.7 } do
+		Kit.ring(m, "Tyre", cf * CF(0, r, z) * ANG(0, 0, rad(90)), r, 0.14, 0.14, 16, C.Black, M.Rubber)
+		Kit.cyl(m, "Hub", cf * CF(0, r, z), 0.3, 0.2, C.Chrome, M.Metal)
+	end
+	local tube = function(a: Vector3, b: Vector3)
+		local pa, pb = (cf * CF(a)).Position, (cf * CF(b)).Position
+		Kit.box(m, "Frame", CFrame.lookAt((pa + pb) / 2, pb), V(0.14, 0.14, (pb - pa).Magnitude), color, M.Metal)
+	end
+	local bb, seat, head = V(0, 0.95, 0.2), V(0, 2.9, 0.7), V(0, 2.7, -1.2)
+	tube(bb, seat)
+	tube(bb, head)
+	tube(seat, head)
+	tube(bb, V(0, r, 1.7))
+	tube(seat, V(0, r, 1.7))
+	tube(head, V(0, r, -1.7))
+	Kit.box(m, "Saddle", cf * CF(0, 3.05, 0.75), V(0.35, 0.14, 0.9), C.Black, M.Leather)
+	Kit.cyl(m, "Handlebar", cf * CF(0, 3.2, -1.25), 1.6, 0.12, C.Chrome, M.Metal)
+	Kit.vcyl(m, "Stem", cf * CF(0, 2.95, -1.23), 0.5, 0.12, C.Chrome, M.Metal)
 	return m
 end
 

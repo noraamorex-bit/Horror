@@ -221,18 +221,20 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.bookcase(living, F(-9.3, G, -6.5, NX), 6, 1.2, 8.5, 4)
 	Kit.ceilingFan(living, V(-24, G + 13, -14))
 
-	-- cozy: knitted throws, extra cushions, two mugs of cocoa still steaming, a basket of blankets
-	-- by the fire, warm sconces either side of the TV
-	local sofaCF = F(-24, G, -15.5, NZ)
-	Kit.throwBlanket(living, sofaCF, 3.8, -2.6, 2.4, Color3.fromRGB(226, 214, 190), Color3.fromRGB(170, 60, 50))
-	Kit.throwBlanket(living, F(-34, G, -21.5, PX), 3.8, 0, 2.2, Color3.fromRGB(150, 50, 44), Color3.fromRGB(230, 200, 150))
-	Kit.cushion(living, sofaCF * CF(1.2, 2.72, 0.45) * ANG(rad(14), rad(8), rad(5)), 1.2, Color3.fromRGB(226, 196, 140))
-	Kit.cushion(living, F(-15.2, G, -22.4, NX) * CF(0, 2.62, 0.45) * ANG(rad(14), 0, rad(-6)), 1.15, Color3.fromRGB(70, 96, 84))
-	Kit.cocoa(living, F(-21.9, G + 2.1, -22.0, NZ), Color3.fromRGB(190, 60, 50))
-	Kit.cocoa(living, F(-25.0, G + 2.1, -22.1, NZ) * ANG(0, rad(140), 0), Color3.fromRGB(236, 230, 214))
-	Kit.basket(living, F(-37.3, G, -5.4, PX), 1.9, 1.5)
-	for _, x in { -30.6, -17.4 } do
-		sconce(living, F(x, G + 8.4, -29.62, PZ))
+	do
+		-- cozy: knitted throws, extra cushions, two mugs of cocoa still steaming, a basket of blankets
+		-- by the fire, warm sconces either side of the TV
+		local sofaCF = F(-24, G, -15.5, NZ)
+		Kit.throwBlanket(living, sofaCF, 3.8, -2.6, 2.4, Color3.fromRGB(226, 214, 190), Color3.fromRGB(170, 60, 50))
+		Kit.throwBlanket(living, F(-34, G, -21.5, PX), 3.8, 0, 2.2, Color3.fromRGB(150, 50, 44), Color3.fromRGB(230, 200, 150))
+		Kit.cushion(living, sofaCF * CF(1.2, 2.72, 0.45) * ANG(rad(14), rad(8), rad(5)), 1.2, Color3.fromRGB(226, 196, 140))
+		Kit.cushion(living, F(-15.2, G, -22.4, NX) * CF(0, 2.62, 0.45) * ANG(rad(14), 0, rad(-6)), 1.15, Color3.fromRGB(70, 96, 84))
+		Kit.cocoa(living, F(-21.9, G + 2.1, -22.0, NZ), Color3.fromRGB(190, 60, 50))
+		Kit.cocoa(living, F(-25.0, G + 2.1, -22.1, NZ) * ANG(0, rad(140), 0), Color3.fromRGB(236, 230, 214))
+		Kit.basket(living, F(-37.3, G, -5.4, PX), 1.9, 1.5)
+		for _, x in { -30.6, -17.4 } do
+			sconce(living, F(x, G + 8.4, -29.62, PZ))
+		end
 	end
 
 	-- grandfather clock in the corner, pendulum swinging behind the glass
@@ -794,13 +796,15 @@ function Interior.build(ctx, root: Instance, refs)
 	lamp(den, "Den", F(28.2, G, 18.8, NZ), "floor")
 	Kit.ceilingFan(den, V(24, G + 13, 15))
 	Kit.plant(den, F(37, G, 7.2, NX), 1.4, "leafy")
-	-- cozy: throw and cushion on the sofa, cocoa and cookies for movie night, blanket basket
-	local denSofa = F(21.5, G, 17.5, NZ)
-	Kit.throwBlanket(den, denSofa, 3.8, 2.8, 2.4, Color3.fromRGB(196, 150, 90), Color3.fromRGB(120, 60, 40))
-	Kit.cushion(den, denSofa * CF(-1.4, 2.72, 0.45) * ANG(rad(14), rad(-8), rad(-5)), 1.2, Color3.fromRGB(190, 120, 70))
-	Kit.cocoa(den, F(19.5, G + 2, 12.4, NZ), Color3.fromRGB(70, 100, 140))
-	Kit.cookies(den, F(23.6, G + 2, 12.5, NZ))
-	Kit.basket(den, F(14.2, G, 21.4, PX), 1.9, 1.5, nil, { Color3.fromRGB(120, 60, 40), Color3.fromRGB(226, 214, 190), Color3.fromRGB(196, 150, 90) })
+	do
+		-- cozy: throw and cushion on the sofa, cocoa and cookies for movie night, blanket basket
+		local denSofa = F(21.5, G, 17.5, NZ)
+		Kit.throwBlanket(den, denSofa, 3.8, 2.8, 2.4, Color3.fromRGB(196, 150, 90), Color3.fromRGB(120, 60, 40))
+		Kit.cushion(den, denSofa * CF(-1.4, 2.72, 0.45) * ANG(rad(14), rad(-8), rad(-5)), 1.2, Color3.fromRGB(190, 120, 70))
+		Kit.cocoa(den, F(19.5, G + 2, 12.4, NZ), Color3.fromRGB(70, 100, 140))
+		Kit.cookies(den, F(23.6, G + 2, 12.5, NZ))
+		Kit.basket(den, F(14.2, G, 21.4, PX), 1.9, 1.5, nil, { Color3.fromRGB(120, 60, 40), Color3.fromRGB(226, 214, 190), Color3.fromRGB(196, 150, 90) })
+	end
 
 	---------------------------------------------------------------------------
 	-- GARAGE
@@ -852,20 +856,47 @@ function Interior.build(ctx, root: Instance, refs)
 
 	-- the woodpile (for the fireplace)
 	Kit.woodpile(garage, F(62.5, G, -10.5, NX), 4)
-	local pileSpot = spot(garage, "PileSpot", CF(62.5, G + 1.6, -10.5), V(3.4, 3.2, 3.9))
-	target("Woodpile", pileSpot.Position)
-	ctx.Interaction.prompt(pileSpot, { Action = "Take firewood", Object = "Woodpile", Hold = 0.6, Distance = 7 }, function(player)
-		if ctx.Inventory.has(player, "Firewood") then
-			ctx.Audio.caption("Your arms are full already.", nil, nil, { player })
-			return
+	do
+		-- lived-in garage: an oil stain, winter tyres, the mower, yard tools, an old fridge, recycling
+		Kit.ellipsoid(garage, "OilStain", CF(53, G + 0.02, -19), V(3.2, 0.02, 2.2), Color3.fromRGB(28, 26, 24), KM.Glass, { Reflectance = 0.2 })
+		for k = 0, 2 do
+			Kit.vcyl(garage, "Tyre", CF(42.2, G + 0.45 + k * 0.9, -27.4) * ANG(0, k * 0.3, 0), 0.85, 2.5, Color3.fromRGB(24, 24, 26), KM.Rubber)
+			Kit.vcyl(garage, "TyreRim", CF(42.2, G + 0.45 + k * 0.9, -27.4), 0.88, 1.2, Color3.fromRGB(150, 150, 154), KM.Metal)
 		end
-		if refs.Fire and refs.Fire.Logs then
-			ctx.Audio.caption("The fire's already going. There's plenty of wood in it.", nil, nil, { player })
-			return
+		Kit.collider(garage, CF(42.2, G + 1.35, -27.4), V(2.5, 2.7, 2.5))
+		local mower = Kit.model(garage, "Lawnmower")
+		Kit.box(mower, "MowerDeck", CF(63.6, G + 0.9, -27.4), V(2.2, 0.9, 2.6), Color3.fromRGB(160, 40, 36), KM.Metal)
+		Kit.vcyl(mower, "MowerEngine", CF(63.6, G + 1.7, -27.4), 0.8, 1.1, Color3.fromRGB(40, 40, 44), KM.Metal)
+		for _, s in { -1, 1 } do
+			for _, e in { -1, 1 } do
+				Kit.cyl(mower, "MowerWheel", CF(63.6 + s * 1.15, G + 0.4, -27.4 + e * 1.0), 0.25, 0.8, C.Black, KM.Rubber)
+			end
+			Kit.box(mower, "MowerHandle", CF(63.6 + s * 0.8, G + 2.3, -25.4) * ANG(rad(-40), 0, 0), V(0.12, 3.4, 0.12), Color3.fromRGB(60, 60, 64), KM.Metal)
 		end
-		ctx.Audio.playAt("LogDrop", pileSpot.Position, { Caption = false, Volume = 0.4 })
-		ctx.Inventory.give(player, "Firewood")
-	end)
+		Kit.collider(mower, CF(63.6, G + 1, -27), V(2.4, 2, 3.2))
+		for i, tool in { { "Rake", Color3.fromRGB(150, 110, 70) }, { "Shovel", Color3.fromRGB(120, 90, 60) }, { "Broom", Color3.fromRGB(190, 160, 80) } } do
+			local z = -24 + i * 1.3
+			Kit.box(garage, tool[1] .. "Handle", CF(40.55, G + 3.4, z) * ANG(rad(4), 0, 0), V(0.16, 6, 0.16), tool[2], KM.Wood)
+			Kit.box(garage, tool[1] .. "Head", CF(40.6, G + 0.5, z), V(0.2, 0.9, 1.1), Color3.fromRGB(70, 70, 74), KM.Metal)
+		end
+		Kit.box(garage, "ToolHooks", CF(40.42, G + 6.2, -22), V(0.12, 0.3, 4.2), Color3.fromRGB(60, 60, 64), KM.Metal)
+		Kit.fridge(garage, F(56.3, G, 4.4, NZ), 3, 2.8, 6.4, Color3.fromRGB(226, 220, 200))
+		Kit.trashBin(garage, F(64.4, G, 1.6, NX), Color3.fromRGB(40, 80, 150))
+		local pileSpot = spot(garage, "PileSpot", CF(62.5, G + 1.6, -10.5), V(3.4, 3.2, 3.9))
+		target("Woodpile", pileSpot.Position)
+		ctx.Interaction.prompt(pileSpot, { Action = "Take firewood", Object = "Woodpile", Hold = 0.6, Distance = 7 }, function(player)
+			if ctx.Inventory.has(player, "Firewood") then
+				ctx.Audio.caption("Your arms are full already.", nil, nil, { player })
+				return
+			end
+			if refs.Fire and refs.Fire.Logs then
+				ctx.Audio.caption("The fire's already going. There's plenty of wood in it.", nil, nil, { player })
+				return
+			end
+			ctx.Audio.playAt("LogDrop", pileSpot.Position, { Caption = false, Volume = 0.4 })
+			ctx.Inventory.give(player, "Firewood")
+		end)
+	end
 
 	-- his route: stepladder under the hatch, muddy prints from the side door
 	local gh = L.GarageHatch
@@ -1139,6 +1170,80 @@ function Interior.build(ctx, root: Instance, refs)
 	local tarp = Kit.solid(base0, "Tarp", CF(5.9, BS + 3, 15.75), V(0.2, 6, 8.5), Color3.fromRGB(60, 80, 90), KM.Fabric)
 	for k = 0, 4 do
 		Kit.box(base0, "TarpFold", CF(5.8, BS + 3, 12.2 + k * 1.7) * ANG(0, 0, rad(3)), V(0.12, 5.9, 0.3), Color3.fromRGB(50, 68, 78), KM.Fabric)
+	end
+	do
+		-- structure: exposed floor joists, a steel girder on posts
+		local JOIST = Color3.fromRGB(150, 120, 85)
+		for x = -38, 4, 4 do
+			if x < -20 then
+				-- the boiler room wall (z = 10) runs up to the joists: they stop either side of it
+				Kit.box(base0, "Joist", CF(x, -0.55, -10.15), V(0.5, 1.1, 39.7), JOIST, KM.Wood)
+				Kit.box(base0, "Joist", CF(x, -0.55, 20.15), V(0.5, 1.1, 19.7), JOIST, KM.Wood)
+			else
+				Kit.box(base0, "Joist", CF(x, -0.55, 0), V(0.5, 1.1, 60), JOIST, KM.Wood)
+			end
+		end
+		Kit.box(base0, "Girder", CF(-17, -1.35, -0.8), V(46, 0.9, 0.6), Color3.fromRGB(90, 90, 96), KM.Metal)
+		for _, x in { -30, -18, -4 } do
+			Kit.vcyl(base0, "LallyColumn", CF(x, BS + 5.9, -0.8), 11.8, 0.45, Color3.fromRGB(70, 70, 76), KM.Metal, { CanCollide = true })
+		end
+		-- ducts and wiring along the joists
+		Kit.box(base0, "Duct", CF(-22, -1.9, 8), V(34, 1.2, 1.8), Color3.fromRGB(170, 172, 176), KM.Metal)
+		for x = -36, -8, 7 do
+			Kit.box(base0, "DuctBand", CF(x, -1.9, 8), V(0.15, 1.3, 1.9), Color3.fromRGB(130, 132, 136), KM.Metal)
+		end
+		-- bare bulbs with pull cords
+		for _, p in { V(-24, 0, -12), V(-30, 0, 2), V(-2, 0, 12) } do
+			Kit.vcyl(base0, "BulbSocket", CF(p + V(0, -1.3, 0)), 0.4, 0.35, Color3.fromRGB(60, 60, 60), KM.Plastic)
+			Kit.ball(base0, "BareBulb", p + V(0, -1.75, 0), 0.45, Color3.fromRGB(250, 240, 210), KM.Glass)
+			Kit.vcyl(base0, "PullCord", CF(p + V(0.15, -3.1, 0)), 2.6, 0.03, Color3.fromRGB(230, 226, 214), KM.Fabric)
+		end
+		-- the old rec-room corner: rug, a crate with an old TV, the couch facing it
+		Kit.rug(base0, F(-8, BS, -9.5, NZ), 10, 7, Color3.fromRGB(96, 70, 56), Color3.fromRGB(150, 120, 80))
+		Kit.cardboardBox(base0, F(-8, BS, -14.2, PZ), V(3.4, 2.2, 2.2), Color3.fromRGB(120, 96, 70))
+		Kit.box(base0, "OldTV", CF(-8, BS + 3.4, -14.2), V(3, 2.4, 2.2), Color3.fromRGB(40, 38, 36), KM.Plastic)
+		Kit.box(base0, "OldTVScreen", CF(-8, BS + 3.45, -13.08), V(2.3, 1.7, 0.05), Color3.fromRGB(20, 26, 24), KM.Glass, { Reflectance = 0.15 })
+		Kit.box(base0, "Antenna", CF(-8.4, BS + 5.1, -14.2) * ANG(0, 0, rad(25)), V(0.06, 1.6, 0.06), Kit.C.Chrome, KM.Metal)
+		Kit.box(base0, "Antenna", CF(-7.6, BS + 5.1, -14.2) * ANG(0, 0, rad(-25)), V(0.06, 1.6, 0.06), Kit.C.Chrome, KM.Metal)
+		-- a ping-pong table under a dust sheet
+		local sheet = Color3.fromRGB(206, 202, 192)
+		Kit.solid(base0, "PingPong", CF(-24, BS + 1.3, -13), V(9, 2.6, 5), Color3.fromRGB(40, 70, 50), KM.Wood)
+		Kit.soft(base0, "DustSheet", CF(-24, BS + 2.66, -13), V(9.4, 0.12, 5.4), 0.05, sheet, KM.Fabric)
+		for _, s in { -1, 1 } do
+			Kit.box(base0, "SheetDrape", CF(-24, BS + 1.8, -13 + s * 2.72) * ANG(s * 0.08, 0, 0), V(9.4, 1.8, 0.08), sheet, KM.Fabric)
+			Kit.box(base0, "SheetDrape", CF(-24 + s * 4.72, BS + 1.8, -13) * ANG(0, 0, -s * 0.08), V(0.08, 1.8, 5.4), sheet, KM.Fabric)
+		end
+		-- an armchair under another sheet
+		Kit.soft(base0, "SheetedChair", CF(-30, BS + 1.6, 5.5), V(3.4, 3.2, 3.2), 0.6, sheet, KM.Fabric)
+		Kit.soft(base0, "SheetedChairBack", CF(-30, BS + 3.6, 6.7), V(3.4, 1.6, 0.9), 0.4, sheet, KM.Fabric)
+		-- holiday storage: stacked tubs and the artificial tree box
+		for k = 0, 2 do
+			local lid = k % 2 == 0 and Color3.fromRGB(150, 40, 36) or Color3.fromRGB(40, 100, 60)
+			Kit.box(base0, "StorageTub", CF(-20.5, BS + 0.85 + k * 1.72, -28.2), V(3.2, 1.6, 2.2), Color3.fromRGB(200, 200, 196), KM.Plastic, { Transparency = 0.2 })
+			Kit.box(base0, "TubLid", CF(-20.5, BS + 1.7 + k * 1.72, -28.2), V(3.3, 0.14, 2.3), lid, KM.Plastic)
+		end
+		Kit.cardboardBox(base0, F(-8, BS, -28.3, PZ) * ANG(0, 0, 0), V(5.5, 1.6, 1.6), Color3.fromRGB(150, 60, 50))
+		-- bikes against the east wall, an old mattress leaning beside them
+		Kit.bicycle(base0, F(10.6, BS, -12, PZ), Color3.fromRGB(40, 90, 150))
+		Kit.bicycle(base0, F(10.6, BS, -17, PZ), Color3.fromRGB(200, 60, 120))
+		Kit.soft(base0, "OldMattress", CF(10.9, BS + 3.5, -24) * ANG(0, 0, rad(-12)), V(0.9, 7, 5.2), 0.3, Color3.fromRGB(200, 196, 180), KM.Fabric)
+		-- the sump pit, with water around it
+		Kit.vcyl(base0, "SumpRim", CF(-2, BS + 0.05, 21), 0.1, 2.6, Color3.fromRGB(90, 90, 92), KM.Concrete)
+		Kit.vcyl(base0, "SumpWater", CF(-2, BS + 0.07, 21), 0.08, 2.1, Color3.fromRGB(30, 36, 40), KM.Glass, { Reflectance = 0.3 })
+		Kit.box(base0, "SumpGrate", CF(-2, BS + 0.12, 21), V(2.2, 0.04, 2.2), Color3.fromRGB(60, 60, 64), KM.Metal, { Transparency = 0.3 })
+		Kit.vcyl(base0, "SumpPipe", CF(-2, BS + 6, 21.9), 12, 0.35, Color3.fromRGB(230, 230, 226), KM.Plastic)
+		for _, p in { { -4.5, 23, 3, 2 }, { 1, 18.5, 2.2, 1.4 }, { -18, -6, 3.5, 2.2 } } do
+			Kit.ellipsoid(base0, "Puddle", CF(p[1], BS + 0.02, p[2]), V(p[3], 0.02, p[4]), Color3.fromRGB(34, 38, 42), KM.Glass, { Reflectance = 0.3 })
+		end
+		-- water stains low on the concrete
+		for _, p in { { -39.3, -20, 5 }, { -39.3, 6, 3.5 }, { -10, 29.3, 4 }, { 11.3, -26, 3 } } do
+			local alongZ = math.abs(p[1]) > 30 or p[1] > 10
+			Kit.box(base0, "WaterStain", CF(p[1], BS + 1.2, p[2]), alongZ and V(0.02, 2.4, p[3]) or V(p[3], 2.4, 0.02), Color3.fromRGB(80, 78, 72), KM.Concrete, { Transparency = 0.35 })
+		end
+		-- cobwebs in the corners by the joists
+		for _, c in { V(-39.4, -1.4, -29.4), V(11.4, -1.4, -29.4), V(-39.4, -1.4, 29.4) } do
+			Kit.wedge(base0, "Cobweb", CF(c) * ANG(0, (c.X > 0 and -1 or 1) * rad(45) + (c.Z > 0 and math.pi or 0), 0), V(0.02, 2, 2), Color3.fromRGB(220, 220, 220), KM.Fabric, { Transparency = 0.7 })
+		end
 	end
 	ctx.Hiding.register(tarp, {
 		Name = "Under the basement stairs",
