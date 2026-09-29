@@ -478,6 +478,13 @@ function Director.startAct(name: string, cause: Player?)
 			end
 			task.wait(4)
 			ctx.Intruder.setMode("Lurk")
+			-- first night ever: how to survive, once
+			for _, p in ctx.Util.sessionPlayers() do
+				if (tonumber(p:GetAttribute("StatNights")) or 0) == 0 and not p:GetAttribute("SawSurvivalTips") then
+					p:SetAttribute("SawSurvivalTips", true)
+					ctx.Remotes.Notice:FireClient(p, ctx.Story.SurvivalTips)
+				end
+			end
 			task.wait(6)
 			ctx.Remotes.Notify:FireAllClients("That wasn't the storm. Something flipped the main breaker.", "danger")
 		end)
@@ -583,7 +590,26 @@ function Director.checkAllCaptured()
 		end
 	end
 	if #ctx.Util.activePlayers() == 0 and anyCaptured then
-		ctx.Ending.trigger("GoneQuiet")
+		-- everyone is tied up: one last chance to struggle free before it's over
+		if not state.GoneQuietAt then
+			state.GoneQuietAt = os.clock() + (ctx.Config.Capture.LastChance or 45)
+			for _, p in session do
+				ctx.Remotes.Notify:FireClient(p, "Nobody's coming. Struggle free before he comes back!", "danger")
+			end
+		end
+	else
+		state.GoneQuietAt = nil
+	end
+end
+
+local function lastChanceTick()
+	if state.GoneQuietAt then
+		if #ctx.Util.activePlayers() > 0 then
+			state.GoneQuietAt = nil
+		elseif os.clock() >= state.GoneQuietAt and not ctx.Ending.isOver() then
+			state.GoneQuietAt = nil
+			ctx.Ending.trigger("GoneQuiet")
+		end
 	end
 end
 
@@ -853,6 +879,7 @@ local function actTick()
 
 	schedule(actTime)
 	hintTick()
+	lastChanceTick()
 	-- first visits to each room in the first act get a line of their own
 	if state.Act == "Evening" and Director.isQuiet() then
 		for _, p in ctx.Util.activePlayers() do

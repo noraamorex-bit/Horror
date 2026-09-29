@@ -689,6 +689,13 @@ Story.Endings = {
 	},
 }
 
+-- shown once, the first night someone plays, when he starts moving around the house
+Story.SurvivalTips = {
+	Title = "HE'S IN THE HOUSE",
+	Body = "• Hide in closets, wardrobes, under beds, behind the shower curtain.\n• When he's close, hold your BREATH.\n• He sees you in the light and hears you run. Crouch in the dark.\n• Stick together: friends can cut you free if he takes you.\n• Get help: fix the phone line, find a signal, reach the neighbor, or take the car.",
+	Button = "GOT IT",
+}
+
 -- The lobby's endings collection: display order and a hint for the ones not found yet
 Story.EndingOrder = { "Sirens", "NextDoor", "Taillights", "LockedIn", "Dawn", "GoneQuiet" }
 Story.EndingHints = {

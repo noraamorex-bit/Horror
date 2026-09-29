@@ -105,7 +105,8 @@ Config.Intruder = {
 	SightFlashlight = 110,
 	CrouchSightMultiplier = 0.6,
 	PeripheralRange = 7, -- sensed regardless of facing
-	ChaseMaxTime = 15,
+	ChaseMaxTime = 15, -- x0.75 when playing alone
+	SoloChaseSlowdown = 1.5, -- studs/s slower when playing alone
 	ChaseLoseSightTime = 4,
 	StunTime = 7,
 	RetreatAfterStun = 35,
@@ -131,6 +132,7 @@ Config.Capture = {
 	RescueHoldTool = 2.5,
 	StrugglePerPress = 1.1, -- percent
 	StruggleNoiseEvery = 12, -- presses
+	LastChance = 45, -- seconds everyone-captured players get to struggle free before the bad ending
 }
 
 Config.Help = {

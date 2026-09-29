@@ -37,6 +37,7 @@ local NAMES = {
 	"LeaveQueue", -- () lobby: step off your circle
 	"DialogueChoice", -- (index) the line you picked
 	"Jumpscare", -- (head part) he got you: the camera snaps to his face
+	"Notice", -- ({Title, Body, Button}) a one-button card (first-night tips)
 }
 
 local Remotes = {}

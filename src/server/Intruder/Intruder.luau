@@ -706,7 +706,7 @@ STATES.Chase = function(_, visible)
 		return
 	end
 	local r = rootOf(t) :: BasePart
-	if now() - S.StateStart > I.ChaseMaxTime then
+	if now() - S.StateStart > I.ChaseMaxTime * ((#ctx.Util.sessionPlayers() <= 1) and 0.75 or 1) then
 		S.ChaseCooldownUntil = now() + 20
 		setState("Search", { Pos = r.Position })
 		return
@@ -720,7 +720,9 @@ STATES.Chase = function(_, visible)
 		return
 	end
 	-- he's heard them running: head for where they are even between glimpses
-	follow(r.Position, I.ChaseSpeed)
+	-- (alone, you get a fairer chance: he's a step slower and gives up sooner)
+	local solo = #ctx.Util.sessionPlayers() <= 1
+	follow(r.Position, I.ChaseSpeed - (solo and (I.SoloChaseSlowdown or 1.5) or 0))
 	tryGrab(t)
 end
 

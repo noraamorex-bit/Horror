@@ -97,6 +97,11 @@ The living-room sofa, both armchairs and the den sofa have seats: a **Sit** prom
 ### Night recap
 The ending card adds a line under each player: how many times they hid, were spotted, got caught and freed a friend (or "never saw him coming").
 
+### Fairness
+- **Last chance:** when everyone is tied up (always true when playing alone), the bad ending waits 45 s (`Config.Capture.LastChance`) so captives can struggle free; anyone getting loose cancels it.
+- **Alone:** he chases a step slower (`SoloChaseSlowdown`) and gives up a quarter sooner.
+- **First night:** the first time someone plays, a "HE'S IN THE HOUSE" card explains hiding, breath, light and noise, friends and the ways out, right after the power dies.
+
 ### Getting caught
 When he grabs you, your camera snaps onto his masked face, inches away and lunging closer, with a scream hit ("Eyes Scream Horror Hit", APM), a red flash and a hard shake. Then the hand over your mouth and the fade to black. He also breathes: a slow, heavy loop on him that you only hear from a few steps away, which is how you know he is right outside your hiding spot.
 

@@ -79,6 +79,13 @@ function Notice.init(c)
 end
 
 function Notice.start()
+	if ctx.Remotes.Notice then
+		ctx.Remotes.Notice.OnClientEvent:Connect(function(data)
+			if type(data) == "table" then
+				Notice.show(data)
+			end
+		end)
+	end
 	local UI = ctx.UI
 	card = UI.new("Frame", {
 		Name = "Notice",
