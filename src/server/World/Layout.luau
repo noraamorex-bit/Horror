@@ -185,7 +185,8 @@ Layout.Stairs = {
 	Basement = { x0 = 6, x1 = 12, zStart = 22, zEnd = -0.4, yStart = 1, yEnd = -13 },
 }
 
-Layout.AtticHatch = { x0 = 4, x1 = 8, z0 = 22, z1 = 28 }
+-- Under the ridge side of the roof, so there is headroom above it in the attic.
+Layout.AtticHatch = { x0 = 4, x1 = 8, z0 = 8, z1 = 14 }
 Layout.GarageHatch = { x0 = 50, x1 = 54, z0 = -3, z1 = 1 }
 
 -- Wall colors per floor section (interior)
@@ -295,7 +296,7 @@ Layout.WindowWatch = {
 Layout.FootstepPath = {
 	Vector3.new(26, 15.5, 20), Vector3.new(18, 15.5, 20), Vector3.new(12, 15.5, 20),
 	Vector3.new(8, 15.5, 16), Vector3.new(4, 15.5, 8), Vector3.new(4, 15.5, 0),
-	Vector3.new(4, 15.5, 10), Vector3.new(6, 15.5, 20), Vector3.new(6, 15.5, 25),
+	Vector3.new(4, 15.5, 6), Vector3.new(6, 15.5, 10), Vector3.new(6, 15.5, 12),
 }
 
 Layout.RestraintSlots = {
@@ -311,7 +312,7 @@ Layout.LobbySpawns = {
 
 Layout.Attic = {
 	Nest = Vector3.new(-24, 29, 0),
-	HatchTop = Vector3.new(6, 32, 20),
+	HatchTop = Vector3.new(2, 32, 11),
 	GarageHatchBelow = Vector3.new(52, 4, 3),
 	IntruderOffstage = Vector3.new(-26, 32, 3),
 }

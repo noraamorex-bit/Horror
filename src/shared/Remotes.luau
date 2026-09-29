@@ -20,6 +20,7 @@ local NAMES = {
 	"Ending", -- (payload)
 	"Texts", -- (list of phone messages)
 	"Lobby", -- (state)
+	"Figure", -- (cframe, duration) a figure only this player sees
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})

@@ -127,6 +127,20 @@ Config.Help = {
 	JunctionRepair = 10,
 }
 
+-- The Director: tension ceilings per act, seconds between scheduled events, storm cadence
+Config.Director = {
+	Ceiling = { Evening = 20, SmallThings = 55, SomeoneElse = 75, Guest = 100 },
+	Gap = {
+		Evening = { 60, 110 },
+		SmallThings = { 28, 55 },
+		SomeoneElse = { 30, 60 },
+		Guest = { 45, 90 },
+	},
+	TensionDecay = 0.5, -- per second
+	Lightning = { 20, 50 },
+	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
+}
+
 Config.ChatRange = 50
 
 Config.PepperSpray = {

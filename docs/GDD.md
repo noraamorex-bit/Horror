@@ -199,17 +199,20 @@ He opens doors, forces privacy locks (5 s), avoids light before Act IV, and pref
 Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host), Multitool (Tinkerer), Car Keys (hook → attic nest; spare in office), Basement Key (mudroom), Electrical Tape (kitchen junk drawer), Fire Poker (breaks ground-floor windows, very loud), Scissors (bathroom).
 
 ### Controls
-| Key | Action |
-|---|---|
-| E | Interact / hold |
-| R | Lock / unlock (doors) |
-| F | Flashlight |
-| G | Pepper spray |
-| C | Crouch toggle |
-| Shift | Sprint |
-| Tab | Journal (objectives) |
-| P | Phone |
-| Space | Hold breath (hiding) / struggle (captured) |
+| Key | Touch (phone / tablet) | Gamepad | Action |
+|---|---|---|---|
+| E | Tap the prompt | X | Interact (press and hold the prompt for hold actions) |
+| R | Tap the blue prompt | Y | Lock / unlock (doors), secondary actions |
+| F | LIGHT | D-pad up | Flashlight |
+| G | SPRAY | D-pad right | Pepper spray |
+| C | CROUCH | B | Crouch toggle |
+| Shift | SPRINT (toggle; turns off when you stop or run out of stamina) | L3 | Sprint |
+| Tab | JOURNAL (top right) | D-pad left | Journal (objectives) |
+| P | PHONE (top right) | D-pad down | Phone |
+| Space | BREATH (hold) / STRUGGLE (mash) | A | Hold breath (hiding) / struggle (captured) |
+| E | LEAVE | B | Leave a hiding spot |
+
+**Mobile layout.** Roblox's own thumbstick (move), camera drag (look) and jump button stay. The action buttons sit in an arc around the jump button and change with context: exploring shows SPRINT, CROUCH, LIGHT and SPRAY (the last two only once you carry the item); hiding swaps them for a big BREATH button and LEAVE (drag anywhere to peek around); captured shows one big STRUGGLE button. Prompts are drawn as large tappable cards. Phones get a lighter rain density, and panels (phone, documents) move off the right side so they never cover the buttons. Every touch button fires the same input action as its key, so there is one code path for all devices (`client/Controllers/Input` → `MobileControls`).
 
 ---
 
@@ -266,8 +269,9 @@ src/
 │  ├─ Director/       Director (acts, tension, beats), Events (event library)
 │  └─ Intruder/       Intruder (rig, states), Navigator (pathfinding), Perception
 └─ client/            → StarterPlayerScripts.Client (bootstrap: init.client.luau)
-   └─ Controllers/    Atmosphere (rain, lightning, audio), Movement, Flashlight, HUD,
-                      Prompts, Phone, Hiding camera, Effects (nerve), Ending
+   └─ Controllers/    UI, Input (keyboard/gamepad/touch actions), MobileControls, Atmosphere
+                      (rain, lightning, audio), Movement (+ flashlight aim), HUD, Prompts,
+                      Documents, Phone, HidingCam, Effects (nerve), Lobby, Ending
 ```
 
 ### Principles
@@ -294,6 +298,12 @@ src/
 3. Game Settings: set **Max Players = 4**, enable **Spatial Voice** (optional) and **Studio Access to API Services** (not required).
 4. Fill the empty `Id` fields in `src/shared/Sounds.luau` with audio from the Creator Store (rain loop, thunder, door creak, and so on).
 5. Test: **Studio → Test → Clients and Servers → 2 players**. Set `Config.Debug = true` for fast acts and debug logging.
+
+### Publishing
+`rojo build -o HomeAlone.rbxl`, then upload it with the Open Cloud Place Publishing API
+(`POST https://apis.roblox.com/universes/v1/{universeId}/places/{placeId}/versions?versionType=Published`,
+header `x-api-key`, body = the .rbxl as `application/octet-stream`). Use `versionType=Saved` to upload
+without making the version live.
 
 ### Tuning quick reference (`src/shared/Config.luau`)
 - `TimeScale`: multiply all act durations (0.25 for fast test runs).

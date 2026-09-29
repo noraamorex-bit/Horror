@@ -221,7 +221,7 @@ function Doors.open(door, byWho: string?, fast: boolean?)
 		ctx.Audio.playAt("DoorSlam", door.Position)
 		ctx.Noise.emit(door.Position, ctx.Config.Noise.DoorSlam, "Door")
 	else
-		ctx.Audio.playAt("DoorOpen", door.Position, { Caption = byWho == "Intruder" and nil or false })
+		ctx.Audio.playAt("DoorOpen", door.Position, { Caption = if byWho == "Intruder" then nil else false })
 		ctx.Noise.emit(door.Position, ctx.Config.Noise.Door, "Door")
 	end
 end

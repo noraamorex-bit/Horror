@@ -317,6 +317,7 @@ function Builder.railing(parent: Instance, a: Vector3, b: Vector3, height: numbe
 		Size = Vector3.new(0.4, height, len),
 		CFrame = CFrame.lookAt((a + b) / 2 + Vector3.new(0, height / 2, 0), b + Vector3.new(0, height / 2, 0)),
 		Transparency = 1,
+		CanQuery = false, -- you can see through balusters
 	})
 	local count = math.floor(len / 1.4)
 	for i = 0, count do

@@ -389,9 +389,23 @@ function Escape.setupGarageDoor(door: BasePart, button: BasePart, cord: BasePart
 	local closedCF = door.CFrame
 	local openCF = closedCF * CFrame.new(0, 9.2, 0)
 	state.GarageDoor = { Part = door, Closed = closedCF, Open = openCF }
+	-- the door and its panel seams move together
+	local pieces = { door }
+	for _, d in door:GetDescendants() do
+		if d:IsA("BasePart") then
+			table.insert(pieces, d)
+		end
+	end
+	local closedOf = {}
+	for _, p in pieces do
+		closedOf[p] = p.CFrame
+	end
 	local function setOpen(open: boolean, time: number)
 		state.GarageOpen = open
-		TweenService:Create(door, TweenInfo.new(time, Enum.EasingStyle.Linear), { CFrame = open and openCF or closedCF }):Play()
+		for _, p in pieces do
+			local target = open and (closedOf[p] + Vector3.new(0, 9.2, 0)) or closedOf[p]
+			TweenService:Create(p, TweenInfo.new(time, Enum.EasingStyle.Linear), { CFrame = target }):Play()
+		end
 	end
 	ctx.Interaction.prompt(button, {
 		Action = "Press",
@@ -431,7 +445,11 @@ end
 function Escape.setupKeyHook(keysPart: BasePart, hookBoard: BasePart)
 	state.KeyHook = keysPart
 	ctx.Interaction.pickup(keysPart, "CarKeys", { Object = "Car keys (Honda)" })
-	ctx.Interaction.document(hookBoard, "EmptyHook", { Action = "Look", Object = "Key hooks", Distance = 5 })
+	-- the board only reads as "empty" once the Honda keys are gone
+	state.HookDoc = ctx.Interaction.document(hookBoard, "EmptyHook", { Action = "Look", Object = "Key hooks", Distance = 5 }, function()
+		ctx.Director.logTruth("KeysTaken")
+	end)
+	state.HookDoc.Enabled = false
 end
 
 function Escape.setNest(nestFolder: Instance, keysPos: Vector3)
@@ -443,6 +461,9 @@ function Escape.stealKeys(): boolean
 	if state.KeyHook and state.KeyHook.Parent then
 		state.KeyHook:Destroy()
 		state.KeyHook = nil
+		if state.HookDoc then
+			state.HookDoc.Enabled = true
+		end
 		Escape.returnCarKeysToNest()
 		return true
 	end

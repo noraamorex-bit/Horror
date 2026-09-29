@@ -1,0 +1,613 @@
+--[[
+	Director — the night's pacing.
+
+	• Lobby: ready-up, countdown, roles.
+	• Acts: Evening -> SmallThings -> SomeoneElse -> Guest, each with Min/Max lengths.
+	• Tension (0-100): rises with events, sightings and chases, decays over time. Events are only
+	  scheduled while tension is under the act's ceiling, so quiet stretches happen on purpose.
+	• Guaranteed beats have deadlines; the rest come from a weighted pool whose conditions hold.
+	• The truth log: every strange thing that actually happened, with the in-game time.
+]]
+
+local Players = game:GetService("Players")
+
+local Events = require(script.Parent.Events)
+local Perception = require(script.Parent.Parent.Intruder.Perception)
+
+local Director = {}
+local ctx
+local D: any = Director
+
+Director.Perception = Perception
+
+local ACT_ORDER = { "Evening", "SmallThings", "SomeoneElse", "Guest" }
+
+-- guaranteed beats per act: { event id, deadline as a fraction of the act's Max }
+local BEATS = {
+	SmallThings = { { "FootstepsUpstairs", 0.35 }, { "FigureWindow", 0.7 }, { "TVAlert", 0.55 } },
+}
+
+local state: any = {}
+
+local function fresh()
+	return {
+		Act = "Lobby",
+		ActStart = os.clock(),
+		GameStart = nil,
+		Tension = 0,
+		Truth = {},
+		Logged = {},
+		Fired = {},
+		LastFired = {},
+		NextEventAt = 0,
+		NextLightning = os.clock() + 15,
+		Ready = {},
+		Countdown = nil,
+		Discovered = false,
+		ActEnding = false,
+		Participants = {},
+	}
+end
+
+function Director.init(c)
+	ctx = c
+	Perception.init(c)
+	state = fresh()
+end
+
+function Director.reset()
+	state = fresh()
+	workspace:SetAttribute("Act", "Lobby")
+	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)
+end
+
+---------------------------------------------------------------------------
+-- Queries
+---------------------------------------------------------------------------
+function Director.getAct(): string
+	return state.Act
+end
+
+local function scaled(minutes: number): number
+	return minutes * 60 * ctx.Config.TimeScale
+end
+
+local function elapsed(): number
+	return state.GameStart and (os.clock() - state.GameStart) or 0
+end
+
+function Director.clockMinutes(): number
+	return ctx.Config.ClockStartMinutes + elapsed() / 60 * ctx.Config.ClockRate / ctx.Config.TimeScale
+end
+
+function Director.clockString(): string
+	return ctx.Util.clockString(Director.clockMinutes())
+end
+
+function Director.elapsedString(): string
+	return ctx.Util.formatSeconds(elapsed())
+end
+
+function Director.getTruthLog()
+	return state.Truth
+end
+
+function Director.tension(): number
+	return state.Tension
+end
+
+function Director.addTension(n: number)
+	state.Tension = math.clamp(state.Tension + n, 0, 100)
+end
+
+---------------------------------------------------------------------------
+-- Truth log
+---------------------------------------------------------------------------
+function Director.logTruth(id: string)
+	if state.Logged[id] or state.Act == "Lobby" then
+		return
+	end
+	local text = ctx.Story.Truths[id]
+	if not text then
+		return
+	end
+	state.Logged[id] = true
+	table.insert(state.Truth, { Time = Director.clockString(), Text = text, Id = id })
+	if ctx.Config.Debug then
+		print("[Truth] " .. id)
+	end
+end
+
+function Director.logTruthRaw(text: string)
+	if state.Act == "Lobby" then
+		return
+	end
+	table.insert(state.Truth, { Time = Director.clockString(), Text = text })
+end
+
+---------------------------------------------------------------------------
+-- Storm
+---------------------------------------------------------------------------
+function Director.lightning(intensity: number?)
+	local i = intensity or (0.6 + math.random() * 0.5)
+	ctx.Remotes.Lightning:FireAllClients(i, 0.6 + math.random() * 2.5)
+	workspace:SetAttribute("LastLightning", workspace:GetServerTimeNow())
+end
+
+---------------------------------------------------------------------------
+-- Lobby
+---------------------------------------------------------------------------
+local function lobbyPayload()
+	local ready = {}
+	local count = 0
+	for _, p in Players:GetPlayers() do
+		if state.Ready[p] then
+			table.insert(ready, p.UserId)
+			count += 1
+		end
+	end
+	return {
+		Phase = state.Act == "Lobby" and (state.Countdown and "Countdown" or "Waiting") or "InGame",
+		Ready = ready,
+		ReadyCount = count,
+		Players = #Players:GetPlayers(),
+		Needed = ctx.Config.MinPlayers,
+		Countdown = state.Countdown,
+	}
+end
+
+local function broadcastLobby()
+	ctx.Remotes.Lobby:FireAllClients(lobbyPayload())
+end
+
+local function spawnFor(player: Player): CFrame?
+	local L = ctx.Layout
+	if player:GetAttribute("Escaped") or (state.Act ~= "Lobby" and not player:GetAttribute("InGame")) then
+		return CFrame.new(L.Outside.NeighborSafe + Vector3.new(math.random(-4, 4), 0, math.random(-3, 3)))
+	end
+	local spawns = L.LobbySpawns
+	local i = math.random(1, #spawns)
+	return CFrame.lookAt(spawns[i], spawns[i] + Vector3.new(-1, 0, 0))
+end
+
+function Director.enterLobby()
+	state = fresh()
+	workspace:SetAttribute("Act", "Lobby")
+	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)
+	broadcastLobby()
+end
+
+local function startGame()
+	state.Countdown = nil
+	local participants = {}
+	for _, p in Players:GetPlayers() do
+		if #participants < ctx.Config.MaxPlayers then
+			table.insert(participants, p)
+		end
+	end
+	state.Participants = participants
+	for _, p in participants do
+		ctx.PlayerState.resetPlayer(p)
+		p:SetAttribute("InGame", true)
+	end
+	ctx.PlayerState.assignRoles(participants)
+	for _, p in Players:GetPlayers() do
+		if not p:GetAttribute("InGame") then
+			ctx.Remotes.Notify:FireClient(p, "The house is full tonight. You're watching from next door.", "info")
+			local char = p.Character
+			if char then
+				char:PivotTo(spawnFor(p) :: CFrame)
+			end
+		end
+	end
+	state.GameStart = os.clock()
+	broadcastLobby()
+	Director.startAct("Evening")
+end
+
+local function lobbyTick()
+	local players = Players:GetPlayers()
+	local readyCount = 0
+	for _, p in players do
+		if state.Ready[p] then
+			readyCount += 1
+		end
+	end
+	local allReady = #players > 0 and readyCount >= math.min(#players, ctx.Config.MaxPlayers) and readyCount >= ctx.Config.MinPlayers
+	if allReady then
+		if not state.Countdown then
+			state.Countdown = ctx.Config.Debug and 3 or ctx.Config.LobbyCountdown
+		else
+			state.Countdown -= 1
+		end
+		broadcastLobby()
+		if state.Countdown <= 0 then
+			startGame()
+		end
+	elseif state.Countdown then
+		state.Countdown = nil
+		broadcastLobby()
+	end
+end
+
+---------------------------------------------------------------------------
+-- Acts
+---------------------------------------------------------------------------
+local function setGap()
+	local gap = ctx.Config.Director.Gap[state.Act]
+	if gap then
+		state.NextEventAt = os.clock() + (gap[1] + math.random() * (gap[2] - gap[1])) * math.max(ctx.Config.TimeScale, 0.35)
+	end
+end
+
+local function sayAll(lines, gap: number?)
+	for _, line in lines do
+		ctx.Audio.caption(line)
+		task.wait(gap or 3)
+	end
+end
+
+function Director.startAct(name: string, cause: Player?)
+	state.Act = name
+	state.ActStart = os.clock()
+	state.ActEnding = false
+	workspace:SetAttribute("Act", name)
+	local card = ctx.Story.Chapters[name]
+	if card then
+		ctx.Remotes.Chapter:FireAllClients(card.Title, card.Sub)
+	end
+	ctx.Escape.refreshLandline()
+	setGap()
+
+	if name == "Evening" then
+		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Movie", "Fire", "Windows" })
+		ctx.Intruder.setMode("Offstage")
+		task.delay(6, function()
+			ctx.Remotes.Notify:FireAllClients("Press Tab (or the Journal button) for the to-do list.", "info")
+		end)
+	elseif name == "SmallThings" then
+		ctx.Objectives.set({ "Explore", "Stay" }, { Explore = true, Stay = true })
+		-- Tony's calls back: the creek road has flooded
+		task.delay(4, function()
+			local answered = false
+			ctx.Escape.ringLandline("PizzaCancel", function()
+				answered = true
+			end)
+			task.wait(26)
+			if not answered and state.Act ~= "Lobby" then
+				for _, p in ctx.Util.sessionPlayers() do
+					ctx.Phone.deliver(p, "Tony's Pizza", "Sorry! Creek Rd flooded, driver can't get to 14 Alder. Order cancelled, no charge.")
+				end
+			end
+			Director.logTruth("PizzaCancel")
+		end)
+	elseif name == "SomeoneElse" then
+		ctx.Objectives.set({ "Power", "Phone", "Attic" }, { Power = true })
+		task.delay(7, function()
+			if state.Act ~= "SomeoneElse" then
+				return
+			end
+			-- the breaker: all at once, no flicker
+			ctx.Power.setMain(false, "Intruder")
+			ctx.Audio.playAt("Breaker", Vector3.new(41, 8, -12.7))
+			ctx.Audio.playAt("PowerDown", Vector3.new(0, 8, 0))
+			ctx.PlayerState.scareNear(Vector3.new(0, 8, 0), 300, 8)
+			Director.logTruth("PowerOut")
+			ctx.Escape.cutLine()
+			if ctx.Escape.stealKeys() then
+				Director.logTruth("KeysTaken")
+			end
+			local refs = ctx.World.refs()
+			if refs.openGarageHatch then
+				refs.openGarageHatch()
+			end
+			if refs.Footprints then
+				refs.Footprints.show()
+			end
+			task.wait(4)
+			ctx.Intruder.setMode("Lurk")
+			task.wait(6)
+			ctx.Remotes.Notify:FireAllClients("That wasn't the storm. Something flipped the main breaker.", "danger")
+		end)
+	elseif name == "Guest" then
+		ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Trap", "Rescue" }, { Neighbor = true, Car = true, Trap = true, Rescue = true })
+		ctx.Intruder.setMode("Hunt", cause)
+		Director.addTension(30)
+		task.spawn(sayAll, { "Somewhere in the house, something heavy hits the floor.", "He knows." }, 3)
+	end
+end
+
+local function nextAct()
+	local i = table.find(ACT_ORDER, state.Act)
+	if i and ACT_ORDER[i + 1] then
+		Director.startAct(ACT_ORDER[i + 1])
+	end
+end
+
+function Director.onDiscovery(player: Player, docId: string)
+	Director.logTruthRaw((player:GetAttribute("RoleName") or player.Name) .. " found the nest in the attic.")
+	if state.Act == "SomeoneElse" and not state.Discovered and not ctx.Escape.helpCalled() then
+		state.Discovered = true
+		task.delay(4, function()
+			if state.Act == "SomeoneElse" then
+				Director.startAct("Guest", player)
+			end
+		end)
+	end
+end
+
+---------------------------------------------------------------------------
+-- Hooks from services
+---------------------------------------------------------------------------
+function Director.onCapture(player: Player)
+	Director.addTension(25)
+	Director.logTruthRaw("Curtis took " .. (player:GetAttribute("RoleName") or player.Name) .. " down to the boiler room.")
+	task.delay(2, Director.checkAllCaptured)
+end
+
+function Director.onRescue(player: Player, by: Player?)
+	if by then
+		Director.logTruthRaw((by:GetAttribute("RoleName") or by.Name) .. " cut " .. (player:GetAttribute("RoleName") or player.Name) .. " free.")
+	else
+		Director.logTruthRaw((player:GetAttribute("RoleName") or player.Name) .. " broke free of the zip ties.")
+	end
+	ctx.Objectives.complete("Rescue")
+end
+
+function Director.onSighting(player: Player)
+	Director.addTension(15)
+	if state.Act == "SomeoneElse" then
+		Director.logTruth("Glimpse")
+	end
+end
+
+function Director.onDoorOpened(door, player: Player)
+	if door.Id == "BackDoor" and (state.Act == "Evening" or state.Act == "SmallThings") then
+		Director.logTruth("BackDoorUnlocked")
+	end
+end
+
+function Director.onDoorLockChanged(door, player: Player)
+	if door.Id == "BackDoor" and door.Locked and (state.Act == "Evening" or state.Act == "SmallThings") then
+		Director.logTruth("BackDoorUnlocked")
+	end
+	if door.Id == "Basement" and door.Locked and not door.IsOpen and ctx.Intruder.isInBasement() then
+		if ctx.Intruder.trap() then
+			ctx.Objectives.complete("Trap")
+			Director.logTruthRaw((player:GetAttribute("RoleName") or player.Name) .. " locked Curtis in the basement.")
+			ctx.Remotes.Notify:FireAllClients("He's locked in the basement. It won't hold him forever.", "objective")
+		end
+	end
+end
+
+function Director.checkAllCaptured()
+	if state.Act == "Lobby" or ctx.Ending.isOver() or ctx.Escape.helpCalled() then
+		return
+	end
+	local session = ctx.Util.sessionPlayers()
+	if #session == 0 then
+		return
+	end
+	local anyCaptured = false
+	for _, p in session do
+		if p:GetAttribute("Captured") then
+			anyCaptured = true
+		end
+	end
+	if #ctx.Util.activePlayers() == 0 and anyCaptured then
+		ctx.Ending.trigger("GoneQuiet")
+	end
+end
+
+---------------------------------------------------------------------------
+-- Scheduling
+---------------------------------------------------------------------------
+local function eventById(id: string)
+	for _, e in Events.List do
+		if e.Id == id then
+			return e
+		end
+	end
+	return nil
+end
+
+local function canFire(e): boolean
+	if not e.Acts[state.Act] then
+		return false
+	end
+	if e.Once and state.Fired[e.Id] then
+		return false
+	end
+	if e.Cooldown and state.LastFired[e.Id] and os.clock() - state.LastFired[e.Id] < e.Cooldown * math.max(ctx.Config.TimeScale, 0.35) then
+		return false
+	end
+	return true
+end
+
+local function fire(e, data)
+	state.Fired[e.Id] = true
+	state.LastFired[e.Id] = os.clock()
+	Director.addTension(e.Tension or 5)
+	if ctx.Config.Debug then
+		print("[Director] event " .. e.Id)
+	end
+	task.spawn(function()
+		local ok, err = pcall(e.Run, ctx, D, data)
+		if not ok then
+			warn("[Director] event " .. e.Id .. " failed: " .. tostring(err))
+		end
+	end)
+end
+
+local function tryEvent(e, force: boolean?): boolean
+	local ok, data = pcall(e.Cond, ctx, D)
+	if (not ok or data == nil) and force and e.Force then
+		ok, data = pcall(e.Force, ctx, D)
+	end
+	if ok and data ~= nil then
+		fire(e, data)
+		return true
+	end
+	return false
+end
+
+local function beatsDone(): boolean
+	for _, b in BEATS[state.Act] or {} do
+		if not state.Fired[b[1]] then
+			return false
+		end
+	end
+	return true
+end
+
+local function schedule(actTime: number)
+	local maxT = scaled(ctx.Config.Acts[state.Act] and ctx.Config.Acts[state.Act].Max or 15)
+	-- overdue guaranteed beats go first (and ignore the ceiling)
+	for _, b in BEATS[state.Act] or {} do
+		local e = eventById(b[1])
+		if e and not state.Fired[e.Id] and actTime >= b[2] * maxT and canFire(e) then
+			if tryEvent(e, true) then
+				setGap()
+				return
+			end
+		end
+	end
+	if os.clock() < state.NextEventAt then
+		return
+	end
+	local ceiling = ctx.Config.Director.Ceiling[state.Act] or 50
+	if state.Tension >= ceiling then
+		return
+	end
+	local pool = {}
+	for _, e in Events.List do
+		if canFire(e) then
+			table.insert(pool, { e, e.Weight or 1 })
+		end
+	end
+	-- try up to three picks until one's conditions hold
+	for _ = 1, 3 do
+		local e = ctx.Util.weighted(pool)
+		if not e then
+			break
+		end
+		if tryEvent(e) then
+			break
+		end
+		for i, entry in pool do
+			if entry[1] == e then
+				table.remove(pool, i)
+				break
+			end
+		end
+	end
+	setGap()
+end
+
+local function actTick()
+	local actTime = os.clock() - state.ActStart
+	local cfg = ctx.Config.Acts[state.Act]
+	workspace:SetAttribute("ClockMinutes", Director.clockMinutes())
+	ctx.Phone.update(state.Act, actTime)
+
+	-- tension decays
+	state.Tension = math.max(0, state.Tension - ctx.Config.Director.TensionDecay)
+	workspace:SetAttribute("Tension", math.floor(state.Tension))
+
+	-- storm
+	if os.clock() >= state.NextLightning then
+		local L = ctx.Config.Director.Lightning
+		state.NextLightning = os.clock() + L[1] + math.random() * (L[2] - L[1])
+		Director.lightning()
+	end
+
+	schedule(actTime)
+
+	-- hard cap
+	if elapsed() >= scaled(ctx.Config.HardCapMinutes) and not ctx.Escape.helpCalled() then
+		Director.logTruthRaw("Dawn. A neighbor on Birch Street reported the van.")
+		ctx.Escape.dawn()
+		return
+	end
+
+	if state.ActEnding or not cfg then
+		return
+	end
+	local minT, maxT = scaled(cfg.Min), scaled(cfg.Max)
+	local done = false
+	if state.Act == "Evening" then
+		done = (actTime >= minT and ctx.Objectives.allRequiredDone()) or actTime >= maxT
+	elseif state.Act == "SmallThings" then
+		done = (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet) or actTime >= maxT
+	elseif state.Act == "SomeoneElse" then
+		done = actTime >= maxT and not ctx.Escape.helpCalled()
+	end
+	if done then
+		state.ActEnding = true
+		nextAct()
+	end
+end
+
+---------------------------------------------------------------------------
+function Director.start()
+	ctx.PlayerState.setSpawnResolver(spawnFor)
+	workspace:SetAttribute("Act", "Lobby")
+	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)
+
+	ctx.Remotes.Ready.OnServerEvent:Connect(function(player, ready)
+		if state.Act ~= "Lobby" then
+			return
+		end
+		state.Ready[player] = ready == true or nil
+		broadcastLobby()
+	end)
+
+	Players.PlayerAdded:Connect(function(p)
+		task.wait(1.5)
+		ctx.Remotes.Lobby:FireClient(p, lobbyPayload())
+		if state.Act == "Evening" and #ctx.Util.sessionPlayers() < ctx.Config.MaxPlayers then
+			-- late arrival during the cozy part: join the night
+			p:SetAttribute("InGame", true)
+			ctx.PlayerState.assignRoles({ p })
+			local char = p.Character
+			if char then
+				char:PivotTo(spawnFor(p) :: CFrame)
+			end
+			ctx.Remotes.Notify:FireClient(p, "You made it just in time. The others are inside.", "info")
+		elseif state.Act ~= "Lobby" then
+			ctx.Remotes.Notify:FireClient(p, "A night is already under way. You'll join the next one.", "info")
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(p)
+		state.Ready[p] = nil
+		if state.Act == "Lobby" then
+			task.defer(broadcastLobby)
+			return
+		end
+		task.defer(function()
+			if #Players:GetPlayers() == 0 or #ctx.Util.sessionPlayers() == 0 then
+				ctx.restart()
+			else
+				Director.checkAllCaptured()
+			end
+		end)
+	end)
+
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			local ok, err = pcall(function()
+				if state.Act == "Lobby" then
+					lobbyTick()
+				elseif not ctx.Ending.isOver() then
+					actTick()
+				end
+			end)
+			if not ok then
+				warn("[Director] " .. tostring(err))
+			end
+		end
+	end)
+end
+
+return Director

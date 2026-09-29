@@ -40,6 +40,7 @@ function Interaction.prompt(parent: Instance, opts, callback)
 	prompt.HoldDuration = opts.Hold or 0
 	prompt.MaxActivationDistance = opts.Distance or 7
 	prompt.KeyboardKeyCode = opts.Key or Enum.KeyCode.E
+	prompt.GamepadKeyCode = opts.Key == Enum.KeyCode.R and Enum.KeyCode.ButtonY or Enum.KeyCode.ButtonX
 	prompt.RequiresLineOfSight = if opts.LOS == nil then false else opts.LOS
 	prompt.Style = Enum.ProximityPromptStyle.Custom
 	prompt.Exclusivity = Enum.ProximityPromptExclusivity.OnePerButton

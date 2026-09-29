@@ -48,7 +48,12 @@ local function setupCharacter(player: Player, char: Model)
 	light.Shadows = true
 	light.Face = Enum.NormalId.Front
 	light.Enabled = player:GetAttribute("FlashlightOn") == true
-	light.Parent = head
+	-- the owning client tilts this attachment with the camera pitch
+	local mount = Instance.new("Attachment")
+	mount.Name = "FlashlightMount"
+	mount.Position = Vector3.new(0.4, -0.2, -0.6)
+	mount.Parent = head
+	light.Parent = mount
 
 	if spawnResolver then
 		local cf = spawnResolver(player)
@@ -76,7 +81,7 @@ local function onPlayerAdded(player: Player)
 end
 
 function PlayerState.resetPlayer(player: Player)
-	for _, attr in { "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate" } do
+	for _, attr in { "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress" } do
 		player:SetAttribute(attr, nil)
 	end
 	player:SetAttribute("Nerve", ctx.Config.Nerve.Max)
@@ -126,7 +131,7 @@ function PlayerState.setFlashlight(player: Player, on: boolean)
 	player:SetAttribute("FlashlightOn", on or nil)
 	local char = player.Character
 	local head = char and char:FindFirstChild("Head")
-	local light = head and head:FindFirstChild("Flashlight")
+	local light = head and head:FindFirstChild("Flashlight", true)
 	if light then
 		(light :: SpotLight).Enabled = on
 	end

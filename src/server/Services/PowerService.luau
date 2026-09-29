@@ -28,6 +28,7 @@ function Power.reset()
 	lights = {}
 	staticLit = {}
 	flickering = false
+	workspace:SetAttribute("Power", true)
 	-- drop listeners that belonged to the old world
 	local kept = {}
 	for _, l in listeners do

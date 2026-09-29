@@ -1,0 +1,119 @@
+--[[
+	Server bootstrap — builds the context, wires every service, builds the house,
+	then starts everything. Services never require each other; they use ctx.
+]]
+
+local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Services = script:WaitForChild("Services")
+
+local ctx: any = {}
+ctx.Config = require(Shared.Config)
+ctx.Remotes = require(Shared.Remotes)
+ctx.Rooms = require(Shared.Rooms)
+ctx.Sounds = require(Shared.Sounds)
+ctx.Story = require(Shared.Story)
+ctx.Util = require(Shared.Util)
+ctx.Builder = require(script.World.Builder)
+ctx.Layout = require(script.World.Layout)
+
+ctx.Audio = require(Services.AudioService)
+ctx.Noise = require(Services.NoiseService)
+ctx.Interaction = require(Services.InteractionService)
+ctx.Inventory = require(Services.InventoryService)
+ctx.Power = require(Services.PowerService)
+ctx.Doors = require(Services.DoorService)
+ctx.PlayerState = require(Services.PlayerStateService)
+ctx.Hiding = require(Services.HidingService)
+ctx.Capture = require(Services.CaptureService)
+ctx.Objectives = require(Services.ObjectiveService)
+ctx.Phone = require(Services.PhoneService)
+ctx.Escape = require(Services.EscapeService)
+ctx.Chat = require(Services.ChatService)
+ctx.Ending = require(Services.EndingService)
+ctx.World = require(script.World.World)
+ctx.Director = require(script.Director.Director)
+ctx.Intruder = require(script.Intruder.Intruder)
+
+local ORDER = {
+	"Audio", "Noise", "Interaction", "Inventory", "Power", "Doors", "PlayerState", "Hiding", "Capture",
+	"Objectives", "Phone", "Escape", "Chat", "Ending", "World", "Director", "Intruder",
+}
+
+-- Atmosphere: a wet, dark November night
+local function setupLighting()
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
+	atmosphere.Density = 0.42
+	atmosphere.Offset = 0.1
+	atmosphere.Color = Color3.fromRGB(70, 80, 95)
+	atmosphere.Decay = Color3.fromRGB(40, 45, 55)
+	atmosphere.Glare = 0
+	atmosphere.Haze = 2.2
+	atmosphere.Parent = Lighting
+	local cc = Lighting:FindFirstChild("Grade") or Instance.new("ColorCorrectionEffect")
+	cc.Name = "Grade";
+	(cc :: ColorCorrectionEffect).Saturation = -0.25;
+	(cc :: ColorCorrectionEffect).Contrast = 0.08;
+	(cc :: ColorCorrectionEffect).TintColor = Color3.fromRGB(235, 240, 255)
+	cc.Parent = Lighting
+	local bloom = Lighting:FindFirstChildOfClass("BloomEffect") or Instance.new("BloomEffect")
+	bloom.Intensity = 0.4
+	bloom.Size = 20
+	bloom.Threshold = 1.4
+	bloom.Parent = Lighting
+	local sky = Lighting:FindFirstChildOfClass("Sky") or Instance.new("Sky")
+	sky.StarCount = 0
+	sky.CelestialBodiesShown = false
+	sky.Parent = Lighting
+	Lighting.ClockTime = 21.5
+end
+
+for _, name in ORDER do
+	local s = ctx[name]
+	if s.init then
+		s.init(ctx)
+	end
+end
+
+setupLighting()
+ctx.World.build()
+
+-- Rebuild the house and send everyone back to the lobby.
+local restarting = false
+function ctx.restart()
+	if restarting then
+		return
+	end
+	restarting = true
+	for _, name in ORDER do
+		local s = ctx[name]
+		if s.reset then
+			local ok, err = pcall(s.reset)
+			if not ok then
+				warn("[Restart] " .. name .. ": " .. tostring(err))
+			end
+		end
+	end
+	ctx.World.build()
+	for _, p in Players:GetPlayers() do
+		ctx.PlayerState.resetPlayer(p)
+		p:SetAttribute("InGame", nil)
+		task.spawn(function()
+			p:LoadCharacter()
+		end)
+	end
+	ctx.Director.enterLobby()
+	restarting = false
+end
+
+for _, name in ORDER do
+	local s = ctx[name]
+	if s.start then
+		s.start()
+	end
+end
+
+print("[HomeAlone] server ready")

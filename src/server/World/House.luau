@@ -53,10 +53,8 @@ function House.build(ctx, root: Instance)
 	end
 	-- attic: insulation everywhere, plywood walkway from the hatch to the nest
 	B.slab(shell, "Insulation", -40, 40, -30, 30, 29.2, 0.3, { { h.x0, h.x1, h.z0, h.z1 } }, Color3.fromRGB(215, 150, 150), M.Insulation)
-	B.box(shell, "Walkway", Vector3.new(-30, 29.2, 16), Vector3.new(10, 29.4, 21.5), Color3.fromRGB(175, 145, 100), M.Planks)
-	B.box(shell, "Walkway", Vector3.new(-30, 29.2, -6), Vector3.new(-18, 29.4, 16), Color3.fromRGB(175, 145, 100), M.Planks)
-	B.box(shell, "Walkway", Vector3.new(8, 29.2, 21.5), Vector3.new(10, 29.4, 28.5), Color3.fromRGB(175, 145, 100), M.Planks)
-	B.box(shell, "Walkway", Vector3.new(3, 29.2, 28.5), Vector3.new(10, 29.4, 30), Color3.fromRGB(175, 145, 100), M.Planks)
+	B.box(shell, "Walkway", Vector3.new(-30, 29.2, h.z0 - 1), Vector3.new(h.x0, 29.4, h.z1 + 1), Color3.fromRGB(175, 145, 100), M.Planks)
+	B.box(shell, "Walkway", Vector3.new(-30, 29.2, -6), Vector3.new(-18, 29.4, h.z0 - 1), Color3.fromRGB(175, 145, 100), M.Planks)
 
 	---------------------------------------------------------------------------
 	-- Walls
@@ -353,6 +351,7 @@ function House.build(ctx, root: Instance)
 		end
 	end
 
+	refs.Shell = shell
 	return refs
 end
 
