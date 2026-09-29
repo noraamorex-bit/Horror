@@ -21,6 +21,7 @@ local NAMES = {
 	"Texts", -- (list of phone messages)
 	"Lobby", -- (state)
 	"Figure", -- (cframe, duration) a figure only this player sees
+	"Queue", -- (state | nil) lobby: your queue circle
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})
@@ -31,6 +32,7 @@ local NAMES = {
 	"HoldBreath", -- (bool)
 	"Struggle", -- ()
 	"Phone", -- (action)
+	"LeaveQueue", -- () lobby: step off your circle
 }
 
 local Remotes = {}

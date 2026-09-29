@@ -18,10 +18,20 @@ ctx.Sounds = require(Shared.Sounds)
 ctx.Story = require(Shared.Story)
 ctx.Util = require(Shared.Util)
 
-local ORDER = {
-	"UI", "Input", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents",
-	"Phone", "HidingCam", "Lobby", "Ending", "MobileControls",
-}
+-- the server tells us whether this is the lobby or a night in the house
+local mode = workspace:GetAttribute("Mode")
+while not mode do
+	workspace:GetAttributeChangedSignal("Mode"):Wait()
+	mode = workspace:GetAttribute("Mode")
+end
+ctx.Mode = mode
+
+local ORDER = if mode == "Lobby"
+	then { "UI", "Input", "Effects", "Atmosphere", "LobbyHub" }
+	else {
+		"UI", "Input", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents",
+		"Phone", "HidingCam", "Lobby", "Ending", "MobileControls",
+	}
 
 local modules = {}
 for _, name in ORDER do
@@ -47,7 +57,7 @@ end
 task.spawn(function()
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, mode == "Lobby")
 	for _ = 1, 20 do
 		local ok = pcall(function()
 			StarterGui:SetCore("ResetButtonCallback", false)

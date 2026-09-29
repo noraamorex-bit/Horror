@@ -7,6 +7,22 @@ local Config = {}
 
 Config.Debug = false -- true: act timings x0.25, verbose logging
 
+-- "Lobby" or "Game" to force a server mode (e.g. to try the lobby in Studio). nil = automatic.
+Config.ForceMode = nil :: string?
+
+-- The lobby: queue circles that teleport a group into its own reserved game server.
+Config.Lobby = {
+	-- nil = the same place hosts both the lobby (public servers) and the game (reserved servers).
+	-- If you later add a separate game place to this experience, put its PlaceId here.
+	GamePlaceId = nil :: number?,
+	LobbyPlaceId = nil :: number?,
+	QueueSizes = { 1, 2, 3, 4 },
+	Countdown = 6, -- seconds a full circle waits before teleporting (lets people step off)
+	SoloCountdown = 3,
+	ArrivalTimeout = 30, -- game server: start without stragglers after this long
+	ReturnDelay = 45, -- game server: seconds on the ending screen before going back to the lobby
+}
+
 Config.MinPlayers = 1 -- 2-4 recommended; 1 is allowed so the game can be tested solo
 Config.MaxPlayers = 4
 Config.LobbyCountdown = 10

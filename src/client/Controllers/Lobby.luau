@@ -37,7 +37,10 @@ local function render(state)
 		table.insert(names, (isReady and "<font color=\"#78c878\">●</font> " or "<font color=\"#8a8a8a\">○</font> ") .. p.DisplayName)
 	end
 	roster.Text = table.concat(names, "\n")
-	if state.Phase == "Countdown" then
+	if state.Phase == "Arriving" then
+		status.Text = state.Countdown and ("Everyone's here. The night begins in " .. tostring(state.Countdown) .. "...")
+			or string.format("Waiting for your group: %d / %d here", state.Players or 0, state.Expected or state.Players or 1)
+	elseif state.Phase == "Countdown" then
 		status.Text = "The night begins in " .. tostring(state.Countdown) .. "..."
 	elseif state.Phase == "InGame" then
 		status.Text = "A night is under way. You'll join the next one."
@@ -47,7 +50,7 @@ local function render(state)
 	ready = table.find(state.Ready or {}, player.UserId) ~= nil
 	readyButton.Text = ready and "READY ✓" or "READY"
 	readyButton.BackgroundColor3 = ready and Color3.fromRGB(60, 120, 70) or ctx.UI.Color.Accent
-	readyButton.Visible = state.Phase ~= "InGame"
+	readyButton.Visible = state.Phase ~= "InGame" and state.Phase ~= "Arriving"
 	controls.Text = controlsText()
 end
 

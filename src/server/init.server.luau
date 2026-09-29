@@ -6,6 +6,7 @@
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Services = script:WaitForChild("Services")
@@ -19,29 +20,7 @@ ctx.Story = require(Shared.Story)
 ctx.Util = require(Shared.Util)
 ctx.Builder = require(script.World.Builder)
 ctx.Layout = require(script.World.Layout)
-
-ctx.Audio = require(Services.AudioService)
-ctx.Noise = require(Services.NoiseService)
-ctx.Interaction = require(Services.InteractionService)
-ctx.Inventory = require(Services.InventoryService)
-ctx.Power = require(Services.PowerService)
-ctx.Doors = require(Services.DoorService)
-ctx.PlayerState = require(Services.PlayerStateService)
-ctx.Hiding = require(Services.HidingService)
-ctx.Capture = require(Services.CaptureService)
-ctx.Objectives = require(Services.ObjectiveService)
-ctx.Phone = require(Services.PhoneService)
-ctx.Escape = require(Services.EscapeService)
-ctx.Chat = require(Services.ChatService)
-ctx.Ending = require(Services.EndingService)
-ctx.World = require(script.World.World)
-ctx.Director = require(script.Director.Director)
-ctx.Intruder = require(script.Intruder.Intruder)
-
-local ORDER = {
-	"Audio", "Noise", "Interaction", "Inventory", "Power", "Doors", "PlayerState", "Hiding", "Capture",
-	"Objectives", "Phone", "Escape", "Chat", "Ending", "World", "Director", "Intruder",
-}
+ctx.Mode = require(Shared.Mode)
 
 -- Atmosphere: a wet, dark November night
 local function setupLighting()
@@ -71,6 +50,40 @@ local function setupLighting()
 	Lighting.ClockTime = 21.5
 end
 
+setupLighting()
+
+-- Lobby servers: queue circles that teleport groups into their own game server
+local mode = ctx.Mode.get()
+workspace:SetAttribute("Mode", mode)
+if mode == "Lobby" then
+	require(script.Lobby.LobbyServer).run(ctx)
+	return
+end
+ctx.Reserved = ctx.Mode.isReserved()
+
+ctx.Audio = require(Services.AudioService)
+ctx.Noise = require(Services.NoiseService)
+ctx.Interaction = require(Services.InteractionService)
+ctx.Inventory = require(Services.InventoryService)
+ctx.Power = require(Services.PowerService)
+ctx.Doors = require(Services.DoorService)
+ctx.PlayerState = require(Services.PlayerStateService)
+ctx.Hiding = require(Services.HidingService)
+ctx.Capture = require(Services.CaptureService)
+ctx.Objectives = require(Services.ObjectiveService)
+ctx.Phone = require(Services.PhoneService)
+ctx.Escape = require(Services.EscapeService)
+ctx.Chat = require(Services.ChatService)
+ctx.Ending = require(Services.EndingService)
+ctx.World = require(script.World.World)
+ctx.Director = require(script.Director.Director)
+ctx.Intruder = require(script.Intruder.Intruder)
+
+local ORDER = {
+	"Audio", "Noise", "Interaction", "Inventory", "Power", "Doors", "PlayerState", "Hiding", "Capture",
+	"Objectives", "Phone", "Escape", "Chat", "Ending", "World", "Director", "Intruder",
+}
+
 for _, name in ORDER do
 	local s = ctx[name]
 	if s.init then
@@ -78,16 +91,34 @@ for _, name in ORDER do
 	end
 end
 
-setupLighting()
 ctx.World.build()
 
--- Rebuild the house and send everyone back to the lobby.
+-- After an ending: a group's own server sends everyone back to the lobby place;
+-- otherwise (Studio, or if that fails) the house is rebuilt and the in-house lobby reopens.
 local restarting = false
-function ctx.restart()
+function ctx.restart(stayHere: boolean?)
 	if restarting then
 		return
 	end
 	restarting = true
+	-- a group's own server: everyone goes back to the lobby together
+	local players = Players:GetPlayers()
+	if ctx.Reserved and #players > 0 and not stayHere then
+		local ok, err = pcall(function()
+			TeleportService:TeleportAsync(ctx.Mode.lobbyPlaceId(), players)
+		end)
+		if ok then
+			-- anyone the teleport didn't take gets a fresh night here instead of a frozen screen
+			task.delay(25, function()
+				if #Players:GetPlayers() > 0 then
+					restarting = false
+					ctx.restart(true)
+				end
+			end)
+			return
+		end
+		warn("[Restart] couldn't return to the lobby, resetting the house instead: " .. tostring(err))
+	end
 	for _, name in ORDER do
 		local s = ctx[name]
 		if s.reset then

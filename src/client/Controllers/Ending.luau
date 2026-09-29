@@ -68,7 +68,7 @@ local function show(payload)
 	task.spawn(function()
 		local left = payload.RestartIn or 60
 		while left > 0 and screen.Parent do
-			countdown.Text = "The house resets in " .. left .. "s"
+			countdown.Text = (payload.ReturnToLobby and "Back to the lobby in " or "The house resets in ") .. left .. "s"
 			task.wait(1)
 			left -= 1
 		end

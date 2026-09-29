@@ -147,7 +147,8 @@ local function lobbyPayload()
 		end
 	end
 	return {
-		Phase = state.Act == "Lobby" and (state.Countdown and "Countdown" or "Waiting") or "InGame",
+		Phase = state.Act ~= "Lobby" and "InGame" or (ctx.Reserved and "Arriving") or (state.Countdown and "Countdown" or "Waiting"),
+		Expected = state.Expected,
 		Ready = ready,
 		ReadyCount = count,
 		Players = #Players:GetPlayers(),
@@ -205,7 +206,32 @@ local function startGame()
 	Director.startAct("Evening")
 end
 
+-- a group's own server: start as soon as the whole group has arrived (or after a timeout)
+local function arrivalTick()
+	local players = Players:GetPlayers()
+	if #players == 0 then
+		return
+	end
+	state.FirstArrival = state.FirstArrival or os.clock()
+	local expected = math.max(state.Expected or 1, 1)
+	if not state.Countdown then
+		if #players >= expected or os.clock() - state.FirstArrival >= ctx.Config.Lobby.ArrivalTimeout then
+			state.Countdown = 4
+		end
+	else
+		state.Countdown -= 1
+	end
+	broadcastLobby()
+	if state.Countdown and state.Countdown <= 0 then
+		startGame()
+	end
+end
+
 local function lobbyTick()
+	if ctx.Reserved then
+		arrivalTick()
+		return
+	end
 	local players = Players:GetPlayers()
 	local readyCount = 0
 	for _, p in players do
@@ -562,7 +588,20 @@ function Director.start()
 		broadcastLobby()
 	end)
 
+	local function readPartySize(p: Player)
+		local ok, data = pcall(function()
+			return p:GetJoinData()
+		end)
+		local td = ok and data and data.TeleportData
+		if type(td) == "table" and tonumber(td.PartySize) then
+			state.Expected = math.max(state.Expected or 0, math.clamp(tonumber(td.PartySize) :: number, 1, ctx.Config.MaxPlayers))
+		end
+	end
+	for _, p in Players:GetPlayers() do
+		readPartySize(p)
+	end
 	Players.PlayerAdded:Connect(function(p)
+		readPartySize(p)
 		task.wait(1.5)
 		ctx.Remotes.Lobby:FireClient(p, lobbyPayload())
 		if state.Act == "Evening" and #ctx.Util.sessionPlayers() < ctx.Config.MaxPlayers then

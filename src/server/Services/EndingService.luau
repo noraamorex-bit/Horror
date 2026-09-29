@@ -59,7 +59,8 @@ function Ending.trigger(kind: string)
 		Fates = fates,
 		Truths = ctx.Director.getTruthLog(),
 		Duration = ctx.Director.elapsedString(),
-		RestartIn = 60,
+		RestartIn = ctx.Reserved and ctx.Config.Lobby.ReturnDelay or 60,
+		ReturnToLobby = ctx.Reserved == true,
 	}
 	ctx.Remotes.Ending:FireAllClients(payload)
 

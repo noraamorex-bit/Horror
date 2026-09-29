@@ -77,7 +77,11 @@ The Director logs each event that actually fires, with the in-game clock time. T
 Real minutes are shown on an in-game clock that starts at **8:47 PM** and runs 1.5× faster than real time. Act lengths flex with what the players are doing (min/max in `Config.Acts`).
 
 ### Act 0 — Lobby
-Players spawn in the living room. Roles are dealt and everyone presses **Ready**. The minimum is 1 player (for testing); 2–4 is recommended.
+Players land in the **lobby**: a rainy dead end at the bottom of Alder Lane, with the Whitaker house dark on the hill and four glowing queue circles for **1, 2, 3 and 4 players**. Stand in a circle to queue and step off (or tap LEAVE) to cancel. When a circle is full it counts down (6 s, 3 s solo), reserves a private game server and teleports the group there together.
+
+In the game server the group spawns in the living room and the night starts as soon as everyone has arrived (or after 30 s without stragglers). Roles are dealt then. After the ending, everyone is teleported back to the lobby.
+
+How it works: one place serves both. Public servers run the lobby (`server/Lobby/LobbyServer`); reserved servers created by `TeleportService:ReserveServer` run the house (`shared/Mode`). Studio can't teleport, so a Studio test runs the house directly with the old in-house READY screen (`Config.ForceMode = "Lobby"` shows the lobby instead). To split them into two places later, set `Config.Lobby.GamePlaceId` / `LobbyPlaceId`. Because lobby and game share one place, **Server Size also caps the lobby**: set it higher than 4 (e.g. 20) so more people can gather; a game server only ever receives one group, and the game caps a night at 4.
 
 ### Act I — "Friday Night" (6–10 min)
 *Social and cozy, with something slightly off.*

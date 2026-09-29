@@ -26,13 +26,18 @@ local VOLUMES = {
 	{ 93, 132, 2, 32 },
 }
 
+-- the lobby sits at z ~400, far from the house: rain over all of it
+local LOBBY_VOLUMES = {
+	{ -90, 90, 310, 490 },
+}
+
 local function buildRain()
 	-- phones get a lighter storm
 	local density = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and 0.45 or 1
 	local folder = Instance.new("Folder")
 	folder.Name = "ClientRain"
 	folder.Parent = workspace
-	for _, v in VOLUMES do
+	for _, v in (ctx.Mode == "Lobby" and LOBBY_VOLUMES or VOLUMES) do
 		local sizeX, sizeZ = v[2] - v[1], v[4] - v[3]
 		local p = Instance.new("Part")
 		p.Anchored = true
