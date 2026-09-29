@@ -54,59 +54,53 @@ local function walk(model: Model, points, speed: number, folder: Instance)
 	end
 end
 
--- The delivery man is a real R15 Rthro avatar (Roblox's "City Life Man" body, stretched tall and
--- thin, a red cap, arms held out with the pizza bag). What makes him wrong is how he holds
--- himself: hunched, head lowered with the eyes rolled up at you, a smile that is too wide and
--- never moves, no blinking, and a slow tilt of the head while he talks. His jaw works when he
--- speaks; he idles and walks with Roblox's Rthro animations.
--- If the avatar can't be loaded, the part-built Kit model stands in.
-local AVATAR = {
-	Head = 71693744825093, -- City Life Man - Head (dynamic)
-	Torso = 2490661289,
-	LeftArm = 2490651894,
-	RightArm = 2490659002,
-	LeftLeg = 2490653036,
-	RightLeg = 2490660219,
-	Hair = 2490665888,
-}
--- a natural light skin tone, a little pallid (the whole body and the head match)
-local SKIN = Color3.fromRGB(224, 192, 168)
--- the face he holds the whole time: a stretched closed-lip smile, eyes wide and rolled up
--- from under a lowered head
-local FACE = {
-	LeftLipCornerPuller = 1, RightLipCornerPuller = 1,
-	LeftLipStretcher = 0.75, RightLipStretcher = 0.75,
-	LeftUpperLipRaiser = 0.2, RightUpperLipRaiser = 0.2,
-	LeftEyeUpperLidRaiser = 1, RightEyeUpperLidRaiser = 1,
-	EyesLookUp = 0.45,
-	LeftOuterBrowRaiser = 0.35, RightOuterBrowRaiser = 0.35,
-	LeftCheekRaiser = 0.2, RightCheekRaiser = 0.2,
-}
+-- The delivery man: a tall, thin R15 man in a black leather jacket and black jeans (Roblox's own
+-- classic clothing), bald, with a realistic pale face texture: heavy brows, narrow eyes and a
+-- crooked smirk. What makes him wrong is how he holds himself: hunched over the pizza boxes, head
+-- lowered, staring from under his brows, and a slow tilt of the head while he talks.
+-- The standard R15 body is used on purpose (it always loads); if even that fails, the part-built
+-- Kit model with the same face stands in.
+local FACE_IMAGE = "rbxassetid://76270804185071" -- "Smirk" face texture (image of decal 134821089038344)
+local SHIRT = 382538295 -- Roblox: Guitar Tee with Black Jacket
+local PANTS = 382537569 -- Roblox: Black Jeans
+-- pale skin to match the face texture
+local SKIN = Color3.fromRGB(228, 204, 186)
 local HEAD_BOW = math.rad(-12) -- head lowered
 local LEAN = math.rad(-7) -- shoulders hunched forward
+
+-- the face texture on a head part (replaces any default face decal)
+local function applyFace(head: BasePart)
+	for _, d in head:GetChildren() do
+		if d:IsA("Decal") then
+			d:Destroy()
+		end
+	end
+	local face = Instance.new("Decal")
+	face.Name = "face"
+	face.Face = Enum.NormalId.Front
+	face.Texture = FACE_IMAGE
+	face.Parent = head
+end
+Delivery.applyFace = applyFace
 
 local function avatarActor(folder: Instance, start: CFrame)
 	local Players = game:GetService("Players")
 	local desc = Instance.new("HumanoidDescription")
-	desc.Head = AVATAR.Head
-	desc.Torso = AVATAR.Torso
-	desc.LeftArm = AVATAR.LeftArm
-	desc.RightArm = AVATAR.RightArm
-	desc.LeftLeg = AVATAR.LeftLeg
-	desc.RightLeg = AVATAR.RightLeg
-	desc.HairAccessory = tostring(AVATAR.Hair)
+	desc.Shirt = SHIRT
+	desc.Pants = PANTS
 	desc.HeadColor = SKIN
 	desc.TorsoColor = SKIN
 	desc.LeftArmColor = SKIN
 	desc.RightArmColor = SKIN
 	desc.LeftLegColor = SKIN
 	desc.RightLegColor = SKIN
-	desc.HeightScale = 1.12
-	desc.WidthScale = 0.84
-	desc.DepthScale = 0.9
+	-- tall and narrow, with long limbs
+	desc.HeightScale = 1.18
+	desc.WidthScale = 0.8
+	desc.DepthScale = 0.85
 	desc.HeadScale = 1
-	desc.BodyTypeScale = 1
-	desc.ProportionScale = 1
+	desc.BodyTypeScale = 0.35
+	desc.ProportionScale = 0.6
 	local model = Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
 	local hum = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
@@ -116,7 +110,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 	model.Name = "PizzaGuy"
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-	hum.WalkSpeed = 6.5
+	hum.WalkSpeed = 5.5
 	hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
 	local animate = model:FindFirstChild("Animate")
@@ -129,15 +123,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 	pcall(function()
 		root:SetNetworkOwner(nil)
 	end)
-	-- the face
-	local fc = head:FindFirstChildWhichIsA("FaceControls", true)
-	if fc then
-		for k, v in FACE do
-			pcall(function()
-				(fc :: any)[k] = v
-			end)
-		end
-	end
+	applyFace(head)
 	-- carrying the pizza the ordinary way: upper arms down at his sides, forearms level, the two
 	-- boxes flat on his hands in front of his stomach
 	for _, name in { "RightShoulder", "LeftShoulder" } do
@@ -223,6 +209,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 	end)
 
 	local actor = { Model = model }
+	local talkBob = 0
 	function actor.pivot(): CFrame
 		return root.CFrame * CFrame.new(0, -feetOffset, 0)
 	end
@@ -252,7 +239,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 	end
 	function actor.head(yaw: number, tilt: number)
 		if neck and neckC0 then
-			neck.C0 = neckC0 * ANG(0, yaw, tilt)
+			neck.C0 = neckC0 * ANG(talkBob, yaw, tilt)
 		end
 	end
 	function actor.backAway(dist: number)
@@ -276,35 +263,28 @@ local function avatarActor(folder: Instance, start: CFrame)
 			end
 		end
 	end
-	-- mouth moves while he talks (the smile stays put)
-	local fc = head:FindFirstChildWhichIsA("FaceControls", true)
+	-- while he talks his head bobs slightly with the words
 	local talking = 0
 	function actor.talk(seconds: number)
-		if not fc then
-			return
-		end
 		talking += 1
 		local mine = talking
 		task.spawn(function()
 			local t0 = os.clock()
 			while talking == mine and os.clock() - t0 < seconds and model.Parent do
 				local t = os.clock() - t0
-				local open = math.max(0, math.sin(t * 11) * 0.5 + math.sin(t * 4.3) * 0.2) * 0.45
-				pcall(function()
-					(fc :: any).JawDrop = open
-				end)
+				talkBob = (math.sin(t * 7) * 0.5 + math.sin(t * 2.9) * 0.5) * 0.045
 				task.wait(0.05)
 			end
-			pcall(function()
-				(fc :: any).JawDrop = 0
-			end)
+			if talking == mine then
+				talkBob = 0
+			end
 		end)
 	end
 	return actor
 end
 
 local function partsActor(folder: Instance, start: CFrame)
-	local man, headModel, neck = Kit.deliveryMan(folder, start)
+	local man, headModel, neck = Kit.deliveryMan(folder, start, FACE_IMAGE)
 	local actor = { Model = man }
 	function actor.pivot(): CFrame
 		return man:GetPivot()
@@ -317,7 +297,7 @@ local function partsActor(folder: Instance, start: CFrame)
 		man:PivotTo(CFrame.lookAt(p, p + V(dir.X, 0, dir.Z)))
 	end
 	function actor.head(yaw: number, tilt: number)
-		headModel:PivotTo(man:GetPivot() * neck * ANG(0, yaw, tilt) * CF(0, 0.75, 0))
+		headModel:PivotTo(man:GetPivot() * neck * ANG(HEAD_BOW, yaw, tilt) * CF(0, 0.7, 0))
 	end
 	function actor.backAway(dist: number)
 		tweenModel(man, man:GetPivot() * CF(0, 0, dist), dist)

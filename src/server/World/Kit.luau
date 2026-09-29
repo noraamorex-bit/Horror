@@ -1990,60 +1990,53 @@ end
 ---------------------------------------------------------------------------
 -- the pizza delivery man: too tall, too thin, too pale. cf = between his feet, facing forward.
 -- Returns the model, the head model (to turn and tilt), its neck CFrame relative to cf, and the pizza box.
-function Kit.deliveryMan(parent, cf: CFrame)
+function Kit.deliveryMan(parent, cf: CFrame, faceImage: string?)
+	-- stand-in for the avatar: tall and thin, black leather jacket, black jeans, bald, a realistic
+	-- pale face texture on a classic head, carrying two pizza boxes in both hands
 	local m = Kit.model(parent, "PizzaGuy")
-	local skin = Color3.fromRGB(224, 192, 168)
-	local shirt = Color3.fromRGB(150, 32, 30)
-	local pants = Color3.fromRGB(34, 34, 38)
+	local skin = Color3.fromRGB(228, 204, 186)
+	local jacket = Color3.fromRGB(28, 28, 30)
+	local tee = Color3.fromRGB(40, 90, 96)
+	local pants = Color3.fromRGB(26, 26, 30)
 	-- legs and shoes
 	for _, s in { -1, 1 } do
-		Kit.soft(m, "Leg", cf * CF(s * 0.42, 1.55, 0), V(0.62, 3.0, 0.62), 0.18, pants, M.Fabric)
+		Kit.soft(m, "Leg", cf * CF(s * 0.42, 1.65, 0), V(0.62, 3.2, 0.62), 0.18, pants, M.Fabric)
 		Kit.soft(m, "Shoe", cf * CF(s * 0.42, 0.14, -0.15), V(0.6, 0.28, 1.05), 0.12, C.Black, M.Leather)
 	end
-	-- torso: a red polo under a rain-dark jacket, name tag
-	Kit.soft(m, "Torso", cf * CF(0, 4.25, 0), V(1.75, 2.5, 0.85), 0.25, shirt, M.Fabric)
-	Kit.box(m, "Belt", cf * CF(0, 3.05, 0), V(1.72, 0.2, 0.86), C.Black, M.Leather)
-	Kit.box(m, "Collar", cf * CF(0, 5.45, -0.1), V(1.0, 0.18, 0.7), Color3.fromRGB(236, 232, 224), M.Fabric)
-	Kit.box(m, "NameTag", cf * CF(-0.45, 4.8, -0.44), V(0.5, 0.22, 0.03), Color3.fromRGB(236, 232, 224), M.Plastic)
-	Kit.box(m, "Logo", cf * CF(0.45, 4.8, -0.44), V(0.4, 0.4, 0.03), Color3.fromRGB(240, 200, 60), M.Plastic)
-	-- long arms reaching forward to hold the box
+	-- torso: the jacket hangs open over a dark tee
+	Kit.soft(m, "Torso", cf * CF(0, 4.45, 0), V(1.7, 2.6, 0.85), 0.25, jacket, M.Leather)
+	Kit.box(m, "Tee", cf * CF(0, 4.55, -0.43), V(0.62, 2.3, 0.03), tee, M.Fabric)
+	-- arms down at his sides, forearms level, hands under the boxes
 	for _, s in { -1, 1 } do
-		local shoulder = cf * CF(s * 1.05, 5.2, 0) * ANG(rad(62), 0, rad(s * 6))
-		Kit.soft(m, "UpperArm", shoulder * CF(0, -0.8, 0), V(0.5, 1.7, 0.5), 0.2, shirt, M.Fabric)
-		Kit.soft(m, "Forearm", shoulder * CF(0, -2.35, 0), V(0.42, 1.6, 0.42), 0.18, skin, M.Plastic)
-		Kit.ellipsoid(m, "Hand", shoulder * CF(0, -3.25, 0), V(0.45, 0.55, 0.3), skin, M.Plastic)
+		local shoulder = cf * CF(s * 1.05, 5.45, 0) * ANG(rad(14), 0, 0)
+		Kit.soft(m, "UpperArm", shoulder * CF(0, -0.85, 0), V(0.5, 1.8, 0.5), 0.2, jacket, M.Leather)
+		local elbow = shoulder * CF(0, -1.75, 0) * ANG(rad(76), 0, 0)
+		Kit.soft(m, "Forearm", elbow * CF(0, -0.75, 0), V(0.44, 1.5, 0.44), 0.18, jacket, M.Leather)
+		Kit.ellipsoid(m, "Hand", elbow * CF(0, -1.62, 0), V(0.42, 0.5, 0.3), skin, M.Plastic)
 	end
-	-- the pizza, in an insulated bag
-	local boxCF = cf * CF(0, 3.85, -2.35)
-	local box = Kit.soft(m, "PizzaBag", boxCF, V(2.6, 0.6, 2.6), 0.1, Color3.fromRGB(170, 30, 30), M.Fabric)
-	Kit.box(m, "BagLogo", boxCF * CF(0, 0.31, 0), V(1.2, 0.02, 0.6), Color3.fromRGB(240, 200, 60), M.Plastic)
-	-- neck and head: long face, sunken eyes, a smile that goes on too long
-	Kit.vcyl(m, "Neck", cf * CF(0, 5.85, 0.05), 0.8, 0.5, skin, M.Plastic)
+	-- the pizza: two boxes flat on his hands
+	local boxCF = cf * CF(0, 3.95, -1.95)
+	local box = Kit.box(m, "PizzaBag", boxCF, V(2.2, 0.34, 2.2), Color3.fromRGB(206, 182, 142), M.Cardboard)
+	Kit.box(m, "PizzaBag", boxCF * CF(0, 0.36, 0) * ANG(0, 0.1, 0), V(2.2, 0.34, 2.2), Color3.fromRGB(206, 182, 142), M.Cardboard)
+	Kit.box(m, "BagLogo", boxCF * CF(0, 0.54, 0) * ANG(0, 0.1, 0), V(1.1, 0.01, 1.1), Color3.fromRGB(170, 36, 32), M.Plastic)
+	-- neck and a classic head carrying the face texture
+	Kit.vcyl(m, "Neck", cf * CF(0, 5.95, 0.05), 0.7, 0.5, skin, M.Plastic)
 	local head = Kit.model(m, "Head")
-	local neck = CF(0, 6.25, 0.05)
-	local h = cf * neck
-	Kit.ellipsoid(head, "Skull", h * CF(0, 0.75, 0), V(1.05, 1.5, 1.1), skin, M.Plastic)
-	Kit.ellipsoid(head, "Jaw", h * CF(0, 0.3, -0.08), V(0.9, 0.7, 0.95), skin, M.Plastic)
-	for _, s in { -1, 1 } do
-		Kit.ellipsoid(head, "EyeSocket", h * CF(s * 0.24, 0.92, -0.46), V(0.34, 0.26, 0.12), Color3.fromRGB(70, 60, 62), M.Plastic)
-		Kit.ball(head, "Eye", (h * CF(s * 0.24, 0.93, -0.52)).Position, 0.16, Color3.fromRGB(236, 232, 226), M.Plastic)
-		Kit.ball(head, "Pupil", (h * CF(s * 0.24, 0.93, -0.595)).Position, 0.07, C.Black, M.Plastic)
-		Kit.ellipsoid(head, "Ear", h * CF(s * 0.53, 0.8, 0), V(0.14, 0.34, 0.24), skin, M.Plastic)
+	local neck = CF(0, 6.3, 0.05)
+	local skull = Kit.box(head, "Skull", cf * neck * CF(0, 0.7, 0), V(1.2, 1.2, 1.2), skin, M.Plastic)
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Head
+	mesh.Scale = V(1.25, 1.25, 1.25)
+	mesh.Parent = skull
+	if faceImage then
+		local face = Instance.new("Decal")
+		face.Name = "face"
+		face.Face = Enum.NormalId.Front
+		face.Texture = faceImage
+		face.Parent = skull
 	end
-	Kit.ellipsoid(head, "Nose", h * CF(0, 0.72, -0.55), V(0.14, 0.3, 0.16), Color3.fromRGB(186, 176, 170), M.Plastic)
-	-- the grin: a thin dark arc from cheek to cheek
-	for k = -4, 4 do
-		local a = k / 4
-		Kit.box(head, "Grin", h * CF(a * 0.4, 0.4 + a * a * 0.16, -0.5 + math.abs(a) * 0.1) * ANG(0, -a * 0.5, rad(a * 30)), V(0.13, 0.07, 0.05), Color3.fromRGB(34, 14, 16), M.Plastic)
-	end
-	-- teeth showing in the middle of it
-	Kit.box(head, "Teeth", h * CF(0, 0.43, -0.505), V(0.42, 0.06, 0.04), Color3.fromRGB(226, 220, 196), M.Plastic)
-	-- the cap
-	Kit.ellipsoid(head, "Cap", h * CF(0, 1.32, 0.02), V(1.12, 0.62, 1.16), Color3.fromRGB(150, 32, 30), M.Fabric)
-	Kit.box(head, "CapBrim", h * CF(0, 1.2, -0.7) * ANG(rad(-8), 0, 0), V(0.95, 0.06, 0.6), Color3.fromRGB(130, 26, 24), M.Fabric)
-	Kit.box(head, "CapPatch", h * CF(0, 1.35, -0.55), V(0.42, 0.22, 0.03), Color3.fromRGB(240, 200, 60), M.Plastic)
-	head.PrimaryPart = head:FindFirstChild("Skull") :: BasePart
-	Kit.collider(m, cf * CF(0, 3.5, 0), V(1.8, 7, 1.2))
+	head.PrimaryPart = skull
+	Kit.collider(m, cf * CF(0, 3.6, 0), V(1.8, 7.2, 1.2))
 	m.PrimaryPart = Kit.box(m, "Root", cf, V(0.2, 0.2, 0.2), skin, M.Plastic, { Transparency = 1 })
 	return m, head, neck, box
 end
