@@ -91,6 +91,12 @@ Each has its own line in the truth log, a thought, and a spoken reaction if frie
 ### Music and sound
 Soft piano indoors in Act I; a driving chase track ("Dark Hunter", APM) when he is chasing someone near you, low dread ("Facing the Fear", APM) while he searches close by, both scaled by how close he is; and from Act II the house creaks somewhere near you every 20-50 s.
 
+### Getting caught
+When he grabs you, your camera snaps onto his masked face, inches away and lunging closer, with a scream hit ("Eyes Scream Horror Hit", APM), a red flash and a hard shake. Then the hand over your mouth and the fade to black. He also breathes: a slow, heavy loop on him that you only hear from a few steps away, which is how you know he is right outside your hiding spot.
+
+### Badges
+`Config.Badges` holds one badge ID per ending plus FirstNight. Create the badges in Creator Hub, paste the IDs, and the ending awards them.
+
 ### Solo nights
 Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that the creek road flooded and they had to turn around ("stay dry, don't get murdered lol"). Friends' banter never plays solo.
 

@@ -110,11 +110,20 @@ function Capture.capture(player: Player)
 	player:SetAttribute("Captured", true)
 	player:SetAttribute("StruggleProgress", 0)
 
-	ctx.Remotes.Fade:FireClient(player, true, 0.4)
-	ctx.Remotes.Shake:FireClient(player, 1, 0.5)
-	ctx.Audio.caption("A hand clamps over your mouth. Everything goes dark.", nil, nil, { player })
+	-- the jumpscare: his face, right there, then darkness
+	local head = ctx.Intruder and ctx.Intruder.getHead and ctx.Intruder.getHead()
+	local scareTime = 0
+	if head and head.Parent then
+		ctx.Remotes.Jumpscare:FireClient(player, head)
+		scareTime = 0.9
+	end
+	task.delay(scareTime, function()
+		ctx.Remotes.Fade:FireClient(player, true, 0.4)
+		ctx.Remotes.Shake:FireClient(player, 1, 0.5)
+		ctx.Audio.caption("A hand clamps over your mouth. Everything goes dark.", nil, nil, { player })
+	end)
 
-	task.delay(1.2, function()
+	task.delay(1.2 + scareTime, function()
 		if not captives[player] then
 			return
 		end

@@ -76,6 +76,8 @@ Sounds.Library = {
 	HatchCreak = { Id = "rbxassetid://9126263691", Fallback = ENGINE_THUD, Volume = 0.7, Range = 60, Caption = "[Something creaks in the ceiling]" },
 	Doorbell = { Id = "rbxassetid://91808856778507", Fallback = ENGINE_BEEP, Volume = 1, Range = 120, Caption = "[The doorbell rings]" },
 	Sting = { Id = "rbxassetid://9120769331", Volume = 0.8, Range = 40 },
+	-- APM "Eyes Scream Horror Hit": the moment he grabs you
+	Jumpscare = { Id = "rbxassetid://9041752524", Volume = 1 },
 	-- jump scares: loud, sudden, close
 	PlateCrash = { Id = "rbxassetid://9114592102", Fallback = ENGINE_THUD, Volume = 1, Range = 140, Caption = "[CRASH - something shatters in the kitchen]" },
 	CeilingThud = { Id = "rbxassetid://9113437538", Fallback = ENGINE_THUD, Volume = 1, Range = 90, Caption = "[A heavy THUD in the ceiling]" },
@@ -92,6 +94,8 @@ Sounds.Library = {
 	ZipTie = { Id = "rbxassetid://9118047781", Fallback = ENGINE_THUD, Volume = 0.6, Range = 25, Caption = "[Zip ties ratchet]" },
 	Struggle = { Id = "rbxassetid://9113535436", Fallback = ENGINE_THUD, Volume = 0.7, Range = 35, Caption = "[Muffled struggling]" },
 	ManWhisper = { Id = "rbxassetid://9113585946", Volume = 0.6, Range = 14, Caption = "[A man's breathing, very close]" },
+	-- his breathing, always with him: you hear it only when he's a few steps away
+	IntruderBreath = { Id = "rbxassetid://9113585946", Volume = 0.45, Range = 16, Looped = true },
 	PhoneVibrate = { Id = "", Fallback = ENGINE_BEEP, Volume = 0.3, Pitch = 1.5 },
 
 	-- Interface / handling (mostly client-side)

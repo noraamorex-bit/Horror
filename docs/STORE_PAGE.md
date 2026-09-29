@@ -23,6 +23,6 @@ Works on mobile, PC and controller. Invite your friends and survive the night to
 - **Icon and thumbnails:** a dark house with one warm lit window and a silhouette in it, and a
   close-up of the burlap-masked intruder in a doorway. Bright contrast and a face read well at
   small sizes.
-- **Badges** for each ending (Sirens, the neighbor, the car, and the bad endings). Endings
-  already trigger in `Services/EndingService`; badge IDs can be awarded there.
+- **Badges**: create one per ending (Sirens, NextDoor, Taillights, LockedIn, Dawn, GoneQuiet)
+  plus "FirstNight", then paste the IDs into `Config.Badges` in `src/shared/Config.luau`.
 - **Enable Spatial Voice** for proximity voice chat (the scariest way to play).

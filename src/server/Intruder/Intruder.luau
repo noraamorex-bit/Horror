@@ -235,6 +235,10 @@ local function ensureModel()
 	S.Tracks = {}
 	S.CurrentTrack = nil
 	loadAnims()
+	-- heavy, slow breathing that carries a few steps: the sound of him right outside the closet
+	if S.Head then
+		ctx.Audio.loopOn("IntruderBreath", S.Head, { Caption = false })
+	end
 end
 
 local function setState(name: string, data: any?)
@@ -1042,6 +1046,11 @@ function Intruder.setMode(mode: string, cause: Player?)
 			end
 		end)
 	end
+end
+
+-- his head, for the capture jumpscare
+function Intruder.getHead(): BasePart?
+	return S.Head
 end
 
 function Intruder.getState(): string

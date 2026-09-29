@@ -167,6 +167,19 @@ Config.Thoughts = {
 
 Config.ChatRange = 50
 
+-- Badges: create them in Creator Hub (Experience > Associated Items > Badges) and paste the
+-- IDs here. Each ending awards its badge to everyone there; FirstNight goes to anyone who
+-- finishes a night. Leave 0 to skip.
+Config.Badges = {
+	FirstNight = 0,
+	Sirens = 0,
+	NextDoor = 0,
+	Taillights = 0,
+	LockedIn = 0,
+	Dawn = 0,
+	GoneQuiet = 0,
+}
+
 Config.PepperSpray = {
 	Uses = 2,
 	Range = 12,

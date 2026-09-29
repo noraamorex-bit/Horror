@@ -51,6 +51,20 @@ function Ending.trigger(kind: string)
 		p:SetAttribute("Fate", fate)
 	end
 
+	-- badges (IDs in Config.Badges; 0 = not set up yet)
+	local badges = ctx.Config.Badges or {}
+	for _, p in ctx.Util.sessionPlayers() do
+		for _, id in { badges.FirstNight, badges[kind] } do
+			if type(id) == "number" and id > 0 then
+				task.spawn(function()
+					pcall(function()
+						game:GetService("BadgeService"):AwardBadge(p.UserId, id)
+					end)
+				end)
+			end
+		end
+	end
+
 	-- saved stats; who saw this ending for the first time
 	local firstFor = {}
 	if ctx.Stats then

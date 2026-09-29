@@ -67,6 +67,43 @@ function Effects.fade(toBlack: boolean, duration: number)
 	ctx.UI.tween(fadeFrame, duration or 0.5, { BackgroundTransparency = toBlack and 0 or 1 })
 end
 
+-- he got you: the camera snaps onto his face, a scream hit, a red flash, then the capture fade
+local scaring = false
+function Effects.jumpscare(head: BasePart?)
+	if scaring or not head or not head.Parent then
+		return
+	end
+	scaring = true
+	local cam = workspace.CurrentCamera
+	local oldType, oldFov = cam.CameraType, cam.FieldOfView
+	cam.CameraType = Enum.CameraType.Scriptable
+	cam.FieldOfView = 48
+	local s = localSound("Jumpscare")
+	if s then
+		s:Play()
+		game:GetService("Debris"):AddItem(s, 7)
+	end
+	local flash = Instance.new("ColorCorrectionEffect")
+	flash.TintColor = Color3.fromRGB(255, 120, 110)
+	flash.Contrast = 0.4
+	flash.Brightness = 0.12
+	flash.Parent = Lighting
+	ctx.UI.tween(flash, 0.9, { TintColor = Color3.new(1, 1, 1), Contrast = 0, Brightness = 0 })
+	Effects.shake(1.4, 0.9)
+	local t0 = os.clock()
+	while os.clock() - t0 < 0.85 and head.Parent do
+		-- right in front of his face, lunging a little closer
+		local k = (os.clock() - t0) / 0.85
+		local hcf = head.CFrame
+		cam.CFrame = CFrame.lookAt(hcf.Position + hcf.LookVector * (2.6 - k * 0.9) + Vector3.new(0, 0.1, 0), hcf.Position)
+		task.wait()
+	end
+	flash:Destroy()
+	cam.FieldOfView = oldFov
+	cam.CameraType = oldType
+	scaring = false
+end
+
 function Effects.shake(mag: number, duration: number)
 	shakeMag = math.max(shakeMag, mag)
 	shakeUntil = math.max(shakeUntil, os.clock() + duration)
@@ -148,6 +185,9 @@ function Effects.start()
 
 	ctx.Remotes.Fade.OnClientEvent:Connect(Effects.fade)
 	ctx.Remotes.Shake.OnClientEvent:Connect(Effects.shake)
+	ctx.Remotes.Jumpscare.OnClientEvent:Connect(function(head)
+		task.spawn(Effects.jumpscare, head)
+	end)
 	ctx.Remotes.Figure.OnClientEvent:Connect(Effects.figure)
 	ctx.Remotes.PlaySound.OnClientEvent:Connect(Effects.playSound)
 
