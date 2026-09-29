@@ -58,12 +58,9 @@ Story.Chapters = {
 Story.Objectives = {
 	OrderPizza = "Order pizza (kitchen phone)",
 	Popcorn = "Make popcorn (microwave)",
-	Movie = "Pick a movie (living room TV)",
-	Fire = "Light the fireplace",
 	Windows = "Close the upstairs windows before the storm",
 
 	Explore = "Figure out what that noise was",
-	Stay = "Stay together",
 
 	Power = "Restore the power (breaker panel, garage)",
 	Phone = "Call someone for help",
@@ -90,17 +87,6 @@ Story.Tasks = {
 	Popcorn = { Title = "Make popcorn", Steps = {
 		{ Key = "Bag", Text = "Get a bag of popcorn from the kitchen cupboard", Target = "Cupboard" },
 		{ Key = "Cook", Text = "Pop it in the microwave", Target = "Microwave" },
-		{ Key = "Serve", Text = "Put the bowl on the living room coffee table", Target = "CoffeeTable" },
-	} },
-	Movie = { Title = "Pick a movie", Steps = {
-		{ Key = "Remote", Text = "Find the TV remote (try the couch cushions)", Target = "Couch" },
-		{ Key = "Watch", Text = "Put a movie on the living room TV", Target = "TV" },
-	} },
-	Fire = { Title = "Light the fireplace", Steps = {
-		{ Key = "Wood", Text = "Grab firewood from the pile in the garage", Target = "Woodpile" },
-		{ Key = "Logs", Text = "Stack the logs in the fireplace", Target = "Fireplace" },
-		{ Key = "Matches", Text = "Find matches in the kitchen drawer by the stove", Target = "Matches" },
-		{ Key = "Light", Text = "Light the fire", Target = "Fireplace" },
 	} },
 	Windows = { Title = "Close the upstairs windows", Steps = {
 		{ Key = "GuestFront", Text = "Close the window in the guest room", Target = "GuestWindow" },
@@ -111,15 +97,15 @@ Story.Tasks = {
 		{ Key = "BackDoor", Text = "Lock the back door in the kitchen", Target = "Door_BackDoor" },
 		{ Key = "GarageSide", Text = "Lock the garage side door", Target = "Door_GarageSide" },
 	} },
-	Stay = { Title = "Stay together" },
+	Investigate = { Title = "Check upstairs", Steps = {
+		{ Key = "Look", Text = "Find out what made that noise upstairs", Target = "Hatch" },
+	} },
 	-- Act III
 	Power = { Title = "Get the power back on", Steps = {
 		{ Key = "Flashlight", Text = "Find a flashlight (mudroom shelf or den drawer)", Target = { "FlashlightMud", "FlashlightDen" } },
-		{ Key = "Panel", Text = "Check the breaker panel in the garage", Target = "Breaker" },
 		{ Key = "Flip", Text = "Flip the MAIN breaker back on", Target = "Breaker" },
 	} },
 	Phone = { Title = "Call for help", Steps = {
-		{ Key = "Landline", Text = "Try the kitchen phone", Target = "Phone" },
 		{ Key = "Box", Text = "Check the phone box outside the garage", Target = "JunctionBox" },
 		{ Key = "Tape", Text = "Find electrical tape (kitchen drawer or garage bench)", Target = { "TapeKitchen", "TapeGarage" } },
 		{ Key = "Splice", Text = "Splice the cut phone wires", Target = "JunctionBox" },
@@ -278,7 +264,7 @@ Story.Calls = {
 -- TV channels
 ---------------------------------------------------------------------------
 Story.TV = {
-	{ Name = "Ch 4 - Movie", Line = "The movie starts. Somebody groans at the cheesy opening credits.", Sound = "TVShow", Objective = true },
+	{ Name = "Ch 4 - Movie", Line = "The movie starts. Somebody groans at the cheesy opening credits.", Sound = "TVShow" },
 	{ Name = "Ch 7 - News", Line = "'...police in Hollis County say a string of odd break-ins - food taken, nothing valuable - may be linked. Residents are asked to report any vehicle that seems out of place...'", Sound = "TVShow" },
 	{ Name = "Ch 11 - Weather", Line = "'...four inches of rain overnight. Creek Road is now closed. If you don't have to go out tonight, don't.'", Sound = "TVShow" },
 	{ Name = "Ch 12 - Static", Line = "Snow. The cable box can't find a signal.", Sound = "TVStatic" },
@@ -297,6 +283,12 @@ Story.Truths = {
 	FoodMissing = "The lasagna was eaten by Curtis. He hadn't eaten since Thursday.",
 	WetShower = "The shower was wet because Curtis showered at 7:50 PM, the way he did every Friday while the family was at swim practice.",
 	SilentCall = "The silent call was Curtis, on his prepaid phone in the attic, counting your voices through the line.",
+	WindSlam = "The door that slammed upstairs really was the storm - the draft from the windows nobody had closed yet.",
+	PlateCrash = "The plate that shattered in the kitchen was knocked off the table by Curtis, crossing to the back door in the dark. He stood perfectly still until you stopped looking.",
+	CeilingThud = "The thud in the ceiling was Curtis, shifting his weight on the attic joists to watch you through the vent.",
+	WindowBang = "The bang on the window was Curtis, outside after moving his van. He wanted to see which way you'd run.",
+	DoorRattle = "The rattling door handle was Curtis, outside, testing whether you'd locked up.",
+	ChairDrop = "The chair that fell over was Curtis, bumping it on his way through a dark room.",
 	FigureWindow = "The figure at the window was Curtis. He went out the garage side door to move his van before anyone noticed it, and stopped when he saw you.",
 	DogBark = "Biscuit was barking at Curtis walking along the side yard.",
 	TVAlert = "The TV changed on its own because an Emergency Alert System broadcast (a real flash-flood warning) overrode the channel.",
@@ -317,21 +309,20 @@ Story.Truths = {
 Story.Thoughts = {
 	Intro = {
 		Host = {
-			"Mom left me a list of chores before she went. I should look at it.|journal",
+			"Mom left me a couple of things to do. It's in my journal.|journal",
 			"Parents gone for the weekend, friends over. This is going to be a good night.",
 		},
 		Guest = {
-			"Jamie's mom left a whole list of stuff for us to do. I should check it.|journal",
+			"Jamie's mom left us a couple of things to do. I should check the journal.|journal",
 			"Pizza, a movie, no parents. This is going to be a good night.",
 		},
 	},
 	Objectives = {
 		OrderPizza = "I'm starving. Mom keeps the pizza menu on the fridge.",
 		Popcorn = "We can't watch a movie without popcorn. There's some in the kitchen cupboard.",
-		Movie = "I should probably put something on the TV. Where's the remote?",
-		Fire = "It's freezing in here. There's firewood in the garage for the fireplace.",
 		LockUp = "Dad always says to lock up at night. The back door and the garage door.",
 		Windows = "The storm's getting worse. Somebody left the windows open upstairs.",
+		Investigate = "Someone has to go up there and look. It's probably nothing.",
 		Power = "The breaker panel is in the garage. Maybe I can get the power back on.",
 		Phone = "The phone's dead. Did something happen to the line outside?",
 		Attic = "The attic hatch in the upstairs hall... what's actually up there?",
@@ -362,6 +353,13 @@ Story.Thoughts = {
 		TVAlert = "The TV just changed by itself.",
 		SilentCall = "Who calls and doesn't say anything?",
 		Glimpse = "There's someone at the end of the hall.",
+		WindSlam = "WHAT was that?! ...A door, upstairs. It's those open windows.",
+		PlateCrash = "Something just smashed in the kitchen. Nobody's in there. Nobody should be in there.",
+		CeilingThud = "Something heavy just hit the floor right above me. That's the attic.",
+		WindowBang = "Someone just slammed on the window! Get away from the window!",
+		DoorRattle = "Someone's trying the door. Someone's outside trying to get in.",
+		ChairDrop = "Did a chair just fall over? In an empty room?",
+		InvestigateDone = "Just the attic hatch. The cord is swinging... it's nothing. It has to be nothing.",
 	},
 	Items = {
 		Flashlight = "A flashlight. This could save my life tonight.|light",

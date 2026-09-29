@@ -217,6 +217,32 @@ function Interior.build(ctx, root: Instance, refs)
 		end
 	end
 
+	-- a toilet whose bowl faces f; (x, z) is the centre of its 3-stud footprint
+	local function toilet(parent, x, z, y, f: Vector3)
+		local PORCELAIN = Color3.fromRGB(242, 242, 238)
+		local UP = CFrame.Angles(0, 0, math.rad(90))
+		local bowl = V(x, 0, z) + f * 0.35
+		-- one simple collider so nobody clips into the porcelain
+		fbox(parent, "ToiletBlock", x, z, f, 0, 0, 2, 3, y, y + 1.9, PORCELAIN, M.Plastic, { Transparency = 1 })
+		-- pedestal and an oval bowl (two overlapping discs)
+		B.cylinder(parent, "Pedestal", V(bowl.X, y + 0.7, bowl.Z) - f * 0.15, 1.4, 1.1, PORCELAIN, M.Plastic, UP).CanCollide = false
+		B.cylinder(parent, "Bowl", V(bowl.X, y + 1.5, bowl.Z), 0.6, 1.8, PORCELAIN, M.Plastic, UP).CanCollide = false
+		B.cylinder(parent, "BowlFront", V(bowl.X, y + 1.5, bowl.Z) + f * 0.3, 0.6, 1.5, PORCELAIN, M.Plastic, UP).CanCollide = false
+		-- seat ring, the dark opening and a little water
+		B.cylinder(parent, "Seat", V(bowl.X, y + 1.86, bowl.Z) + f * 0.12, 0.12, 1.95, Color3.fromRGB(250, 250, 248), M.Plastic, UP).CanCollide = false
+		B.cylinder(parent, "BowlOpening", V(bowl.X, y + 1.93, bowl.Z) + f * 0.12, 0.03, 1.25, Color3.fromRGB(150, 170, 176), M.Glass, UP).CanCollide = false
+		-- lid standing up against the tank
+		fbox(parent, "Lid", x, z, f, -0.62, 0, 1.8, 0.12, y + 1.95, y + 3.45, Color3.fromRGB(250, 250, 248), M.Plastic, DECOR)
+		-- cistern with a lid and a chrome lever
+		fbox(parent, "Tank", x, z, f, -1.1, 0, 2.1, 0.8, y + 1.7, y + 3.7, PORCELAIN, M.Plastic)
+		fbox(parent, "TankLid", x, z, f, -1.1, 0, 2.3, 0.95, y + 3.7, y + 3.9, Color3.fromRGB(250, 250, 248), M.Plastic, DECOR)
+		fbox(parent, "FlushLever", x, z, f, -0.68, 0.7, 0.5, 0.1, y + 3.3, y + 3.42, C.Steel, M.Metal, DECOR)
+		-- supply pipe to the wall
+		fbox(parent, "SupplyPipe", x, z, f, -1.3, -0.7, 0.12, 0.12, y + 0.3, y + 1.7, C.Steel, M.Metal, DECOR)
+		-- toilet paper holder beside it
+		fbox(parent, "PaperRoll", x, z, f, -0.4, 1.6, 0.5, 0.5, y + 2.2, y + 2.7, Color3.fromRGB(248, 248, 244), M.Fabric, DECOR)
+	end
+
 	-- bed with an under-bed hiding spot. `open` = side you crawl in from, `head` = headboard side
 	local function bed(parent, name, x0, z0, x1, z1, y, duvet: Color3, open: Vector3, head: Vector3, room: string, frameColor: Color3?)
 		frameColor = frameColor or WOOD_MID
@@ -234,19 +260,41 @@ function Interior.build(ctx, root: Instance, refs)
 		B.block(parent, "Headboard", headPos + V(0, 2.75, 0), hbSize, frameColor, M.Wood)
 		local panelSize = hx and V(0.1, 3.2, len - 1.2) or V(len - 1.2, 3.2, 0.1)
 		B.block(parent, "HeadboardPanel", headPos - head * 0.25 + V(0, 3.6, 0), panelSize, frameColor:Lerp(Color3.new(), 0.15), M.Fabric, 0, DECOR)
-		-- duvet over the foot two-thirds, folded edge, pillows at the head
+		-- corner posts, and a low footboard opposite the headboard
 		local bedLen = hx and (x1 - x0) or (z1 - z0)
-		local duvetLen = bedLen * 0.68
-		local duvetCenter = center - head * (bedLen / 2 - duvetLen / 2 - 0.1) + V(0, 3.45, 0)
-		local duvetSize = hx and V(duvetLen, 0.35, len - 0.1) or V(len - 0.1, 0.35, duvetLen)
-		B.block(parent, "Duvet", duvetCenter, duvetSize, duvet, M.Fabric, 0, DECOR)
-		local foldSize = hx and V(0.6, 0.45, len - 0.1) or V(len - 0.1, 0.45, 0.6)
-		B.block(parent, "DuvetFold", duvetCenter + head * (duvetLen / 2 - 0.3) + V(0, 0.05, 0), foldSize, duvet:Lerp(Color3.new(1, 1, 1), 0.3), M.Fabric, 0, DECOR)
+		local sideAxis = hx and V(0, 0, 1) or V(1, 0, 0)
+		for _, e in { 1, -1 } do
+			for _, s in { -1, 1 } do
+				local p = center + head * e * (bedLen / 2 - 0.2) + sideAxis * s * (len / 2 - 0.05)
+				local top = e == 1 and 6.4 or 4.2
+				B.block(parent, "BedPost", p + V(0, top / 2, 0), V(0.5, top, 0.5), frameColor:Lerp(Color3.new(), 0.1), M.Wood, 0, DECOR)
+				B.part(parent, { Name = "PostFinial", Shape = Enum.PartType.Ball, Size = V(0.6, 0.6, 0.6), CFrame = CFrame.new(p + V(0, top + 0.2, 0)), Color = frameColor, Material = M.Wood, CanCollide = false, CanQuery = false })
+			end
+		end
+		local footPos = center - head * (bedLen / 2 - 0.2)
+		B.block(parent, "Footboard", footPos + V(0, 3, 0), hx and V(0.3, 1.8, len - 0.4) or V(len - 0.4, 1.8, 0.3), frameColor, M.Wood, 0, DECOR)
+		-- fitted sheet, then a duvet that drapes over both long sides and the foot
+		local sheet = Color3.fromRGB(246, 244, 238)
+		local duvetLen = bedLen * 0.72
+		local duvetCenter = center - head * (bedLen / 2 - duvetLen / 2 - 0.35) + V(0, 3.47, 0)
+		B.block(parent, "Duvet", duvetCenter, hx and V(duvetLen, 0.4, len + 0.3) or V(len + 0.3, 0.4, duvetLen), duvet, M.Fabric, 0, DECOR)
+		for _, s in { -1, 1 } do
+			local drape = duvetCenter + sideAxis * s * (len / 2 + 0.12) - V(0, 0.75, 0)
+			B.block(parent, "DuvetDrape", drape, hx and V(duvetLen, 1.2, 0.14) or V(0.14, 1.2, duvetLen), duvet:Lerp(Color3.new(), 0.08), M.Fabric, 0, DECOR)
+		end
+		B.block(parent, "DuvetFoot", duvetCenter - head * (duvetLen / 2 + 0.05) - V(0, 0.55, 0), hx and V(0.14, 1.0, len + 0.3) or V(len + 0.3, 1.0, 0.14), duvet:Lerp(Color3.new(), 0.08), M.Fabric, 0, DECOR)
+		-- turned-down top edge showing the sheet
+		B.block(parent, "DuvetFold", duvetCenter + head * (duvetLen / 2 - 0.45) + V(0, 0.24, 0), hx and V(0.9, 0.18, len + 0.32) or V(len + 0.32, 0.18, 0.9), sheet, M.Fabric, 0, DECOR)
+		-- a knitted throw across the foot
+		B.block(parent, "Throw", duvetCenter - head * (duvetLen / 2 - 1.1) + V(0, 0.24, 0), hx and V(1.6, 0.14, len + 0.36) or V(len + 0.36, 0.14, 1.6), duvet:Lerp(Color3.fromRGB(230, 220, 200), 0.55), M.Fabric, 0, DECOR)
+		-- plump pillows leaning on the headboard
 		local pillows = len > 6 and { -len / 4, len / 4 } or { 0 }
 		for _, o in pillows do
-			local side = hx and V(0, 0, o) or V(o, 0, 0)
-			local ps = hx and V(1.3, 0.55, math.min(2.6, len / 2 - 0.4)) or V(math.min(2.6, len / 2 - 0.4), 0.55, 1.3)
-			B.block(parent, "Pillow", headPos - head * 1.2 + side + V(0, 3.6, 0), ps, Color3.fromRGB(250, 248, 244), M.Fabric, 0, DECOR)
+			local pw = math.min(2.8, len / #pillows - 0.4)
+			local pos = headPos - head * 1.0 + sideAxis * o + V(0, 3.75, 0)
+			local cf = CFrame.lookAt(pos, pos - head) * CFrame.Angles(math.rad(-25), 0, 0)
+			B.part(parent, { Name = "Pillow", Size = V(pw, 0.7, 1.5), CFrame = cf, Color = sheet, Material = M.Fabric, CanCollide = false, CanQuery = false })
+			B.part(parent, { Name = "AccentPillow", Size = V(pw * 0.6, 0.5, 1.0), CFrame = cf * CFrame.new(0, 0.15, -0.95) * CFrame.Angles(math.rad(10), 0, 0), Color = duvet:Lerp(Color3.new(1, 1, 1), 0.45), Material = M.Fabric, CanCollide = false, CanQuery = false })
 		end
 		-- skirt on the closed sides hides whoever is under it
 		for _, dir in { V(1, 0, 0), V(-1, 0, 0), V(0, 0, 1), V(0, 0, -1) } do
@@ -357,8 +405,11 @@ function Interior.build(ctx, root: Instance, refs)
 		light.Brightness = kind == "floor" and 1.1 or 0.8
 		light.Color = Color3.fromRGB(255, 190, 125)
 		light.Shadows = true
-		light.Parent = shade
-		ctx.Power.registerLight(room, shade, light)
+		-- the glowing bulb sits inside the fabric shade, so the shade itself keeps its colour
+		local bulb = B.part(parent, { Name = "LampBulb", Shape = Enum.PartType.Ball, Size = V(0.5, 0.6, 0.5), CFrame = CFrame.new(pos + V(0, height + 0.25, 0)), Color = Color3.fromRGB(255, 214, 160), CanCollide = false, CanQuery = false })
+		light.Parent = bulb
+		ctx.Power.registerLight(room, bulb, light)
+		shade.Transparency = 0.08
 	end
 
 	-- pendant over an island/table, on its room's switch
@@ -369,18 +420,20 @@ function Interior.build(ctx, root: Instance, refs)
 			Shape = Enum.PartType.Ball,
 			Size = V(1.4, 1.4, 1.4),
 			CFrame = CFrame.new(pos - V(0, drop + 0.5, 0)),
-			Color = Color3.fromRGB(255, 226, 180),
+			Color = Color3.fromRGB(214, 190, 150),
 			Material = Enum.Material.Glass,
+			Transparency = 0.35,
 			CanCollide = false,
 			CanQuery = false,
 		})
+		local bulb = B.part(parent, { Name = "PendantBulb", Shape = Enum.PartType.Ball, Size = V(0.45, 0.55, 0.45), CFrame = shade.CFrame, Color = Color3.fromRGB(255, 214, 160), CanCollide = false, CanQuery = false })
 		local light = Instance.new("PointLight")
 		light.Range = 16
 		light.Brightness = 1
 		light.Color = Color3.fromRGB(255, 200, 140)
 		light.Shadows = true
-		light.Parent = shade
-		ctx.Power.registerLight(room, shade, light)
+		light.Parent = bulb
+		ctx.Power.registerLight(room, bulb, light)
 	end
 
 	-- a ceiling fan: the client spins the blades (CollectionService "Spinner")
@@ -457,12 +510,12 @@ function Interior.build(ctx, root: Instance, refs)
 
 	-- fireplace: stone surround, mantel with candles and photos, a screen
 	local stone = Color3.fromRGB(150, 140, 128)
-	box(living, "Hearth", -30.2, G, -30, -19.8, G + 0.5, -27, stone, M.Concrete)
-	box(living, "Surround", -30, G, -30.3, -27.6, G + 8, -28.9, stone, Enum.Material.Cobblestone)
-	box(living, "Surround", -22.4, G, -30.3, -20, G + 8, -28.9, stone, Enum.Material.Cobblestone)
-	box(living, "Surround", -27.6, G + 6, -30.3, -22.4, G + 8, -28.9, stone, Enum.Material.Cobblestone)
+	box(living, "Hearth", -30.2, G, -30, -19.8, G + 0.5, -26.4, stone, M.Concrete)
+	box(living, "Surround", -30, G, -30.3, -27.6, G + 8, -28.2, stone, Enum.Material.Cobblestone)
+	box(living, "Surround", -22.4, G, -30.3, -20, G + 8, -28.2, stone, Enum.Material.Cobblestone)
+	box(living, "Surround", -27.6, G + 6, -30.3, -22.4, G + 8, -28.2, stone, Enum.Material.Cobblestone)
 	box(living, "Firebox", -27.6, G + 0.5, -30.3, -22.4, G + 6, -29.8, Color3.fromRGB(20, 18, 18), M.Brick)
-	box(living, "Mantel", -30.6, G + 8, -30.3, -19.4, G + 8.6, -28.3, WOOD_DARK, M.Wood)
+	box(living, "Mantel", -30.6, G + 8, -30.3, -19.4, G + 8.6, -27.6, WOOD_DARK, M.Wood)
 	box(living, "Chimneybreast", -29.4, G + 8.6, -30.3, -20.6, G + 13, -29.3, Color3.fromRGB(170, 160, 146), Enum.Material.Cobblestone)
 	for _, x in { -29.6, -20.4 } do
 		B.cylinder(living, "MantelCandle", V(x, G + 9.3, -29.2), 1.4, 0.4, CREAM, M.Plastic, CFrame.Angles(0, 0, math.rad(90)))
@@ -471,13 +524,31 @@ function Interior.build(ctx, root: Instance, refs)
 	for i, x in { -27.5, -25.6, -23.6 } do
 		box(living, "PhotoFrame", x - 0.6, G + 8.6, -29.6, x + 0.6, G + 10 - i * 0.15, -29.4, WOOD_DARK, M.Wood, DECOR)
 	end
-	box(living, "FireScreen", -27.4, G + 0.5, -28.6, -22.6, G + 4, -28.5, C.Black, M.Metal, { Transparency = 0.35, CanCollide = false })
+	-- sooty firebox sides and an iron grate on a bed of ash
+	box(living, "FireboxSide", -27.6, G + 0.5, -29.8, -27.4, G + 6, -28.2, Color3.fromRGB(28, 24, 22), M.Brick, DECOR)
+	box(living, "FireboxSide", -22.6, G + 0.5, -29.8, -22.4, G + 6, -28.2, Color3.fromRGB(28, 24, 22), M.Brick, DECOR)
+	box(living, "Ash", -27.3, G + 0.5, -29.8, -22.7, G + 0.6, -28.3, Color3.fromRGB(70, 66, 62), M.Concrete, DECOR)
+	local IRON = Color3.fromRGB(30, 28, 28)
+	for _, z in { -29.45, -28.6 } do
+		box(living, "GrateBar", -26.8, G + 0.95, z - 0.08, -23.2, G + 1.1, z + 0.08, IRON, M.Metal, DECOR)
+	end
+	for k = 0, 4 do
+		local x = -26.6 + k * 0.8
+		box(living, "GrateRib", x - 0.07, G + 0.95, -29.55, x + 0.07, G + 1.35, -28.5, IRON, M.Metal, DECOR)
+	end
+	for _, x in { -26.7, -23.3 } do
+		for _, z in { -29.45, -28.6 } do
+			box(living, "GrateLeg", x - 0.1, G + 0.5, z - 0.1, x + 0.1, G + 0.95, z + 0.1, IRON, M.Metal, DECOR)
+		end
+		box(living, "Firedog", x - 0.12, G + 0.95, -28.55, x + 0.12, G + 1.9, -28.35, IRON, M.Metal, DECOR)
+	end
+	box(living, "FireScreen", -27.4, G + 0.5, -27.95, -22.6, G + 4, -27.85, C.Black, M.Metal, { Transparency = 0.35, CanCollide = false })
 	-- fire tools, the poker you can take
 	box(living, "ToolStand", -19.6, G, -29.6, -19.2, G + 4, -29.2, C.Black, M.Metal, DECOR)
 	local poker = item(living, "FirePoker", V(-19.2, G + 2.2, -28.9), V(0.25, 4, 0.25), C.Black, "Poker", "Fire poker")
 	poker.CFrame *= CFrame.Angles(0, 0, math.rad(10))
 
-	local fireSpot = B.block(living, "FireSpot", V(-25, G + 1.5, -29.3), V(3, 1, 1.2), C.Black, M.Plastic, 0, { Transparency = 1, CanCollide = false })
+	local fireSpot = B.block(living, "FireSpot", V(-25, G + 2, -29), V(3.2, 1, 1.2), C.Black, M.Plastic, 0, { Transparency = 1, CanCollide = false })
 	target("Fireplace", fireSpot.Position + V(0, 1, 1))
 	local fireEmitter = Instance.new("ParticleEmitter")
 	fireEmitter.Texture = "rbxasset://textures/particles/fire_main.dds"
@@ -491,6 +562,13 @@ function Interior.build(ctx, root: Instance, refs)
 	fireEmitter.EmissionDirection = Enum.NormalId.Top
 	fireEmitter.Enabled = false
 	fireEmitter.Parent = fireSpot
+	local flames = Instance.new("Fire")
+	flames.Size = 4
+	flames.Heat = 7
+	flames.Color = Color3.fromRGB(255, 140, 50)
+	flames.SecondaryColor = Color3.fromRGB(255, 60, 20)
+	flames.Enabled = false
+	flames.Parent = fireSpot
 	local fireLight = Instance.new("PointLight")
 	fireLight.Color = Color3.fromRGB(255, 150, 70)
 	fireLight.Range = 26
@@ -512,10 +590,25 @@ function Interior.build(ctx, root: Instance, refs)
 			end
 			fire.Logs = true
 			ctx.Audio.playAt("LogDrop", fireSpot.Position, { Caption = false })
-			for i = -1, 1 do
-				B.cylinder(living, "Log", V(-25 + i * 0.3, G + 0.95 + math.abs(i) * 0.1, -29.3 + i * 0.3), 3.2, 0.6, Color3.fromRGB(80, 55, 35), M.Wood, CFrame.Angles(0, math.rad(10 * i), 0))
+			-- a proper stack: two logs on the grate, one across them, two crossed on top, kindling
+			local BARK = { Color3.fromRGB(78, 56, 38), Color3.fromRGB(96, 70, 46), Color3.fromRGB(66, 48, 34) }
+			local function log(x, y, z, len, dia, yaw, k)
+				local l = B.cylinder(living, "Log", V(x, y, z), len, dia, BARK[k % 3 + 1], M.Wood, CFrame.Angles(0, math.rad(yaw), 0))
+				l.CanCollide = false
+				l.CanQuery = false
+				for _, e in { -1, 1 } do
+					B.cylinder(living, "LogEnd", V(x, y, z) + CFrame.Angles(0, math.rad(yaw), 0):VectorToWorldSpace(V(e * (len / 2 + 0.01), 0, 0)), 0.04, dia - 0.12, Color3.fromRGB(196, 160, 112), M.Wood, CFrame.Angles(0, math.rad(yaw), 0)).CanCollide = false
+				end
 			end
-			ctx.Objectives.step("Fire", "Logs")
+			log(-25.1, G + 1.45, -29.35, 3.4, 0.62, 4, 1)
+			log(-24.9, G + 1.45, -28.75, 3.2, 0.58, -3, 2)
+			log(-25, G + 1.95, -29.05, 3.0, 0.55, 2, 3)
+			log(-25.7, G + 2.4, -29.0, 1.9, 0.45, 38, 4)
+			log(-24.3, G + 2.4, -29.0, 1.9, 0.45, -38, 5)
+			for k = 1, 6 do
+				local stick = B.block(living, "Kindling", V(-25.6 + k * 0.2, G + 2.2 + (k % 2) * 0.1, -29.05), V(1.3, 0.1, 0.1), Color3.fromRGB(150, 118, 80), M.Wood, 20 + k * 27, DECOR)
+				stick.CFrame *= CFrame.Angles(0, 0, math.rad(k % 2 == 0 and 15 or -12))
+			end
 			firePrompt.ActionText = "Light the fire"
 			firePrompt.HoldDuration = 2
 			return
@@ -528,11 +621,13 @@ function Interior.build(ctx, root: Instance, refs)
 		firePrompt.Enabled = false
 		ctx.Audio.playAt("Matches", fireSpot.Position, { Caption = false })
 		fireEmitter.Enabled = true
+		flames.Enabled = true
 		fireLight.Enabled = true
+		for k = 0, 5 do
+			B.block(living, "Ember", V(-26.4 + k * 0.55, G + 0.95, -29.05 + (k % 2) * 0.3), V(0.5, 0.12, 0.35), Color3.fromRGB(255, 110, 30), Enum.Material.Neon, k * 31, DECOR)
+		end
 		ctx.Audio.loopOn("FireCrackle", fireSpot, { Caption = false })
 		ctx.Power.setStaticLit("Living", true)
-		ctx.Objectives.step("Fire", "Light")
-		ctx.Objectives.complete("Fire")
 		task.spawn(function()
 			while fireSpot.Parent do
 				fireLight.Brightness = 1.3 + math.random() * 0.6
@@ -553,7 +648,6 @@ function Interior.build(ctx, root: Instance, refs)
 		couchPrompt.Enabled = false
 		ctx.Inventory.give(player, "Remote")
 		ctx.Audio.playAt("Pickup", couchSeat.Position, { Caption = false })
-		ctx.Objectives.step("Movie", "Remote")
 	end)
 
 	-- TV on a media console against the west wall
@@ -621,10 +715,6 @@ function Interior.build(ctx, root: Instance, refs)
 		local bg = ch.Sound == "TVStatic" and Color3.fromRGB(90, 90, 90) or Color3.fromRGB(25, 35, 60)
 		tvShow(ch.Name, bg, ch.Sound)
 		ctx.Audio.caption(ch.Line, screen.Position, 30)
-		if ch.Objective then
-			ctx.Objectives.step("Movie", "Watch")
-			ctx.Objectives.complete("Movie")
-		end
 	end
 	function tvState.emergencyAlert(duration: number)
 		if not ctx.Power.isOn() then
@@ -653,8 +743,7 @@ function Interior.build(ctx, root: Instance, refs)
 		end
 		if not tvState.On then
 			if not ctx.Inventory.has(player, "Remote") then
-				ctx.Director.think(player, "Where's the remote? It's always lost in the couch cushions.")
-				return
+				ctx.Audio.caption("No remote. You press the button on the TV itself.", nil, nil, { player })
 			end
 			tvState.On = true
 			tvPrompt.ActionText = "Change channel"
@@ -741,9 +830,7 @@ function Interior.build(ctx, root: Instance, refs)
 	-- matches in the drawer by the stove
 	local matchDrawer = box(kitchen, "MatchDrawer", -37.28, G + 2.75, 18.4, -37.1, G + 3.35, 20.8, CAB:Lerp(Color3.new(1, 1, 1), 0.1), M.Wood)
 	target("Matches", matchDrawer.Position)
-	ctx.Interaction.pickup(matchDrawer, "Matches", { Action = "Search", Object = "Drawer (matches)", Keep = true }, function()
-		ctx.Objectives.step("Fire", "Matches")
-	end)
+	ctx.Interaction.pickup(matchDrawer, "Matches", { Action = "Search", Object = "Drawer (matches)", Keep = true })
 
 	-- island with stools, pendants above, fruit bowl
 	cabinets(kitchen, -28, 12, -22, 18, G, V(0, 0, -1), Color3.fromRGB(64, 84, 96), COUNTER)
@@ -820,16 +907,16 @@ function Interior.build(ctx, root: Instance, refs)
 	ctx.Interaction.pickup(drawer2, "Batteries", { Action = "Search", Object = "Drawer (batteries)", Keep = true })
 
 	-- fridge with the note and the pizza menu under magnets
-	local fridge = box(kitchen, "Fridge", -14.5, G, 26.4, -9.5, G + 10.5, 29.6, Color3.fromRGB(220, 220, 218), M.Metal)
-	box(kitchen, "FridgeSeam", -14.5, G + 6.9, 26.35, -9.5, G + 7.05, 26.4, Color3.fromRGB(150, 150, 150), M.Metal, DECOR)
-	box(kitchen, "FridgeHandle", -10.3, G + 3, 26.1, -10.1, G + 6.4, 26.35, C.Steel, M.Metal, DECOR)
-	box(kitchen, "FreezerHandle", -10.3, G + 7.5, 26.1, -10.1, G + 9.5, 26.35, C.Steel, M.Metal, DECOR)
+	local fridge = box(kitchen, "Fridge", -29.6, G, 26.4, -24.6, G + 10.5, 29.6, Color3.fromRGB(220, 220, 218), M.Metal)
+	box(kitchen, "FridgeSeam", -29.6, G + 6.9, 26.35, -24.6, G + 7.05, 26.4, Color3.fromRGB(150, 150, 150), M.Metal, DECOR)
+	box(kitchen, "FridgeHandle", -25.4, G + 3, 26.1, -25.2, G + 6.4, 26.35, C.Steel, M.Metal, DECOR)
+	box(kitchen, "FreezerHandle", -25.4, G + 7.5, 26.1, -25.2, G + 9.5, 26.35, C.Steel, M.Metal, DECOR)
 	ctx.Audio.loopOn("FridgeHum", fridge, { Caption = false })
-	local note = paper(kitchen, "FridgeNote", V(-12.9, G + 5.6, 26.37), V(1.4, 1.8, 0.05))
+	local note = paper(kitchen, "FridgeNote", V(-28.0, G + 5.6, 26.37), V(1.4, 1.8, 0.05))
 	ctx.Interaction.document(note, "FridgeNote", { Object = "Note on the fridge", Distance = 6 })
-	local menu = paper(kitchen, "PizzaMenu", V(-11.6, G + 8.4, 26.37), V(1.3, 1.9, 0.05))
+	local menu = paper(kitchen, "PizzaMenu", V(-26.7, G + 8.4, 26.37), V(1.3, 1.9, 0.05))
 	menu.Color = Color3.fromRGB(200, 60, 45)
-	for _, p in { V(-12.9, G + 6.4, 26.33), V(-11.6, G + 9.3, 26.33) } do
+	for _, p in { V(-28.0, G + 6.4, 26.33), V(-26.7, G + 9.3, 26.33) } do
 		B.block(kitchen, "Magnet", p, V(0.25, 0.25, 0.08), Color3.fromRGB(60, 120, 200), M.Plastic, 0, DECOR)
 	end
 	target("Fridge", menu.Position)
@@ -846,8 +933,8 @@ function Interior.build(ctx, root: Instance, refs)
 			ctx.Audio.caption("Soda, eggs, condiments - and the lasagna Mom left, under foil.", nil, nil, { player })
 		end
 	end)
-	B.cylinder(kitchen, "TrashCan", V(-16, G + 1.6, 28.4), 3.2, 2.2, Color3.fromRGB(150, 150, 150), M.Metal, CFrame.Angles(0, 0, math.rad(90)))
-	local trashLid = B.cylinder(kitchen, "TrashLid", V(-16, G + 3.25, 28.4), 0.15, 2.3, C.Steel, M.Metal, CFrame.Angles(0, 0, math.rad(90)))
+	B.cylinder(kitchen, "TrashCan", V(-15.6, G + 1.6, 28.4), 3.2, 2.2, Color3.fromRGB(150, 150, 150), M.Metal, CFrame.Angles(0, 0, math.rad(90)))
+	local trashLid = B.cylinder(kitchen, "TrashLid", V(-15.6, G + 3.25, 28.4), 0.15, 2.3, C.Steel, M.Metal, CFrame.Angles(0, 0, math.rad(90)))
 	local trashDoc = ctx.Interaction.document(trashLid, "TrashCan", { Action = "Look", Object = "Kitchen trash", Distance = 6 })
 	trashDoc.Enabled = false
 	function kitchenRefs.takeLasagna()
@@ -872,16 +959,16 @@ function Interior.build(ctx, root: Instance, refs)
 	for i = 0, 2 do
 		box(hall, "Shoes", 9.2 + i * 0.8, G, -28.6, 9.8 + i * 0.8, G + 0.5, -27.6, Color3.fromRGB(40 + i * 30, 30, 30), M.Fabric, DECOR)
 	end
-	box(hall, "CoatRack", 11.1, G, -22.4, 11.6, G + 8.5, -21.9, WOOD_DARK, M.Wood)
+	box(hall, "CoatRack", 11.1, G, -13, 11.6, G + 8.5, -12.5, WOOD_DARK, M.Wood)
 	for i, col in { Color3.fromRGB(60, 70, 90), Color3.fromRGB(140, 110, 70) } do
-		box(hall, "Coat", 10.4, G + 4.5, -23 + i * 0.4, 11.1, G + 8, -22.2 + i * 0.4, col, M.Fabric, DECOR)
+		box(hall, "Coat", 10.4, G + 4.5, -13.6 + i * 0.4, 11.1, G + 8, -12.8 + i * 0.4, col, M.Fabric, DECOR)
 	end
-	box(hall, "ConsoleTable", -7.6, G, -27, -6, G + 3.4, -21, WOOD_DARK, M.Wood)
-	box(hall, "Mirror", -7.7, G + 5, -26.5, -7.6, G + 9, -21.5, Color3.fromRGB(190, 200, 205), M.Glass, { Reflectance = 0.5, CanCollide = false })
-	box(hall, "MirrorFrame", -7.72, G + 4.8, -26.7, -7.64, G + 9.2, -21.3, BRASS, M.Metal, DECOR)
-	B.cylinder(hall, "KeyBowl", V(-6.8, G + 3.6, -24), 0.3, 1.2, Color3.fromRGB(70, 110, 140), M.Glass, CFrame.Angles(0, 0, math.rad(90)))
+	box(hall, "ConsoleTable", -7.6, G, -28.8, -6, G + 3.4, -23, WOOD_DARK, M.Wood)
+	box(hall, "Mirror", -7.7, G + 5, -28.3, -7.6, G + 9, -23.5, Color3.fromRGB(190, 200, 205), M.Glass, { Reflectance = 0.5, CanCollide = false })
+	box(hall, "MirrorFrame", -7.72, G + 4.8, -28.5, -7.64, G + 9.2, -23.3, BRASS, M.Metal, DECOR)
+	B.cylinder(hall, "KeyBowl", V(-6.8, G + 3.6, -26), 0.3, 1.2, Color3.fromRGB(70, 110, 140), M.Glass, CFrame.Angles(0, 0, math.rad(90)))
 	B.cylinder(hall, "UmbrellaStand", V(7.5, G + 1.3, -28.8), 2.6, 1, C.Black, M.Metal, CFrame.Angles(0, 0, math.rad(90)))
-	plant(hall, V(-6.8, G, -18.5), 1.4)
+	plant(hall, V(-6.9, G, -12.6), 1.3)
 
 	---------------------------------------------------------------------------
 	-- OFFICE (key-locked)
@@ -915,18 +1002,17 @@ function Interior.build(ctx, root: Instance, refs)
 	-- DOWNSTAIRS BATHROOM
 	---------------------------------------------------------------------------
 	local bath = folder("Bathroom")
-	cabinets(bath, 15, 2.3, 19.5, 3.7, G, V(0, 0, -1), Color3.fromRGB(70, 90, 110), Color3.fromRGB(235, 235, 232), 3)
-	B.cylinder(bath, "Basin", V(17.25, G + 3.35, 3), 0.3, 1.6, C.White, M.Marble, CFrame.Angles(0, 0, math.rad(90)))
-	B.block(bath, "Faucet", V(17.25, G + 3.9, 3.5), V(0.2, 0.8, 0.2), C.Steel, M.Metal, 0, DECOR)
-	box(bath, "Mirror", 15.5, G + 5, 3.62, 19, G + 8.5, 3.7, Color3.fromRGB(190, 200, 205), M.Glass, { Reflectance = 0.45, CanCollide = false })
-	box(bath, "MirrorFrame", 15.3, G + 4.8, 3.66, 19.2, G + 8.7, 3.72, WOOD_DARK, M.Wood, DECOR)
-	item(bath, "Scissors", V(15.8, G + 3.35, 2.9), V(0.8, 0.1, 0.35), Color3.fromRGB(210, 60, 60), "Scissors", "Scissors")
-	box(bath, "ToiletBowl", 19.8, G, -9.2, 21.4, G + 1.7, -7.2, C.White, M.Marble)
-	box(bath, "ToiletSeat", 19.7, G + 1.7, -9.3, 21.5, G + 1.9, -7.1, C.White, M.Plastic)
-	box(bath, "ToiletTank", 20, G + 1.9, -9.7, 21.2, G + 4, -8.9, C.White, M.Marble)
-	box(bath, "TowelBar", 13.8, G + 5.5, -9.65, 17.2, G + 5.7, -9.55, C.Steel, M.Metal, DECOR)
-	box(bath, "Towel", 14.2, G + 3.6, -9.6, 16.8, G + 5.6, -9.45, Color3.fromRGB(120, 160, 190), M.Fabric, DECOR)
-	rug(bath, 16, -5, 20, -1, G, Color3.fromRGB(110, 140, 160))
+	-- vanity on the north wall, toilet on the east wall, towel on the south wall
+	cabinets(bath, 17.2, 2.3, 21.7, 3.7, G, V(0, 0, -1), Color3.fromRGB(70, 90, 110), Color3.fromRGB(235, 235, 232), 3)
+	B.cylinder(bath, "Basin", V(19.45, G + 3.35, 3), 0.3, 1.6, C.White, M.Marble, CFrame.Angles(0, 0, math.rad(90)))
+	B.block(bath, "Faucet", V(19.45, G + 3.9, 3.5), V(0.2, 0.8, 0.2), C.Steel, M.Metal, 0, DECOR)
+	box(bath, "Mirror", 17.7, G + 5, 3.62, 21.2, G + 8.5, 3.7, Color3.fromRGB(190, 200, 205), M.Glass, { Reflectance = 0.45, CanCollide = false })
+	box(bath, "MirrorFrame", 17.5, G + 4.8, 3.66, 21.4, G + 8.7, 3.72, WOOD_DARK, M.Wood, DECOR)
+	item(bath, "Scissors", V(18, G + 3.35, 2.9), V(0.8, 0.1, 0.35), Color3.fromRGB(210, 60, 60), "Scissors", "Scissors")
+	toilet(bath, 20.2, -1.8, G, V(-1, 0, 0))
+	box(bath, "TowelBar", 16, G + 5.5, -3.7, 19.4, G + 5.7, -3.6, C.Steel, M.Metal, DECOR)
+	box(bath, "Towel", 16.4, G + 3.6, -3.72, 19, G + 5.6, -3.57, Color3.fromRGB(120, 160, 190), M.Fabric, DECOR)
+	rug(bath, 16, -1.5, 19.5, 1.5, G, Color3.fromRGB(110, 140, 160))
 
 	---------------------------------------------------------------------------
 	-- MUDROOM
@@ -960,12 +1046,12 @@ function Interior.build(ctx, root: Instance, refs)
 	---------------------------------------------------------------------------
 	local den = folder("Den")
 	rug(den, 16, 8, 32, 21, G, Color3.fromRGB(60, 72, 64), Color3.fromRGB(170, 150, 110))
-	sofa(den, 24, 17.5, G, 11, V(0, 0, -1), Color3.fromRGB(110, 86, 64), Color3.fromRGB(60, 90, 70))
-	coffeeTable(den, 21, 10.5, 27, 13, G, 2, WOOD_MID)
-	box(den, "TVCabinet", 18, G, 4.4, 30, G + 2.4, 6.4, WOOD_DARK, M.Wood)
-	tv(den, V(24, G + 2.4, 5), V(0, 0, 1), 7, 4.2)
-	box(den, "Console", 25, G + 2.4, 5.4, 27, G + 2.9, 6.3, C.Black, M.Plastic, DECOR)
-	for _, x in { 21.8, 23.2 } do
+	sofa(den, 21.5, 17.5, G, 10, V(0, 0, -1), Color3.fromRGB(110, 86, 64), Color3.fromRGB(60, 90, 70))
+	coffeeTable(den, 18.5, 10.5, 24.5, 13, G, 2, WOOD_MID)
+	box(den, "TVCabinet", 16.5, G, 4.4, 26.5, G + 2.4, 6.4, WOOD_DARK, M.Wood)
+	tv(den, V(21.5, G + 2.4, 5), V(0, 0, 1), 7, 4.2)
+	box(den, "Console", 23.5, G + 2.4, 5.4, 25.5, G + 2.9, 6.3, C.Black, M.Plastic, DECOR)
+	for _, x in { 18.8, 20.2 } do
 		box(den, "Controller", x, G + 2.4, 5.6, x + 0.9, G + 2.6, 6.2, Color3.fromRGB(30, 30, 34), M.Plastic, DECOR)
 	end
 	box(den, "EndTable", 14, G, 14.5, 16.5, G + 2.8, 17, WOOD_MID, M.Wood)
@@ -977,7 +1063,7 @@ function Interior.build(ctx, root: Instance, refs)
 	shelf(den, 38.8, 18, 39.8, 25.5, G, 8, 4)
 	wardrobe(den, "Den closet", 32, 26.6, 37, 29.8, G, V(0, 0, -1), "Den", Color3.fromRGB(236, 232, 222))
 	ceilingFan(den, V(24, G + 13, 17))
-	plant(den, V(13.4, G, 28.6), 1.5)
+	plant(den, V(38.6, G, 5.6), 1.5)
 
 	---------------------------------------------------------------------------
 	-- GARAGE
@@ -1045,7 +1131,7 @@ function Interior.build(ctx, root: Instance, refs)
 	box(garage, "Boxes", 58, G, 1, 65, G + 4, 5.5, Color3.fromRGB(160, 130, 90), M.Cardboard)
 	box(garage, "Boxes", 59, G + 4, 2, 63, G + 6.5, 5, Color3.fromRGB(150, 120, 85), M.Cardboard)
 	for i = 0, 1 do
-		B.cylinder(garage, "TrashBin", V(64.5, G + 2, -3 + i * 2.6), 4, 2.2, Color3.fromRGB(40, 70, 50), M.Plastic, CFrame.Angles(0, 0, math.rad(90)))
+		B.cylinder(garage, "TrashBin", V(56.4, G + 2, -0.6 + i * 2.6), 4, 2.2, Color3.fromRGB(40, 70, 50), M.Plastic, CFrame.Angles(0, 0, math.rad(90)))
 	end
 
 	-- the woodpile (for the fireplace)
@@ -1070,7 +1156,6 @@ function Interior.build(ctx, root: Instance, refs)
 		end
 		ctx.Audio.playAt("LogDrop", pileSpot.Position, { Caption = false, Volume = 0.4 })
 		ctx.Inventory.give(player, "Firewood")
-		ctx.Objectives.step("Fire", "Wood")
 	end)
 
 	-- his route: stepladder under the hatch, muddy prints from the side door
@@ -1136,8 +1221,7 @@ function Interior.build(ctx, root: Instance, refs)
 		B.cylinder(mbath, "Basin", V(x, U + 3.35, 11.2), 0.3, 1.5, C.White, M.Marble, CFrame.Angles(0, 0, math.rad(90)))
 	end
 	box(mbath, "Mirror", -19.5, U + 5, 11.85, -12.5, U + 8.5, 11.95, Color3.fromRGB(190, 200, 205), M.Glass, { Reflectance = 0.45, CanCollide = false })
-	box(mbath, "ToiletBowl", -10.8, U, 1.2, -9.2, U + 1.7, 3, C.White, M.Marble)
-	box(mbath, "ToiletTank", -10.6, U + 1.7, 0.4, -9.4, U + 3.8, 1.2, C.White, M.Marble)
+	toilet(mbath, -10, 1.9, U, V(0, 0, 1))
 	rug(mbath, -24, 5, -18, 9, U, Color3.fromRGB(200, 200, 196))
 
 	---------------------------------------------------------------------------
@@ -1167,8 +1251,8 @@ function Interior.build(ctx, root: Instance, refs)
 	local uhall = folder("UpperHall")
 	wardrobe(uhall, "Linen wardrobe", 9.2, -8.5, 11.8, -3.5, U, V(-1, 0, 0), "UpperHall", Color3.fromRGB(236, 232, 222))
 	rug(uhall, 0.5, -27, 5.5, -9, U, Color3.fromRGB(110, 50, 48), Color3.fromRGB(200, 170, 120))
-	box(uhall, "HallTable", 10, U, -20, 11.7, U + 3, -16, WOOD_DARK, M.Wood)
-	plant(uhall, V(10.8, U + 3, -18), 0.9)
+	box(uhall, "HallTable", 10, U, -27, 11.7, U + 3, -23, WOOD_DARK, M.Wood)
+	plant(uhall, V(10.8, U + 3, -25), 0.9)
 	target("SignalSpot", V(37, U + 3, 1))
 
 	---------------------------------------------------------------------------
@@ -1177,15 +1261,15 @@ function Interior.build(ctx, root: Instance, refs)
 	local guest = folder("Guest")
 	rug(guest, 15, -21, 27, -12, U, Color3.fromRGB(150, 120, 90))
 	bed(guest, "Under the guest bed", 14, -29.6, 20.5, -22, U, Color3.fromRGB(150, 130, 100), V(0, 0, 1), V(0, 0, -1), "Guest", WOOD_LIGHT)
-	nightstand(guest, 22, -28.8, U, V(0, 0, 1), WOOD_LIGHT)
+	nightstand(guest, 21.7, -28.8, U, V(0, 0, 1), WOOD_LIGHT)
 	lamp(guest, "Guest", V(22, U + 2.4, -28.8), "table")
 	wardrobe(guest, "Guest wardrobe", 32, -9.2, 38, -6.4, U, V(0, 0, -1), "Guest", WOOD_LIGHT)
 	box(guest, "Boxes", 36, U, -29.5, 39.6, U + 3, -25, Color3.fromRGB(160, 130, 90), M.Cardboard)
 	box(guest, "Boxes", 36.6, U + 3, -29, 39.2, U + 5, -26.5, Color3.fromRGB(150, 120, 85), M.Cardboard)
-	box(guest, "SewingTable", 28, U + 3, -29.5, 33, U + 3.3, -27.2, WOOD_LIGHT, M.Wood)
-	box(guest, "SewingLeg", 28.1, U, -29.4, 28.5, U + 3, -27.3, WOOD_LIGHT, M.Wood)
-	box(guest, "SewingLeg", 32.5, U, -29.4, 32.9, U + 3, -27.3, WOOD_LIGHT, M.Wood)
-	box(guest, "SewingMachine", 29.5, U + 3.3, -29, 31.5, U + 4.6, -28, C.White, M.Metal, DECOR)
+	box(guest, "SewingTable", 30.2, U + 3, -29.5, 35.2, U + 3.3, -27.2, WOOD_LIGHT, M.Wood)
+	box(guest, "SewingLeg", 30.3, U, -29.4, 30.7, U + 3, -27.3, WOOD_LIGHT, M.Wood)
+	box(guest, "SewingLeg", 34.7, U, -29.4, 35.1, U + 3, -27.3, WOOD_LIGHT, M.Wood)
+	box(guest, "SewingMachine", 31.7, U + 3.3, -29, 33.7, U + 4.6, -28, C.White, M.Metal, DECOR)
 	plant(guest, V(38.5, U, -12), 1.4)
 
 	---------------------------------------------------------------------------
@@ -1195,8 +1279,7 @@ function Interior.build(ctx, root: Instance, refs)
 	cabinets(hbath, 14, -5.6, 21, -4, U, V(0, 0, 1), Color3.fromRGB(236, 232, 222), Color3.fromRGB(60, 60, 62), 3)
 	B.cylinder(hbath, "Basin", V(17.5, U + 3.35, -4.8), 0.3, 1.6, C.White, M.Marble, CFrame.Angles(0, 0, math.rad(90)))
 	box(hbath, "Mirror", 15.5, U + 5, -5.72, 19.5, U + 8.5, -5.62, Color3.fromRGB(190, 200, 205), M.Glass, { Reflectance = 0.45, CanCollide = false })
-	box(hbath, "ToiletBowl", 23.2, U, -5.2, 24.8, U + 1.7, -3.4, C.White, M.Marble)
-	box(hbath, "ToiletTank", 23.4, U + 1.7, -5.7, 24.6, U + 3.8, -5, C.White, M.Marble)
+	toilet(hbath, 24, -4.3, U, V(0, 0, 1))
 	box(hbath, "ShowerBase", 33.5, U, 3, 39.7, U + 0.4, 7.7, Color3.fromRGB(230, 230, 228), M.Tile)
 	box(hbath, "ShowerWall", 33.4, U, 7.6, 39.7, U + 11, 7.8, Color3.fromRGB(230, 230, 228), M.Tile)
 	box(hbath, "ShowerWall", 33.3, U, 2.8, 39.7, U + 11, 3, Color3.fromRGB(230, 230, 228), M.Tile)
@@ -1236,15 +1319,18 @@ function Interior.build(ctx, root: Instance, refs)
 	B.cylinder(lily, "RoundRug", V(24, U + 0.03, 17), 0.06, 11, Color3.fromRGB(240, 190, 210), M.Fabric, CFrame.Angles(0, 0, math.rad(90))).CanCollide = false
 	bed(lily, "Under Lily's bed", 32, 23.5, 38.5, 29.6, U, Color3.fromRGB(235, 160, 195), V(0, 0, -1), V(0, 0, 1), "Lily", Color3.fromRGB(240, 236, 230))
 	wardrobe(lily, "Lily's closet", 13.2, 8.3, 18.2, 11.2, U, V(0, 0, 1), "Lily", Color3.fromRGB(240, 236, 230))
-	box(lily, "ToyBox", 21, U, 27.5, 25, U + 2.2, 29.6, Color3.fromRGB(230, 200, 120), M.Wood)
-	box(lily, "ToyBoxLid", 20.9, U + 2.2, 27.4, 25.1, U + 2.5, 29.7, Color3.fromRGB(210, 90, 90), M.Wood)
+	box(lily, "ToyBox", 15.5, U, 27.5, 19.5, U + 2.2, 29.6, Color3.fromRGB(230, 200, 120), M.Wood)
+	box(lily, "ToyBoxLid", 15.4, U + 2.2, 27.4, 19.6, U + 2.5, 29.7, Color3.fromRGB(210, 90, 90), M.Wood)
 	box(lily, "FishTank", 36, U + 3, 9, 39.6, U + 5.4, 11, Color3.fromRGB(120, 170, 200), M.Glass, { Transparency = 0.4 })
 	box(lily, "TankStand", 36, U, 9, 39.6, U + 3, 11, Color3.fromRGB(240, 236, 230), M.Wood)
 	B.part(lily, { Name = "Fish", Shape = Enum.PartType.Ball, Size = V(0.4, 0.25, 0.25), CFrame = CFrame.new(37.5, U + 4.2, 10), Color = Color3.fromRGB(255, 140, 40), Material = Enum.Material.Neon, CanCollide = false })
 	-- dollhouse
-	box(lily, "Dollhouse", 13.2, U, 20.5, 15.5, U + 3.6, 24.5, Color3.fromRGB(250, 220, 230), M.Wood)
-	B.part(lily, { ClassName = "WedgePart", Name = "DollRoof", Size = V(2.3, 1.2, 2), CFrame = CFrame.new(14.35, U + 4.2, 23.5), Color = Color3.fromRGB(200, 90, 110), Material = M.Wood })
-	B.part(lily, { ClassName = "WedgePart", Name = "DollRoof", Size = V(2.3, 1.2, 2), CFrame = CFrame.new(14.35, U + 4.2, 21.5) * CFrame.Angles(0, math.pi, 0), Color = Color3.fromRGB(200, 90, 110), Material = M.Wood })
+	box(lily, "Dollhouse", 28.4, U, 8.4, 32.4, U + 3.6, 10.7, Color3.fromRGB(250, 220, 230), M.Wood)
+	B.part(lily, { ClassName = "WedgePart", Name = "DollRoof", Size = V(4, 1.2, 1.15), CFrame = CFrame.new(30.4, U + 4.2, 10.125), Color = Color3.fromRGB(200, 90, 110), Material = M.Wood })
+	B.part(lily, { ClassName = "WedgePart", Name = "DollRoof", Size = V(4, 1.2, 1.15), CFrame = CFrame.new(30.4, U + 4.2, 8.975) * CFrame.Angles(0, math.pi, 0), Color = Color3.fromRGB(200, 90, 110), Material = M.Wood })
+	for i = 0, 2 do
+		box(lily, "DollWindow", 28.9 + i * 1.2, U + 1.6, 10.7, 29.6 + i * 1.2, U + 2.5, 10.75, Color3.fromRGB(255, 230, 160), M.Plastic, DECOR)
+	end
 	for i, col in { Color3.fromRGB(200, 160, 120), Color3.fromRGB(230, 230, 230), Color3.fromRGB(140, 110, 90) } do
 		B.part(lily, { Name = "Plush", Shape = Enum.PartType.Ball, Size = V(1, 1, 1) * (0.8 + i * 0.1), CFrame = CFrame.new(33.5 + i * 1.2, U + 3.9, 28.6), Color = col, Material = M.Fabric, CanCollide = false })
 	end

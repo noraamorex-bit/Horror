@@ -86,16 +86,16 @@ How it works: one place serves both. Public servers run the lobby (`server/Lobby
 ### Onboarding: one notice, then your own thoughts
 When the night starts each player sees **one notice** (who they are, their perk) with an **OK** button. Nothing else competes with it: the chapter card and everything after wait until it's dismissed, and the journal stays closed until the player opens it.
 
-After that the character **thinks out loud** (`Story.Thoughts`, `client/Controllers/Thoughts`): big text, one line at a time, 5 seconds each. It points the way ("Mom left me a list of chores before she went. I should look at it." / "I should probably put something on the TV in the living room."), reacts to strange events ("Footsteps... upstairs? But we're all down here."), and comments on first pickups, hiding and being captured. A line can carry a control tip that matches the device (keyboard, touch or gamepad). If nobody makes progress for 45 s, someone remembers the next task.
+After that the character **thinks out loud** (`Story.Thoughts`, `client/Controllers/Thoughts`): big text, one line at a time, 5 seconds each. It points the way ("Mom left me a couple of things to do. It's in my journal." / "I'm starving. Mom keeps the pizza menu on the fridge."), reacts to strange events ("Footsteps... upstairs? But we're all down here."), and comments on first pickups, hiding and being captured. A line can carry a control tip that matches the device (keyboard, touch or gamepad). If nobody makes progress for 45 s, someone remembers the next task.
 
-### Act I — "Friday Night" (6–10 min)
+### Act I — "Friday Night" (5–9 min)
 *Social and cozy, with something slightly off.*
-- Objectives, each a few steps (`Story.Tasks`):
+- Only three short objectives (`Story.Tasks`) — this is a horror game, not a chore list:
   - **Order pizza:** find the menu on the fridge → call Tony's on the kitchen phone.
-  - **Make popcorn:** take a bag from the kitchen cupboard → microwave it → put the bowl on the living-room coffee table.
-  - **Pick a movie:** find the remote in the couch cushions → turn on the TV.
-  - **Light the fire:** firewood from the garage woodpile → stack it in the fireplace → matches from the drawer by the stove → light it.
+  - **Make popcorn:** take a bag from the kitchen cupboard → microwave it.
   - **Close the upstairs windows:** guest room, Lily's room (a storm is coming).
+- Things you *can* do but don't have to: put on the TV (the remote is in the couch, or press the button on the set), light the fireplace (firewood from the garage, matches from the drawer by the stove — it lights the living room when the power dies later), set the popcorn on the coffee table.
+- **Jump scare:** while the windows are still open, the draft slams an upstairs door (loud bang, lightning, screen shake).
 - The top-right **OBJECTIVE** panel shows the current task and step; a bobbing **"!"** marks where each step happens (yellow and large for the current task), with the distance. The journal lists every step.
 - Clues planted: the unlocked back door, the warm mug, Mom's note on the fridge ("don't use the garage keypad, it's acting up"), the attic hatch that is "stuck".
 - Phone texts from Mom and Dad over Wi-Fi.
@@ -104,7 +104,9 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 ### Act II — "Small Things" (10–13 min)
 *Did you hear that?*
 The Director plays low-intensity events. Each one needs conditions to be met, for example "every player is on the ground floor", "one player is alone near a window" or "nobody can see this door".
+- Objective: **Lock up for the night** (back door, garage side door). After the footsteps upstairs, a second one appears: **Check upstairs** — walk up to the attic hatch.
 - Footsteps upstairs, a door left ajar, the attic cord swinging, the lasagna gone, the wet shower, a silent phone call, Biscuit barking, the emergency alert on TV, the storm flickering the lights.
+- **Loud, sudden noises** (each with a real cause in the truth log, each shakes the screen and costs nerve): a plate **smashes** in the empty kitchen (the shards stay on the floor), a heavy **thud in the ceiling** right above an upstairs player (dust rains down), someone **bangs on the window** next to a lone player, a door handle is **yanked** hard, a chair **crashes over** in an empty room.
 - **The Window.** A lone player near a ground-floor window sees Curtis outside, lit for a moment by lightning. Nobody else sees it.
 - Texts: Mrs. Okafor asks whether "your dad's friend" is still staying with them, because she saw a man at the side door on Tuesday.
 
@@ -113,7 +115,7 @@ The Director plays low-intensity events. Each one needs conditions to be met, fo
 - **The power dies**, and it's the main breaker, not the storm. Wi-Fi goes with it, so no more texts.
 - **The landline is dead.** The car keys are gone. The attic hatch now opens.
 - Curtis is now physically in the house. He **lurks**: he moves only while unobserved, watches from doorways, and walks away when someone spots him. Players get glimpses at the end of a hall or in a doorway. He does not attack yet.
-- Optional objectives: restore power at the garage breaker, work out where the noises come from, check the attic.
+- Objectives: call for help (phone box outside → tape → splice → call), find out what's in the attic, and (optional) get the power back on (flashlight → flip the main breaker).
 - Environmental story: an open hatch in the garage ceiling with a stepladder under it, muddy size-12 prints, the contractor invoice in the office (Host key), Lily's drawing of "the ceiling man".
 - **Discovery.** When someone reads Curtis's notebook in the attic nest, Act IV starts at once. Otherwise it starts when the act times out.
 
@@ -227,7 +229,7 @@ Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host
 | Space | BREATH (hold) / STRUGGLE (mash) | A | Hold breath (hiding) / struggle (captured) |
 | E | LEAVE | B | Leave a hiding spot |
 
-**Mobile layout.** Roblox's own thumbstick (move), camera drag (look) and jump button stay. The action buttons sit in an arc around the jump button and change with context: exploring shows SPRINT, CROUCH, LIGHT and SPRAY (the last two only once you carry the item); hiding swaps them for a big BREATH button and LEAVE (drag anywhere to peek around); captured shows one big STRUGGLE button. Prompts are drawn as large tappable cards. Phones get a lighter rain density, and panels (phone, documents) move off the right side so they never cover the buttons. Every touch button fires the same input action as its key, so there is one code path for all devices (`client/Controllers/Input` → `MobileControls`).
+**Mobile layout.** Roblox's own thumbstick (move), camera drag (look) and jump button stay. The action buttons sit in an arc around the jump button and change with context: exploring shows SPRINT, CROUCH, LIGHT and SPRAY (the last two only once you carry the item); hiding swaps them for a big BREATH button and LEAVE (drag anywhere to peek around); captured shows one big STRUGGLE button. Interactions use the standard Roblox ProximityPrompt, which only fires on a deliberate tap (dragging the camera across it does nothing). Phones get a lighter rain density, and panels (phone, documents) move off the right side so they never cover the buttons. Every touch button fires the same input action as its key, so there is one code path for all devices (`client/Controllers/Input` → `MobileControls`).
 
 ---
 

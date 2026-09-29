@@ -18,6 +18,7 @@ local PALETTE = {
 	Hallway = { Wall = Color3.fromRGB(214, 202, 178), Mat = "Plaster", Wainscot = WHITE, Curtain = Color3.fromRGB(120, 50, 45), Art = 3 },
 	Office = { Wall = Color3.fromRGB(52, 64, 88), Mat = "Plaster", Wainscot = Color3.fromRGB(92, 62, 42), WainscotMat = "Wood", Curtain = Color3.fromRGB(150, 120, 80), Art = 2 },
 	Bathroom = { Wall = Color3.fromRGB(170, 196, 208), Mat = "Plaster", Wainscot = Color3.fromRGB(236, 236, 232), WainscotMat = "Tile", WainscotH = 5, Art = 0 },
+	MudHall = { Wall = Color3.fromRGB(140, 152, 136), Mat = "Plaster", Wainscot = Color3.fromRGB(238, 234, 226), Art = 1 },
 	Mudroom = { Wall = Color3.fromRGB(140, 152, 136), Mat = "Plaster", Wainscot = WHITE, Art = 0 },
 	Den = { Wall = Color3.fromRGB(68, 88, 72), Mat = "Fabric", Wainscot = Color3.fromRGB(110, 78, 52), WainscotMat = "Wood", Curtain = Color3.fromRGB(200, 180, 140), Art = 2 },
 	Master = { Wall = Color3.fromRGB(150, 164, 182), Mat = "Fabric", Wainscot = WHITE, Curtain = Color3.fromRGB(230, 225, 215), Art = 2 },

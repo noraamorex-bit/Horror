@@ -285,7 +285,6 @@ function Escape.useLandline(player: Player)
 		return
 	end
 	if state.LineCut and not state.LineRepaired then
-		ctx.Objectives.step("Phone", "Landline")
 		say(ctx.Story.Calls.Dead, pos, 12, { player })
 		if act ~= "Evening" and act ~= "SmallThings" then
 			ctx.Director.logTruth("LineCut")
@@ -365,7 +364,6 @@ function Escape.setupBreaker(panel: BasePart, lever: BasePart, onCF: CFrame, off
 	ctx.Interaction.document(panel, "Breaker", { Action = "Inspect", Object = "Breaker panel", Offset = Vector3.new(0, -1, 0) }, function(player, first)
 		if not ctx.Power.isOn() then
 			ctx.Director.logTruth("PowerOut")
-			ctx.Objectives.step("Power", "Panel")
 		end
 	end)
 	ctx.Interaction.prompt(lever, {

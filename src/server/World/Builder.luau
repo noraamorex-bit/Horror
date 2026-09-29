@@ -250,6 +250,11 @@ function Builder.stairs(parent: Instance, name: string, x0: number, x1: number, 
 	local model = Instance.new("Model")
 	model.Name = name
 	model.Parent = parent
+	-- always build bottom-up, so the visible treads sit on the walking surface (the ramp)
+	if yEnd < yStart then
+		zStart, zEnd = zEnd, zStart
+		yStart, yEnd = yEnd, yStart
+	end
 	local steps = math.max(1, math.floor(math.abs(yEnd - yStart) + 0.5))
 	local rise = (yEnd - yStart) / steps
 	local run = (zEnd - zStart) / steps
@@ -377,13 +382,28 @@ function Builder.ceilingLight(parent: Instance, pos: Vector3, opts)
 	local bulb = Builder.part(model, {
 		Name = "Bulb",
 		Shape = Enum.PartType.Ball,
-		Size = Vector3.new(1.4, 1.4, 1.4),
-		CFrame = CFrame.new(pos + Vector3.new(0, -0.7, 0)),
-		Color = Color3.fromRGB(255, 236, 200),
+		Size = Vector3.new(0.7, 0.7, 0.7),
+		CFrame = CFrame.new(pos + Vector3.new(0, -0.75, 0)),
+		Color = Color3.fromRGB(255, 212, 160),
 		Material = Enum.Material.Neon,
 		CastShadow = false,
 		CanCollide = false,
+		CanQuery = false,
 	})
+	-- a frosted glass globe around the bulb so it glows warm instead of blazing white
+	Builder.part(model, {
+		Name = "Globe",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.new(1.7, 1.5, 1.7),
+		CFrame = CFrame.new(pos + Vector3.new(0, -0.8, 0)),
+		Color = Color3.fromRGB(236, 224, 204),
+		Material = Enum.Material.Glass,
+		Transparency = 0.45,
+		CastShadow = false,
+		CanCollide = false,
+		CanQuery = false,
+	})
+	Builder.cylinder(model, "Finial", pos + Vector3.new(0, -1.6, 0), 0.25, 0.25, Color3.fromRGB(196, 168, 104), Enum.Material.Metal)
 	local light = Instance.new("PointLight")
 	light.Range = opts.range or 24
 	light.Brightness = opts.brightness or 1.3

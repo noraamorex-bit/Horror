@@ -294,7 +294,9 @@ function House.build(ctx, root: Instance)
 	end
 	for _, sw in L.Switches do
 		local size = (sw.Face == "+X" or sw.Face == "-X") and Vector3.new(0.12, 0.9, 0.55) or Vector3.new(0.55, 0.9, 0.12)
-		local plate = B.block(lightsFolder, "Switch_" .. sw.Room, sw.Pos, size, C.White, M.Plastic)
+		-- stand proud of the wall finishes (paint + wainscot) so the plate is never buried
+		local out = ({ ["+X"] = Vector3.new(0.14, 0, 0), ["-X"] = Vector3.new(-0.14, 0, 0), ["+Z"] = Vector3.new(0, 0, 0.14), ["-Z"] = Vector3.new(0, 0, -0.14) })[sw.Face] or Vector3.zero
+		local plate = B.block(lightsFolder, "Switch_" .. sw.Room, sw.Pos + out, size, C.White, M.Plastic)
 		ctx.Power.registerSwitch(sw.Room, plate)
 	end
 	for room in L.StartLit do

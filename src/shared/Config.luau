@@ -30,7 +30,7 @@ Config.LobbyCountdown = 10
 -- Act lengths in minutes. An act ends at Max, or earlier once its exit condition is met (never before Min).
 Config.TimeScale = 1
 Config.Acts = {
-	Evening = { Min = 6, Max = 10 },
+	Evening = { Min = 5, Max = 9 },
 	SmallThings = { Min = 10, Max = 13 },
 	SomeoneElse = { Min = 8, Max = 13 },
 }
@@ -145,12 +145,12 @@ Config.Help = {
 
 -- The Director: tension ceilings per act, seconds between scheduled events, storm cadence
 Config.Director = {
-	Ceiling = { Evening = 20, SmallThings = 55, SomeoneElse = 75, Guest = 100 },
+	Ceiling = { Evening = 25, SmallThings = 65, SomeoneElse = 85, Guest = 100 },
 	Gap = {
-		Evening = { 60, 110 },
-		SmallThings = { 28, 55 },
-		SomeoneElse = { 30, 60 },
-		Guest = { 45, 90 },
+		Evening = { 40, 75 },
+		SmallThings = { 20, 40 },
+		SomeoneElse = { 22, 45 },
+		Guest = { 35, 70 },
 	},
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },

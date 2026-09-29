@@ -120,7 +120,8 @@ Layout.InteriorWalls = {
 	{ floor = "Ground", x1 = -40, z1 = 2, x2 = -8, z2 = 2, openings = { arch(-24, 10, 10) } },
 	{ floor = "Ground", x1 = 12, z1 = -30, x2 = 12, z2 = 30, openings = {
 		door(-20, "Office", "Dad's Office", { lock = "Key", key = "HouseKeys", locked = true, into = "+" }),
-		door(-5, "Bathroom", "Bathroom", { lock = "Privacy", into = "+" }),
+		door(0.5, "Bathroom", "Bathroom", { lock = "Privacy", into = "+" }),
+		door(-7, "BackHall", "Back Hall", { into = "+" }),
 		door(26, "Den", "Den", { into = "+" }),
 	} },
 	{ floor = "Ground", x1 = 6, z1 = -0.4, x2 = 6, z2 = 22, openings = {} },
@@ -129,7 +130,9 @@ Layout.InteriorWalls = {
 		door(9, "Basement", "Basement Door", { w = 4.4, lock = "Key", key = "BasementKey", into = "+", hinge = "max" }),
 	} },
 	{ floor = "Ground", x1 = 12, z1 = -10, x2 = 40, z2 = -10, openings = {} },
-	{ floor = "Ground", x1 = 22, z1 = -10, x2 = 22, z2 = 4, openings = {} },
+	-- the back hall (front hall -> mudroom -> garage) runs along the office wall; the bathroom sits north of it
+	{ floor = "Ground", x1 = 22, z1 = -4, x2 = 22, z2 = 4, openings = {} },
+	{ floor = "Ground", x1 = 12, z1 = -4, x2 = 22, z2 = -4, openings = {} },
 	{ floor = "Ground", x1 = 12, z1 = 4, x2 = 40, z2 = 4, openings = { door(31, "Mudroom", "Mudroom", { into = "-" }) } },
 
 	-- Upstairs
@@ -204,7 +207,8 @@ Layout.Lights = {
 	Kitchen = { Vector3.new(-30, 14, 10), Vector3.new(-20, 14, 22) },
 	Hallway = { Vector3.new(2, 14, -20), Vector3.new(2, 14, 4), Vector3.new(0, 14, 26) },
 	Office = { Vector3.new(26, 14, -20) },
-	Bathroom = { Vector3.new(17, 14, -3) },
+	Bathroom = { Vector3.new(17, 14, 0) },
+	MudHall = { Vector3.new(17, 14, -7) },
 	Mudroom = { Vector3.new(31, 14, -3) },
 	Den = { Vector3.new(26, 14, 17) },
 	Garage = { Vector3.new(53, 14, -12) },
@@ -225,7 +229,8 @@ Layout.Switches = {
 	{ Room = "Kitchen", Pos = Vector3.new(-8.35, 5.5, 22.5), Face = "-X" },
 	{ Room = "Hallway", Pos = Vector3.new(5.5, 5.5, -29.45), Face = "+Z" },
 	{ Room = "Office", Pos = Vector3.new(12.35, 5.5, -16.8), Face = "+X" },
-	{ Room = "Bathroom", Pos = Vector3.new(12.35, 5.5, -1.8), Face = "+X" },
+	{ Room = "Bathroom", Pos = Vector3.new(12.35, 5.5, -3.2), Face = "+X" },
+	{ Room = "MudHall", Pos = Vector3.new(14.5, 5.5, -9.65), Face = "+Z" },
 	{ Room = "Mudroom", Pos = Vector3.new(34.5, 5.5, 3.65), Face = "-Z" },
 	{ Room = "Den", Pos = Vector3.new(12.35, 5.5, 22.5), Face = "+X" },
 	{ Room = "Garage", Pos = Vector3.new(40.55, 5.5, -6.5), Face = "+X" },
@@ -251,29 +256,30 @@ local function n(room, x, y, z, dark)
 end
 
 Layout.Nodes = {
-	n("Living", -12, 4, -27, true), n("Living", -37, 4, 0, true),
-	n("Kitchen", -12, 4, 6), n("Kitchen", -26, 4, 27, true),
+	n("Living", -18, 4, -26, true), n("Living", -37, 4, 0, true),
+	n("Kitchen", -14, 4, 6), n("Kitchen", -20, 4, 26, true),
 	n("Hallway", 2, 4, 28, true), n("Hallway", 2, 4, -26),
 	n("Office", 37, 4, -13, true),
 	n("Bathroom", 17, 4, 0, true),
+	n("MudHall", 18, 4, -7),
 	n("Mudroom", 36, 4, 0, true),
-	n("Den", 37, 4, 27, true), n("Den", 15, 4, 8),
-	n("Garage", 62, 4, 2, true), n("Garage", 45, 4, -26, true), n("Garage", 52, 4, 3),
-	n("Master", -37, 18, -3, true), n("Master", -11, 18, -27),
-	n("MasterBath", -37, 18, 9, true),
+	n("Den", 31, 4, 26, true), n("Den", 15, 4, 8),
+	n("Garage", 62, 4, -6, true), n("Garage", 43.5, 4, -20, true), n("Garage", 52, 4, 3),
+	n("Master", -37, 18, -3, true), n("Master", -14, 18, -22),
+	n("MasterBath", -30, 18, 6, true),
 	n("Jamie", -11, 18, 28, true),
 	n("UpperHall", 8, 18, 28, true), n("UpperHall", 2, 18, -26), n("UpperHall", 9, 18, -8),
-	n("Guest", 37, 18, -9, true),
+	n("Guest", 32, 18, -12, true),
 	n("HallBath", 37, 18, -3, true),
-	n("Lily", 15, 18, 28, true),
-	n("Basement", -36, -10, -26, true), n("Basement", 0, -10, -26), n("Basement", -10, -10, 25, true), n("Basement", 3, -10, 5),
+	n("Lily", 14.5, 18, 25, true),
+	n("Basement", -32, -10, -22, true), n("Basement", -4, -10, -22), n("Basement", -10, -10, 25, true), n("Basement", 3, -10, 5),
 	n("Boiler", -30, -10, 20, true),
 }
 
 -- Peek spots: places he stands to watch players in Act III (end of halls, doorways)
 Layout.PeekSpots = {
 	{ Pos = Vector3.new(2, 4, 28.5), Look = Vector3.new(2, 4, -20) }, -- back of front hall
-	{ Pos = Vector3.new(-24, 4, 27), Look = Vector3.new(-24, 4, -10) }, -- kitchen back door, looking through arch
+	{ Pos = Vector3.new(-20, 4, 26.5), Look = Vector3.new(-24, 4, -10) }, -- kitchen back door, looking through arch
 	{ Pos = Vector3.new(9, 18, 28.5), Look = Vector3.new(2, 18, -20) }, -- upstairs hall end
 	{ Pos = Vector3.new(0, 18, -28), Look = Vector3.new(2, 18, 20) }, -- upstairs hall front
 	{ Pos = Vector3.new(38, 4, -2), Look = Vector3.new(26, 4, -2) }, -- mudroom

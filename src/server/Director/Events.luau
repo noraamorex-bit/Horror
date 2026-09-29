@@ -33,6 +33,30 @@ local function floorOf(ctx, root: BasePart): string
 	return ctx.Rooms.floorOf(root.Position)
 end
 
+
+-- a loud sudden noise: shake and rattle everyone close enough to hear it clearly
+local function jolt(ctx, pos: Vector3, radius: number, nerve: number, shake: number)
+	local hit = {}
+	for _, p in ctx.Util.activePlayers() do
+		local root = ctx.Util.getRoot(p)
+		if root then
+			local d = (root.Position - pos).Magnitude
+			if d <= radius then
+				local k = 1 - d / radius * 0.6
+				ctx.PlayerState.addNerve(p, -nerve * k)
+				ctx.Remotes.Shake:FireClient(p, shake * k, 0.55)
+				table.insert(hit, p)
+			end
+		end
+	end
+	return hit
+end
+
+local function roomOf(ctx, p: Player)
+	local root = ctx.Util.getRoot(p)
+	return root and ctx.Rooms.find(root.Position), root
+end
+
 Events.List = {
 	---------------------------------------------------------------------------
 	{
@@ -65,6 +89,9 @@ Events.List = {
 			ctx.Audio.playAt("HatchCreak", path[#path] + V(0, 12, 0))
 			D.logTruth("FootstepsUpstairs")
 			D.think(nil, ctx.Story.Thoughts.Events.FootstepsUpstairs)
+			if ctx.Director.getAct() == "SmallThings" then
+				ctx.Objectives.add("Investigate")
+			end
 		end,
 	},
 	---------------------------------------------------------------------------
@@ -345,6 +372,227 @@ Events.List = {
 			ctx.Audio.playAt("Breaker", V(41, 8, -12.7))
 			ctx.Audio.playAt("PowerDown", V(0, 8, 0), { Caption = true })
 			D.logTruthRaw("The power went out again. Curtis flipped the main breaker a second time.")
+		end,
+	},
+	---------------------------------------------------------------------------
+	-- JUMP SCARES: loud, sudden noises with a real cause
+	---------------------------------------------------------------------------
+	{
+		Id = "WindSlam",
+		Acts = { Evening = true },
+		Weight = 4,
+		Tension = 10,
+		Once = true,
+		Cond = function(ctx)
+			if ctx.Objectives.isDone("Windows") then
+				return nil
+			end
+			local ok = anyone(ctx, function(_, root)
+				return floorOf(ctx, root) == "Ground"
+			end)
+			return ok and (ctx.Doors.get("Lily") or ctx.Doors.get("Guest")) or nil
+		end,
+		Run = function(ctx, D, door)
+			if door.IsOpen then
+				ctx.Doors.close(door)
+			end
+			ctx.Audio.playAt("DoorSlam", door.Position, { Volume = 1, Range = 160 })
+			D.lightning(0.8)
+			local hit = jolt(ctx, door.Position, 70, 8, 0.4)
+			D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.WindSlam)
+			D.logTruth("WindSlam")
+		end,
+	},
+	{
+		Id = "PlateCrash",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 4,
+		Tension = 14,
+		Once = true,
+		Cond = function(ctx)
+			local inKitchen, nearby = false, false
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if room and room.Name == "Kitchen" then
+					inKitchen = true
+				elseif root and root.Position.Y < 12 and (root.Position - V(-16, 4, 17)).Magnitude < 55 then
+					nearby = true
+				end
+			end
+			return (nearby and not inKitchen) and V(-16.5, 1, 22.6) or nil
+		end,
+		Run = function(ctx, D, pos)
+			ctx.Audio.playAt("PlateCrash", pos + V(0, 2, 0), { Volume = 1 })
+			-- the pieces stay on the floor
+			local folder = ctx.World.folder():FindFirstChild("Kitchen") or ctx.World.folder()
+			local rng = Random.new()
+			for i = 1, 9 do
+				local shard = ctx.Builder.block(folder, "PlateShard", pos + V(rng:NextNumber(-1.6, 1.6), 0.05, rng:NextNumber(-1.2, 1.2)), V(rng:NextNumber(0.25, 0.7), 0.06, rng:NextNumber(0.2, 0.5)), i <= 2 and Color3.fromRGB(70, 110, 150) or Color3.fromRGB(245, 243, 236), Enum.Material.SmoothPlastic, rng:NextNumber(0, 360), { CanCollide = false, CanQuery = false })
+				shard.Name = "PlateShard"
+			end
+			local hit = jolt(ctx, pos, 60, 12, 0.5)
+			D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.PlateCrash)
+			D.logTruth("PlateCrash")
+		end,
+	},
+	{
+		Id = "CeilingThud",
+		Acts = { SmallThings = true, SomeoneElse = true, Guest = true },
+		Weight = 3,
+		Tension = 12,
+		Cooldown = 150,
+		Cond = function(ctx)
+			local choices = {}
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if room and room.Floor == "Upstairs" and not p:GetAttribute("Hiding") then
+					table.insert(choices, { Player = p, Pos = V(root.Position.X, 28.8, root.Position.Z) })
+				end
+			end
+			-- only when he could really be up there (offstage, or in the attic itself)
+			local ip = ctx.Intruder.position()
+			if ip and ctx.Rooms.floorOf(ip) ~= "Attic" then
+				return nil
+			end
+			return ctx.Util.choice(choices)
+		end,
+		Run = function(ctx, D, data)
+			ctx.Audio.playAt("CeilingThud", data.Pos, { Volume = 1 })
+			-- dust shaken loose from the ceiling
+			local dust = ctx.Builder.block(ctx.World.folder(), "CeilingDust", data.Pos - V(0, 1, 0), V(5, 0.2, 5), Color3.new(), nil, 0, { Transparency = 1, CanCollide = false, CanQuery = false })
+			local e = Instance.new("ParticleEmitter")
+			e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+			e.Color = ColorSequence.new(Color3.fromRGB(190, 180, 165))
+			e.Transparency = NumberSequence.new(0.55, 1)
+			e.Size = NumberSequence.new(0.4, 1.2)
+			e.Lifetime = NumberRange.new(1.5, 2.5)
+			e.Speed = NumberRange.new(1, 3)
+			e.EmissionDirection = Enum.NormalId.Bottom
+			e.Acceleration = V(0, -4, 0)
+			-- a short burst (a server-side :Emit() wouldn't reach the clients)
+			e.Rate = 90
+			e.Parent = dust
+			task.delay(0.45, function()
+				e.Enabled = false
+			end)
+			game:GetService("Debris"):AddItem(dust, 4)
+			local hit = jolt(ctx, data.Pos - V(0, 12, 0), 26, 10, 0.55)
+			D.think(#hit > 0 and hit or data.Player, ctx.Story.Thoughts.Events.CeilingThud)
+			D.logTruth("CeilingThud")
+		end,
+	},
+	{
+		Id = "WindowBang",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 3,
+		Tension = 18,
+		Once = true,
+		Cond = function(ctx)
+			if ctx.Intruder.isInHouse() then
+				return nil
+			end
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if not room or room.Floor ~= "Ground" or p:GetAttribute("Hiding") then
+					continue
+				end
+				for _, w in ctx.Layout.WindowWatch do
+					if w.Room == room.Name and (root.Position - w.Face).Magnitude < 20 then
+						return { Player = p, Watch = w }
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			local w = data.Watch
+			for i = 1, 3 do
+				ctx.Audio.playAt("WindowBang", w.Face, { Volume = 1, Caption = i == 1 })
+				if i == 1 then
+					jolt(ctx, w.Face, 30, 16, 0.6)
+					-- his silhouette right up against the glass, for a split second
+					ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(w.Stand:Lerp(w.Face, 0.85), w.Face), 0.45)
+				end
+				task.wait(0.28)
+			end
+			D.think(data.Player, ctx.Story.Thoughts.Events.WindowBang)
+			D.logTruth("WindowBang")
+		end,
+	},
+	{
+		Id = "DoorRattle",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 2,
+		Tension = 14,
+		Once = true,
+		Cond = function(ctx)
+			if ctx.Intruder.isInHouse() then
+				return nil
+			end
+			for _, id in { "FrontDoor", "BackDoor", "GarageSide" } do
+				local door = ctx.Doors.get(id)
+				if door and not door.IsOpen then
+					local near = anyone(ctx, function(_, root)
+						local d = (root.Position - door.Position).Magnitude
+						return d > 6 and d < 30
+					end)
+					if near then
+						return door
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, door)
+			for i = 1, 4 do
+				ctx.Audio.playAt("DoorYank", door.Position, { Volume = 1, Caption = i == 1 })
+				if i == 1 then
+					local hit = jolt(ctx, door.Position, 40, 12, 0.45)
+					D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.DoorRattle)
+				end
+				task.wait(0.5 + math.random() * 0.4)
+			end
+			D.logTruth("DoorRattle")
+		end,
+	},
+	{
+		Id = "ChairDrop",
+		Acts = { SmallThings = true, SomeoneElse = true, Guest = true },
+		Weight = 2,
+		Tension = 10,
+		Cooldown = 200,
+		Cond = function(ctx)
+			-- an empty ground-floor room next to someone
+			local occupied = {}
+			local anyRoot
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if room then
+					occupied[room.Name] = true
+					anyRoot = anyRoot or root
+				end
+			end
+			if not anyRoot then
+				return nil
+			end
+			local best, bestD = nil, math.huge
+			for _, name in { "Kitchen", "Living", "Den", "Office", "Mudroom" } do
+				local r = ctx.Rooms.ByName[name]
+				if r and not occupied[name] then
+					local d = (r.Center - anyRoot.Position).Magnitude
+					if d > 14 and d < bestD then
+						best, bestD = r, d
+					end
+				end
+			end
+			return best and bestD < 50 and best or nil
+		end,
+		Run = function(ctx, D, room)
+			local pos = room.Center + V(0, 2, 0)
+			ctx.Audio.playAt("ChairDrop", pos, { Volume = 1 })
+			local hit = jolt(ctx, pos, 45, 8, 0.35)
+			D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.ChairDrop)
+			D.logTruth("ChairDrop")
 		end,
 	},
 }

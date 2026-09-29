@@ -305,6 +305,7 @@ local function build()
 
 	-- clock (top-left, under the Roblox top bar)
 	local clock = UI.new("Frame", {
+		Name = "Clock",
 		Position = UDim2.fromOffset(18, inset.Y + 10),
 		Size = UDim2.fromOffset(260, 70),
 		BackgroundTransparency = 1,
@@ -507,10 +508,23 @@ local function update()
 		meterFill.BackgroundColor3 = color
 	end
 
+	-- keep the top of the HUD clear of the Roblox top bar (and, on phones, of the JOURNAL/PHONE
+	-- buttons). The inset is in screen pixels but our offsets get scaled, so divide it back out.
+	local s = UI.Scale or 1
+	local insetY = GuiService:GetGuiInset().Y
+	local clock = root:FindFirstChild("Clock") :: Frame?
+	if clock then
+		clock.Position = UDim2.fromOffset(18, (insetY + 8) / s)
+	end
+	local topY = (insetY + (UI.isTouch() and 52 or 10)) / s
+	objPanel.Position = UDim2.new(1, -18, 0, topY)
+	journal.Position = UDim2.new(1, -18, 0, topY + 140)
+	etaLabel.Position = UDim2.new(0.5, 0, 0, (insetY + 8) / s)
+	notifyList.Position = UDim2.new(0.5, 0, 0, (insetY + 8) / s + 30)
 	-- on touch screens the thumbstick owns the bottom-left corner
 	if UI.isTouch() then
 		inventoryLabel.AnchorPoint = Vector2.new(0, 0)
-		inventoryLabel.Position = UDim2.fromOffset(18, GuiService:GetGuiInset().Y + 80)
+		inventoryLabel.Position = UDim2.fromOffset(18, (insetY + 8) / s + 74)
 		inventoryLabel.TextYAlignment = Enum.TextYAlignment.Top
 	else
 		inventoryLabel.AnchorPoint = Vector2.new(0, 1)

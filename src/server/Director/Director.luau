@@ -24,7 +24,8 @@ local ACT_ORDER = { "Evening", "SmallThings", "SomeoneElse", "Guest" }
 
 -- guaranteed beats per act: { event id, deadline as a fraction of the act's Max }
 local BEATS = {
-	SmallThings = { { "FootstepsUpstairs", 0.35 }, { "FigureWindow", 0.7 }, { "TVAlert", 0.55 } },
+	Evening = { { "WindSlam", 0.45 } },
+	SmallThings = { { "PlateCrash", 0.2 }, { "FootstepsUpstairs", 0.35 }, { "TVAlert", 0.55 }, { "FigureWindow", 0.7 } },
 }
 
 local state: any = {}
@@ -397,7 +398,7 @@ function Director.startAct(name: string, cause: Player?)
 	end
 
 	if name == "Evening" then
-		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Movie", "Fire", "Windows" })
+		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Windows" })
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
 		for _, p in ctx.Util.sessionPlayers() do
@@ -407,7 +408,7 @@ function Director.startAct(name: string, cause: Player?)
 			end
 		end
 	elseif name == "SmallThings" then
-		ctx.Objectives.set({ "LockUp", "Stay" }, { Stay = true })
+		ctx.Objectives.set({ "LockUp" })
 		-- Tony's calls back: the creek road has flooded
 		task.delay(4, function()
 			local answered = false
@@ -661,6 +662,26 @@ local function schedule(actTime: number)
 	setGap()
 end
 
+-- "Check upstairs": done once somebody walks up to the attic hatch
+local function investigateTick()
+	if not ctx.Objectives.has("Investigate") or ctx.Objectives.isDone("Investigate") then
+		return
+	end
+	local h = ctx.Layout.AtticHatch
+	local spot = Vector3.new((h.x0 + h.x1) / 2, ctx.Layout.Y.Upstairs + 3, (h.z0 + h.z1) / 2)
+	for _, p in ctx.Util.activePlayers() do
+		local root = ctx.Util.getRoot(p)
+		if root and (root.Position - spot).Magnitude < 10 then
+			ctx.Objectives.complete("Investigate")
+			Director.think(p, ctx.Story.Thoughts.Events.InvestigateDone)
+			task.delay(2.5, function()
+				ctx.Audio.playAt("HatchCreak", spot + Vector3.new(0, 11, 0), { Volume = 1 })
+			end)
+			return
+		end
+	end
+end
+
 local function actTick()
 	local actTime = os.clock() - state.ActStart
 	local cfg = ctx.Config.Acts[state.Act]
@@ -680,6 +701,7 @@ local function actTick()
 
 	schedule(actTime)
 	hintTick()
+	investigateTick()
 
 	-- hard cap
 	if elapsed() >= scaled(ctx.Config.HardCapMinutes) and not ctx.Escape.helpCalled() then

@@ -60,6 +60,12 @@ Sounds.Library = {
 	DogBark = { Id = "", Volume = 0.8, Range = 180, Caption = "[A dog barking next door]" },
 	Floorboard = { Id = "rbxassetid://9114496277", Fallback = ENGINE_STEP, Volume = 0.8, Range = 60, Caption = "[A floorboard creaks]" },
 	HatchCreak = { Id = "rbxassetid://9126263691", Fallback = ENGINE_THUD, Volume = 0.7, Range = 60, Caption = "[Something creaks in the ceiling]" },
+	-- jump scares: loud, sudden, close
+	PlateCrash = { Id = "rbxassetid://9114592102", Fallback = ENGINE_THUD, Volume = 1, Range = 140, Caption = "[CRASH - something shatters in the kitchen]" },
+	CeilingThud = { Id = "rbxassetid://9113437538", Fallback = ENGINE_THUD, Volume = 1, Range = 90, Caption = "[A heavy THUD in the ceiling]" },
+	WindowBang = { Id = "rbxassetid://9120752961", Fallback = ENGINE_THUD, Volume = 1, Range = 90, Caption = "[BANG BANG - someone slams on the window]" },
+	DoorYank = { Id = "rbxassetid://9114129501", Fallback = ENGINE_THUD, Volume = 1, Range = 110, Caption = "[Someone is yanking at the door handle]" },
+	ChairDrop = { Id = "rbxassetid://9113768971", Fallback = ENGINE_THUD, Volume = 1, Range = 100, Caption = "[Something heavy falls over]" },
 	WindowClose = { Id = "rbxassetid://9119205658", Fallback = ENGINE_THUD, Volume = 0.6, Range = 30 },
 
 	-- People
