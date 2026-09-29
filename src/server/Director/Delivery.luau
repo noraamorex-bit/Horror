@@ -68,10 +68,7 @@ local AVATAR = {
 	LeftLeg = 2490653036,
 	RightLeg = 2490660219,
 	Hair = 2490665888,
-	Hat = 1028606, -- Red Baseball Cap
 }
-local WALK_ANIM = "rbxassetid://2510202577" -- Rthro Walk
-local IDLE_ANIM = "rbxassetid://2510197257" -- Rthro Idle
 -- a natural light skin tone, a little pallid (the whole body and the head match)
 local SKIN = Color3.fromRGB(224, 192, 168)
 -- the face he holds the whole time: a stretched closed-lip smile, eyes wide and rolled up
@@ -98,7 +95,6 @@ local function avatarActor(folder: Instance, start: CFrame)
 	desc.LeftLeg = AVATAR.LeftLeg
 	desc.RightLeg = AVATAR.RightLeg
 	desc.HairAccessory = tostring(AVATAR.Hair)
-	desc.HatAccessory = tostring(AVATAR.Hat)
 	desc.HeadColor = SKIN
 	desc.TorsoColor = SKIN
 	desc.LeftArmColor = SKIN
@@ -142,20 +138,28 @@ local function avatarActor(folder: Instance, start: CFrame)
 			end)
 		end
 	end
-	-- arms held out in front, carrying the insulated bag
+	-- carrying the pizza the ordinary way: upper arms down at his sides, forearms level, the two
+	-- boxes flat on his hands in front of his stomach
 	for _, name in { "RightShoulder", "LeftShoulder" } do
 		local joint = model:FindFirstChild(name, true)
 		if joint and joint:IsA("Motor6D") then
-			joint.C0 = joint.C0 * ANG(math.rad(78), 0, 0)
+			joint.C0 = joint.C0 * ANG(math.rad(16), 0, 0)
 		end
 	end
 	for _, name in { "RightElbow", "LeftElbow" } do
 		local joint = model:FindFirstChild(name, true)
 		if joint and joint:IsA("Motor6D") then
-			joint.C0 = joint.C0 * ANG(math.rad(12), 0, 0)
+			joint.C0 = joint.C0 * ANG(math.rad(74), 0, 0)
 		end
 	end
-	Kit.soft(model, "PizzaBag", torso.CFrame * CF(0, -0.9, -2.3), V(2.5, 0.6, 2.5), 0.1, Color3.fromRGB(150, 28, 26), Kit.M.Fabric)
+	-- the elbows sit about level with the bottom of the upper torso; the level forearms keep
+	-- the hands there
+	local handY = -torso.Size.Y / 2 - 0.15
+	for k = 0, 1 do
+		local cf = torso.CFrame * CF(0, handY + 0.3 + k * 0.36, -1.45) * ANG(0, k * 0.1, 0)
+		Kit.box(model, "PizzaBag", cf, V(2.2, 0.34, 2.2), Color3.fromRGB(206, 182, 142), Kit.M.Cardboard)
+		Kit.box(model, "PizzaBag", cf * CF(0, 0.175, 0), V(1.1, 0.01, 1.1), Color3.fromRGB(170, 36, 32), Kit.M.Plastic)
+	end
 	for _, p in model:GetChildren() do
 		if p:IsA("BasePart") and p.Name == "PizzaBag" then
 			p.Anchored = false
@@ -177,30 +181,46 @@ local function avatarActor(folder: Instance, start: CFrame)
 	if neck and neckC0 then
 		neck.C0 = neckC0
 	end
-	local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
-	local function load(id: string)
-		local track
-		pcall(function()
-			local anim = Instance.new("Animation")
-			anim.AnimationId = id
-			track = (animator :: Animator):LoadAnimation(anim)
-			track.Looped = true
-		end)
-		return track
-	end
-	local walkTrack = load(WALK_ANIM)
-	local idleTrack = load(IDLE_ANIM)
-	local function idle(on: boolean)
-		if idleTrack then
-			if on then
-				idleTrack:Play(0.4)
-				idleTrack:AdjustSpeed(0.6) -- slow, heavy breathing
-			else
-				idleTrack:Stop(0.2)
-			end
+
+	-- Procedural animation (keyframe packs would swing the arms off the box he carries):
+	-- a slow, stiff walk from the hips and knees, and when he stands still, deep slow breathing
+	-- that lifts the shoulders. The arms never move.
+	local joints = {}
+	for _, name in { "LeftHip", "RightHip", "LeftKnee", "RightKnee", "Waist" } do
+		local j = model:FindFirstChild(name, true)
+		if j and j:IsA("Motor6D") then
+			joints[name] = { J = j, C0 = j.C0 }
 		end
 	end
-	idle(true)
+	local walking = false
+	local phase = 0
+	task.spawn(function()
+		local last = os.clock()
+		while model.Parent do
+			local now = os.clock()
+			local dt = now - last
+			last = now
+			local speed = V(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z).Magnitude
+			local stride = walking and math.clamp(speed / hum.WalkSpeed, 0, 1) or 0
+			phase += dt * (2.2 + speed * 0.35)
+			local s = math.sin(phase * 2)
+			local function set(name: string, rx: number)
+				local e = joints[name]
+				if e then
+					e.J.C0 = e.C0 * ANG(rx, 0, 0)
+				end
+			end
+			-- legs: long stiff strides, knees barely bending
+			set("LeftHip", s * 0.42 * stride)
+			set("RightHip", -s * 0.42 * stride)
+			set("LeftKnee", -math.max(0, -s) * 0.35 * stride)
+			set("RightKnee", -math.max(0, s) * 0.35 * stride)
+			-- upper body: a hunch that heaves with slow breaths when he's still
+			local breath = math.sin(now * 1.6) * 0.035 * (1 - stride)
+			set("Waist", breath)
+			task.wait(0.03)
+		end
+	end)
 
 	local actor = { Model = model }
 	function actor.pivot(): CFrame
@@ -220,18 +240,11 @@ local function avatarActor(folder: Instance, start: CFrame)
 	end
 	function actor.walk(points)
 		hum.AutoRotate = true
-		idle(false)
-		if walkTrack then
-			walkTrack:Play(0.2)
-			walkTrack:AdjustSpeed(0.8)
-		end
+		walking = true
 		for i = 2, #points do
 			moveTo(points[i])
 		end
-		if walkTrack then
-			walkTrack:Stop(0.3)
-		end
-		idle(true)
+		walking = false
 	end
 	function actor.face(dir: Vector3)
 		hum.AutoRotate = false
@@ -245,16 +258,23 @@ local function avatarActor(folder: Instance, start: CFrame)
 	function actor.backAway(dist: number)
 		hum.AutoRotate = false
 		local target = root.Position - root.CFrame.LookVector * dist
-		if walkTrack then
-			walkTrack:Play(0.2)
-			walkTrack:AdjustSpeed(-0.6)
-		end
-		idle(false)
+		walking = true
 		moveTo(target)
-		if walkTrack then
-			walkTrack:Stop(0.3)
+		walking = false
+	end
+	-- he hands the pizza over: the boxes leave his hands and his arms drop to his sides
+	function actor.handOver()
+		for _, p in model:GetChildren() do
+			if p:IsA("BasePart") and p.Name == "PizzaBag" then
+				p:Destroy()
+			end
 		end
-		idle(true)
+		for _, name in { "RightShoulder", "LeftShoulder", "RightElbow", "LeftElbow" } do
+			local joint = model:FindFirstChild(name, true)
+			if joint and joint:IsA("Motor6D") then
+				joint.C0 = joint.C0 * ANG(math.rad(name:find("Elbow") and -66 or -16), 0, 0)
+			end
+		end
 	end
 	-- mouth moves while he talks (the smile stays put)
 	local fc = head:FindFirstChildWhichIsA("FaceControls", true)
@@ -303,6 +323,13 @@ local function partsActor(folder: Instance, start: CFrame)
 		tweenModel(man, man:GetPivot() * CF(0, 0, dist), dist)
 	end
 	function actor.talk(_seconds: number) end
+	function actor.handOver()
+		for _, p in man:GetChildren() do
+			if p.Name == "PizzaBag" or p.Name == "BagLogo" then
+				p:Destroy()
+			end
+		end
+	end
 	return actor
 end
 
@@ -475,7 +502,8 @@ function Delivery.run(ctx, D, onDone)
 			finish()
 			return
 		end
-		-- the pizza ends up on the dining table
+		-- he hands it over; the pizza ends up on the dining table
+		actor.handOver()
 		pizzaBoxes(world, CF(-15, 4.8, 20.4))
 		-- he backs away, still watching, then turns and goes
 		actor.backAway(2.4)
