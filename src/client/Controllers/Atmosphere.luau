@@ -12,6 +12,7 @@ local Atmosphere = {}
 local ctx
 
 local rainSound: Sound?
+local rainWindow: Sound?
 local windSound: Sound?
 local muffle: EqualizerSoundEffect
 local flash: ColorCorrectionEffect
@@ -69,19 +70,58 @@ end
 -- the lighting the flash returns to (whatever the server set for this mode)
 local base = { Ambient = nil :: Color3?, Brightness = 0.4 }
 
+local THUNDER = { "Thunder", "Thunder2", "Thunder3" }
+
 local function thunder(delay: number, intensity: number)
 	task.delay(delay, function()
-		local s = ctx.Effects.localSound("Thunder")
+		-- a close crack, loud; the bigger the flash the louder it is
+		local s = ctx.Effects.localSound(THUNDER[math.random(1, #THUNDER)])
 		if s then
-			s.Volume = math.clamp(intensity, 0.3, 1.2)
-			s.PlaybackSpeed = 0.85 + math.random() * 0.25
+			local inside = ctx.Rooms.isInside(workspace.CurrentCamera and workspace.CurrentCamera.CFrame.Position or Vector3.zero)
+			s.Volume = math.clamp(0.7 + intensity * 0.6, 0.8, 1.8) * (inside and 0.75 or 1)
+			s.PlaybackSpeed = 0.9 + math.random() * 0.2
 			s:Play()
-			game:GetService("Debris"):AddItem(s, 8)
+			game:GetService("Debris"):AddItem(s, 14)
 		end
-		if intensity > 1 and ctx.HUD then
+		if ctx.HUD then
 			ctx.HUD.caption("[Thunder]")
 		end
 	end)
+end
+
+-- ground mist: big, faint smoke puffs drifting low around the camera when outdoors
+local mist: ParticleEmitter
+local mistPart: BasePart
+local function buildMist()
+	mistPart = Instance.new("Part")
+	mistPart.Name = "ClientMist"
+	mistPart.Anchored = true
+	mistPart.CanCollide = false
+	mistPart.CanQuery = false
+	mistPart.CanTouch = false
+	mistPart.Transparency = 1
+	mistPart.Size = Vector3.new(140, 1, 140)
+	mistPart.Parent = workspace
+	mist = Instance.new("ParticleEmitter")
+	mist.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	mist.Color = ColorSequence.new(Color3.fromRGB(150, 158, 172))
+	mist.LightEmission = 0
+	mist.LightInfluence = 0.4
+	mist.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.3, 0.82),
+		NumberSequenceKeypoint.new(0.7, 0.85),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	mist.Size = NumberSequence.new(18, 26)
+	mist.Lifetime = NumberRange.new(10, 14)
+	mist.Speed = NumberRange.new(0.5, 1.5)
+	mist.SpreadAngle = Vector2.new(180, 10)
+	mist.EmissionDirection = Enum.NormalId.Top
+	mist.Rotation = NumberRange.new(0, 360)
+	mist.RotSpeed = NumberRange.new(-4, 4)
+	mist.Rate = UserInputService.TouchEnabled and 5 or 9
+	mist.Parent = mistPart
 end
 
 function Atmosphere.lightning(intensity: number, thunderDelay: number)
@@ -110,6 +150,7 @@ end
 
 function Atmosphere.start()
 	buildRain()
+	buildMist()
 	flash = Instance.new("ColorCorrectionEffect")
 	flash.Name = "Lightning"
 	flash.Parent = Lighting
@@ -125,8 +166,9 @@ function Atmosphere.start()
 	muffle.LowGain = 0
 	muffle.Parent = group
 	rainSound = ctx.Effects.localSound("Rain")
+	rainWindow = ctx.Effects.localSound("RainWindow")
 	windSound = ctx.Effects.localSound("Wind")
-	for _, s in { rainSound, windSound } do
+	for _, s in { rainSound, rainWindow, windSound } do
 		if s then
 			s.Looped = true
 			s.SoundGroup = group
@@ -135,6 +177,16 @@ function Atmosphere.start()
 	end
 
 	ctx.Remotes.Lightning.OnClientEvent:Connect(Atmosphere.lightning)
+	-- the lobby has no director: the storm runs itself there
+	if ctx.Mode == "Lobby" then
+		task.spawn(function()
+			task.wait(6)
+			while true do
+				Atmosphere.lightning(0.6 + math.random() * 0.6, 0.6 + math.random() * 2.4)
+				task.wait(22 + math.random() * 30)
+			end
+		end)
+	end
 
 	local acc = 0
 	RunService.RenderStepped:Connect(function(dt)
@@ -147,15 +199,22 @@ function Atmosphere.start()
 		if not cam then
 			return
 		end
-		local inside = ctx.Rooms.isInside(cam.CFrame.Position)
-		muffle.HighGain = inside and -30 or 0
-		muffle.MidGain = inside and -12 or 0
+		local inside = ctx.Mode ~= "Lobby" and ctx.Rooms.isInside(cam.CFrame.Position)
+		-- indoors the storm is muffled, but you still hear it drumming on the windows
+		muffle.HighGain = inside and -14 or 0
+		muffle.MidGain = inside and -5 or 0
 		if rainSound then
-			rainSound.Volume = inside and 0.25 or 0.6
+			rainSound.Volume = inside and 0.45 or 0.85
+		end
+		if rainWindow then
+			rainWindow.Volume = inside and 0.55 or 0
 		end
 		if windSound then
-			windSound.Volume = inside and 0.06 or 0.2
+			windSound.Volume = inside and 0.1 or 0.25
 		end
+		-- the ground mist follows the camera outdoors only
+		mistPart.CFrame = CFrame.new(cam.CFrame.Position.X, (inside and -500 or cam.CFrame.Position.Y - 4), cam.CFrame.Position.Z)
+		mist.Enabled = not inside
 	end)
 end
 

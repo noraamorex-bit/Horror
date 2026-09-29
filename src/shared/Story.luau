@@ -92,6 +92,9 @@ Story.Tasks = {
 		{ Key = "GuestFront", Text = "Close the window in the guest room", Target = "GuestWindow" },
 		{ Key = "LilyBack", Text = "Close the window in Lily's room", Target = "LilyWindow" },
 	} },
+	Door = { Title = "Answer the door", Steps = {
+		{ Key = "Answer", Text = "The pizza's here. Answer the front door", Target = "Door_FrontDoor" },
+	} },
 	-- Act II
 	LockUp = { Title = "Lock up for the night", Steps = {
 		{ Key = "BackDoor", Text = "Lock the back door in the kitchen", Target = "Door_BackDoor" },
@@ -237,11 +240,6 @@ Story.Calls = {
 		"...ok, go ahead.",
 		"Two large, pepperoni and half-mushroom? 14 Alder. Forty-five minutes, maybe an hour with this rain.",
 	},
-	PizzaCancel = {
-		"Hi, this is Tony's calling for 14 Alder?",
-		"Real sorry, hon. Creek Road's flooded out, police closed it. My driver can't get up the hill.",
-		"No charge. Stay dry, okay?",
-	},
 	Silent = {
 		"...",
 		"(Nobody speaks. You can hear breathing, and very faintly - your own TV. Through the line.)",
@@ -271,6 +269,112 @@ Story.TV = {
 }
 
 ---------------------------------------------------------------------------
+-- Dialogue. Each node: Speaker + Lines, then either Choices ({ Say, Next }) or Next, or End.
+-- Speaker "" is narration.
+---------------------------------------------------------------------------
+Story.Dialogue = {
+	Pizza = {
+		Start = "hello",
+		Nodes = {
+			hello = {
+				Speaker = "Delivery man",
+				Lines = {
+					"Delivery for... Whitaker.",
+					"Two large. Pepperoni. Half mushroom.",
+				},
+				Choices = {
+					{ Say = "That's us. How much do we owe you?", Next = "paid" },
+					{ Say = "You're not the usual guy.", Next = "usual" },
+				},
+			},
+			paid = {
+				Speaker = "Delivery man",
+				Lines = {
+					"Already paid for. Your mom's card.",
+					"She was very specific. Two large. Half mushroom.",
+				},
+				Next = "creek",
+			},
+			usual = {
+				Speaker = "Delivery man",
+				Lines = {
+					"Tony's nephew. Ray.",
+					"The usual guy doesn't like coming out this far at night. Neither do I.",
+				},
+				Next = "creek",
+			},
+			creek = {
+				Speaker = "Delivery man",
+				Lines = {
+					"Creek Road's going under. I'm the last one getting through tonight.",
+					"He looks past you, into the dark hallway, for a long time.",
+					"Nice house. Big. Lots of places to be.",
+				},
+				Narrate = { [2] = true },
+				Choices = {
+					{ Say = "Uh... thanks. Drive safe.", Next = "safe" },
+					{ Say = "What's that supposed to mean?", Next = "mean" },
+				},
+			},
+			safe = {
+				Speaker = "Delivery man",
+				Lines = {
+					"I always drive safe.",
+					"He holds the box out, and doesn't let go of it right away.",
+					"Is it just you kids in there?",
+				},
+				Narrate = { [2] = true },
+				Next = "alone",
+			},
+			mean = {
+				Speaker = "Delivery man",
+				Lines = {
+					"Nothing. Old houses. They creak. They settle.",
+					"He tilts his head, like he's listening to something upstairs.",
+					"Sometimes it isn't the house. Is it just you kids in there?",
+				},
+				Narrate = { [2] = true },
+				Next = "alone",
+			},
+			alone = {
+				Speaker = "Delivery man",
+				Lines = { "..." },
+				Choices = {
+					{ Say = "No. My dad's upstairs.", Next = "dad" },
+					{ Say = "...Yeah. Just us.", Next = "justus" },
+				},
+			},
+			dad = {
+				Speaker = "Delivery man",
+				Lines = {
+					"His eyes go to the dark windows upstairs, and stay there.",
+					"Sure he is.",
+					"Keep the doors locked. All of them.",
+				},
+				Narrate = { [1] = true },
+				Next = "leave",
+			},
+			justus = {
+				Speaker = "Delivery man",
+				Lines = {
+					"Huh.",
+					"Then you should really keep the doors locked. All of them.",
+					"Even the ones you don't use.",
+				},
+				Next = "leave",
+			},
+			leave = {
+				Speaker = "",
+				Lines = {
+					"He hands you the pizza. He backs down the steps without turning around, still smiling, until the rain swallows him.",
+				},
+				End = true,
+			},
+		},
+	},
+}
+
+---------------------------------------------------------------------------
 -- What Really Happened — explanations logged when events actually fire.
 ---------------------------------------------------------------------------
 Story.Truths = {
@@ -297,7 +401,7 @@ Story.Truths = {
 	LineCut = "The phone was dead because Curtis cut the line at the junction box on the garage wall.",
 	KeysTaken = "The car keys disappeared because Curtis took them off the hook so nobody could drive for help.",
 	Glimpse = "The shape at the end of the hall was Curtis. He was deciding what to do about you.",
-	PizzaCancel = "The pizza never came because Creek Road really did flood. That part was just bad luck.",
+	PizzaGuy = "The delivery man was Ray Tolliver, Tony's nephew, on his last run before the creek closed the road. He was strange, and he stared too long, but he had nothing to do with any of it. The real stranger had been above your heads the whole time.",
 	Floorboard = "The floorboard creak overhead was Curtis shifting his weight in the attic, directly above you.",
 	LilyNightlight = "Lily's nightlight was on because Lily always leaves it on. The ceiling man never bothered to turn it off.",
 }
@@ -322,6 +426,7 @@ Story.Thoughts = {
 		Popcorn = "We can't watch a movie without popcorn. There's some in the kitchen cupboard.",
 		LockUp = "Dad always says to lock up at night. The back door and the garage door.",
 		Windows = "The storm's getting worse. Somebody left the windows open upstairs.",
+		Door = "The doorbell. That's the pizza. Somebody get the front door.",
 		Investigate = "Someone has to go up there and look. It's probably nothing.",
 		Power = "The breaker panel is in the garage. Maybe I can get the power back on.",
 		Phone = "The phone's dead. Did something happen to the line outside?",
@@ -333,7 +438,7 @@ Story.Thoughts = {
 	},
 	Acts = {
 		SmallThings = {
-			"The pizza's not coming. The creek flooded. We're stuck here tonight.",
+			"That guy was so weird. And if the creek road's closed, nobody's getting in or out tonight.",
 			"It's just the storm. Old houses make noise.",
 		},
 		SomeoneElse = {

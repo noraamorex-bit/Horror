@@ -247,7 +247,7 @@ Events.List = {
 			local tv = ctx.World.refs().TV
 			if tv and tv.emergencyAlert(18) then
 				D.logTruth("TVAlert")
-				D.thinkNear(V(-30, 4, -10), 60, ctx.Story.Thoughts.Events.TVAlert)
+				D.thinkNear(V(-24, 4, -24), 60, ctx.Story.Thoughts.Events.TVAlert)
 			end
 		end,
 	},

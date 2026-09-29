@@ -132,6 +132,7 @@ function Finish.build(ctx, root: Instance)
 			continue
 		end
 		local y0 = L.Y[r.Floor]
+		local r0Floor = r.Floor
 		local x0, x1, z0, z1 = r.Min.X, r.Max.X, r.Min.Z, r.Max.Z
 		local sides = {
 			{ AlongX = true, Fixed = z0, A0 = x0, A1 = x1, Inward = 1 },
@@ -185,7 +186,18 @@ function Finish.build(ctx, root: Instance)
 							bestA, bestLen = a, b - a
 						end
 					end
-					if bestA and artLeft > 0 then
+					local reserved = false
+					if bestA then
+						local c0 = bestA + bestLen / 2
+						local px = side.AlongX and c0 or side.Fixed
+						local pz = side.AlongX and side.Fixed or c0
+						for _, r in L.NoArt or {} do
+							if r[1] == r0Floor and px >= r[2] and px <= r[3] and pz >= r[4] and pz <= r[5] then
+								reserved = true
+							end
+						end
+					end
+					if bestA and artLeft > 0 and not reserved then
 						artLeft -= 1
 						local c = bestA + bestLen / 2
 						local w, h = math.min(bestLen - 1, 3 + rng:NextNumber() * 2), 2.4 + rng:NextNumber() * 1.2

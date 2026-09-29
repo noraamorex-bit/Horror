@@ -52,6 +52,10 @@ local function run()
 			until ready
 			task.wait(0.4)
 		end
+		-- nor over a conversation
+		while ctx.Dialogue and ctx.Dialogue.isOpen() do
+			task.wait(0.2)
+		end
 		local item = table.remove(queue, 1)
 		line.Text = item.Text
 		tip.Text = hintText(item.Hint)

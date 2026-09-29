@@ -25,12 +25,13 @@ ctx.Mode = require(Shared.Mode)
 -- Atmosphere: a wet, dark November night
 local function setupLighting()
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
-	atmosphere.Density = 0.42
-	atmosphere.Offset = 0.1
-	atmosphere.Color = Color3.fromRGB(70, 80, 95)
-	atmosphere.Decay = Color3.fromRGB(40, 45, 55)
+	-- thick fog: the street and the neighbors' lights fade out into it
+	atmosphere.Density = 0.52
+	atmosphere.Offset = 0.18
+	atmosphere.Color = Color3.fromRGB(86, 94, 110)
+	atmosphere.Decay = Color3.fromRGB(46, 52, 64)
 	atmosphere.Glare = 0
-	atmosphere.Haze = 2.2
+	atmosphere.Haze = 2.6
 	atmosphere.Parent = Lighting
 	local cc = Lighting:FindFirstChild("Grade") or Instance.new("ColorCorrectionEffect")
 	cc.Name = "Grade";
@@ -78,6 +79,7 @@ ctx.PlayerState = require(Services.PlayerStateService)
 ctx.Hiding = require(Services.HidingService)
 ctx.Capture = require(Services.CaptureService)
 ctx.Objectives = require(Services.ObjectiveService)
+ctx.Dialogue = require(Services.DialogueService)
 ctx.Phone = require(Services.PhoneService)
 ctx.Escape = require(Services.EscapeService)
 ctx.Chat = require(Services.ChatService)
@@ -88,7 +90,7 @@ ctx.Intruder = require(script.Intruder.Intruder)
 
 local ORDER = {
 	"Audio", "Noise", "Interaction", "Inventory", "Power", "Doors", "PlayerState", "Hiding", "Capture",
-	"Objectives", "Phone", "Escape", "Chat", "Ending", "World", "Director", "Intruder",
+	"Objectives", "Dialogue", "Phone", "Escape", "Chat", "Ending", "World", "Director", "Intruder",
 }
 
 for _, name in ORDER do

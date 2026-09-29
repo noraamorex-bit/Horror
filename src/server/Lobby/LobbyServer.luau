@@ -10,6 +10,8 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 
+local Kit = require(script.Parent.Parent.World.Kit)
+
 local LobbyServer = {}
 
 local V = Vector3.new
@@ -77,8 +79,9 @@ local function buildHouse(parent: Instance, cx: number, frontZ: number, opts)
 	end
 	box("Ridge", V(x0 - 1.5, f2 + rise + 0.3, midZ - 0.6), V(x1 + 1.5, f2 + rise + 1, midZ + 0.6), roofColor, M.Roof)
 	for _, x in { x0 + 0.3, x1 - 0.3 } do
-		B.part(model, { ClassName = "WedgePart", Name = "Gable", Size = V(0.6, rise, D / 2), CFrame = CFrame.new(ORIGIN + V(x, f2 + rise / 2, midZ + D / 4)), Color = siding, Material = M.Siding })
-		B.part(model, { ClassName = "WedgePart", Name = "Gable", Size = V(0.6, rise, D / 2), CFrame = CFrame.new(ORIGIN + V(x, f2 + rise / 2, midZ - D / 4)) * CFrame.Angles(0, math.pi, 0), Color = siding, Material = M.Siding })
+		-- each half of the gable rises toward the ridge in the middle
+		B.part(model, { ClassName = "WedgePart", Name = "Gable", Size = V(0.6, rise, D / 2), CFrame = CFrame.new(ORIGIN + V(x, f2 + rise / 2, midZ + D / 4)) * CFrame.Angles(0, math.pi, 0), Color = siding, Material = M.Siding })
+		B.part(model, { ClassName = "WedgePart", Name = "Gable", Size = V(0.6, rise, D / 2), CFrame = CFrame.new(ORIGIN + V(x, f2 + rise / 2, midZ - D / 4)), Color = siding, Material = M.Siding })
 	end
 	-- chimney
 	local chx = x0 + 6
@@ -194,18 +197,16 @@ local function buildHouse(parent: Instance, cx: number, frontZ: number, opts)
 	return model
 end
 
-local function lampPost(root: Instance, pos: Vector3)
-	local B = ctx.Builder
-	B.cylinder(root, "LampPost", ORIGIN + pos + V(0, 7, 0), 14, 0.5, Color3.fromRGB(28, 28, 30), B.M.Metal)
-	B.box(root, "LampBase", ORIGIN + pos + V(-0.6, 0, -0.6), ORIGIN + pos + V(0.6, 1.2, 0.6), Color3.fromRGB(28, 28, 30), B.M.Metal)
-	local head = B.box(root, "LampHead", ORIGIN + pos + V(-0.8, 14, -0.8), ORIGIN + pos + V(0.8, 15.8, 0.8), Color3.fromRGB(255, 214, 150), Enum.Material.Neon, { CanCollide = false })
-	B.box(root, "LampCap", ORIGIN + pos + V(-1.1, 15.8, -1.1), ORIGIN + pos + V(1.1, 16.3, 1.1), Color3.fromRGB(28, 28, 30), B.M.Metal)
-	local pl = Instance.new("PointLight")
-	pl.Range = 32
-	pl.Brightness = 1.4
-	pl.Color = Color3.fromRGB(255, 196, 130)
-	pl.Shadows = true
-	pl.Parent = head
+local function lampPost(root: Instance, pos: Vector3, lit: boolean?)
+	local _, head = Kit.streetLamp(root, CFrame.lookAt(ORIGIN + pos, ORIGIN + pos + V(0, 0, 1)), 16)
+	if lit ~= false then
+		local pl = Instance.new("PointLight")
+		pl.Range = 32
+		pl.Brightness = 1.4
+		pl.Color = Color3.fromRGB(255, 196, 130)
+		pl.Shadows = true
+		pl.Parent = head
+	end
 end
 
 -- a white outline ring on the ground (the queue circle)
@@ -244,10 +245,12 @@ local function setupLighting()
 	Lighting.ExposureCompensation = 0.25
 	local atmo = Lighting:FindFirstChildOfClass("Atmosphere")
 	if atmo then
-		atmo.Density = 0.34
-		atmo.Color = Color3.fromRGB(88, 98, 120)
-		atmo.Decay = Color3.fromRGB(50, 56, 72)
-		atmo.Haze = 1.6
+		-- thick, cold fog: past the street everything fades out, so the town never ends
+		atmo.Density = 0.58
+		atmo.Offset = 0.22
+		atmo.Color = Color3.fromRGB(100, 108, 124)
+		atmo.Decay = Color3.fromRGB(58, 64, 80)
+		atmo.Haze = 2.8
 	end
 end
 
@@ -261,13 +264,18 @@ local function build(root: Folder)
 	local CONCRETE = Color3.fromRGB(128, 128, 124)
 
 	-- ground, sidewalks, the wet street
-	box("Ground", V(-130, -3, -130), V(130, 0.5, 130), GRASS, Enum.Material.Grass)
-	box("Sidewalk", V(-130, 0.5, 20), V(130, 0.75, 28), CONCRETE, M.Concrete)
-	box("Curb", V(-130, 0.3, 27.6), V(130, 0.85, 28.2), Color3.fromRGB(150, 150, 146), M.Concrete)
-	box("Street", V(-130, 0.3, 28.2), V(130, 0.45, 46), Color3.fromRGB(30, 31, 35), M.Asphalt, { Reflectance = 0.08 })
-	box("Curb", V(-130, 0.3, 46), V(130, 0.85, 46.6), Color3.fromRGB(150, 150, 146), M.Concrete)
-	box("SidewalkFar", V(-130, 0.5, 46.6), V(130, 0.75, 54), CONCRETE, M.Concrete)
-	for x = -120, 120, 16 do
+	-- the ground, street and sidewalks run on far past the invisible walls, into the fog
+	local FAR = 900
+	-- (the grass stops at the sidewalks, so it never covers the street)
+	box("Ground", V(-FAR, -3, -FAR), V(FAR, 0.5, 20), GRASS, Enum.Material.Grass)
+	box("Ground", V(-FAR, -3, 54), V(FAR, 0.5, FAR), GRASS, Enum.Material.Grass)
+	box("Subgrade", V(-FAR, -3, 20), V(FAR, 0.3, 54), Color3.fromRGB(40, 40, 40), M.Concrete)
+	box("Sidewalk", V(-FAR, 0.5, 20), V(FAR, 0.75, 28), CONCRETE, M.Concrete)
+	box("Curb", V(-FAR, 0.3, 27.6), V(FAR, 0.85, 28.2), Color3.fromRGB(150, 150, 146), M.Concrete)
+	box("Street", V(-FAR, 0.3, 28.2), V(FAR, 0.45, 46), Color3.fromRGB(30, 31, 35), M.Asphalt, { Reflectance = 0.08 })
+	box("Curb", V(-FAR, 0.3, 46), V(FAR, 0.85, 46.6), Color3.fromRGB(150, 150, 146), M.Concrete)
+	box("SidewalkFar", V(-FAR, 0.5, 46.6), V(FAR, 0.75, 54), CONCRETE, M.Concrete)
+	for x = -600, 600, 16 do
 		box("LaneMark", V(x, 0.45, 36.8), V(x + 8, 0.5, 37.4), Color3.fromRGB(205, 185, 95), M.Plastic, { CanCollide = false })
 	end
 	for _, pd in { { -30, 31, 9, 6 }, { 12, 39, 7, 4 }, { 55, 32, 10, 5 }, { -70, 40, 8, 5 } } do
@@ -311,21 +319,39 @@ local function build(root: Folder)
 	-- hedges, flower beds, picket fence, mailbox, trees
 	for _, span in { { -26, -11 }, { 11, 26 } } do
 		box("Mulch", V(span[1], 0.5, -40), V(span[2], 0.62, -36), Color3.fromRGB(60, 40, 30), M.Fabric)
-		box("Hedge", V(span[1] + 0.5, 0.6, -39.4), V(span[2] - 0.5, 3.6, -37), Color3.fromRGB(38, 58, 34), Enum.Material.LeafyGrass)
+		Kit.hedge(root, CFrame.lookAt(ORIGIN + V((span[1] + span[2]) / 2, 0.6, -38.2), ORIGIN + V((span[1] + span[2]) / 2, 0.6, -37)), span[2] - span[1] - 1, 3, 2.4)
 	end
-	for x = -130, 126, 4 do
-		if x > -5 and x < 3 or (x >= 26 and x <= 44) then
-			continue
+	for _, span in { { -130, -5 }, { 5, 26 }, { 46, 130 } } do
+		Kit.picketFence(root, ORIGIN + V(span[1], 0.5, 18.8), ORIGIN + V(span[2], 0.5, 18.8), 3.4)
+	end
+	Kit.mailbox(root, CFrame.lookAt(ORIGIN + V(5.4, 0.5, 20.6), ORIGIN + V(5.4, 0.5, 22)))
+	Kit.hydrant(root, CFrame.new(ORIGIN + V(-34, 0.75, 22.5)))
+	for i, t in { { -48, -50 }, { 58, -52 }, { -58, 2 }, { 62, 4 }, { -118, 8 }, { 118, 10 }, { -20, 70 }, { 40, 72 }, { -90, 72 } } do
+		if i % 3 == 0 then
+			Kit.pine(root, ORIGIN + V(t[1], 0.5, t[2]), 28, i)
+		else
+			Kit.tree(root, ORIGIN + V(t[1], 0.5, t[2]), 24, i)
 		end
-		box("Picket", V(x + 1.6, 0.5, 18.6), V(x + 2.4, 3.6, 18.9), TRIM, M.Wood)
 	end
-	box("FenceRail", V(-130, 2.4, 18.9), V(-5, 2.7, 19.1), TRIM, M.Wood)
-	box("FenceRail", V(5, 2.4, 18.9), V(26, 2.7, 19.1), TRIM, M.Wood)
-	box("FenceRail", V(46, 2.4, 18.9), V(130, 2.7, 19.1), TRIM, M.Wood)
-	box("MailPost", V(5.2, 0.5, 20.4), V(5.6, 4.2, 20.8), C.DarkWood, M.Wood)
-	box("Mailbox", V(4.6, 4.2, 19.8), V(6.2, 5.4, 21.8), Color3.fromRGB(30, 30, 32), M.Metal)
-	for _, t in { { -48, -50 }, { 58, -52 }, { -58, 2 }, { 62, 4 }, { -118, 8 }, { 118, 10 }, { -20, 70 }, { 40, 72 }, { -90, 72 } } do
-		B.tree(root, ORIGIN + V(t[1], 0.5, t[2]), 24)
+	-- beyond the walls: woods and more street lamps fading into the fog
+	local rng = Random.new(4242)
+	for i = 1, 70 do
+		local a = rng:NextNumber(0, math.pi * 2)
+		local r = rng:NextNumber(150, 420)
+		local x, z = math.cos(a) * r, math.sin(a) * r
+		if z > 14 and z < 60 then
+			z += 60 -- keep the street clear
+		end
+		if rng:NextNumber() < 0.55 then
+			Kit.pine(root, ORIGIN + V(x, 0.5, z), rng:NextNumber(26, 40), i)
+		else
+			Kit.tree(root, ORIGIN + V(x, 0.5, z), rng:NextNumber(22, 30), i)
+		end
+	end
+	for x = -420, 420, 70 do
+		if math.abs(x) > 130 then
+			lampPost(root, V(x, 0.75, 24), false)
+		end
 	end
 
 	-- street lamps and the gray van at the curb across the street
@@ -334,15 +360,10 @@ local function build(root: Folder)
 	end
 	lampPost(root, V(-40, 0.75, 50))
 	lampPost(root, V(40, 0.75, 50))
-	local van = Instance.new("Model")
+	local van = Kit.van(root, CFrame.lookAt(ORIGIN + V(68, 0.45, 41.5), ORIGIN + V(60, 0.45, 41.5)), Color3.fromRGB(122, 125, 128))
 	van.Name = "GrayVan"
-	van.Parent = root
-	B.box(van, "VanBody", ORIGIN + V(62, 1.5, 38), ORIGIN + V(78, 8.5, 45), Color3.fromRGB(122, 125, 128), M.Metal)
-	B.box(van, "VanHood", ORIGIN + V(58, 1.5, 38), ORIGIN + V(62, 5.5, 45), Color3.fromRGB(122, 125, 128), M.Metal)
-	B.box(van, "VanGlass", ORIGIN + V(61.9, 5.5, 38.4), ORIGIN + V(62.2, 8, 44.6), Color3.fromRGB(26, 30, 36), M.Glass)
-	for _, w in { { 61, 37.9 }, { 75, 37.9 }, { 61, 45.1 }, { 75, 45.1 } } do
-		B.cylinder(van, "Wheel", ORIGIN + V(w[1], 1.5, w[2]), 3, 3, C.Black, M.Plastic, CFrame.Angles(0, math.rad(90), 0))
-	end
+	Kit.sedan(root, CFrame.lookAt(ORIGIN + V(-50, 0.45, 32.5), ORIGIN + V(-40, 0.45, 32.5)), Color3.fromRGB(110, 28, 30))
+	Kit.sedan(root, CFrame.lookAt(ORIGIN + V(37.6, 0.7, -18), ORIGIN + V(37.6, 0.7, -28)), Color3.fromRGB(40, 60, 90))
 
 	-- queue circles on the patio: plain white outlines
 	for i, size in ctx.Config.Lobby.QueueSizes do
@@ -576,8 +597,9 @@ function LobbyServer.run(c)
 	local function setup(player: Player)
 		-- third person here; the house itself is first person
 		player.CameraMode = Enum.CameraMode.Classic
-		player.CameraMinZoomDistance = 0.5
-		player.CameraMaxZoomDistance = 18
+		-- a minimum zoom forces the camera out behind the character (the game itself is first person)
+		player.CameraMaxZoomDistance = 22
+		player.CameraMinZoomDistance = 9
 		player.CharacterAdded:Connect(function(char)
 			local hum = char:WaitForChild("Humanoid") :: Humanoid
 			hum.WalkSpeed = 16

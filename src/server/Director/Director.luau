@@ -12,6 +12,7 @@
 local Players = game:GetService("Players")
 
 local Events = require(script.Parent.Events)
+local Delivery = require(script.Parent.Delivery)
 local Perception = require(script.Parent.Parent.Intruder.Perception)
 
 local Director = {}
@@ -390,7 +391,7 @@ function Director.startAct(name: string, cause: Player?)
 	local actLines = ctx.Story.Thoughts.Acts[name]
 	if actLines then
 		-- act II waits for the pizza place's call; the others start right after the chapter card
-		task.delay(name == "SmallThings" and 32 or 7, function()
+		task.delay(name == "SmallThings" and 5 or 7, function()
 			for _, line in actLines do
 				Director.think(nil, line)
 			end
@@ -409,20 +410,6 @@ function Director.startAct(name: string, cause: Player?)
 		end
 	elseif name == "SmallThings" then
 		ctx.Objectives.set({ "LockUp" })
-		-- Tony's calls back: the creek road has flooded
-		task.delay(4, function()
-			local answered = false
-			ctx.Escape.ringLandline("PizzaCancel", function()
-				answered = true
-			end)
-			task.wait(26)
-			if not answered and state.Act ~= "Lobby" then
-				for _, p in ctx.Util.sessionPlayers() do
-					ctx.Phone.deliver(p, "Tony's Pizza", "Sorry! Creek Rd flooded, driver can't get to 14 Alder. Order cancelled, no charge.")
-				end
-			end
-			Director.logTruth("PizzaCancel")
-		end)
 	elseif name == "SomeoneElse" then
 		ctx.Objectives.set({ "Phone", "Attic", "Power" }, { Power = true })
 		checkHeldItems()
@@ -716,7 +703,26 @@ local function actTick()
 	local minT, maxT = scaled(cfg.Min), scaled(cfg.Max)
 	local done = false
 	if state.Act == "Evening" then
-		done = (actTime >= minT and ctx.Objectives.allRequiredDone()) or actTime >= maxT
+		-- once the chores are done (or it's getting late) the pizza arrives; the act ends when
+		-- the delivery man has gone
+		if not state.Delivery and ((ctx.Objectives.allRequiredDone() and actTime >= 10) or actTime >= maxT) then
+			state.Delivery = true
+			state.DeliveryAt = os.clock()
+			local myState = state
+			task.delay(5, function()
+				if state ~= myState then
+					return
+				end
+				local ok, err = pcall(Delivery.run, ctx, D, function()
+					myState.DeliveryDone = true
+				end)
+				if not ok then
+					warn("[Director] delivery failed: " .. tostring(err))
+					myState.DeliveryDone = true
+				end
+			end)
+		end
+		done = state.DeliveryDone == true or (state.DeliveryAt ~= nil and os.clock() - state.DeliveryAt > 240)
 	elseif state.Act == "SmallThings" then
 		done = (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet) or actTime >= maxT
 	elseif state.Act == "SomeoneElse" then

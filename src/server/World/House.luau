@@ -276,8 +276,18 @@ function House.build(ctx, root: Instance)
 	-- garage roof
 	B.box(shell, "GarageRoof", Vector3.new(39.5, 16, -31), Vector3.new(67, 16.8, 7), C.Roof, M.Roof)
 	B.box(shell, "GarageFascia", Vector3.new(40, 15, -31), Vector3.new(66.5, 16, -30.4), C.Trim, M.Wood)
-	-- chimney
-	B.box(shell, "Chimney", Vector3.new(-29, 0, -33), Vector3.new(-21, 46, -30.5), Color3.fromRGB(110, 60, 50), M.Brick)
+	-- chimney on the west gable, behind the living-room fireplace: a wide firebox base,
+	-- sloped shoulders, then the stack past the ridge with a cap and two flue pots
+	local BRICK = Color3.fromRGB(116, 62, 50)
+	B.box(shell, "Chimney", Vector3.new(-44.2, 0, -17.2), Vector3.new(-40.4, 12, -6.8), BRICK, M.Brick)
+	for _, sgn in { -1, 1 } do
+		B.part(shell, { ClassName = "WedgePart", Name = "ChimneyShoulder", Size = Vector3.new(3.8, 3, 3.2), CFrame = CFrame.new(-42.3, 13.5, -12 + sgn * 3.6) * CFrame.Angles(0, sgn > 0 and math.pi or 0, 0), Color = BRICK, Material = M.Brick })
+	end
+	B.box(shell, "ChimneyStack", Vector3.new(-43.6, 12, -14), Vector3.new(-40.4, 44.5, -10), BRICK, M.Brick)
+	B.box(shell, "ChimneyCap", Vector3.new(-44, 44.5, -14.4), Vector3.new(-40, 45.2, -9.6), Color3.fromRGB(120, 116, 110), M.Concrete)
+	for _, z in { -13, -11 } do
+		B.cylinder(shell, "FluePot", Vector3.new(-42, 45.9, z), 1.4, 0.9, Color3.fromRGB(150, 90, 70), M.Concrete)
+	end
 	-- foundation skirt
 	B.box(shell, "Foundation", Vector3.new(-40.6, -0.5, -30.6), Vector3.new(66.6, 0.2, 30.6), C.Concrete, M.Concrete, { CanCollide = false })
 

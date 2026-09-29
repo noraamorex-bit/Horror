@@ -42,6 +42,10 @@ local function currentSet(): { string }
 	if not player:GetAttribute("InGame") or player:GetAttribute("Escaped") or workspace:GetAttribute("EndingActive") then
 		return {}
 	end
+	-- a conversation owns the bottom of the screen
+	if ctx.Dialogue and ctx.Dialogue.isOpen() then
+		return {}
+	end
 	if player:GetAttribute("Captured") then
 		return { "Struggle" }
 	end
@@ -243,6 +247,13 @@ end
 
 function MobileControls.init(c)
 	ctx = c
+	ctx.MobileControls = MobileControls
+end
+
+function MobileControls.refresh()
+	if gui and gui.Enabled then
+		layout()
+	end
 end
 
 function MobileControls.start()

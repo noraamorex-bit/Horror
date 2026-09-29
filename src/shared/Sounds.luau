@@ -20,9 +20,13 @@ local ENGINE_SPLASH = "rbxasset://sounds/impact_water.mp3"
 
 Sounds.Library = {
 	-- Ambience (client, looped)
-	Rain = { Id = "rbxassetid://9112853287", Volume = 0.45, Looped = true },
+	Rain = { Id = "rbxassetid://9112853287", Volume = 0.8, Looped = true },
+	RainWindow = { Id = "rbxassetid://9112856881", Volume = 0.6, Looped = true },
 	Wind = { Id = "rbxassetid://9120697823", Fallback = ENGINE_WIND, Volume = 0.12, Looped = true },
-	Thunder = { Id = "rbxassetid://9120018695", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
+	Thunder = { Id = "rbxassetid://9120016037", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
+	Thunder2 = { Id = "rbxassetid://9120016241", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
+	Thunder3 = { Id = "rbxassetid://9120016256", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
+	ThunderRumble = { Id = "rbxassetid://9120018695", Fallback = ENGINE_THUD, Volume = 0.6 },
 	ClockTick = { Id = "", Volume = 0.25, Looped = true, Range = 30, Note = "grandfather clock tick" },
 	ClockChime = { Id = "rbxassetid://9113816347", Fallback = ENGINE_BEEP, Volume = 0.5, Range = 120, Caption = "[The grandfather clock chimes]" },
 	FridgeHum = { Id = "rbxassetid://9112889082", Volume = 0.06, Looped = true, Range = 20 },
@@ -60,6 +64,8 @@ Sounds.Library = {
 	DogBark = { Id = "", Volume = 0.8, Range = 180, Caption = "[A dog barking next door]" },
 	Floorboard = { Id = "rbxassetid://9114496277", Fallback = ENGINE_STEP, Volume = 0.8, Range = 60, Caption = "[A floorboard creaks]" },
 	HatchCreak = { Id = "rbxassetid://9126263691", Fallback = ENGINE_THUD, Volume = 0.7, Range = 60, Caption = "[Something creaks in the ceiling]" },
+	Doorbell = { Id = "rbxassetid://91808856778507", Fallback = ENGINE_BEEP, Volume = 1, Range = 120, Caption = "[The doorbell rings]" },
+	Sting = { Id = "rbxassetid://9120769331", Volume = 0.8, Range = 40 },
 	-- jump scares: loud, sudden, close
 	PlateCrash = { Id = "rbxassetid://9114592102", Fallback = ENGINE_THUD, Volume = 1, Range = 140, Caption = "[CRASH - something shatters in the kitchen]" },
 	CeilingThud = { Id = "rbxassetid://9113437538", Fallback = ENGINE_THUD, Volume = 1, Range = 90, Caption = "[A heavy THUD in the ceiling]" },

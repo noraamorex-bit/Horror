@@ -23,6 +23,7 @@ local NAMES = {
 	"Figure", -- (cframe, duration) a figure only this player sees
 	"Queue", -- (state | nil) lobby: your queue circle
 	"Thought", -- (text, hintKey?) your character thinking out loud
+	"Dialogue", -- (line | nil) a conversation line, maybe with choices; nil closes the box
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})
@@ -34,6 +35,7 @@ local NAMES = {
 	"Struggle", -- ()
 	"Phone", -- (action)
 	"LeaveQueue", -- () lobby: step off your circle
+	"DialogueChoice", -- (index) the line you picked
 }
 
 local Remotes = {}

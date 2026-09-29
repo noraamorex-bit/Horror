@@ -313,7 +313,24 @@ Layout.RestraintSlots = {
 }
 
 Layout.LobbySpawns = {
-	Vector3.new(-22, 4, -14), Vector3.new(-26, 4, -14), Vector3.new(-22, 4, -10), Vector3.new(-26, 4, -10),
+	Vector3.new(-22, 4, -10), Vector3.new(-26, 4, -10), Vector3.new(-22, 4, -6), Vector3.new(-26, 4, -6),
+}
+
+-- Wall spans that already have a feature on them (no framed pictures there): floor, x0, x1, z0, z1
+Layout.NoArt = {
+	{ "Ground", -40.6, -36, -19, -5 }, -- living-room fireplace and chimney breast
+	{ "Ground", -32, -16, -30.6, -26 }, -- TV wall
+	{ "Ground", 15, 28, 3.4, 6.6 }, -- den TV wall
+	{ "Ground", -40.6, -36, 3, 29 }, -- kitchen counters and upper cabinets
+	{ "Ground", -12, -8, 3, 11 }, -- phone counter / corkboard
+	{ "Ground", -32, -22, 29, 30.6 }, -- fridge
+	{ "Ground", 16, 23, 3, 4.4 }, -- bathroom mirror
+	{ "Ground", 34, 40.6, -10.6, -7 }, -- mudroom shelf and key board
+	{ "Ground", 23, 33, -10.6, -8.5 }, -- mudroom coat hooks
+	{ "Ground", -8.4, -5, -29, -23 }, -- hall mirror
+	{ "Upstairs", -10, -7.6, -27, -21 }, -- master dresser mirror
+	{ "Upstairs", -21, -11, 11, 12.6 }, -- master bath mirrors
+	{ "Upstairs", 14, 21, -6.6, -5 }, -- upstairs bath mirror
 }
 
 Layout.Attic = {

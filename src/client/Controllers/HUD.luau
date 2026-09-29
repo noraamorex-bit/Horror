@@ -312,8 +312,8 @@ local function build()
 		Parent = root,
 	})
 	clockLabel = UI.label({ Size = UDim2.new(1, 0, 0, 30), Text = "", Font = UI.Font.Title, TextSize = 28, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.6, Parent = clock })
-	actLabel = UI.label({ Position = UDim2.fromOffset(0, 30), Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 14, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, Parent = clock })
-	roomLabel = UI.label({ Position = UDim2.fromOffset(0, 48), Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 14, TextColor3 = UI.Color.Accent, TextXAlignment = Enum.TextXAlignment.Left, Parent = clock })
+	actLabel = UI.label({ Position = UDim2.fromOffset(0, 30), Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 15, Font = UI.Font.Bold, TextColor3 = Color3.fromRGB(214, 208, 196), TextStrokeTransparency = 0.45, TextXAlignment = Enum.TextXAlignment.Left, Parent = clock })
+	roomLabel = UI.label({ Position = UDim2.fromOffset(0, 48), Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 15, Font = UI.Font.Bold, TextColor3 = UI.Color.Accent, TextStrokeTransparency = 0.45, TextXAlignment = Enum.TextXAlignment.Left, Parent = clock })
 
 	-- police ETA (top center)
 	etaLabel = UI.label({
@@ -518,7 +518,14 @@ local function update()
 	end
 	local topY = (insetY + (UI.isTouch() and 52 or 10)) / s
 	objPanel.Position = UDim2.new(1, -18, 0, topY)
-	journal.Position = UDim2.new(1, -18, 0, topY + 140)
+	if UI.isTouch() then
+		-- on phones the right side belongs to the action buttons: the journal opens in the middle
+		journal.AnchorPoint = Vector2.new(0.5, 0.5)
+		journal.Position = UDim2.fromScale(0.5, 0.45)
+	else
+		journal.AnchorPoint = Vector2.new(1, 0)
+		journal.Position = UDim2.new(1, -18, 0, topY + 140)
+	end
 	etaLabel.Position = UDim2.new(0.5, 0, 0, (insetY + 8) / s)
 	notifyList.Position = UDim2.new(0.5, 0, 0, (insetY + 8) / s + 30)
 	-- on touch screens the thumbstick owns the bottom-left corner
