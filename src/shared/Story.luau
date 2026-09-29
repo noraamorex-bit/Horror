@@ -78,9 +78,86 @@ Story.Objectives = {
 }
 
 ---------------------------------------------------------------------------
+-- Tasks: each objective is a few steps. Target = where the "!" marker goes (a name the
+-- world build registers with Objectives.setTarget), or a list of alternatives.
+---------------------------------------------------------------------------
+Story.Tasks = {
+	-- Act I
+	OrderPizza = { Title = "Order pizza", Steps = {
+		{ Key = "Menu", Text = "Find the pizza menu on the fridge", Target = "Fridge" },
+		{ Key = "Call", Text = "Call Tony's Pizza on the kitchen phone", Target = "Phone" },
+	} },
+	Popcorn = { Title = "Make popcorn", Steps = {
+		{ Key = "Bag", Text = "Get a bag of popcorn from the kitchen cupboard", Target = "Cupboard" },
+		{ Key = "Cook", Text = "Pop it in the microwave", Target = "Microwave" },
+		{ Key = "Serve", Text = "Put the bowl on the living room coffee table", Target = "CoffeeTable" },
+	} },
+	Movie = { Title = "Pick a movie", Steps = {
+		{ Key = "Remote", Text = "Find the TV remote (try the couch cushions)", Target = "Couch" },
+		{ Key = "Watch", Text = "Put a movie on the living room TV", Target = "TV" },
+	} },
+	Fire = { Title = "Light the fireplace", Steps = {
+		{ Key = "Wood", Text = "Grab firewood from the pile in the garage", Target = "Woodpile" },
+		{ Key = "Logs", Text = "Stack the logs in the fireplace", Target = "Fireplace" },
+		{ Key = "Matches", Text = "Find matches in the kitchen drawer by the stove", Target = "Matches" },
+		{ Key = "Light", Text = "Light the fire", Target = "Fireplace" },
+	} },
+	Windows = { Title = "Close the upstairs windows", Steps = {
+		{ Key = "GuestFront", Text = "Close the window in the guest room", Target = "GuestWindow" },
+		{ Key = "LilyBack", Text = "Close the window in Lily's room", Target = "LilyWindow" },
+	} },
+	-- Act II
+	LockUp = { Title = "Lock up for the night", Steps = {
+		{ Key = "BackDoor", Text = "Lock the back door in the kitchen", Target = "Door_BackDoor" },
+		{ Key = "GarageSide", Text = "Lock the garage side door", Target = "Door_GarageSide" },
+	} },
+	Stay = { Title = "Stay together" },
+	-- Act III
+	Power = { Title = "Get the power back on", Steps = {
+		{ Key = "Flashlight", Text = "Find a flashlight (mudroom shelf or den drawer)", Target = { "FlashlightMud", "FlashlightDen" } },
+		{ Key = "Panel", Text = "Check the breaker panel in the garage", Target = "Breaker" },
+		{ Key = "Flip", Text = "Flip the MAIN breaker back on", Target = "Breaker" },
+	} },
+	Phone = { Title = "Call for help", Steps = {
+		{ Key = "Landline", Text = "Try the kitchen phone", Target = "Phone" },
+		{ Key = "Box", Text = "Check the phone box outside the garage", Target = "JunctionBox" },
+		{ Key = "Tape", Text = "Find electrical tape (kitchen drawer or garage bench)", Target = { "TapeKitchen", "TapeGarage" } },
+		{ Key = "Splice", Text = "Splice the cut phone wires", Target = "JunctionBox" },
+		{ Key = "Call", Text = "Call 911 from the kitchen phone", Target = "Phone" },
+	} },
+	Attic = { Title = "Find out what's in the attic", Steps = {
+		{ Key = "Hatch", Text = "Pull down the attic hatch in the upstairs hall", Target = "Hatch" },
+		{ Key = "Search", Text = "Climb up and search the attic", Target = "Nest" },
+	} },
+	-- Act IV
+	Call911 = { Title = "Call 911", Steps = {
+		{ Key = "Call", Text = "Fix the phone line outside, or find a signal by the upstairs bathroom window", Target = { "JunctionBox", "SignalSpot" } },
+	} },
+	Neighbor = { Title = "Get to Mrs. Okafor's house", Steps = {
+		{ Key = "Knock", Text = "Knock on her door next door, and wait", Target = "NeighborDoor" },
+	} },
+	Car = { Title = "Escape in the car", Steps = {
+		{ Key = "Keys", Text = "Find the car keys (his attic hideout, or dad's office)", Target = { "Nest", "OfficeKeys" } },
+		{ Key = "Garage", Text = "Open the garage door", Target = "GarageButton" },
+		{ Key = "Drive", Text = "Drive away", Target = "Car" },
+	} },
+	Trap = { Title = "(Optional) Lock him in the basement", Steps = {
+		{ Key = "Lock", Text = "Lure him down, then lock the basement door", Target = "Door_Basement" },
+	} },
+	Rescue = { Title = "Free your friend", Steps = {
+		{ Key = "Free", Text = "Cut them loose in the boiler room", Target = "Boiler" },
+	} },
+	Survive = { Title = "Survive until the police arrive" },
+}
+
+---------------------------------------------------------------------------
 -- Readable documents (Id -> content). ObserverExtra is only shown to the Observer role.
 ---------------------------------------------------------------------------
 Story.Documents = {
+	Menu = {
+		Title = "Tony's Pizza - menu",
+		Body = "TONY'S PIZZA  ·  Hollis Creek\n\nLarge cheese ........ 14.99\nLarge pepperoni ..... 16.99\nHalf & half ......... 17.49\n\nWE DELIVER!  555-0142\n\n(Mom's handwriting in the corner: 'the usual - 2 large, half mushroom')",
+	},
 	FridgeNote = {
 		Title = "Note on the fridge",
 		Body = "Jamie -\n\nBack Sunday night. Pizza money is in the drawer by the phone. Friends are FINE, parties are NOT.\n\nLock up. Don't let Lily's fish die.\n\nLove, Mom\n\nP.S. The garage keypad is acting up again. Don't use it, Dad will call the company Monday.",
@@ -249,10 +326,11 @@ Story.Thoughts = {
 		},
 	},
 	Objectives = {
-		OrderPizza = "I'm starving. The phone's in the kitchen. I should order the pizza.",
-		Popcorn = "We can't watch a movie without popcorn. The microwave's in the kitchen.",
-		Movie = "I should probably put something on the TV in the living room.",
-		Fire = "It's freezing in here. I should light the fireplace.",
+		OrderPizza = "I'm starving. Mom keeps the pizza menu on the fridge.",
+		Popcorn = "We can't watch a movie without popcorn. There's some in the kitchen cupboard.",
+		Movie = "I should probably put something on the TV. Where's the remote?",
+		Fire = "It's freezing in here. There's firewood in the garage for the fireplace.",
+		LockUp = "Dad always says to lock up at night. The back door and the garage door.",
 		Windows = "The storm's getting worse. Somebody left the windows open upstairs.",
 		Power = "The breaker panel is in the garage. Maybe I can get the power back on.",
 		Phone = "The phone's dead. Did something happen to the line outside?",
@@ -295,6 +373,11 @@ Story.Thoughts = {
 		Poker = "A fire poker. Heavy enough to break a window.",
 		Scissors = "Scissors. Sharp enough to cut through a zip tie.",
 		Batteries = "Fresh batteries. The flashlight is full again.",
+		Remote = "Found it. In the couch cushions, obviously.",
+		PopcornBag = "Microwave popcorn. Extra butter. Now the microwave.",
+		PopcornBowl = "Smells amazing. The coffee table in the living room.",
+		Firewood = "Heavy. Okay, to the fireplace.",
+		Matches = "Matches. Now I can light the fire.",
 	},
 	Hide = "I have to stay quiet in here.|breath",
 	Captured = "My hands are tied to a pipe. I have to get loose, or wait for the others.|struggle",

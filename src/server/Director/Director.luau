@@ -172,8 +172,27 @@ function Director.thinkNear(position: Vector3, radius: number, line: string?)
 	Director.think(list, line)
 end
 
+-- items that tick off a step of a task
+local ITEM_STEPS = {
+	Flashlight = { "Power", "Flashlight" },
+	ElectricalTape = { "Phone", "Tape" },
+	CarKeys = { "Car", "Keys" },
+}
+
+local function checkHeldItems()
+	for item, st in ITEM_STEPS do
+		if #ctx.Inventory.holders(item) > 0 then
+			ctx.Objectives.step(st[1], st[2])
+		end
+	end
+end
+
 function Director.onItem(player: Player, item: string)
 	Director.thinkOnce(player, "Item_" .. item, ctx.Story.Thoughts.Items[item])
+	local st = ITEM_STEPS[item]
+	if st then
+		ctx.Objectives.step(st[1], st[2])
+	end
 end
 
 function Director.onHide(player: Player)
@@ -191,8 +210,16 @@ local function hintTick()
 	state.NextHintAt = os.clock() + ctx.Config.Thoughts.IdleHint
 	for _, id in ctx.Objectives.pending() do
 		local line = ctx.Story.Thoughts.Objectives[id]
-		if line then
-			Director.think(nil, line)
+		local step = ctx.Objectives.currentText(id)
+		if line or step then
+			-- the first reminder is in their own words, later ones name the exact next step
+			state.Hinted = state.Hinted or {}
+			if line and not state.Hinted[id] then
+				state.Hinted[id] = true
+				Director.think(nil, line)
+			elseif step then
+				Director.think(nil, "What next... " .. step:sub(1, 1):lower() .. step:sub(2) .. ".")
+			end
 			return
 		end
 	end
@@ -380,7 +407,7 @@ function Director.startAct(name: string, cause: Player?)
 			end
 		end
 	elseif name == "SmallThings" then
-		ctx.Objectives.set({ "Explore", "Stay" }, { Explore = true, Stay = true })
+		ctx.Objectives.set({ "LockUp", "Stay" }, { Stay = true })
 		-- Tony's calls back: the creek road has flooded
 		task.delay(4, function()
 			local answered = false
@@ -396,7 +423,8 @@ function Director.startAct(name: string, cause: Player?)
 			Director.logTruth("PizzaCancel")
 		end)
 	elseif name == "SomeoneElse" then
-		ctx.Objectives.set({ "Power", "Phone", "Attic" }, { Power = true })
+		ctx.Objectives.set({ "Phone", "Attic", "Power" }, { Power = true })
+		checkHeldItems()
 		task.delay(7, function()
 			if state.Act ~= "SomeoneElse" then
 				return
@@ -424,7 +452,11 @@ function Director.startAct(name: string, cause: Player?)
 			ctx.Remotes.Notify:FireAllClients("That wasn't the storm. Something flipped the main breaker.", "danger")
 		end)
 	elseif name == "Guest" then
-		ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Trap", "Rescue" }, { Neighbor = true, Car = true, Trap = true, Rescue = true })
+		ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Trap" }, { Neighbor = true, Car = true, Trap = true })
+		checkHeldItems()
+		if ctx.Capture.captiveCount() > 0 then
+			ctx.Objectives.add("Rescue", true)
+		end
 		ctx.Intruder.setMode("Hunt", cause)
 		Director.addTension(30)
 		task.spawn(sayAll, { "Somewhere in the house, something heavy hits the floor.", "He knows." }, 3)
@@ -439,6 +471,7 @@ local function nextAct()
 end
 
 function Director.onDiscovery(player: Player, docId: string)
+	ctx.Objectives.step("Attic", "Search")
 	Director.logTruthRaw((player:GetAttribute("RoleName") or player.Name) .. " found the nest in the attic.")
 	if state.Act == "SomeoneElse" and not state.Discovered and not ctx.Escape.helpCalled() then
 		state.Discovered = true
@@ -455,6 +488,9 @@ end
 ---------------------------------------------------------------------------
 function Director.onCapture(player: Player)
 	Director.addTension(25)
+	if state.Act == "Guest" then
+		ctx.Objectives.add("Rescue", true)
+	end
 	task.delay(4, function()
 		Director.think(player, ctx.Story.Thoughts.Captured)
 	end)
@@ -486,6 +522,9 @@ function Director.onDoorOpened(door, player: Player)
 end
 
 function Director.onDoorLockChanged(door, player: Player)
+	if door.Locked and (door.Id == "BackDoor" or door.Id == "GarageSide") then
+		ctx.Objectives.step("LockUp", door.Id)
+	end
 	if door.Id == "BackDoor" and door.Locked and (state.Act == "Evening" or state.Act == "SmallThings") then
 		Director.logTruth("BackDoorUnlocked")
 	end

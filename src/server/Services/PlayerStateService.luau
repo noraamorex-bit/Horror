@@ -45,7 +45,9 @@ local function setupCharacter(player: Player, char: Model)
 	light.Angle = ctx.Config.Flashlight.Angle
 	light.Brightness = ctx.Config.Flashlight.Brightness
 	light.Color = Color3.fromRGB(255, 244, 222)
-	light.Shadows = true
+	-- no shadows: the head (and hats/hair) would block its own beam. The owner also gets a
+	-- sharper local light that follows their camera (client Movement controller).
+	light.Shadows = false
 	light.Face = Enum.NormalId.Front
 	light.Enabled = player:GetAttribute("FlashlightOn") == true
 	-- the owning client tilts this attachment with the camera pitch
@@ -323,7 +325,7 @@ function PlayerState.start()
 			return
 		end
 		if not ctx.Inventory.has(player, "Flashlight") then
-			ctx.Audio.caption("You don't have a flashlight.", nil, nil, { player })
+			ctx.Director.think(player, "I don't have a flashlight. There's one on the mudroom shelf, and one in the den drawer.")
 			return
 		end
 		if (player:GetAttribute("Battery") or 0) <= 0 then

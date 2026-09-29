@@ -98,13 +98,19 @@ function Interaction.pickup(part: BasePart, item: string, opts, onTaken)
 		Distance = opts.Distance or 7,
 		Offset = opts.Offset,
 	}, function(player)
+		ctx.Audio.playAt("Pickup", part.Position, { Caption = false })
 		ctx.Inventory.give(player, item, opts.Count or 1)
 		ctx.Audio.caption("Picked up: " .. (opts.Object or item), nil, nil, { player })
 		if onTaken then
 			onTaken(player)
 		end
-		local target = opts.Destroy or part
-		target:Destroy()
+		if opts.Keep then
+			-- a drawer or cupboard stays put; only the prompt goes
+			prompt:Destroy()
+		else
+			local target = opts.Destroy or part
+			target:Destroy()
+		end
 	end)
 	return prompt
 end

@@ -1,7 +1,8 @@
 --[[
 	Sounds — the audio library.
 
-	Id       : your uploaded / Creator Store asset ("rbxassetid://123"). Leave "" until imported.
+	Id       : a Creator Store asset ("rbxassetid://123"). The ones set here are Roblox-licensed
+	           ProSoundEffects sounds that any experience may use. "" = not chosen yet.
 	Fallback : a built-in engine sound used when Id is empty (may be nil).
 	Caption  : shown to players who hear it. Captions always show, so the game is fully
 	           playable (and accessible) before any audio is imported.
@@ -19,56 +20,65 @@ local ENGINE_SPLASH = "rbxasset://sounds/impact_water.mp3"
 
 Sounds.Library = {
 	-- Ambience (client, looped)
-	Rain = { Id = "", Volume = 0.5, Looped = true, Note = "heavy rain loop" },
-	Wind = { Id = "", Fallback = ENGINE_WIND, Volume = 0.15, Looped = true, Note = "wind howl loop" },
-	Thunder = { Id = "", Fallback = ENGINE_THUD, Volume = 1, Pitch = 0.3, Caption = "[Thunder]", Note = "distant thunder" },
+	Rain = { Id = "rbxassetid://9112853287", Volume = 0.45, Looped = true },
+	Wind = { Id = "rbxassetid://9120697823", Fallback = ENGINE_WIND, Volume = 0.12, Looped = true },
+	Thunder = { Id = "rbxassetid://9120018695", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
 	ClockTick = { Id = "", Volume = 0.25, Looped = true, Range = 30, Note = "grandfather clock tick" },
-	ClockChime = { Id = "", Fallback = ENGINE_BEEP, Pitch = 0.4, Volume = 0.5, Range = 120, Caption = "[The grandfather clock chimes]" },
-	FridgeHum = { Id = "", Volume = 0.2, Looped = true, Range = 20, Note = "refrigerator hum" },
-	FireCrackle = { Id = "", Volume = 0.5, Looped = true, Range = 30, Note = "fireplace crackle" },
+	ClockChime = { Id = "rbxassetid://9113816347", Fallback = ENGINE_BEEP, Volume = 0.5, Range = 120, Caption = "[The grandfather clock chimes]" },
+	FridgeHum = { Id = "rbxassetid://9112889082", Volume = 0.06, Looped = true, Range = 20 },
+	FireCrackle = { Id = "rbxassetid://9112780193", Volume = 0.55, Looped = true, Range = 30 },
 
 	-- House
-	Footstep = { Id = "", Fallback = ENGINE_STEP, Volume = 0.9, Range = 70, Caption = "[Footsteps]" },
-	FootstepsAbove = { Id = "", Fallback = ENGINE_STEP, Volume = 1, Range = 90, Pitch = 0.8, Caption = "[Footsteps... above you]" },
-	DoorOpen = { Id = "", Volume = 0.6, Range = 45, Caption = "[A door creaks]", Note = "door creak open" },
-	DoorClose = { Id = "", Fallback = ENGINE_THUD, Volume = 0.6, Range = 45, Caption = "[A door closes]" },
-	DoorSlam = { Id = "", Fallback = ENGINE_THUD, Volume = 1, Range = 110, Caption = "[A door SLAMS]" },
-	DoorRattle = { Id = "", Fallback = ENGINE_THUD, Volume = 0.7, Pitch = 1.6, Range = 50, Caption = "[A door handle rattles]" },
-	Deadbolt = { Id = "", Fallback = ENGINE_THUD, Pitch = 2, Volume = 0.6, Range = 30, Caption = "[Click of a deadbolt]" },
-	DoorForce = { Id = "", Fallback = ENGINE_THUD, Volume = 1, Pitch = 0.7, Range = 80, Caption = "[Someone is forcing a door]" },
-	Knock = { Id = "", Fallback = ENGINE_THUD, Volume = 1, Pitch = 1.3, Range = 60, Caption = "[Knocking]" },
-	LightSwitch = { Id = "", Fallback = ENGINE_THUD, Pitch = 3, Volume = 0.3, Range = 16 },
-	Breaker = { Id = "", Fallback = ENGINE_THUD, Pitch = 0.6, Volume = 1, Range = 70, Caption = "[A heavy clunk from the garage]" },
-	PowerDown = { Id = "", Volume = 0.6, Range = 200, Caption = "[Everything goes silent]" },
-	PowerUp = { Id = "", Volume = 0.6, Range = 200, Caption = "[The fridge hums back to life]" },
-	MicrowaveHum = { Id = "", Volume = 0.4, Looped = true, Range = 30, Caption = "[Microwave humming]" },
-	MicrowaveBeep = { Id = "", Fallback = ENGINE_BEEP, Volume = 0.6, Range = 50, Caption = "[Beep beep beep]" },
+	Footstep = { Id = "rbxassetid://9120880067", Fallback = ENGINE_STEP, Volume = 0.9, Range = 70, Caption = "[Footsteps]" },
+	FootstepsAbove = { Id = "rbxassetid://9114493393", Fallback = ENGINE_STEP, Volume = 1, Range = 90, Caption = "[Footsteps... above you]" },
+	DoorOpen = { Id = "rbxassetid://9120839010", Volume = 0.6, Range = 45, Caption = "[A door creaks]" },
+	DoorClose = { Id = "rbxassetid://9120839581", Fallback = ENGINE_THUD, Volume = 0.6, Range = 45, Caption = "[A door closes]" },
+	DoorSlam = { Id = "rbxassetid://9114153270", Fallback = ENGINE_THUD, Volume = 1, Range = 110, Caption = "[A door SLAMS]" },
+	DoorRattle = { Id = "rbxassetid://9114138011", Fallback = ENGINE_THUD, Volume = 0.7, Range = 50, Caption = "[A door handle rattles]" },
+	Deadbolt = { Id = "rbxassetid://9114144264", Fallback = ENGINE_THUD, Volume = 0.6, Range = 30, Caption = "[Click of a deadbolt]" },
+	DoorForce = { Id = "rbxassetid://9114129501", Fallback = ENGINE_THUD, Volume = 1, Range = 80, Caption = "[Someone is forcing a door]" },
+	Knock = { Id = "rbxassetid://9120918417", Fallback = ENGINE_THUD, Volume = 1, Range = 60, Caption = "[Knocking]" },
+	LightSwitch = { Id = "rbxassetid://9116284750", Fallback = ENGINE_THUD, Volume = 0.5, Range = 16 },
+	Breaker = { Id = "rbxassetid://9119633359", Fallback = ENGINE_THUD, Pitch = 0.8, Volume = 1, Range = 70, Caption = "[A heavy clunk from the garage]" },
+	PowerDown = { Id = "rbxassetid://9117871125", Volume = 0.8, Range = 200, Caption = "[Everything goes silent]" },
+	PowerUp = { Id = "rbxassetid://9117882503", Volume = 0.6, Range = 200, Caption = "[The fridge hums back to life]" },
+	MicrowaveHum = { Id = "rbxassetid://9114258913", Volume = 0.4, Looped = true, Range = 30, Caption = "[Microwave humming]" },
+	MicrowaveBeep = { Id = "rbxassetid://9118777437", Fallback = ENGINE_BEEP, Volume = 0.6, Range = 50, Caption = "[Beep beep beep]" },
 	Popcorn = { Id = "", Volume = 0.6, Range = 35, Caption = "[Popcorn popping]" },
-	Faucet = { Id = "", Fallback = ENGINE_SPLASH, Volume = 0.3, Range = 20, Caption = "[Running water]" },
-	Toilet = { Id = "", Fallback = ENGINE_SPLASH, Volume = 0.6, Pitch = 0.6, Range = 40, Caption = "[A toilet flushes]" },
-	PhoneRing = { Id = "", Fallback = ENGINE_BEEP, Volume = 1, Looped = true, Range = 120, Caption = "[The landline is ringing]" },
-	DialTone = { Id = "", Fallback = ENGINE_BEEP, Volume = 0.4, Pitch = 0.5, Range = 8 },
-	TVStatic = { Id = "", Volume = 0.35, Looped = true, Range = 40, Caption = "[TV static]" },
-	TVShow = { Id = "", Volume = 0.35, Looped = true, Range = 40, Caption = "[TV murmuring]" },
-	TVAlert = { Id = "", Fallback = ENGINE_BEEP, Volume = 0.8, Pitch = 0.7, Looped = true, Range = 60, Caption = "[EMERGENCY ALERT TONE]" },
-	GarageMotor = { Id = "", Volume = 0.8, Range = 120, Caption = "[Garage door motor grinding]" },
-	GarageManual = { Id = "", Fallback = ENGINE_THUD, Volume = 1, Range = 100, Caption = "[Metal screeching - the garage door]" },
-	GlassBreak = { Id = "", Fallback = ENGINE_THUD, Volume = 1, Pitch = 1.8, Range = 160, Caption = "[GLASS SHATTERS]" },
-	CarEngine = { Id = "", Volume = 0.8, Range = 150, Caption = "[A car engine starts]" },
-	Siren = { Id = "", Fallback = ENGINE_WIND, Volume = 1, Pitch = 2, Looped = true, Range = 400, Caption = "[Sirens]" },
+	Faucet = { Id = "rbxassetid://9119153987", Fallback = ENGINE_SPLASH, Volume = 0.3, Range = 20, Caption = "[Running water]" },
+	Toilet = { Id = "rbxassetid://9120106655", Fallback = ENGINE_SPLASH, Volume = 0.6, Range = 40, Caption = "[A toilet flushes]" },
+	PhoneRing = { Id = "rbxassetid://9117305259", Fallback = ENGINE_BEEP, Volume = 1, Looped = true, Range = 120, Caption = "[The landline is ringing]" },
+	DialTone = { Id = "rbxassetid://9125716553", Fallback = ENGINE_BEEP, Volume = 0.5, Range = 10 },
+	TVStatic = { Id = "rbxassetid://9113115842", Volume = 0.3, Looped = true, Range = 40, Caption = "[TV static]" },
+	TVShow = { Id = "rbxassetid://9114012077", Volume = 0.3, Looped = true, Range = 40, Caption = "[TV murmuring]" },
+	TVAlert = { Id = "rbxassetid://9113089565", Fallback = ENGINE_BEEP, Volume = 0.7, Looped = true, Range = 60, Caption = "[EMERGENCY ALERT TONE]" },
+	GarageMotor = { Id = "rbxassetid://9125699768", Volume = 0.8, Range = 120, Caption = "[Garage door motor grinding]" },
+	GarageManual = { Id = "rbxassetid://9113560502", Fallback = ENGINE_THUD, Volume = 1, Range = 100, Caption = "[Metal screeching - the garage door]" },
+	GlassBreak = { Id = "rbxassetid://9114590297", Fallback = ENGINE_THUD, Volume = 1, Range = 160, Caption = "[GLASS SHATTERS]" },
+	CarEngine = { Id = "rbxassetid://9112952489", Volume = 0.8, Range = 150, Caption = "[A car engine starts]" },
+	Siren = { Id = "rbxassetid://9117810961", Fallback = ENGINE_WIND, Volume = 1, Looped = true, Range = 400, Caption = "[Sirens]" },
 	DogBark = { Id = "", Volume = 0.8, Range = 180, Caption = "[A dog barking next door]" },
-	Floorboard = { Id = "", Fallback = ENGINE_STEP, Volume = 0.8, Pitch = 0.5, Range = 60, Caption = "[A floorboard creaks]" },
-	HatchCreak = { Id = "", Fallback = ENGINE_THUD, Pitch = 0.5, Volume = 0.6, Range = 60, Caption = "[Something creaks in the ceiling]" },
+	Floorboard = { Id = "rbxassetid://9114496277", Fallback = ENGINE_STEP, Volume = 0.8, Range = 60, Caption = "[A floorboard creaks]" },
+	HatchCreak = { Id = "rbxassetid://9126263691", Fallback = ENGINE_THUD, Volume = 0.7, Range = 60, Caption = "[Something creaks in the ceiling]" },
+	WindowClose = { Id = "rbxassetid://9119205658", Fallback = ENGINE_THUD, Volume = 0.6, Range = 30 },
 
 	-- People
-	Breathing = { Id = "", Volume = 0.35, Looped = true, Range = 12, Note = "heavy nervous breathing" },
+	Breathing = { Id = "rbxassetid://9116457539", Volume = 0.25, Looped = true, Range = 12 },
 	Heartbeat = { Id = "", Fallback = ENGINE_THUD, Volume = 0.6, Pitch = 0.5 },
-	Cough = { Id = "", Fallback = ENGINE_THUD, Pitch = 0.4, Volume = 1, Range = 60, Caption = "[A man coughing and choking]" },
-	Spray = { Id = "", Fallback = ENGINE_SPLASH, Pitch = 2.5, Volume = 0.8, Range = 30, Caption = "[Pssshhht]" },
-	ZipTie = { Id = "", Fallback = ENGINE_THUD, Pitch = 2.5, Volume = 0.6, Range = 25, Caption = "[Zip ties ratchet]" },
-	Struggle = { Id = "", Fallback = ENGINE_THUD, Pitch = 1.4, Volume = 0.7, Range = 35, Caption = "[Muffled struggling]" },
-	ManWhisper = { Id = "", Volume = 0.5, Range = 14, Caption = "[A man's voice, very close]" },
+	Cough = { Id = "rbxassetid://9113948412", Fallback = ENGINE_THUD, Volume = 1, Range = 60, Caption = "[A man coughing and choking]" },
+	Spray = { Id = "rbxassetid://9113044265", Fallback = ENGINE_SPLASH, Volume = 0.8, Range = 30, Caption = "[Pssshhht]" },
+	ZipTie = { Id = "rbxassetid://9118047781", Fallback = ENGINE_THUD, Volume = 0.6, Range = 25, Caption = "[Zip ties ratchet]" },
+	Struggle = { Id = "rbxassetid://9113535436", Fallback = ENGINE_THUD, Volume = 0.7, Range = 35, Caption = "[Muffled struggling]" },
+	ManWhisper = { Id = "rbxassetid://9113585946", Volume = 0.6, Range = 14, Caption = "[A man's breathing, very close]" },
 	PhoneVibrate = { Id = "", Fallback = ENGINE_BEEP, Volume = 0.3, Pitch = 1.5 },
+
+	-- Interface / handling (mostly client-side)
+	Pickup = { Id = "rbxassetid://9113849306", Volume = 0.5, Range = 20 },
+	Paper = { Id = "rbxassetid://9125723307", Volume = 0.6 },
+	FlashlightClick = { Id = "rbxassetid://9114479661", Volume = 0.6, Range = 15 },
+	Matches = { Id = "rbxassetid://9120930385", Volume = 0.7, Range = 25 },
+	LogDrop = { Id = "rbxassetid://9120871246", Volume = 0.7, Range = 30 },
+	ObjectiveDone = { Id = "rbxassetid://9126073001", Volume = 0.35 },
 }
 
 function Sounds.get(name: string)

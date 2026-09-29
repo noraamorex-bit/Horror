@@ -74,7 +74,7 @@ local function thunder(delay: number, intensity: number)
 		local s = ctx.Effects.localSound("Thunder")
 		if s then
 			s.Volume = math.clamp(intensity, 0.3, 1.2)
-			s.PlaybackSpeed = 0.25 + math.random() * 0.15
+			s.PlaybackSpeed = 0.85 + math.random() * 0.25
 			s:Play()
 			game:GetService("Debris"):AddItem(s, 8)
 		end

@@ -21,6 +21,11 @@ Inventory.Display = {
 	Multitool = "Multitool",
 	Scissors = "Scissors",
 	Batteries = "Batteries",
+	Remote = "TV remote",
+	PopcornBag = "Bag of popcorn",
+	PopcornBowl = "Bowl of popcorn",
+	Firewood = "Firewood",
+	Matches = "Matches",
 }
 
 function Inventory.init(c)

@@ -120,6 +120,7 @@ function Exterior.build(ctx, root: Instance, refs)
 	local door = B.box(jm, "BoxDoor", V(67.2, jb.Y - 1.2, jb.Z - 1), V(67.35, jb.Y + 1.2, jb.Z + 1), Color3.fromRGB(160, 160, 155), M.Metal)
 	local openCF = CFrame.new(V(67.2, jb.Y, jb.Z - 1)) * CFrame.Angles(0, math.rad(-100), 0) * CFrame.new(0.07, 0, 1)
 	ctx.Escape.setupJunctionBox(jm, door, openCF, wire, cut)
+	ctx.Objectives.setTarget("JunctionBox", door.Position + V(1, 0, 0))
 
 	---------------------------------------------------------------------------
 	-- Mrs. Okafor's house (x 95..130)
@@ -148,6 +149,7 @@ function Exterior.build(ctx, root: Instance, refs)
 	npl.Color = Color3.fromRGB(255, 210, 150)
 	npl.Parent = nlamp
 	ctx.Escape.setupNeighbor(ndoor)
+	ctx.Objectives.setTarget("NeighborDoor", ndoor.Position + V(0, 0, -1))
 	-- inside: warm and safe
 	local lamp = B.block(f, "NLamp", V(112, 12.5, -15), V(1.5, 0.6, 1.5), Color3.fromRGB(255, 230, 190), Enum.Material.Neon)
 	local il = Instance.new("PointLight")

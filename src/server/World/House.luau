@@ -90,6 +90,8 @@ function House.build(ctx, root: Instance)
 				glass.CFrame = closedCF * CFrame.new(0, op.h * 0.45, 0)
 				glass.Size = glass.Size * Vector3.new(1, 0.55, 1)
 				local entry = { Glass = glass, Closed = false }
+				local targetName = op.id == "GuestFront" and "GuestWindow" or (op.id == "LilyBack" and "LilyWindow" or op.id)
+				ctx.Objectives.setTarget(targetName, glass.Position)
 				table.insert(refs.OpenWindows, entry)
 				local prompt
 				prompt = ctx.Interaction.prompt(glass, {
@@ -103,7 +105,8 @@ function House.build(ctx, root: Instance)
 					entry.Closed = true
 					prompt.Enabled = false
 					TweenService:Create(glass, TweenInfo.new(0.6), { CFrame = closedCF, Size = glass.Size / Vector3.new(1, 0.55, 1) }):Play()
-					ctx.Audio.playAt("DoorClose", glass.Position, { Caption = false })
+					ctx.Audio.playAt("WindowClose", glass.Position, { Caption = false })
+					ctx.Objectives.step("Windows", op.id)
 					local all = true
 					for _, w in refs.OpenWindows do
 						if not w.Closed then
@@ -362,6 +365,7 @@ function House.build(ctx, root: Instance)
 		end)
 	end
 
+	ctx.Objectives.setTarget("Hatch", handle.Position)
 	hatch.Prompt = ctx.Interaction.prompt(handle, {
 		Action = "Pull",
 		Object = "Attic hatch",
@@ -371,7 +375,7 @@ function House.build(ctx, root: Instance)
 		local act = ctx.Director.getAct()
 		if act == "SomeoneElse" or act == "Guest" then
 			hatch.open()
-			ctx.Objectives.complete("Attic")
+			ctx.Objectives.step("Attic", "Hatch")
 		else
 			ctx.Audio.caption("It won't budge. Like something's holding it shut from above.", nil, nil, { player })
 			ctx.Audio.playAt("HatchCreak", Vector3.new(hx, 28, hz), { Caption = false })

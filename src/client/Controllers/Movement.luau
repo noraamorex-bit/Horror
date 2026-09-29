@@ -53,7 +53,45 @@ function Movement.init(c)
 	ctx.Movement = Movement
 end
 
+local beamPart: Part
+local localBeam: SpotLight
+local localGlow: PointLight
+
+local function buildLocalFlashlight()
+	beamPart = Instance.new("Part")
+	beamPart.Name = "LocalFlashlight"
+	beamPart.Anchored = true
+	beamPart.CanCollide = false
+	beamPart.CanQuery = false
+	beamPart.CanTouch = false
+	beamPart.Transparency = 1
+	beamPart.Size = Vector3.new(0.2, 0.2, 0.2)
+	beamPart.Parent = workspace
+	localBeam = Instance.new("SpotLight")
+	localBeam.Face = Enum.NormalId.Front
+	localBeam.Range = 60
+	localBeam.Angle = 55
+	localBeam.Brightness = 3.2
+	localBeam.Color = Color3.fromRGB(255, 244, 222)
+	localBeam.Shadows = true
+	localBeam.Enabled = false
+	localBeam.Parent = beamPart
+	-- a little spill so the edges of the beam aren't pitch black
+	localGlow = Instance.new("PointLight")
+	localGlow.Range = 9
+	localGlow.Brightness = 0.35
+	localGlow.Color = Color3.fromRGB(255, 244, 222)
+	localGlow.Enabled = false
+	localGlow.Parent = beamPart
+end
+
 function Movement.start()
+	buildLocalFlashlight()
+	player:GetAttributeChangedSignal("FlashlightOn"):Connect(function()
+		if ctx.Effects then
+			ctx.Effects.playSound("FlashlightClick")
+		end
+	end)
 	ctx.Input.on("Sprint", function(began)
 		sprintHeld = began
 		if began then
@@ -118,12 +156,23 @@ function Movement.start()
 			cam.FieldOfView += (fov - cam.FieldOfView) * math.min(1, dt * 6)
 		end
 
-		-- flashlight follows the camera's pitch
+		-- your own flashlight: a local light that follows the camera exactly
+		local on = player:GetAttribute("FlashlightOn") == true
+		localBeam.Enabled = on
+		localGlow.Enabled = on
+		if on then
+			beamPart.CFrame = cam.CFrame * CFrame.new(0.7, -0.6, -0.4)
+		end
+		-- the server's copy (so others see your beam) stays off for you, and aims with your pitch
 		local head = char:FindFirstChild("Head")
 		local mount = head and head:FindFirstChild("FlashlightMount") :: Attachment?
 		if mount then
 			local look = cam.CFrame.LookVector
 			mount.Orientation = Vector3.new(math.deg(math.asin(math.clamp(look.Y, -1, 1))), 0, 0)
+			local serverLight = mount:FindFirstChildOfClass("SpotLight")
+			if serverLight then
+				serverLight.Enabled = false
+			end
 		end
 	end)
 end

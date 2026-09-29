@@ -35,6 +35,9 @@ function Documents.open(docId: string)
 		extra.Visible = false
 	end
 	panel.Visible = true
+	if ctx.Effects then
+		ctx.Effects.playSound("Paper", nil, { Caption = false })
+	end
 	local root = ctx.Util.getRoot(player)
 	openedAt = root and root.Position or nil
 end

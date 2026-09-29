@@ -90,7 +90,13 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 
 ### Act I — "Friday Night" (6–10 min)
 *Social and cozy, with something slightly off.*
-- Objectives: **order pizza** (kitchen landline), **make popcorn** (microwave), **pick a movie** (TV), **light the fire**, **close the upstairs windows** (a storm is coming).
+- Objectives, each a few steps (`Story.Tasks`):
+  - **Order pizza:** find the menu on the fridge → call Tony's on the kitchen phone.
+  - **Make popcorn:** take a bag from the kitchen cupboard → microwave it → put the bowl on the living-room coffee table.
+  - **Pick a movie:** find the remote in the couch cushions → turn on the TV.
+  - **Light the fire:** firewood from the garage woodpile → stack it in the fireplace → matches from the drawer by the stove → light it.
+  - **Close the upstairs windows:** guest room, Lily's room (a storm is coming).
+- The top-right **OBJECTIVE** panel shows the current task and step; a bobbing **"!"** marks where each step happens (yellow and large for the current task), with the distance. The journal lists every step.
 - Clues planted: the unlocked back door, the warm mug, Mom's note on the fridge ("don't use the garage keypad, it's acting up"), the attic hatch that is "stuck".
 - Phone texts from Mom and Dad over Wi-Fi.
 - The act ends when the objectives are done or time runs out. **Tony's Pizza calls back: the creek road has flooded and the driver can't get through.** The house is cut off.
@@ -296,7 +302,7 @@ src/
 - Light fixtures use `Shadows` selectively. Parts are anchored with minimal collision geometry.
 
 ### Audio
-`Shared/Sounds.luau` holds the library. Assets that need uploading or picking from the Creator Store are marked `Id = ""`. The game falls back to built-in engine sounds where one fits, and **always shows a caption** (`[Footsteps above you]`). That keeps the game playable and accessible before any audio is imported.
+`Shared/Sounds.luau` holds the library. Almost every sound uses a Roblox-licensed **ProSoundEffects** asset (usable in any experience); the few still marked `Id = ""` (clock tick, popcorn, dog, heartbeat) are captions-only until chosen. The game falls back to built-in engine sounds where one fits, and **always shows a caption** (`[Footsteps above you]`). That keeps the game playable and accessible before any audio is imported.
 
 ---
 

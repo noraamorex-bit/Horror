@@ -20,7 +20,7 @@ local journalList: Frame
 local journalOpen = false
 local objectives = {}
 
-local ITEM_ORDER = { "Flashlight", "PepperSpray", "Walkie", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors" }
+local ITEM_ORDER = { "Flashlight", "PepperSpray", "Walkie", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors", "Remote", "PopcornBag", "PopcornBowl", "Firewood", "Matches" }
 local ITEM_NAMES = {
 	Flashlight = "Flashlight",
 	Walkie = "Walkie-talkie",
@@ -32,6 +32,11 @@ local ITEM_NAMES = {
 	Poker = "Fire poker",
 	Multitool = "Multitool",
 	Scissors = "Scissors",
+	Remote = "TV remote",
+	PopcornBag = "Bag of popcorn",
+	PopcornBowl = "Bowl of popcorn",
+	Firewood = "Firewood",
+	Matches = "Matches",
 }
 
 local ACT_NAMES = {
@@ -92,6 +97,9 @@ end
 local KIND_COLOR = {}
 
 function HUD.notify(text: string, kind: string?)
+	if kind == "done" and ctx.Effects then
+		ctx.Effects.playSound("ObjectiveDone", nil, { Caption = false })
+	end
 	local color = KIND_COLOR[kind or "info"] or UI.Color.Text
 	local frame = UI.new("Frame", {
 		Size = UDim2.new(1, 0, 0, 0),
@@ -177,26 +185,80 @@ end
 ---------------------------------------------------------------------------
 -- Journal (objectives)
 ---------------------------------------------------------------------------
+local objPanel: Frame
+local objTitle: TextLabel
+local objStep: TextLabel
+local objProgress: TextLabel
+local lastFocus = { Id = nil, Done = -1 }
+
+-- the task the group should do next: the first unfinished required one, else any unfinished one
+local function focusObjective()
+	for _, o in objectives do
+		if not o.Done and not o.Optional then
+			return o
+		end
+	end
+	for _, o in objectives do
+		if not o.Done then
+			return o
+		end
+	end
+	return nil
+end
+HUD.focusObjective = focusObjective
+
+local function renderObjectivePanel()
+	local o = focusObjective()
+	if not o then
+		objPanel.Visible = false
+		return
+	end
+	objPanel.Visible = true
+	objTitle.Text = o.Text
+	objStep.Text = o.Current and ("›  " .. o.Current) or ""
+	local total = #(o.Steps or {})
+	objProgress.Text = total > 1 and string.format("Step %d of %d", math.min((o.StepsDone or 0) + 1, total), total) or ""
+	-- a step just got done: a little flash
+	if lastFocus.Id == o.Id and (o.StepsDone or 0) > lastFocus.Done then
+		objPanel.BackgroundColor3 = Color3.fromRGB(70, 110, 70)
+		UI.tween(objPanel, 0.8, { BackgroundColor3 = UI.Color.Panel })
+		if ctx.Effects then
+			ctx.Effects.playSound("ObjectiveDone", nil, { Caption = false, Volume = 0.2 })
+		end
+	end
+	lastFocus = { Id = o.Id, Done = o.StepsDone or 0 }
+end
+
 local function renderJournal()
 	for _, c in journalList:GetChildren() do
 		if c:IsA("TextLabel") then
 			c:Destroy()
 		end
 	end
-	for i, o in objectives do
-		local mark = o.Done and "<font color=\"#78c878\">✓</font> " or (o.Optional and "◦ " or "• ")
-		local text = o.Done and ("<s>" .. o.Text .. "</s>") or o.Text
+	local order = 0
+	local function line(text: string, size: number, color: Color3)
+		order += 1
 		UI.label({
 			Size = UDim2.new(1, 0, 0, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
-			Text = mark .. text,
-			TextSize = 16,
+			Text = text,
+			TextSize = size,
 			TextXAlignment = Enum.TextXAlignment.Left,
-			TextColor3 = o.Done and UI.Color.Dim or (o.Optional and Color3.fromRGB(200, 196, 186) or UI.Color.Text),
-			LayoutOrder = i,
+			TextColor3 = color,
+			LayoutOrder = order,
 			Parent = journalList,
 		})
 	end
+	for _, o in objectives do
+		local mark = o.Done and "<font color=\"#78c878\">✓</font> " or (o.Optional and "◦ " or "• ")
+		line(mark .. (o.Done and ("<s>" .. o.Text .. "</s>") or ("<b>" .. o.Text .. "</b>")), 18, o.Done and UI.Color.Dim or UI.Color.Text)
+		if not o.Done then
+			for _, st in o.Steps or {} do
+				line("      " .. (st.Done and "<font color=\"#78c878\">✓</font> <s>" .. st.Text .. "</s>" or "–  " .. st.Text), 15, st.Done and UI.Color.Dim or Color3.fromRGB(205, 200, 190))
+			end
+		end
+	end
+	renderObjectivePanel()
 end
 
 function HUD.setJournal(open: boolean)
@@ -290,10 +352,30 @@ local function build()
 	chapterTitle = UI.label({ Size = UDim2.new(1, 0, 0, 64), Text = "", Font = UI.Font.Title, TextSize = 54, TextTransparency = 1, TextStrokeTransparency = 0.7, Parent = chapterFrame })
 	chapterSub = UI.label({ Position = UDim2.fromOffset(0, 66), Size = UDim2.new(1, 0, 0, 28), Text = "", TextSize = 20, TextColor3 = UI.Color.Dim, TextTransparency = 1, Parent = chapterFrame })
 
-	-- journal (right)
+	-- objective panel (top right; below the touch JOURNAL/PHONE buttons on phones)
+	local topY = inset.Y + (UI.isTouch() and 54 or 10)
+	objPanel = UI.new("Frame", {
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -18, 0, topY),
+		Size = UDim2.fromOffset(360, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = UI.Color.Panel,
+		BackgroundTransparency = 0.3,
+		Visible = false,
+		Parent = root,
+	})
+	UI.corner(objPanel, 10)
+	UI.padding(objPanel, 12)
+	UI.new("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = objPanel })
+	UI.label({ Size = UDim2.new(1, 0, 0, 18), Text = "OBJECTIVE", Font = UI.Font.Bold, TextSize = 15, TextColor3 = UI.Color.Accent, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 1, Parent = objPanel })
+	objTitle = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = "", Font = UI.Font.Bold, TextSize = 22, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, Parent = objPanel })
+	objStep = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = "", TextSize = 18, TextColor3 = Color3.fromRGB(215, 210, 200), TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 3, Parent = objPanel })
+	objProgress = UI.label({ Size = UDim2.new(1, 0, 0, 16), Text = "", TextSize = 13, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 4, Parent = objPanel })
+
+	-- journal (right, under the objective panel)
 	journal = UI.new("Frame", {
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -18, 0, inset.Y + 64),
+		Position = UDim2.new(1, -18, 0, topY + 140),
 		Size = UDim2.fromOffset(330, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = UI.Color.Panel,

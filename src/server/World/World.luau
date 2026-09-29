@@ -5,6 +5,7 @@
 
 local House = require(script.Parent.House)
 local Interior = require(script.Parent.Interior)
+local Finish = require(script.Parent.Finish)
 local Exterior = require(script.Parent.Exterior)
 
 local World = {}
@@ -23,8 +24,13 @@ function World.build()
 	f.Parent = workspace
 	folder = f
 	refs = House.build(ctx, f)
+	Finish.build(ctx, f)
 	Interior.build(ctx, f, refs)
 	Exterior.build(ctx, f, refs)
+	-- objective markers for doors
+	for _, door in ctx.Doors.all() do
+		ctx.Objectives.setTarget("Door_" .. door.Id, door.Position)
+	end
 	return refs
 end
 

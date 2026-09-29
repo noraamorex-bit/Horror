@@ -78,6 +78,7 @@ function Escape.callForHelp(method: string, player: Player?)
 	workspace:SetAttribute("HelpMethod", method)
 
 	ctx.Objectives.complete("Call911")
+	ctx.Objectives.complete("Phone")
 	ctx.Objectives.complete("Neighbor")
 	ctx.Objectives.complete("Car")
 	ctx.Objectives.add("Survive")
@@ -273,6 +274,10 @@ function Escape.useLandline(player: Player)
 	end
 	local act = ctx.Director.getAct()
 	if act == "Evening" and not ctx.Objectives.isDone("OrderPizza") then
+		if not ctx.Objectives.isStepDone("OrderPizza", "Menu") then
+			ctx.Director.think(player, "I don't know Tony's number by heart. Mom keeps the menu on the fridge.")
+			return
+		end
 		ctx.Audio.playAt("DialTone", pos, { Caption = false })
 		ctx.Objectives.complete("OrderPizza")
 		Escape.refreshLandline()
@@ -280,6 +285,7 @@ function Escape.useLandline(player: Player)
 		return
 	end
 	if state.LineCut and not state.LineRepaired then
+		ctx.Objectives.step("Phone", "Landline")
 		say(ctx.Story.Calls.Dead, pos, 12, { player })
 		if act ~= "Evening" and act ~= "SmallThings" then
 			ctx.Director.logTruth("LineCut")
@@ -318,6 +324,7 @@ function Escape.setupJunctionBox(model: Model, door: BasePart, openCF: CFrame, w
 	ctx.Interaction.document(door, "JunctionBox", { Action = "Inspect", Object = "Phone junction box" }, function(player, first)
 		if state.LineCut then
 			ctx.Director.logTruth("LineCut")
+			ctx.Objectives.step("Phone", "Box")
 		end
 	end)
 	local prompt
@@ -341,7 +348,7 @@ function Escape.setupJunctionBox(model: Model, door: BasePart, openCF: CFrame, w
 		wire.Transparency = 0
 		cutWire.Transparency = 1
 		Escape.refreshLandline()
-		ctx.Objectives.complete("Phone")
+		ctx.Objectives.step("Phone", "Splice")
 		ctx.Audio.caption("You twist the copper together and wrap it tight. The landline should work now.", nil, nil, { player })
 		ctx.Remotes.Notify:FireAllClients("The phone line is spliced. Use the kitchen phone!", "objective")
 	end)
@@ -358,6 +365,7 @@ function Escape.setupBreaker(panel: BasePart, lever: BasePart, onCF: CFrame, off
 	ctx.Interaction.document(panel, "Breaker", { Action = "Inspect", Object = "Breaker panel", Offset = Vector3.new(0, -1, 0) }, function(player, first)
 		if not ctx.Power.isOn() then
 			ctx.Director.logTruth("PowerOut")
+			ctx.Objectives.step("Power", "Panel")
 		end
 	end)
 	ctx.Interaction.prompt(lever, {
@@ -402,6 +410,9 @@ function Escape.setupGarageDoor(door: BasePart, button: BasePart, cord: BasePart
 	end
 	local function setOpen(open: boolean, time: number)
 		state.GarageOpen = open
+		if open then
+			ctx.Objectives.step("Car", "Garage")
+		end
 		for _, p in pieces do
 			local target = open and (closedOf[p] + Vector3.new(0, 9.2, 0)) or closedOf[p]
 			TweenService:Create(p, TweenInfo.new(time, Enum.EasingStyle.Linear), { CFrame = target }):Play()
