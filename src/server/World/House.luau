@@ -194,6 +194,43 @@ function House.build(ctx, root: Instance)
 		end
 	end
 
+	-- exterior trim: shutters beside every window, corner boards, floor band and frieze
+	local TRIM = C.Trim
+	local SHUTTER = Color3.fromRGB(38, 56, 48)
+	for _, spec in L.ExteriorWalls do
+		if spec.concrete or spec.garage then
+			continue
+		end
+		local alongX = spec.z1 == spec.z2
+		local fixed = alongX and spec.z1 or spec.x1
+		local outSign = spec.out == "+" and 1 or -1
+		local face = fixed + outSign * 0.5
+		local y0 = L.Y[spec.floor]
+		for _, op in spec.openings do
+			if op.kind == "window" and op.w >= 5 then
+				for sgn = -1, 1, 2 do
+					local along = op.at + sgn * (op.w / 2 + 1.2)
+					local yb, yt = y0 + (op.bottom or 0), y0 + (op.bottom or 0) + op.h
+					if alongX then
+						B.box(shell, "Shutter", Vector3.new(along - 0.9, yb, face), Vector3.new(along + 0.9, yt, face + outSign * 0.25), SHUTTER, M.Wood, { CanCollide = false })
+					else
+						B.box(shell, "Shutter", Vector3.new(face, yb, along - 0.9), Vector3.new(face + outSign * 0.25, yt, along + 0.9), SHUTTER, M.Wood, { CanCollide = false })
+					end
+				end
+			end
+		end
+	end
+	for _, c in { { -40, -30 }, { 40, -30 }, { -40, 30 }, { 40, 30 }, { 66, -30 }, { 66, 6 } } do
+		local top = c[1] == 66 and 15 or 28.5
+		B.box(shell, "CornerBoard", Vector3.new(c[1] - 0.8, 0, c[2] - 0.8), Vector3.new(c[1] + 0.8, top, c[2] + 0.8), TRIM, M.Wood)
+	end
+	for _, y in { 14.4 } do
+		B.box(shell, "Band", Vector3.new(-40.7, y, -30.8), Vector3.new(40.7, y + 0.7, -30.5), TRIM, M.Wood, { CanCollide = false })
+		B.box(shell, "Band", Vector3.new(-40.7, y, 30.5), Vector3.new(40.7, y + 0.7, 30.8), TRIM, M.Wood, { CanCollide = false })
+	end
+	B.box(shell, "Frieze", Vector3.new(-40.8, 27.6, -30.9), Vector3.new(40.8, 28.6, -30.4), TRIM, M.Wood, { CanCollide = false })
+	B.box(shell, "Frieze", Vector3.new(-40.8, 27.6, 30.4), Vector3.new(40.8, 28.6, 30.9), TRIM, M.Wood, { CanCollide = false })
+
 	-- baseboards along the main hallways for a finished look
 	for _, y in { L.Y.Ground, L.Y.Upstairs } do
 		B.box(shell, "Baseboard", Vector3.new(-7.7, y, -30), Vector3.new(-7.5, y + 0.6, 30), C.Trim, M.Wood, { CanCollide = false })

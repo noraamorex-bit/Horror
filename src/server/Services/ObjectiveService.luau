@@ -44,11 +44,30 @@ function Objectives.complete(id: string): boolean
 		if o.Id == id and not o.Done then
 			o.Done = true
 			broadcast()
+			if ctx.Director and ctx.Director.onObjectiveDone then
+				ctx.Director.onObjectiveDone()
+			end
 			ctx.Remotes.Notify:FireAllClients("Done: " .. o.Text, "done")
 			return true
 		end
 	end
 	return false
+end
+
+-- ids still to do: required ones first, then optional
+function Objectives.pending(): { string }
+	local out = {}
+	for _, o in list do
+		if not o.Done and not o.Optional then
+			table.insert(out, o.Id)
+		end
+	end
+	for _, o in list do
+		if not o.Done and o.Optional then
+			table.insert(out, o.Id)
+		end
+	end
+	return out
 end
 
 function Objectives.isDone(id: string): boolean

@@ -22,6 +22,7 @@ local NAMES = {
 	"Lobby", -- (state)
 	"Figure", -- (cframe, duration) a figure only this player sees
 	"Queue", -- (state | nil) lobby: your queue circle
+	"Thought", -- (text, hintKey?) your character thinking out loud
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})

@@ -27,10 +27,10 @@ end
 ctx.Mode = mode
 
 local ORDER = if mode == "Lobby"
-	then { "UI", "Input", "Effects", "Atmosphere", "LobbyHub" }
+	then { "UI", "Input", "Notice", "Effects", "Atmosphere", "LobbyHub" }
 	else {
-		"UI", "Input", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents",
-		"Phone", "HidingCam", "Lobby", "Ending", "MobileControls",
+		"UI", "Input", "Notice", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD",
+		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls",
 	}
 
 local modules = {}

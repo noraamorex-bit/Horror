@@ -1,8 +1,8 @@
 --[[
 	LobbyServer — the lobby that players land in.
 
-	A rainy dead end at the bottom of Alder Lane, with the Whitaker house dark on the hill. Four
-	glowing circles queue groups of 1, 2, 3 and 4. When a circle is full it counts down, reserves
+	Alder Lane on a rainy night: the Whitaker house with its porch light on, the neighbors, the
+	street and the gray van. Four white circles on the front patio queue groups of 1, 2, 3 and 4. When a circle is full it counts down, reserves
 	a private game server and teleports the group there together.
 ]]
 
@@ -15,12 +15,6 @@ local LobbyServer = {}
 local V = Vector3.new
 local ORIGIN = V(0, 0, 400) -- far from the house coordinates, so nothing mistakes it for a room
 local PAD_RADIUS = 5.5
-local PAD_COLORS = {
-	Color3.fromRGB(235, 190, 90),
-	Color3.fromRGB(110, 200, 190),
-	Color3.fromRGB(235, 130, 70),
-	Color3.fromRGB(215, 70, 60),
-}
 
 local ctx
 local pads = {}
@@ -31,115 +25,345 @@ local spawnCF: CFrame
 ---------------------------------------------------------------------------
 -- The place
 ---------------------------------------------------------------------------
+local TRIM = Color3.fromRGB(236, 233, 226)
+
+-- A two-storey colonial. Front wall at z = frontZ (faces +Z), centered on cx.
+-- opts: Width, Depth, Siding, Shutter, Door, Lit = { [windowIndex] = true }, Garage, Porch, Detail
+local function buildHouse(parent: Instance, cx: number, frontZ: number, opts)
+	local B = ctx.Builder
+	local M = B.M
+	local model = Instance.new("Model")
+	model.Name = opts.Name or "House"
+	model.Parent = parent
+	local W, D = opts.Width or 52, opts.Depth or 24
+	local x0, x1 = cx - W / 2, cx + W / 2
+	local zb, zf = frontZ - D, frontZ
+	local base, f1, f2 = 1.5, 13.5, 25.5
+	local siding = opts.Siding or Color3.fromRGB(150, 162, 172)
+	local function box(name, a: Vector3, b: Vector3, color, mat, extra)
+		return B.box(model, name, ORIGIN + a, ORIGIN + b, color, mat, extra)
+	end
+	local DECOR = { CanCollide = false, CanQuery = false }
+
+	-- foundation, walls, lap-siding lines, corner boards and bands
+	box("Foundation", V(x0 - 0.3, 0, zb - 0.3), V(x1 + 0.3, base, zf + 0.3), Color3.fromRGB(120, 72, 60), Enum.Material.Brick)
+	box("Walls", V(x0, base, zb), V(x1, f2, zf), siding, M.Siding)
+	if opts.Detail then
+		for y = base + 1.2, f2 - 0.6, 1.2 do
+			box("Lap", V(x0, y, zf), V(x1, y + 0.12, zf + 0.08), siding:Lerp(Color3.new(), 0.18), M.Plastic, DECOR)
+		end
+	end
+	for _, x in { x0 - 0.2, x1 - 0.8 } do
+		box("CornerBoard", V(x, base, zf - 0.4), V(x + 1, f2, zf + 0.25), TRIM, M.Wood, DECOR)
+	end
+	box("Band", V(x0 - 0.2, f1 - 0.3, zf), V(x1 + 0.2, f1 + 0.4, zf + 0.25), TRIM, M.Wood, DECOR)
+	box("Frieze", V(x0 - 0.2, f2 - 0.8, zb - 0.2), V(x1 + 0.2, f2, zf + 0.3), TRIM, M.Wood, DECOR)
+
+	-- roof: a gable along X with overhangs, fascia boards and gable ends
+	local rise, run = 10, D / 2 + 1.5
+	local slope = math.sqrt(rise * rise + run * run)
+	local angle = math.atan2(rise, run)
+	local midZ = (zb + zf) / 2
+	local roofColor = opts.Roof or Color3.fromRGB(52, 50, 52)
+	for sgn = -1, 1, 2 do
+		B.part(model, {
+			Name = "Roof",
+			Size = V(W + 3, 0.8, slope),
+			CFrame = CFrame.new(ORIGIN + V(cx, f2 + rise / 2 + 0.3, midZ + sgn * run / 2)) * CFrame.Angles(sgn * angle, 0, 0),
+			Color = roofColor,
+			Material = M.Roof,
+		})
+		box("Fascia", V(x0 - 1.5, f2 - 0.2, midZ + sgn * (run + 0.1) - 0.3), V(x1 + 1.5, f2 + 0.6, midZ + sgn * (run + 0.1) + 0.3), TRIM, M.Wood, DECOR)
+	end
+	box("Ridge", V(x0 - 1.5, f2 + rise + 0.3, midZ - 0.6), V(x1 + 1.5, f2 + rise + 1, midZ + 0.6), roofColor, M.Roof)
+	for _, x in { x0 + 0.3, x1 - 0.3 } do
+		B.part(model, { ClassName = "WedgePart", Name = "Gable", Size = V(0.6, rise, D / 2), CFrame = CFrame.new(ORIGIN + V(x, f2 + rise / 2, midZ + D / 4)), Color = siding, Material = M.Siding })
+		B.part(model, { ClassName = "WedgePart", Name = "Gable", Size = V(0.6, rise, D / 2), CFrame = CFrame.new(ORIGIN + V(x, f2 + rise / 2, midZ - D / 4)) * CFrame.Angles(0, math.pi, 0), Color = siding, Material = M.Siding })
+	end
+	-- chimney
+	local chx = x0 + 6
+	box("Chimney", V(chx - 2, f2, midZ - 4), V(chx + 2, f2 + rise + 5, midZ), Color3.fromRGB(125, 70, 58), Enum.Material.Brick)
+	box("ChimneyCap", V(chx - 2.4, f2 + rise + 5, midZ - 4.4), V(chx + 2.4, f2 + rise + 5.6, midZ + 0.4), Color3.fromRGB(90, 88, 86), M.Concrete)
+
+	-- windows with frames, muntins, sills, shutters; some glow warm
+	local shutter = opts.Shutter or Color3.fromRGB(38, 56, 48)
+	local wz = zf
+	local function window(i: number, x: number, sill: number, w: number, h: number)
+		local lit = opts.Lit and opts.Lit[i]
+		local glass = box("Glass", V(x - w / 2, sill, wz - 0.1), V(x + w / 2, sill + h, wz + 0.05),
+			lit and Color3.fromRGB(205, 150, 88) or Color3.fromRGB(24, 28, 36),
+			lit and Enum.Material.Neon or M.Glass, lit and DECOR or { Reflectance = 0.25 })
+		if lit then
+			local l = Instance.new("PointLight")
+			l.Range = 10
+			l.Brightness = 0.9
+			l.Color = Color3.fromRGB(255, 185, 120)
+			l.Parent = glass
+			-- a curtain drawn half across
+			box("Curtain", V(x - w / 2, sill, wz + 0.06), V(x - w / 2 + w * 0.3, sill + h, wz + 0.1), Color3.fromRGB(170, 110, 80), M.Fabric, DECOR)
+		end
+		local t = 0.35
+		box("Frame", V(x - w / 2 - t, sill + h, wz), V(x + w / 2 + t, sill + h + t, wz + 0.35), TRIM, M.Wood, DECOR)
+		box("Frame", V(x - w / 2 - t, sill - t, wz), V(x + w / 2 + t, sill, wz + 0.35), TRIM, M.Wood, DECOR)
+		box("Frame", V(x - w / 2 - t, sill, wz), V(x - w / 2, sill + h, wz + 0.35), TRIM, M.Wood, DECOR)
+		box("Frame", V(x + w / 2, sill, wz), V(x + w / 2 + t, sill + h, wz + 0.35), TRIM, M.Wood, DECOR)
+		box("Muntin", V(x - 0.08, sill, wz), V(x + 0.08, sill + h, wz + 0.2), TRIM, M.Wood, DECOR)
+		box("Muntin", V(x - w / 2, sill + h / 2 - 0.08, wz), V(x + w / 2, sill + h / 2 + 0.08, wz + 0.2), TRIM, M.Wood, DECOR)
+		box("Sill", V(x - w / 2 - 0.7, sill - t - 0.25, wz), V(x + w / 2 + 0.7, sill - t, wz + 0.7), TRIM, M.Wood, DECOR)
+		box("Head", V(x - w / 2 - 0.7, sill + h + t, wz), V(x + w / 2 + 0.7, sill + h + t + 0.45, wz + 0.55), TRIM, M.Wood, DECOR)
+		for sgn = -1, 1, 2 do
+			local sx = x + sgn * (w / 2 + t + 1.05)
+			box("Shutter", V(sx - 0.9, sill - 0.1, wz), V(sx + 0.9, sill + h + 0.1, wz + 0.25), shutter, M.Wood, DECOR)
+			for k = 1, 3 do
+				box("Louver", V(sx - 0.7, sill + k * h / 4 - 0.06, wz + 0.25), V(sx + 0.7, sill + k * h / 4 + 0.06, wz + 0.32), shutter:Lerp(Color3.new(), 0.3), M.Wood, DECOR)
+			end
+		end
+	end
+	local i = 0
+	for _, x in opts.GroundWindows or { cx - 19, cx - 11, cx + 11, cx + 19 } do
+		i += 1
+		window(i, x, base + 3, 4.2, 6.5)
+	end
+	for _, x in opts.UpperWindows or { cx - 19, cx - 11, cx, cx + 11, cx + 19 } do
+		i += 1
+		window(i, x, f1 + 2.5, 4.2, 6.5)
+	end
+
+	-- front door with sidelights and a glowing transom
+	box("DoorCasing", V(cx - 3.6, base, wz), V(cx + 3.6, base + 10.2, wz + 0.4), TRIM, M.Wood, DECOR)
+	box("Door", V(cx - 2.1, base, wz + 0.2), V(cx + 2.1, base + 8.4, wz + 0.5), opts.Door or Color3.fromRGB(125, 32, 30), M.Wood)
+	for _, dy in { 2.2, 5.6 } do
+		box("DoorPanel", V(cx - 1.6, base + dy - 1.2, wz + 0.5), V(cx + 1.6, base + dy + 1.2, wz + 0.58), (opts.Door or Color3.fromRGB(125, 32, 30)):Lerp(Color3.new(), 0.2), M.Wood, DECOR)
+	end
+	box("Knob", V(cx + 1.3, base + 4, wz + 0.5), V(cx + 1.7, base + 4.4, wz + 0.8), Color3.fromRGB(200, 170, 100), M.Metal, DECOR)
+	box("Transom", V(cx - 2.1, base + 8.6, wz + 0.2), V(cx + 2.1, base + 9.9, wz + 0.45), Color3.fromRGB(215, 160, 95), Enum.Material.Neon, DECOR)
+	for sgn = -1, 1, 2 do
+		box("Sidelight", V(cx + sgn * 2.4 - 0.5, base + 1, wz + 0.2), V(cx + sgn * 2.4 + 0.5, base + 8, wz + 0.45), Color3.fromRGB(190, 140, 85), Enum.Material.Neon, DECOR)
+	end
+
+	-- porch: deck, steps, columns, railing, roof and a warm light
+	if opts.Porch ~= false then
+		local px0, px1 = cx - 10, cx + 10
+		local pz = zf + 7
+		box("PorchDeck", V(px0, 0, zf), V(px1, base, pz), Color3.fromRGB(128, 122, 116), M.Wood)
+		for k = 1, 3 do
+			box("Step", V(cx - 4, 0, pz + (k - 1) * 1.1), V(cx + 4, base - (k - 1) * 0.5, pz + k * 1.1), Color3.fromRGB(128, 122, 116), M.Wood)
+		end
+		for _, x in { px0 + 0.8, cx - 4.4, cx + 4.4, px1 - 0.8 } do
+			B.cylinder(model, "Column", ORIGIN + V(x, base + 5.4, pz - 0.8), 10.8, 1.1, TRIM, M.Wood)
+			box("ColumnBase", V(x - 0.8, base, pz - 1.6), V(x + 0.8, base + 0.6, pz), TRIM, M.Wood, DECOR)
+		end
+		box("PorchBeam", V(px0 - 0.3, base + 10.8, pz - 1.6), V(px1 + 0.3, base + 11.8, pz), TRIM, M.Wood)
+		box("PorchRoof", V(px0 - 0.8, base + 11.8, zf), V(px1 + 0.8, base + 12.5, pz + 0.8), opts.Roof or Color3.fromRGB(52, 50, 52), M.Roof)
+		for _, span in { { px0 + 0.8, cx - 4.4 }, { cx + 4.4, px1 - 0.8 } } do
+			box("Rail", V(span[1], base + 3, pz - 1), V(span[2], base + 3.35, pz - 0.6), TRIM, M.Wood)
+			for x = span[1] + 0.8, span[2] - 0.5, 0.9 do
+				box("Baluster", V(x - 0.1, base, pz - 0.9), V(x + 0.1, base + 3, pz - 0.7), TRIM, M.Wood, DECOR)
+			end
+		end
+		local lamp = box("PorchLight", V(cx + 4.2, base + 6.4, zf + 0.3), V(cx + 4.9, base + 7.6, zf + 0.9), Color3.fromRGB(255, 205, 140), Enum.Material.Neon, DECOR)
+		local pl = Instance.new("PointLight")
+		pl.Range = 20
+		pl.Brightness = 1.3
+		pl.Color = Color3.fromRGB(255, 190, 120)
+		pl.Shadows = true
+		pl.Parent = lamp
+	end
+
+	-- attached garage
+	if opts.Garage then
+		local g0, g1 = x1, x1 + 20
+		local gz0 = zf - 20
+		box("GarageWalls", V(g0, base, gz0), V(g1, f1, zf), siding, M.Siding)
+		box("GarageFrieze", V(g0, f1 - 0.6, gz0), V(g1 + 0.2, f1, zf + 0.3), TRIM, M.Wood, DECOR)
+		B.part(model, { ClassName = "WedgePart", Name = "GarageRoof", Size = V(21.5, 6, 21.5), CFrame = CFrame.new(ORIGIN + V((g0 + g1) / 2, f1 + 3, (gz0 + zf) / 2)), Color = opts.Roof or Color3.fromRGB(52, 50, 52), Material = M.Roof })
+		box("GarageDoor", V(g0 + 2.5, base, zf), V(g1 - 2.5, base + 9, zf + 0.3), TRIM, M.Metal)
+		for r = 1, 3 do
+			box("GarageSeam", V(g0 + 2.5, base + r * 2.25, zf + 0.3), V(g1 - 2.5, base + r * 2.25 + 0.12, zf + 0.36), Color3.fromRGB(190, 188, 182), M.Metal, DECOR)
+		end
+		box("GarageWindows", V(g0 + 4, base + 6.8, zf + 0.3), V(g1 - 4, base + 8, zf + 0.34), Color3.fromRGB(30, 34, 40), M.Glass, DECOR)
+		for _, x in { g0 + 1.4, g1 - 1.4 } do
+			local cl = box("CoachLight", V(x - 0.35, base + 6, zf + 0.3), V(x + 0.35, base + 7.2, zf + 0.9), Color3.fromRGB(255, 205, 140), Enum.Material.Neon, DECOR)
+			local l = Instance.new("PointLight")
+			l.Range = 12
+			l.Brightness = 0.8
+			l.Color = Color3.fromRGB(255, 190, 120)
+			l.Parent = cl
+		end
+	end
+	return model
+end
+
+local function lampPost(root: Instance, pos: Vector3)
+	local B = ctx.Builder
+	B.cylinder(root, "LampPost", ORIGIN + pos + V(0, 7, 0), 14, 0.5, Color3.fromRGB(28, 28, 30), B.M.Metal)
+	B.box(root, "LampBase", ORIGIN + pos + V(-0.6, 0, -0.6), ORIGIN + pos + V(0.6, 1.2, 0.6), Color3.fromRGB(28, 28, 30), B.M.Metal)
+	local head = B.box(root, "LampHead", ORIGIN + pos + V(-0.8, 14, -0.8), ORIGIN + pos + V(0.8, 15.8, 0.8), Color3.fromRGB(255, 214, 150), Enum.Material.Neon, { CanCollide = false })
+	B.box(root, "LampCap", ORIGIN + pos + V(-1.1, 15.8, -1.1), ORIGIN + pos + V(1.1, 16.3, 1.1), Color3.fromRGB(28, 28, 30), B.M.Metal)
+	local pl = Instance.new("PointLight")
+	pl.Range = 32
+	pl.Brightness = 1.4
+	pl.Color = Color3.fromRGB(255, 196, 130)
+	pl.Shadows = true
+	pl.Parent = head
+end
+
+-- a white outline ring on the ground (the queue circle)
+local function ring(root: Instance, center: Vector3, radius: number): { BasePart }
+	local B = ctx.Builder
+	local parts = {}
+	local n = 40
+	local chord = 2 * math.pi * radius / n + 0.08
+	for i = 0, n - 1 do
+		local a = i / n * math.pi * 2
+		local p = center + V(math.cos(a) * radius, 0, math.sin(a) * radius)
+		local t = V(-math.sin(a), 0, math.cos(a))
+		table.insert(parts, B.part(root, {
+			Name = "Ring",
+			Size = V(0.35, 0.1, chord),
+			CFrame = CFrame.lookAt(p, p + t),
+			Color = Color3.new(1, 1, 1),
+			Material = Enum.Material.Neon,
+			CanCollide = false,
+			CanQuery = false,
+			CastShadow = false,
+			Transparency = 0.3,
+		}))
+	end
+	return parts
+end
+
+local function setupLighting()
+	local Lighting = game:GetService("Lighting")
+	Lighting.ClockTime = 0.2 -- the moon high overhead
+	Lighting.Brightness = 1.2
+	Lighting.Ambient = Color3.fromRGB(34, 36, 46)
+	Lighting.OutdoorAmbient = Color3.fromRGB(72, 80, 104)
+	Lighting.EnvironmentDiffuseScale = 0.45
+	Lighting.EnvironmentSpecularScale = 0.8
+	Lighting.ExposureCompensation = 0.25
+	local atmo = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmo then
+		atmo.Density = 0.34
+		atmo.Color = Color3.fromRGB(88, 98, 120)
+		atmo.Decay = Color3.fromRGB(50, 56, 72)
+		atmo.Haze = 1.6
+	end
+end
+
 local function build(root: Folder)
 	local B = ctx.Builder
 	local C, M = B.C, B.M
 	local function box(name, a: Vector3, b: Vector3, color, mat, extra)
 		return B.box(root, name, ORIGIN + a, ORIGIN + b, color, mat, extra)
 	end
+	local GRASS = Color3.fromRGB(48, 64, 42)
+	local CONCRETE = Color3.fromRGB(128, 128, 124)
 
-	box("Ground", V(-90, -3, -90), V(90, 0.5, 90), Color3.fromRGB(52, 66, 44), Enum.Material.Grass)
-	box("Street", V(-90, 0.5, 8), V(90, 0.55, 26), Color3.fromRGB(38, 38, 42), M.Asphalt)
-	box("Sidewalk", V(-90, 0.5, 2), V(90, 0.8, 8), Color3.fromRGB(135, 135, 130), M.Concrete)
-	box("Plaza", V(-36, 0.5, -24), V(36, 0.8, 2), Color3.fromRGB(110, 108, 104), M.Concrete)
-	for x = -80, 80, 16 do
-		box("LaneMark", V(x, 0.55, 16.7), V(x + 8, 0.6, 17.3), Color3.fromRGB(200, 180, 90), M.Plastic, { CanCollide = false })
+	-- ground, sidewalks, the wet street
+	box("Ground", V(-130, -3, -130), V(130, 0.5, 130), GRASS, Enum.Material.Grass)
+	box("Sidewalk", V(-130, 0.5, 20), V(130, 0.75, 28), CONCRETE, M.Concrete)
+	box("Curb", V(-130, 0.3, 27.6), V(130, 0.85, 28.2), Color3.fromRGB(150, 150, 146), M.Concrete)
+	box("Street", V(-130, 0.3, 28.2), V(130, 0.45, 46), Color3.fromRGB(30, 31, 35), M.Asphalt, { Reflectance = 0.08 })
+	box("Curb", V(-130, 0.3, 46), V(130, 0.85, 46.6), Color3.fromRGB(150, 150, 146), M.Concrete)
+	box("SidewalkFar", V(-130, 0.5, 46.6), V(130, 0.75, 54), CONCRETE, M.Concrete)
+	for x = -120, 120, 16 do
+		box("LaneMark", V(x, 0.45, 36.8), V(x + 8, 0.5, 37.4), Color3.fromRGB(205, 185, 95), M.Plastic, { CanCollide = false })
+	end
+	for _, pd in { { -30, 31, 9, 6 }, { 12, 39, 7, 4 }, { 55, 32, 10, 5 }, { -70, 40, 8, 5 } } do
+		box("Puddle", V(pd[1], 0.45, pd[2]), V(pd[1] + pd[3], 0.47, pd[2] + pd[4]), Color3.fromRGB(40, 46, 58), M.Glass, { Reflectance = 0.45, Transparency = 0.2, CanCollide = false })
 	end
 
-	-- the Whitaker house, dark on the hill (scenery only)
-	local house = Instance.new("Model")
-	house.Name = "HouseOnTheHill"
-	house.Parent = root
-	B.box(house, "Hill", ORIGIN + V(-70, 0, -90), ORIGIN + V(70, 4, -40), Color3.fromRGB(45, 58, 40), Enum.Material.Grass)
-	B.box(house, "House", ORIGIN + V(-30, 4, -82), ORIGIN + V(30, 26, -58), C.Siding, M.Siding)
-	B.box(house, "Garage", ORIGIN + V(30, 4, -80), ORIGIN + V(46, 16, -62), Color3.fromRGB(125, 132, 136), M.Siding)
-	B.part(house, { ClassName = "WedgePart", Name = "Roof", Size = V(62, 10, 13), CFrame = CFrame.new(ORIGIN + V(0, 31, -64.5)), Color = C.Roof, Material = M.Roof })
-	B.part(house, { ClassName = "WedgePart", Name = "Roof", Size = V(62, 10, 13), CFrame = CFrame.new(ORIGIN + V(0, 31, -75.5)) * CFrame.Angles(0, math.pi, 0), Color = C.Roof, Material = M.Roof })
-	for _, w in { { -20, 8, false }, { 18, 8, false }, { -20, 18, true }, { 18, 18, false }, { 0, 18, false } } do
-		local lit = w[3]
-		local win = B.box(house, "Window", ORIGIN + V(w[1] - 3, w[2], -57.9), ORIGIN + V(w[1] + 3, w[2] + 4.5, -57.6), lit and Color3.fromRGB(255, 200, 130) or Color3.fromRGB(20, 22, 28), lit and Enum.Material.Neon or M.Glass)
-		if lit then
-			local l = Instance.new("PointLight")
-			l.Range = 14
-			l.Brightness = 0.6
-			l.Color = Color3.fromRGB(255, 190, 120)
-			l.Parent = win
+	-- front walk and the patio where the circles are
+	box("Walk", V(-3, 0.5, -30), V(3, 0.72, 20), Color3.fromRGB(140, 134, 126), M.Concrete)
+	box("Patio", V(-34, 0.5, -22), V(34, 0.7, -4), Color3.fromRGB(110, 106, 100), Enum.Material.Pebble)
+	box("PatioEdge", V(-34.4, 0.5, -22.4), V(34.4, 0.78, -21.9), Color3.fromRGB(150, 146, 140), M.Concrete)
+	box("PatioEdge", V(-34.4, 0.5, -4.1), V(34.4, 0.78, -3.6), Color3.fromRGB(150, 146, 140), M.Concrete)
+	box("Driveway", V(28, 0.5, -40), V(44, 0.7, 28), Color3.fromRGB(100, 100, 98), M.Concrete)
+
+	-- the Whitaker house and the neighbors
+	buildHouse(root, 0, -40, {
+		Name = "WhitakerHouse",
+		Detail = true,
+		Garage = true,
+		Lit = { [2] = true, [7] = true },
+	})
+	buildHouse(root, -96, -34, {
+		Name = "NeighborLeft",
+		Width = 36,
+		Siding = Color3.fromRGB(176, 160, 132),
+		Shutter = Color3.fromRGB(60, 40, 30),
+		Door = Color3.fromRGB(40, 60, 70),
+		GroundWindows = { -108, -84 },
+		UpperWindows = { -108, -96, -84 },
+		Lit = { [1] = true, [4] = true },
+	})
+	buildHouse(root, 92, -34, {
+		Name = "NeighborRight",
+		Width = 36,
+		Siding = Color3.fromRGB(120, 130, 120),
+		Shutter = Color3.fromRGB(30, 30, 34),
+		GroundWindows = { 80, 104 },
+		UpperWindows = { 80, 92, 104 },
+		Lit = { [2] = true },
+	})
+
+	-- hedges, flower beds, picket fence, mailbox, trees
+	for _, span in { { -26, -11 }, { 11, 26 } } do
+		box("Mulch", V(span[1], 0.5, -40), V(span[2], 0.62, -36), Color3.fromRGB(60, 40, 30), M.Fabric)
+		box("Hedge", V(span[1] + 0.5, 0.6, -39.4), V(span[2] - 0.5, 3.6, -37), Color3.fromRGB(38, 58, 34), Enum.Material.LeafyGrass)
+	end
+	for x = -130, 126, 4 do
+		if x > -5 and x < 3 or (x >= 26 and x <= 44) then
+			continue
 		end
+		box("Picket", V(x + 1.6, 0.5, 18.6), V(x + 2.4, 3.6, 18.9), TRIM, M.Wood)
 	end
-	B.box(house, "FrontDoor", ORIGIN + V(-2.5, 4, -57.9), ORIGIN + V(2.5, 13, -57.6), Color3.fromRGB(70, 40, 35), M.Wood)
+	box("FenceRail", V(-130, 2.4, 18.9), V(-5, 2.7, 19.1), TRIM, M.Wood)
+	box("FenceRail", V(5, 2.4, 18.9), V(26, 2.7, 19.1), TRIM, M.Wood)
+	box("FenceRail", V(46, 2.4, 18.9), V(130, 2.7, 19.1), TRIM, M.Wood)
+	box("MailPost", V(5.2, 0.5, 20.4), V(5.6, 4.2, 20.8), C.DarkWood, M.Wood)
+	box("Mailbox", V(4.6, 4.2, 19.8), V(6.2, 5.4, 21.8), Color3.fromRGB(30, 30, 32), M.Metal)
+	for _, t in { { -48, -50 }, { 58, -52 }, { -58, 2 }, { 62, 4 }, { -118, 8 }, { 118, 10 }, { -20, 70 }, { 40, 72 }, { -90, 72 } } do
+		B.tree(root, ORIGIN + V(t[1], 0.5, t[2]), 24)
+	end
 
-	-- trees, lamps, the gray van at the curb
-	for _, t in { { -60, -20 }, { 58, -28 }, { -75, 50 }, { 70, 55 }, { -45, 60 } } do
-		B.tree(root, ORIGIN + V(t[1], 0.5, t[2]), 22)
+	-- street lamps and the gray van at the curb across the street
+	for _, x in { -60, -16, 16, 60 } do
+		lampPost(root, V(x, 0.75, 24))
 	end
-	for _, x in { -44, 44 } do
-		box("LampPole", V(x - 0.3, 0.5, 3), V(x + 0.3, 18, 3.6), Color3.fromRGB(60, 60, 62), M.Metal)
-		local head = box("LampHead", V(x - 2, 18, 2), V(x + 2, 18.8, 4.5), Color3.fromRGB(255, 220, 160), Enum.Material.Neon)
-		local sl = Instance.new("SpotLight")
-		sl.Face = Enum.NormalId.Bottom
-		sl.Range = 40
-		sl.Angle = 120
-		sl.Brightness = 2
-		sl.Color = Color3.fromRGB(255, 200, 140)
-		sl.Parent = head
-	end
+	lampPost(root, V(-40, 0.75, 50))
+	lampPost(root, V(40, 0.75, 50))
 	local van = Instance.new("Model")
 	van.Name = "GrayVan"
 	van.Parent = root
-	B.box(van, "VanBody", ORIGIN + V(55, 1.5, 11), ORIGIN + V(71, 8.5, 18), Color3.fromRGB(125, 128, 130), M.Metal)
-	B.box(van, "VanHood", ORIGIN + V(71, 1.5, 11), ORIGIN + V(74, 5.5, 18), Color3.fromRGB(125, 128, 130), M.Metal)
-
-	-- title sign
-	local sign = box("Sign", V(-14, 1, -26), V(14, 11, -25), Color3.fromRGB(25, 24, 28), M.Wood)
-	for _, x in { -13, 13 } do
-		box("SignPost", V(x - 0.4, 0.5, -25.8), V(x + 0.4, 11, -25.2), Color3.fromRGB(25, 24, 28), M.Wood)
+	B.box(van, "VanBody", ORIGIN + V(62, 1.5, 38), ORIGIN + V(78, 8.5, 45), Color3.fromRGB(122, 125, 128), M.Metal)
+	B.box(van, "VanHood", ORIGIN + V(58, 1.5, 38), ORIGIN + V(62, 5.5, 45), Color3.fromRGB(122, 125, 128), M.Metal)
+	B.box(van, "VanGlass", ORIGIN + V(61.9, 5.5, 38.4), ORIGIN + V(62.2, 8, 44.6), Color3.fromRGB(26, 30, 36), M.Glass)
+	for _, w in { { 61, 37.9 }, { 75, 37.9 }, { 61, 45.1 }, { 75, 45.1 } } do
+		B.cylinder(van, "Wheel", ORIGIN + V(w[1], 1.5, w[2]), 3, 3, C.Black, M.Plastic, CFrame.Angles(0, math.rad(90), 0))
 	end
-	local sg = Instance.new("SurfaceGui")
-	sg.Face = Enum.NormalId.Back
-	sg.CanvasSize = Vector2.new(840, 300)
-	sg.LightInfluence = 0
-	sg.Parent = sign
-	local title = Instance.new("TextLabel")
-	title.BackgroundTransparency = 1
-	title.Size = UDim2.new(1, 0, 0.55, 0)
-	title.Font = Enum.Font.SpecialElite
-	title.TextScaled = true
-	title.TextColor3 = Color3.fromRGB(235, 228, 215)
-	title.Text = "HOME ALONE"
-	title.Parent = sg
-	local sub = Instance.new("TextLabel")
-	sub.BackgroundTransparency = 1
-	sub.Position = UDim2.fromScale(0.05, 0.58)
-	sub.Size = UDim2.new(0.9, 0, 0.36, 0)
-	sub.Font = Enum.Font.GothamMedium
-	sub.TextScaled = true
-	sub.TextWrapped = true
-	sub.TextColor3 = Color3.fromRGB(180, 175, 165)
-	sub.Text = "Stand in a circle to queue. The night starts when the circle is full."
-	sub.Parent = sg
 
-	-- queue circles
+	-- queue circles on the patio: plain white outlines
 	for i, size in ctx.Config.Lobby.QueueSizes do
 		local x = (i - (#ctx.Config.Lobby.QueueSizes + 1) / 2) * 16
-		local center = ORIGIN + V(x, 0.8, -8)
-		local color = PAD_COLORS[i] or PAD_COLORS[1]
-		B.cylinder(root, "PadBase", center + V(0, 0.1, 0), 0.2, PAD_RADIUS * 2 + 1.2, Color3.fromRGB(30, 30, 34), M.Concrete, CFrame.Angles(0, 0, math.rad(90)))
-		local disc = B.cylinder(root, "Pad" .. size, center + V(0, 0.25, 0), 0.12, PAD_RADIUS * 2, color, Enum.Material.Neon, CFrame.Angles(0, 0, math.rad(90)))
-		disc.CanCollide = false
-		disc.Transparency = 0.55
-		local glow = Instance.new("PointLight")
-		glow.Range = 12
-		glow.Brightness = 0.8
-		glow.Color = color
-		glow.Parent = disc
-
+		local center = ORIGIN + V(x, 0.72, -13)
+		local segments = ring(root, center, PAD_RADIUS)
+		local anchor = B.part(root, {
+			Name = "Pad" .. size,
+			Size = V(1, 1, 1),
+			CFrame = CFrame.new(center + V(0, 0.5, 0)),
+			Transparency = 1,
+			CanCollide = false,
+			CanQuery = false,
+		})
 		local bb = Instance.new("BillboardGui")
 		bb.Name = "QueueSign"
-		bb.Size = UDim2.fromScale(9, 4.5)
-		bb.StudsOffset = V(0, 6.5, 0)
+		bb.Size = UDim2.fromScale(10, 4.6)
+		bb.StudsOffset = V(0, 6, 0)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 150
-		bb.Parent = disc
+		bb.MaxDistance = 160
+		bb.Parent = anchor
 		local function line(name, y, h, font, color3)
 			local l = Instance.new("TextLabel")
 			l.Name = name
@@ -149,21 +373,21 @@ local function build(root: Folder)
 			l.Font = font
 			l.TextScaled = true
 			l.TextColor3 = color3
-			l.TextStrokeTransparency = 0.4
+			l.TextStrokeTransparency = 0.5
 			l.Text = ""
 			l.Parent = bb
 			return l
 		end
-		local head = line("Title", 0, 0.4, Enum.Font.SpecialElite, color)
+		local head = line("Title", 0, 0.42, Enum.Font.GothamBold, Color3.new(1, 1, 1))
 		head.Text = size == 1 and "1 PLAYER" or (size .. " PLAYERS")
-		local count = line("Count", 0.42, 0.3, Enum.Font.GothamBold, Color3.fromRGB(235, 230, 220))
-		local status = line("Status", 0.74, 0.24, Enum.Font.GothamMedium, Color3.fromRGB(190, 185, 175))
+		local count = line("Count", 0.44, 0.3, Enum.Font.GothamBold, Color3.fromRGB(235, 235, 235))
+		local status = line("Status", 0.76, 0.24, Enum.Font.GothamMedium, Color3.fromRGB(190, 190, 190))
 
 		table.insert(pads, {
 			Size = size,
 			Center = center,
-			Disc = disc,
-			Color = color,
+			Anchor = anchor,
+			Segments = segments,
 			Count = count,
 			Status = status,
 			Members = {},
@@ -173,15 +397,15 @@ local function build(root: Folder)
 		})
 	end
 
-	-- spawn, facing the circles
-	spawnCF = CFrame.lookAt(ORIGIN + V(0, 3.5, 12), ORIGIN + V(0, 3.5, -8))
+	-- spawn on the front walk, facing the circles and the house
+	spawnCF = CFrame.lookAt(ORIGIN + V(0, 3.5, 8), ORIGIN + V(0, 3.5, -13))
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Name = "LobbySpawn"
 	spawn.Anchored = true
 	spawn.CanCollide = false
 	spawn.Transparency = 1
 	spawn.Size = V(10, 0.2, 6)
-	spawn.CFrame = CFrame.new(ORIGIN + V(0, 0.9, 12))
+	spawn.CFrame = CFrame.new(ORIGIN + V(0, 0.9, 8))
 	spawn.Neutral = true
 	spawn.Duration = 0
 	spawn.Parent = root
@@ -191,9 +415,10 @@ local function build(root: Folder)
 	end
 
 	-- invisible walls
-	for _, b in { { V(-91, -5, -91), V(-90, 60, 91) }, { V(90, -5, -91), V(91, 60, 91) }, { V(-91, -5, -91), V(91, 60, -90) }, { V(-91, -5, 90), V(91, 60, 91) } } do
+	for _, b in { { V(-126, -5, -126), V(-125, 60, 126) }, { V(125, -5, -126), V(126, 60, 126) }, { V(-126, -5, -126), V(126, 60, -125) }, { V(-126, -5, 125), V(126, 60, 126) } } do
 		box("Bounds", b[1], b[2], C.Black, M.Plastic, { Transparency = 1 })
 	end
+	setupLighting()
 end
 
 ---------------------------------------------------------------------------
@@ -307,7 +532,12 @@ local function tick()
 			pad.Status.Text = counted == 0 and "Step in to queue" or ("Waiting for " .. (pad.Size - counted) .. " more")
 		end
 		pad.Count.Text = counted .. " / " .. pad.Size
-		pad.Disc.Transparency = counted > 0 and 0.2 or 0.55
+		local glow = counted > 0 and 0 or 0.3
+		if pad.Segments[1].Transparency ~= glow then
+			for _, seg in pad.Segments do
+				seg.Transparency = glow
+			end
+		end
 
 		for i, p in members do
 			local status

@@ -38,14 +38,21 @@ function Exterior.build(ctx, root: Instance, refs)
 	box("PorchStep", -2, 0, -40, 6, 0.75, -38, Color3.fromRGB(120, 110, 100), M.Wood)
 	box("Walk", 0, 0, -62, 4, 0.6, -40, Color3.fromRGB(135, 135, 130), M.Concrete)
 	box("PorchRoof", -6, 12.5, -39, 10, 13, -30.5, C.Roof, M.Roof)
-	for _, x in { -5.5, 9.5 } do
-		box("PorchPost", x - 0.3, 1, -38.6, x + 0.3, 12.5, -38, C.Trim, M.Wood)
+	for _, x in { -5.5, -1.2, 5.2, 9.5 } do
+		B.cylinder(f, "PorchColumn", V(x, 6.75, -38.3), 11.5, 0.9, C.Trim, M.Wood)
+	end
+	for _, span in { { -5.5, -1.2 }, { 5.2, 9.5 } } do
+		box("PorchRail", span[1], 3.6, -38.5, span[2], 3.9, -38.1, C.Trim, M.Wood)
+		for x = span[1] + 0.6, span[2] - 0.4, 0.8 do
+			box("Baluster", x - 0.08, 1, -38.4, x + 0.08, 3.6, -38.2, C.Trim, M.Wood, { CanCollide = false })
+		end
 	end
 	local porchLamp = B.block(f, "PorchLamp", V(-1, 8, -30.9), V(0.8, 1.2, 0.6), Color3.fromRGB(255, 230, 180), Enum.Material.Neon)
 	local pl = Instance.new("PointLight")
-	pl.Range = 18
-	pl.Brightness = 0.7
-	pl.Color = Color3.fromRGB(255, 210, 150)
+	pl.Range = 22
+	pl.Brightness = 1.2
+	pl.Color = Color3.fromRGB(255, 196, 130)
+	pl.Shadows = true
 	pl.Parent = porchLamp
 	ctx.Power.onChanged(function(on)
 		pl.Enabled = on

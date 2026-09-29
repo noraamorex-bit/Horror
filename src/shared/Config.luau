@@ -17,7 +17,7 @@ Config.Lobby = {
 	GamePlaceId = nil :: number?,
 	LobbyPlaceId = nil :: number?,
 	QueueSizes = { 1, 2, 3, 4 },
-	Countdown = 6, -- seconds a full circle waits before teleporting (lets people step off)
+	Countdown = 10, -- seconds a full circle waits before teleporting (lets people step off)
 	SoloCountdown = 3,
 	ArrivalTimeout = 30, -- game server: start without stragglers after this long
 	ReturnDelay = 45, -- game server: seconds on the ending screen before going back to the lobby
@@ -155,6 +155,13 @@ Config.Director = {
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
+}
+
+-- Inner monologue: the character thinking out loud about what to do next
+Config.Thoughts = {
+	Duration = 5, -- seconds each line stays on screen
+	IdleHint = 45, -- seconds without progress before they remind themselves of the next task
+	FirstHint = 18, -- seconds into the night before the first task nudge
 }
 
 Config.ChatRange = 50

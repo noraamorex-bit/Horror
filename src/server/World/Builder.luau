@@ -386,8 +386,8 @@ function Builder.ceilingLight(parent: Instance, pos: Vector3, opts)
 	})
 	local light = Instance.new("PointLight")
 	light.Range = opts.range or 24
-	light.Brightness = opts.brightness or 1.1
-	light.Color = opts.color or Color3.fromRGB(255, 220, 175)
+	light.Brightness = opts.brightness or 1.3
+	light.Color = opts.color or Color3.fromRGB(255, 214, 165)
 	light.Shadows = opts.shadows ~= false
 	light.Parent = bulb
 	return bulb, light, model

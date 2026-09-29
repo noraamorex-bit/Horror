@@ -47,7 +47,14 @@ local function setupLighting()
 	sky.StarCount = 0
 	sky.CelestialBodiesShown = false
 	sky.Parent = Lighting
-	Lighting.ClockTime = 21.5
+	-- moonlight high overhead, a cool outdoor fill, and interiors that stay dark without lamps
+	Lighting.ClockTime = 0.2
+	Lighting.Brightness = 0.9
+	Lighting.Ambient = Color3.fromRGB(16, 16, 22)
+	Lighting.OutdoorAmbient = Color3.fromRGB(52, 58, 76)
+	Lighting.EnvironmentDiffuseScale = 0.4
+	Lighting.EnvironmentSpecularScale = 0.7
+	Lighting.ExposureCompensation = 0.1
 end
 
 setupLighting()

@@ -126,6 +126,79 @@ function Director.logTruthRaw(text: string)
 end
 
 ---------------------------------------------------------------------------
+-- Inner monologue
+---------------------------------------------------------------------------
+-- players: a list, a single Player, or nil for everyone in the night
+function Director.think(players, line: string?)
+	if not line then
+		return
+	end
+	local text, hint = line:match("^(.-)|(%w+)$")
+	text = text or line
+	local list = players
+	if list == nil then
+		list = ctx.Util.sessionPlayers()
+	elseif typeof(list) == "Instance" then
+		list = { list }
+	end
+	for _, p in list do
+		if p:GetAttribute("InGame") and not p:GetAttribute("Escaped") then
+			ctx.Remotes.Thought:FireClient(p, text, hint)
+		end
+	end
+end
+
+-- once per player per key
+function Director.thinkOnce(player: Player, key: string, line: string?)
+	state.Thought = state.Thought or {}
+	local seen = state.Thought[player] or {}
+	state.Thought[player] = seen
+	if seen[key] then
+		return
+	end
+	seen[key] = true
+	Director.think(player, line)
+end
+
+-- everyone within `radius` of a point
+function Director.thinkNear(position: Vector3, radius: number, line: string?)
+	local list = {}
+	for _, p in ctx.Util.activePlayers() do
+		local root = ctx.Util.getRoot(p)
+		if root and (root.Position - position).Magnitude <= radius then
+			table.insert(list, p)
+		end
+	end
+	Director.think(list, line)
+end
+
+function Director.onItem(player: Player, item: string)
+	Director.thinkOnce(player, "Item_" .. item, ctx.Story.Thoughts.Items[item])
+end
+
+function Director.onHide(player: Player)
+	Director.thinkOnce(player, "Hide", ctx.Story.Thoughts.Hide)
+end
+
+function Director.onObjectiveDone()
+	state.NextHintAt = os.clock() + 8
+end
+
+local function hintTick()
+	if not state.NextHintAt or os.clock() < state.NextHintAt then
+		return
+	end
+	state.NextHintAt = os.clock() + ctx.Config.Thoughts.IdleHint
+	for _, id in ctx.Objectives.pending() do
+		local line = ctx.Story.Thoughts.Objectives[id]
+		if line then
+			Director.think(nil, line)
+			return
+		end
+	end
+end
+
+---------------------------------------------------------------------------
 -- Storm
 ---------------------------------------------------------------------------
 function Director.lightning(intensity: number?)
@@ -285,12 +358,27 @@ function Director.startAct(name: string, cause: Player?)
 	ctx.Escape.refreshLandline()
 	setGap()
 
+	state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint + 10
+	local actLines = ctx.Story.Thoughts.Acts[name]
+	if actLines then
+		-- act II waits for the pizza place's call; the others start right after the chapter card
+		task.delay(name == "SmallThings" and 32 or 7, function()
+			for _, line in actLines do
+				Director.think(nil, line)
+			end
+		end)
+	end
+
 	if name == "Evening" then
 		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Movie", "Fire", "Windows" })
 		ctx.Intruder.setMode("Offstage")
-		task.delay(6, function()
-			ctx.Remotes.Notify:FireAllClients("Press Tab (or the Journal button) for the to-do list.", "info")
-		end)
+		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
+		for _, p in ctx.Util.sessionPlayers() do
+			local lines = ctx.Story.Thoughts.Intro[p:GetAttribute("Role") == "Host" and "Host" or "Guest"]
+			for _, line in lines do
+				Director.think(p, line)
+			end
+		end
 	elseif name == "SmallThings" then
 		ctx.Objectives.set({ "Explore", "Stay" }, { Explore = true, Stay = true })
 		-- Tony's calls back: the creek road has flooded
@@ -367,6 +455,9 @@ end
 ---------------------------------------------------------------------------
 function Director.onCapture(player: Player)
 	Director.addTension(25)
+	task.delay(4, function()
+		Director.think(player, ctx.Story.Thoughts.Captured)
+	end)
 	Director.logTruthRaw("Curtis took " .. (player:GetAttribute("RoleName") or player.Name) .. " down to the boiler room.")
 	task.delay(2, Director.checkAllCaptured)
 end
@@ -384,6 +475,7 @@ function Director.onSighting(player: Player)
 	Director.addTension(15)
 	if state.Act == "SomeoneElse" then
 		Director.logTruth("Glimpse")
+		Director.thinkOnce(player, "Glimpse", ctx.Story.Thoughts.Events.Glimpse)
 	end
 end
 
@@ -548,6 +640,7 @@ local function actTick()
 	end
 
 	schedule(actTime)
+	hintTick()
 
 	-- hard cap
 	if elapsed() >= scaled(ctx.Config.HardCapMinutes) and not ctx.Escape.helpCalled() then

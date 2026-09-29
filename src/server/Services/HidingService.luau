@@ -77,6 +77,9 @@ function Hiding.enter(player: Player, spot)
 	if ctx.Intruder then
 		ctx.Intruder.onPlayerHid(player, spot)
 	end
+	if ctx.Director and ctx.Director.onHide then
+		ctx.Director.onHide(player)
+	end
 end
 
 function Hiding.exit(player: Player, forced: boolean?)

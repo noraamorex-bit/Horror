@@ -165,6 +165,22 @@ function Interior.build(ctx, root: Instance, refs)
 		box(parent, "Rug", x0, y, z0, x1, y + 0.06, z1, color, M.Fabric, DECOR)
 	end
 
+	-- a lamp that follows its room's light switch (and the breaker)
+	local function lamp(parent, room: string, pos: Vector3, kind: string)
+		local shadeSize = kind == "floor" and V(1.8, 1.4, 1.8) or V(1.3, 1, 1.3)
+		local height = kind == "floor" and 6 or 1.6
+		B.cylinder(parent, "LampBase", pos + V(0, 0.1, 0), 0.2, kind == "floor" and 1.2 or 0.8, C.Black, M.Metal, CFrame.Angles(0, 0, math.rad(90)))
+		B.block(parent, "LampPole", pos + V(0, height / 2, 0), V(0.15, height, 0.15), Color3.fromRGB(60, 55, 50), M.Metal, 0, DECOR)
+		local shade = B.block(parent, "LampShade", pos + V(0, height + shadeSize.Y / 2, 0), shadeSize, Color3.fromRGB(235, 215, 180), M.Fabric, 0, DECOR)
+		local light = Instance.new("PointLight")
+		light.Range = kind == "floor" and 20 or 14
+		light.Brightness = kind == "floor" and 1.1 or 0.8
+		light.Color = Color3.fromRGB(255, 190, 125)
+		light.Shadows = true
+		light.Parent = shade
+		ctx.Power.registerLight(room, shade, light)
+	end
+
 	---------------------------------------------------------------------------
 	-- LIVING ROOM
 	---------------------------------------------------------------------------
@@ -178,6 +194,8 @@ function Interior.build(ctx, root: Instance, refs)
 	local clockFace = B.cylinder(living, "ClockFace", V(-10.05, G + 7, -27.5), 0.1, 1.2, C.White, M.Plastic, CFrame.new())
 	ctx.Audio.loopOn("ClockTick", clockFace, { Caption = false })
 	shelf(living, -9.6, -8, -8.4, -3, G, 8, 4)
+	lamp(living, "Living", V(-38.5, G, -2.5), "floor")
+	lamp(living, "Living", V(-11.5, G, -28.8), "floor")
 
 	-- fireplace on the front wall
 	box(living, "Hearth", -29.5, G, -30, -20.5, G + 0.4, -27.5, Color3.fromRGB(95, 55, 45), M.Brick)
@@ -462,6 +480,7 @@ function Interior.build(ctx, root: Instance, refs)
 		box(office, "DeskDrawerEmpty", 28.85, G + 2.2, -22.5, 29, G + 3.1, -20.5, C.DarkWood, M.Wood)
 	end)
 	shelf(office, 38.6, -29.5, 39.8, -12, G, 10, 5)
+	lamp(office, "Office", V(36.3, G + 3.8, -24.3), "table")
 	box(office, "FilingCabinet", 13, G, -29.5, 16, G + 5, -27, C.Steel, M.Metal)
 	rug(office, 20, -27, 34, -13, G, Color3.fromRGB(60, 70, 80))
 
@@ -508,6 +527,7 @@ function Interior.build(ctx, root: Instance, refs)
 		box(den, "EndTableDrawerEmpty", 14.2, G + 1.6, 16.5, 16.3, G + 2.5, 16.65, C.DarkWood, M.Wood)
 	end)
 	shelf(den, 38.8, 22, 39.8, 29.5, G, 8, 4)
+	lamp(den, "Den", V(15.2, G + 2.8, 14.6), "table")
 	wardrobe(den, "Den closet", 32, 26.6, 37, 29.8, G, V(0, 0, -1), "Den", C.White)
 
 	---------------------------------------------------------------------------
@@ -608,6 +628,7 @@ function Interior.build(ctx, root: Instance, refs)
 	box(master, "Dresser", -10.2, U, -28.5, -8.4, U + 4, -22, C.Walnut, M.Wood)
 	item(master, "Purse", V(-9.3, U + 4.6, -25), V(1.4, 1.1, 0.7), Color3.fromRGB(110, 60, 45), "PepperSpray", "Pepper spray (mom's old purse)", ctx.Config.PepperSpray.Uses)
 	box(master, "Nightstand", -40, U, -8.8, -38, U + 2.4, -6.5, C.Walnut, M.Wood)
+	lamp(master, "Master", V(-39, U + 2.4, -7.6), "table")
 
 	local mbath = folder("MasterBath")
 	box(mbath, "Tub", -40, U, 8.5, -31, U + 2.2, 12, C.White, M.Marble)
@@ -623,6 +644,7 @@ function Interior.build(ctx, root: Instance, refs)
 	wardrobe(jamie, "Jamie's closet", -19.5, 26.8, -13.5, 29.8, U, V(0, 0, -1), "Jamie", C.White)
 	table4(jamie, -31, 26.5, -25.5, 29.5, U, 3.4, C.Oak)
 	chair(jamie, -28, 25, U, V(0, 0, -1))
+	lamp(jamie, "Jamie", V(-26.2, U + 3.4, 28.6), "table")
 	box(jamie, "Laptop", -29.5, U + 3.4, 27.5, -27, U + 3.55, 29, Color3.fromRGB(70, 70, 75), M.Metal, DECOR)
 	box(jamie, "Poster", -39.7, U + 6, 25.5, -39.62, U + 10, 28.5, Color3.fromRGB(180, 70, 60), M.Plastic, DECOR)
 

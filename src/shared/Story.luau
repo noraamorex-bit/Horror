@@ -234,6 +234,73 @@ Story.Truths = {
 }
 
 ---------------------------------------------------------------------------
+-- Inner monologue. Lines are "text|hint": the hint key becomes a control tip for the
+-- player's device (keyboard, touch or gamepad) on a smaller second line.
+---------------------------------------------------------------------------
+Story.Thoughts = {
+	Intro = {
+		Host = {
+			"Mom left me a list of chores before she went. I should look at it.|journal",
+			"Parents gone for the weekend, friends over. This is going to be a good night.",
+		},
+		Guest = {
+			"Jamie's mom left a whole list of stuff for us to do. I should check it.|journal",
+			"Pizza, a movie, no parents. This is going to be a good night.",
+		},
+	},
+	Objectives = {
+		OrderPizza = "I'm starving. The phone's in the kitchen. I should order the pizza.",
+		Popcorn = "We can't watch a movie without popcorn. The microwave's in the kitchen.",
+		Movie = "I should probably put something on the TV in the living room.",
+		Fire = "It's freezing in here. I should light the fireplace.",
+		Windows = "The storm's getting worse. Somebody left the windows open upstairs.",
+		Power = "The breaker panel is in the garage. Maybe I can get the power back on.",
+		Phone = "The phone's dead. Did something happen to the line outside?",
+		Attic = "The attic hatch in the upstairs hall... what's actually up there?",
+		Call911 = "We need help. Fix the phone line outside, or find a signal by the upstairs bathroom window.|phone",
+		Neighbor = "Mrs. Okafor lives next door. If I can make it to her porch...",
+		Car = "If we find the car keys, we can drive out of here.",
+		Rescue = "He took someone down to the basement. We can't leave them there.",
+	},
+	Acts = {
+		SmallThings = {
+			"The pizza's not coming. The creek flooded. We're stuck here tonight.",
+			"It's just the storm. Old houses make noise.",
+		},
+		SomeoneElse = {
+			"The power's out. All of it. That wasn't the storm.",
+			"I should find a flashlight before I go anywhere dark.",
+		},
+		Guest = {
+			"Someone has been living in the attic. And he's still in the house.",
+			"We need to get help. Stay together. Stay in the light.",
+		},
+	},
+	Events = {
+		FootstepsUpstairs = "Footsteps... upstairs? But we're all down here.",
+		DoorAjar = "Was that door open before?",
+		CordSwing = "Why is the attic cord swinging on its own?",
+		FigureWindow = "There was someone out there. Right outside the window.",
+		TVAlert = "The TV just changed by itself.",
+		SilentCall = "Who calls and doesn't say anything?",
+		Glimpse = "There's someone at the end of the hall.",
+	},
+	Items = {
+		Flashlight = "A flashlight. This could save my life tonight.|light",
+		PepperSpray = "Mom's pepper spray. Only if he gets close.|spray",
+		Walkie = "A walkie-talkie. Whoever has the other one can hear me anywhere.",
+		CarKeys = "The car keys! Now I just need to get the garage open.",
+		ElectricalTape = "Electrical tape. That could fix a cut wire.",
+		BasementKey = "A key marked BSMT. The basement door.",
+		Poker = "A fire poker. Heavy enough to break a window.",
+		Scissors = "Scissors. Sharp enough to cut through a zip tie.",
+		Batteries = "Fresh batteries. The flashlight is full again.",
+	},
+	Hide = "I have to stay quiet in here.|breath",
+	Captured = "My hands are tied to a pipe. I have to get loose, or wait for the others.|struggle",
+}
+
+---------------------------------------------------------------------------
 -- Endings
 ---------------------------------------------------------------------------
 Story.Endings = {

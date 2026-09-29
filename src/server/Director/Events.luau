@@ -64,6 +64,7 @@ Events.List = {
 			end
 			ctx.Audio.playAt("HatchCreak", path[#path] + V(0, 12, 0))
 			D.logTruth("FootstepsUpstairs")
+			D.think(nil, ctx.Story.Thoughts.Events.FootstepsUpstairs)
 		end,
 	},
 	---------------------------------------------------------------------------
@@ -99,6 +100,7 @@ Events.List = {
 		end,
 		Run = function(ctx, D, door)
 			ctx.Doors.setAjar(door, 35)
+			D.thinkNear(door.Position, 50, ctx.Story.Thoughts.Events.DoorAjar)
 			ctx.Audio.playAt("DoorOpen", door.Position, { Volume = 0.35, CaptionText = "[A door creaks open, somewhere close]", CaptionRange = 45 })
 			D.logTruth("DoorAjar")
 		end,
@@ -123,6 +125,7 @@ Events.List = {
 			local hatch = ctx.World.refs().AtticHatch
 			if hatch and not hatch.Open then
 				hatch.swing(9)
+				D.thinkNear(hatch.Handle.Position, 40, ctx.Story.Thoughts.Events.CordSwing)
 				ctx.Audio.playAt("HatchCreak", hatch.Handle.Position + V(0, 3, 0))
 				D.logTruth("CordSwing")
 			end
@@ -174,6 +177,9 @@ Events.List = {
 		Run = function(ctx, D)
 			ctx.Escape.ringLandline("Silent", function()
 				ctx.PlayerState.scareNear(V(-9, 5, 6), 20, ctx.Config.Nerve.ScareEvent)
+				task.delay(8, function()
+					D.thinkNear(V(-9, 5, 6), 30, ctx.Story.Thoughts.Events.SilentCall)
+				end)
 			end)
 			D.logTruth("SilentCall")
 		end,
@@ -214,6 +220,7 @@ Events.List = {
 			local tv = ctx.World.refs().TV
 			if tv and tv.emergencyAlert(18) then
 				D.logTruth("TVAlert")
+				D.thinkNear(V(-30, 4, -10), 60, ctx.Story.Thoughts.Events.TVAlert)
 			end
 		end,
 	},
@@ -284,6 +291,7 @@ Events.List = {
 			task.delay(0.3, function()
 				ctx.PlayerState.addNerve(data.Player, -12)
 				ctx.Remotes.Shake:FireClient(data.Player, 0.35, 0.8)
+				D.think(data.Player, ctx.Story.Thoughts.Events.FigureWindow)
 			end)
 			D.logTruth("FigureWindow")
 		end,

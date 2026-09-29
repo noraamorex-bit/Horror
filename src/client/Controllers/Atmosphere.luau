@@ -28,7 +28,7 @@ local VOLUMES = {
 
 -- the lobby sits at z ~400, far from the house: rain over all of it
 local LOBBY_VOLUMES = {
-	{ -90, 90, 310, 490 },
+	{ -130, 130, 270, 530 },
 }
 
 local function buildRain()
@@ -66,6 +66,9 @@ local function buildRain()
 	end
 end
 
+-- the lighting the flash returns to (whatever the server set for this mode)
+local base = { Ambient = nil :: Color3?, Brightness = 0.4 }
+
 local function thunder(delay: number, intensity: number)
 	task.delay(delay, function()
 		local s = ctx.Effects.localSound("Thunder")
@@ -92,8 +95,8 @@ function Atmosphere.lightning(intensity: number, thunderDelay: number)
 			Lighting.Brightness = 3
 			task.wait(0.05 + math.random() * 0.06)
 			flash.Brightness = 0.05
-			Lighting.OutdoorAmbient = Color3.fromRGB(18, 20, 28)
-			Lighting.Brightness = 0.4
+			Lighting.OutdoorAmbient = base.Ambient :: Color3
+			Lighting.Brightness = base.Brightness
 			task.wait(0.06 + math.random() * 0.12)
 		end
 		ctx.UI.tween(flash, 0.8, { Brightness = 0 })
@@ -110,7 +113,8 @@ function Atmosphere.start()
 	flash = Instance.new("ColorCorrectionEffect")
 	flash.Name = "Lightning"
 	flash.Parent = Lighting
-	Lighting.OutdoorAmbient = Color3.fromRGB(18, 20, 28)
+	base.Ambient = Lighting.OutdoorAmbient
+	base.Brightness = Lighting.Brightness
 
 	local group = Instance.new("SoundGroup")
 	group.Name = "Weather"

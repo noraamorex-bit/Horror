@@ -46,6 +46,9 @@ function Inventory.give(player: Player, item: string, count: number?)
 		player:SetAttribute("Battery", 100)
 	end
 	sync(player, item)
+	if ctx.Director and ctx.Director.onItem then
+		ctx.Director.onItem(player, item)
+	end
 end
 
 function Inventory.take(player: Player, item: string, count: number?): boolean

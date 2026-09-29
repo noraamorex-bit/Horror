@@ -56,20 +56,17 @@ function LobbyHub.start()
 		Parent = UI.Root,
 	})
 	UI.label({ Size = UDim2.new(1, 0, 0, 50), Text = ctx.Story.Title, Font = UI.Font.Title, TextSize = 46, TextStrokeTransparency = 0.5, Parent = title })
-	UI.label({
-		Position = UDim2.fromOffset(0, 50),
-		Size = UDim2.new(1, 0, 0, 22),
-		Text = "Walk into a glowing circle to queue for 1, 2, 3 or 4 players",
-		TextSize = 17,
-		TextColor3 = UI.Color.Dim,
-		TextStrokeTransparency = 0.6,
-		Parent = title,
+
+	ctx.Notice.show({
+		Title = "Welcome to Hollis Creek",
+		Body = "Walk into one of the white circles to queue for 1, 2, 3 or 4 players.\n\nWhen a circle is full, your group goes to the house together.",
+		Button = "OK",
 	})
 
 	panel = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -24),
-		Size = UDim2.fromOffset(460, 104),
+		Size = UDim2.fromOffset(520, 116),
 		BackgroundColor3 = UI.Color.Panel,
 		BackgroundTransparency = 0.2,
 		Visible = false,
@@ -77,8 +74,8 @@ function LobbyHub.start()
 	})
 	UI.corner(panel, 12)
 	UI.stroke(panel, UI.Color.Accent, 1.5, 0.5)
-	queueTitle = UI.label({ Position = UDim2.fromOffset(16, 10), Size = UDim2.new(1, -150, 0, 30), Text = "", Font = UI.Font.Bold, TextSize = 20, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
-	queueStatus = UI.label({ Position = UDim2.fromOffset(16, 44), Size = UDim2.new(1, -150, 0, 48), Text = "", TextSize = 15, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
+	queueTitle = UI.label({ Position = UDim2.fromOffset(16, 10), Size = UDim2.new(1, -150, 0, 32), Text = "", Font = UI.Font.Bold, TextSize = 24, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
+	queueStatus = UI.label({ Position = UDim2.fromOffset(16, 46), Size = UDim2.new(1, -150, 0, 58), Text = "", TextSize = 19, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
 	local leave = UI.new("TextButton", {
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -14, 0.5, 0),

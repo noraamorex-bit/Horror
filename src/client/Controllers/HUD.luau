@@ -57,7 +57,7 @@ function HUD.caption(text: string, _position: Vector3?)
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		Text = text,
-		TextSize = 19,
+		TextSize = 23,
 		Font = isSound and UI.Font.Bold or UI.Font.Body,
 		TextColor3 = isSound and Color3.fromRGB(215, 215, 200) or UI.Color.Text,
 		TextStrokeTransparency = 0.4,
@@ -109,7 +109,7 @@ function HUD.notify(text: string, kind: string?)
 		Position = UDim2.fromOffset(10, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		Text = text,
-		TextSize = 17,
+		TextSize = 20,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = frame,
 	})
@@ -149,6 +149,14 @@ local chapterTitle: TextLabel
 local chapterSub: TextLabel
 
 function HUD.chapter(title: string, sub: string)
+	-- wait for the role notice (or any notice) to be dismissed first
+	if ctx.Notice and ctx.Notice.isOpen() then
+		ctx.Notice.whenClear(function()
+			task.wait(0.3)
+			HUD.chapter(title, sub)
+		end)
+		return
+	end
 	chapterTitle.Text = title
 	chapterSub.Text = sub
 	chapterFrame.Visible = true
@@ -325,9 +333,9 @@ local function build()
 	hintLabel = UI.label({
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -6),
-		Size = UDim2.fromOffset(700, 20),
+		Size = UDim2.fromOffset(700, 24),
 		Text = "",
-		TextSize = 13,
+		TextSize = 18,
 		TextColor3 = UI.Color.Dim,
 		Parent = root,
 	})
@@ -366,18 +374,12 @@ local function hintText(): string
 		return ""
 	end
 	if player:GetAttribute("Captured") then
-		return touch and "Mash STRUGGLE - or wait for a friend to cut you free" or "Mash SPACE to struggle - or wait for a friend to cut you free"
+		return touch and "Mash STRUGGLE" or "Mash SPACE to struggle"
 	end
 	if player:GetAttribute("Hiding") then
-		return touch and "Hold BREATH when he's close  ·  LEAVE to get out  ·  drag to look" or "Hold SPACE to hold your breath  ·  E to leave"
+		return touch and "LEAVE to get out" or "E to leave"
 	end
-	if not player:GetAttribute("InGame") then
-		return ""
-	end
-	if touch then
-		return "Tap a prompt to use it  ·  hold for hold-prompts"
-	end
-	return "E use · R lock · Shift sprint · C crouch · F flashlight · G spray · P phone · Tab journal"
+	return ""
 end
 
 local function update()
@@ -456,18 +458,10 @@ function HUD.start()
 	ctx.Remotes.Caption.OnClientEvent:Connect(HUD.caption)
 	ctx.Remotes.Notify.OnClientEvent:Connect(HUD.notify)
 	ctx.Remotes.Chapter.OnClientEvent:Connect(HUD.chapter)
+	-- the journal stays closed until the player opens it (their thoughts point them to it)
 	ctx.Remotes.Objectives.OnClientEvent:Connect(function(list)
-		local changed = #list ~= #objectives
 		objectives = list
 		renderJournal()
-		if changed and #list > 0 then
-			HUD.setJournal(true)
-			task.delay(8, function()
-				if objectives == list then
-					HUD.setJournal(false)
-				end
-			end)
-		end
 	end)
 	ctx.Input.on("Journal", function(began)
 		if began then
