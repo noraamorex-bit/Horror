@@ -71,11 +71,11 @@ local function show(payload)
 	end
 	-- play it again with more friends, and keep the game one tap away
 	order += 1
-	local row = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, -20, 0, 60), BackgroundTransparency = 1, Parent = scroll })
+	local row = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, -20, 0, 40), BackgroundTransparency = 1, Parent = scroll })
 	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = row })
 	if ctx.Social then
 		ctx.Social.button(row, "invite")
-		ctx.Social.button(row, "favorite", { Size = UDim2.fromOffset(160, 54) })
+		ctx.Social.button(row, "favorite")
 		task.delay(8, function()
 			if screen.Parent then
 				ctx.Social.maybeAskFavorite()

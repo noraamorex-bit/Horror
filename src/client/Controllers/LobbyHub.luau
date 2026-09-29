@@ -23,6 +23,7 @@ local function teleportScreen(): ScreenGui
 end
 
 local quick: Frame
+local lobbyMenu: Frame
 
 local function render(state)
 	if quick then
@@ -60,30 +61,46 @@ function LobbyHub.start()
 		BackgroundTransparency = 1,
 		Parent = UI.Root,
 	})
-	UI.label({ Size = UDim2.new(1, 0, 0, 50), Text = ctx.Story.Title, Font = UI.Font.Title, TextSize = 46, TextStrokeTransparency = 0.5, Parent = title })
-	-- bring friends, and keep the game one tap away
-	local row = UI.new("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, inset.Y + 64),
-		Size = UDim2.fromOffset(560, 54),
+	UI.label({ Size = UDim2.new(1, 0, 0, 50), Text = ctx.Story.Title, Font = UI.Font.Title, TextSize = 34, TextStrokeTransparency = 0.6, Parent = title })
+	-- a small menu down the left side: play first, then the extras
+	local function menuButton(parent, text: string, order: number): TextButton
+		local b = UI.new("TextButton", {
+			LayoutOrder = order,
+			Size = UDim2.fromOffset(150, 30),
+			Text = text,
+			Font = Enum.Font.GothamMedium,
+			TextSize = 15,
+			TextColor3 = Color3.fromRGB(235, 232, 226),
+			BackgroundColor3 = Color3.fromRGB(12, 12, 14),
+			BackgroundTransparency = 0.4,
+			Parent = parent,
+		})
+		UI.corner(b, 6)
+		UI.stroke(b, Color3.new(1, 1, 1), 1, 0.8)
+		return b
+	end
+	local menu = UI.new("Frame", {
+		AnchorPoint = Vector2.new(0, 0),
+		Position = UDim2.new(0, math.max(16, inset.X + 16), 0, inset.Y + 10),
+		Size = UDim2.fromOffset(150, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		Parent = UI.Root,
 	})
-	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = row })
-	ctx.Social.button(row, "invite")
-	ctx.Social.button(row, "favorite", { Size = UDim2.fromOffset(160, 54) })
-	-- the endings collection
-	local endingsBtn = UI.new("TextButton", {
-		Size = UDim2.fromOffset(150, 54),
-		Text = "ENDINGS",
-		Font = UI.Font.Bold,
-		TextSize = 19,
-		TextColor3 = Color3.new(1, 1, 1),
-		BackgroundColor3 = Color3.fromRGB(70, 60, 110),
-		Parent = row,
-	})
-	UI.corner(endingsBtn, 12)
-	UI.stroke(endingsBtn, Color3.new(1, 1, 1), 1.5, 0.6)
+	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = menu })
+	-- one-tap play (hidden while you're in a queue)
+	quick = UI.new("Frame", { LayoutOrder = 1, Size = UDim2.fromOffset(150, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = menu })
+	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = quick })
+	for i, spec in { { "Play solo", "Solo" }, { "Find players", "Group" } } do
+		menuButton(quick, spec[1], i).Activated:Connect(function()
+			ctx.Remotes.QuickPlay:FireServer(spec[2])
+		end)
+	end
+	UI.new("Frame", { LayoutOrder = 2, Size = UDim2.fromOffset(150, 4), BackgroundTransparency = 1, Parent = menu })
+	local endingsBtn = menuButton(menu, "Endings", 3)
+	ctx.Social.button(menu, "invite", { LayoutOrder = 4, Size = UDim2.fromOffset(150, 30) })
+	ctx.Social.button(menu, "favorite", { LayoutOrder = 5, Size = UDim2.fromOffset(150, 30) })
+	lobbyMenu = menu
 	local collection = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.55),
@@ -95,9 +112,9 @@ function LobbyHub.start()
 		Parent = UI.Root,
 	})
 	UI.corner(collection, 14)
-	UI.stroke(collection, UI.Color.Accent, 1.5, 0.4)
+	UI.stroke(collection, Color3.new(1, 1, 1), 1, 0.8)
 	UI.new("UISizeConstraint", { MaxSize = Vector2.new(560, 420), Parent = collection })
-	UI.label({ Position = UDim2.fromOffset(0, 12), Size = UDim2.new(1, 0, 0, 34), Text = "ENDINGS", Font = UI.Font.Title, TextSize = 30, ZIndex = 31, Parent = collection })
+	UI.label({ Position = UDim2.fromOffset(0, 12), Size = UDim2.new(1, 0, 0, 34), Text = "Endings", Font = Enum.Font.GothamMedium, TextSize = 22, ZIndex = 31, Parent = collection })
 	local list = UI.new("ScrollingFrame", {
 		Position = UDim2.fromOffset(18, 56),
 		Size = UDim2.new(1, -36, 1, -130),
@@ -112,16 +129,16 @@ function LobbyHub.start()
 	local close = UI.new("TextButton", {
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -14),
-		Size = UDim2.fromOffset(160, 50),
-		Text = "CLOSE",
-		Font = UI.Font.Bold,
-		TextSize = 19,
-		TextColor3 = Color3.new(1, 1, 1),
-		BackgroundColor3 = Color3.fromRGB(60, 60, 66),
+		Size = UDim2.fromOffset(120, 34),
+		Text = "Close",
+		Font = Enum.Font.GothamMedium,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(235, 232, 226),
+		BackgroundColor3 = Color3.fromRGB(40, 40, 44),
 		ZIndex = 31,
 		Parent = collection,
 	})
-	UI.corner(close, 10)
+	UI.corner(close, 6)
 	local function fillCollection()
 		for _, c in list:GetChildren() do
 			if c:IsA("TextLabel") then
@@ -135,8 +152,8 @@ function LobbyHub.start()
 		for i, key in ctx.Story.EndingOrder do
 			local e = ctx.Story.Endings[key]
 			if e then
-				local text = found[key] and string.format("<b>%s</b>   <font color=\"#9fd49a\">found</font>", e.Title)
-					or string.format("<b>???</b>   <font color=\"#8a8a8a\">%s</font>", ctx.Story.EndingHints[key] or "")
+				local text = found[key] and string.format("<b>%s</b>", e.Title)
+					or string.format("<font color=\"#77736c\">???   %s</font>", ctx.Story.EndingHints[key] or "")
 				UI.label({
 					LayoutOrder = i,
 					Size = UDim2.new(1, 0, 0, 0),
@@ -163,11 +180,11 @@ function LobbyHub.start()
 	local player = game:GetService("Players").LocalPlayer
 	local record = UI.label({
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, inset.Y + 126),
-		Size = UDim2.fromOffset(520, 26),
+		Position = UDim2.new(0.5, 0, 0, inset.Y + 50),
+		Size = UDim2.fromOffset(520, 22),
 		Text = "",
-		Font = UI.Font.Bold,
-		TextSize = 17,
+		Font = Enum.Font.GothamMedium,
+		TextSize = 13,
 		TextColor3 = UI.Color.Dim,
 		TextStrokeTransparency = 0.5,
 		Parent = UI.Root,
@@ -191,60 +208,36 @@ function LobbyHub.start()
 		Button = "OK",
 	})
 
+	-- your queue: at the top of the left-hand menu, in place of the play buttons
 	panel = UI.new("Frame", {
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -24),
-		Size = UDim2.fromOffset(520, 116),
-		BackgroundColor3 = UI.Color.Panel,
-		BackgroundTransparency = 0.2,
+		LayoutOrder = 0,
+		Size = UDim2.fromOffset(280, 70),
+		BackgroundColor3 = Color3.fromRGB(12, 12, 14),
+		BackgroundTransparency = 0.4,
 		Visible = false,
-		Parent = UI.Root,
+		Parent = lobbyMenu,
 	})
-	UI.corner(panel, 12)
-	UI.stroke(panel, UI.Color.Accent, 1.5, 0.5)
-	queueTitle = UI.label({ Position = UDim2.fromOffset(16, 10), Size = UDim2.new(1, -150, 0, 32), Text = "", Font = UI.Font.Bold, TextSize = 24, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
-	queueStatus = UI.label({ Position = UDim2.fromOffset(16, 46), Size = UDim2.new(1, -150, 0, 58), Text = "", TextSize = 19, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
+	UI.corner(panel, 8)
+	UI.stroke(panel, Color3.new(1, 1, 1), 1, 0.8)
+	queueTitle = UI.label({ Position = UDim2.fromOffset(12, 8), Size = UDim2.new(1, -96, 0, 20), Text = "", Font = Enum.Font.GothamMedium, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
+	queueStatus = UI.label({ Position = UDim2.fromOffset(12, 30), Size = UDim2.new(1, -96, 0, 34), Text = "", TextSize = 13, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
 	local leave = UI.new("TextButton", {
 		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -14, 0.5, 0),
-		Size = UDim2.fromOffset(118, 60),
-		Text = "LEAVE",
-		Font = UI.Font.Bold,
-		TextSize = 20,
-		TextColor3 = Color3.new(1, 1, 1),
-		BackgroundColor3 = Color3.fromRGB(150, 45, 40),
+		Position = UDim2.new(1, -10, 0.5, 0),
+		Size = UDim2.fromOffset(72, 34),
+		Text = "Leave",
+		Font = Enum.Font.GothamMedium,
+		TextSize = 14,
+		TextColor3 = Color3.fromRGB(235, 232, 226),
+		BackgroundColor3 = Color3.fromRGB(40, 40, 44),
 		Parent = panel,
 	})
-	UI.corner(leave, 10)
+	UI.corner(leave, 6)
+	UI.stroke(leave, Color3.new(1, 1, 1), 1, 0.8)
 	leave.Activated:Connect(function()
 		ctx.Remotes.LeaveQueue:FireServer()
 	end)
 
-	-- one-tap play (no need to find the circles)
-	quick = UI.new("Frame", {
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -24),
-		Size = UDim2.fromOffset(460, 66),
-		BackgroundTransparency = 1,
-		Parent = UI.Root,
-	})
-	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = quick })
-	for _, spec in { { "PLAY SOLO", "Solo", Color3.fromRGB(170, 60, 45) }, { "FIND PLAYERS", "Group", Color3.fromRGB(45, 90, 150) } } do
-		local b = UI.new("TextButton", {
-			Size = UDim2.fromOffset(220, 66),
-			Text = spec[1],
-			Font = UI.Font.Bold,
-			TextSize = 22,
-			TextColor3 = Color3.new(1, 1, 1),
-			BackgroundColor3 = spec[3],
-			Parent = quick,
-		})
-		UI.corner(b, 14)
-		UI.stroke(b, Color3.new(1, 1, 1), 2, 0.5)
-		b.Activated:Connect(function()
-			ctx.Remotes.QuickPlay:FireServer(spec[2])
-		end)
-	end
 	ctx.Remotes.Queue.OnClientEvent:Connect(render)
 	ctx.Remotes.Notify.OnClientEvent:Connect(function(text)
 		queueStatus.Text = text

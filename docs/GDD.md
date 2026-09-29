@@ -89,7 +89,7 @@ Eleven drawers and shelves are **stashes** (end tables, kitchen drawers, the hal
 Each has its own line in the truth log, a thought, and a spoken reaction if friends are together.
 
 ### Music and sound
-A music box in the rain in the lobby ("Eerie Music Box", APM); soft piano indoors in Act I; a driving chase track ("Dark Hunter", APM) when he is chasing someone near you, low dread ("Facing the Fear", APM) while he searches close by, both scaled by how close he is; and from Act II the house creaks somewhere near you every 20-50 s.
+A quiet music box in the rain in the lobby ("Eerie Music Box", APM, volume 0.06); soft piano indoors in Act I; a driving chase track ("Dark Hunter", APM) when he is chasing someone near you, low dread ("Facing the Fear", APM) while he searches close by, both scaled by how close he is; and from Act II the house creaks somewhere near you every 20-50 s.
 
 ### Hanging out
 The living-room sofa, both armchairs and the den sofa have seats: a **Sit** prompt puts you on the nearest free cushion (walking into them does nothing), jump to get up. Hiding or getting caught pulls you off the seat first.
@@ -119,7 +119,7 @@ Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that 
 
 ### First impression, sharing and records
 - **Loading screen** (`src/first/Loading.client.luau`, ReplicatedFirst): replaces Roblox's default. Rain streaks down a black screen, one warm window glows, and every few seconds a figure is standing in it. Title, a one-line hook, a gameplay tip and a progress bar; it fades out once the game has loaded.
-- **One-tap play:** PLAY SOLO and FIND PLAYERS buttons at the bottom of the lobby put you straight into a queue circle (FIND PLAYERS picks the group circle with the most people waiting, or the smallest when all are empty); walking into a circle still works.
+- **Lobby menu:** a small, plain column in the top-left corner (dark glass, thin outline, white text): Play solo, Find players, Endings, Invite friends, Favorite. While you're queued, your queue status takes the play buttons' place. Play solo / Find players put you straight into a queue circle (FIND PLAYERS picks the group circle with the most people waiting, or the smallest when all are empty); walking into a circle still works.
 - **Invite and favorite** (`client/Controllers/Social`): an INVITE FRIENDS and a FAVORITE button under the lobby title and on the ending screen; the favorite prompt also appears once, 8 s into the first ending of a session.
 - **Saved records** (`Services/StatsService`, DataStore `PlayerStats_v1`): nights played, nights survived, and endings found. The lobby shows `NIGHTS · SURVIVED · ENDINGS x / y`; the ending card says NEW ENDING FOUND the first time you see one.
 - **Endings collection:** an ENDINGS button in the lobby lists all six endings; found ones by name, the rest as ??? with a hint.

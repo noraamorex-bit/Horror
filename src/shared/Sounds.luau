@@ -23,7 +23,7 @@ Sounds.Library = {
 	Rain = { Id = "rbxassetid://9112853287", Volume = 0.8, Looped = true },
 	RainWindow = { Id = "rbxassetid://9112856881", Volume = 0.6, Looped = true },
 	-- APM "Eerie Music Box": the lobby, standing on Alder Lane in the rain
-	LobbyMusic = { Id = "rbxassetid://139053896078359", Volume = 0.2, Looped = true },
+	LobbyMusic = { Id = "rbxassetid://139053896078359", Volume = 0.06, Looped = true },
 	-- APM "Music Box Lullaby (30s)": Lily's music box, playing by itself
 	MusicBox = { Id = "rbxassetid://9047796475", Volume = 0.9, Range = 70, Caption = "[A music box is playing upstairs]" },
 	-- Roblox "BathRunning": the upstairs shower turning on

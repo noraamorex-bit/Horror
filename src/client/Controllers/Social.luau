@@ -49,21 +49,23 @@ end
 function Social.button(parent: Instance, kind: string, props): TextButton
 	local UI = ctx.UI
 	local isInvite = kind == "invite"
+	-- minimal: dark glass, thin outline, white text
 	local b = UI.new("TextButton", {
-		Size = UDim2.fromOffset(200, 54),
-		Text = isInvite and "INVITE FRIENDS" or "FAVORITE",
-		Font = UI.Font.Bold,
-		TextSize = 19,
-		TextColor3 = Color3.new(1, 1, 1),
-		BackgroundColor3 = isInvite and Color3.fromRGB(40, 110, 70) or Color3.fromRGB(170, 120, 30),
+		Size = UDim2.fromOffset(150, 34),
+		Text = isInvite and "Invite friends" or "Favorite",
+		Font = Enum.Font.GothamMedium,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(235, 232, 226),
+		BackgroundColor3 = Color3.fromRGB(12, 12, 14),
+		BackgroundTransparency = 0.4,
 		AutoButtonColor = true,
 		Parent = parent,
 	})
 	for k, v in props or {} do
 		(b :: any)[k] = v
 	end
-	UI.corner(b, 12)
-	UI.stroke(b, Color3.new(1, 1, 1), 1.5, 0.6)
+	UI.corner(b, 6)
+	UI.stroke(b, Color3.new(1, 1, 1), 1, 0.8)
 	b.Activated:Connect(function()
 		if isInvite then
 			Social.invite()
