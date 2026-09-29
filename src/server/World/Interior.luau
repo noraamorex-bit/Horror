@@ -1185,6 +1185,27 @@ function Interior.build(ctx, root: Instance, refs)
 			Kit.box(nest, "PhotoImage", CF(-28.2, A + 2.08 + r * 1.0, n0.Z - 1.6 + c * 1.0), V(0.02, 0.55, 0.55), Color3.fromHSV(rng:NextNumber(0.05, 0.15), 0.3, rng:NextNumber(0.2, 0.5)), KM.Plastic)
 		end
 	end
+	-- the sheet of plywood he propped up to pin things to
+	Kit.box(nest, "Plywood", CF(-28.45, A + 2.6, n0.Z + 1.6), V(0.14, 5.2, 9.6), Color3.fromRGB(128, 100, 70), KM.Wood, { CanCollide = true })
+	-- nineteen days, scratched into a plank beside the photos
+	Kit.box(nest, "TallyBoard", CF(-28.3, A + 2.9, n0.Z + 4.5), V(0.12, 1.6, 2.6), Color3.fromRGB(150, 120, 85), KM.Wood)
+	for k = 0, 18 do
+		local group, idx = k // 5, k % 5
+		local z = n0.Z + 3.4 + group * 0.62 + idx * 0.1
+		if idx == 4 then
+			-- the fifth mark strikes through the other four
+			Kit.box(nest, "Tally", CF(-28.2, A + 2.9, n0.Z + 3.4 + group * 0.62 + 0.16) * ANG(rad(55), 0, 0), V(0.03, 0.95, 0.05), Color3.fromRGB(40, 30, 26), KM.Wood)
+		else
+			Kit.box(nest, "Tally", CF(-28.2, A + 2.9, z), V(0.03, 0.8, 0.05), Color3.fromRGB(40, 30, 26), KM.Wood)
+		end
+	end
+	-- a family photo taken from downstairs, the parents' faces scratched out
+	Kit.picture(nest, F(-27.9, A + 0.72, n0.Z - 3.3, PX) * ANG(rad(-20), 0, 0), 1.4, 1.0, WOOD_DARK, 9)
+	for _, dz in { -0.25, 0.25 } do
+		Kit.box(nest, "Scratch", F(-27.82, A + 0.77, n0.Z - 3.3 + dz, PX) * ANG(rad(-20), 0, rad(35)), V(0.3, 0.05, 0.02), Color3.fromRGB(240, 240, 236), KM.Plastic)
+	end
+	-- Lily's pink hair ribbon, on his pillow
+	Kit.box(nest, "Ribbon", CF(n0.X - 0.6, A + 0.42, n0.Z - 0.4) * ANG(0, rad(30), 0), V(0.7, 0.05, 0.2), Color3.fromRGB(240, 130, 170), KM.Fabric)
 	local lanyard = Kit.box(nest, "Lanyard", CF(n0.X - 1, A + 0.05, n0.Z - 3.6), V(1.0, 0.08, 0.8), Color3.fromRGB(40, 90, 160), KM.Plastic)
 	lanyard.CanQuery = true
 	Kit.box(nest, "IDCard", CF(n0.X - 1, A + 0.1, n0.Z - 3.6), V(0.6, 0.02, 0.8), Color3.fromRGB(236, 236, 230), KM.Plastic)

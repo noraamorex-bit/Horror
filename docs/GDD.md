@@ -318,7 +318,7 @@ All coordinates are in studs. The front of the house faces −Z (toward the stre
 - **Structure audit** (harness): every door and arch needs floor underfoot and open air on both sides; furniture may not intrude into doorways, stair ends or walls.
 - **Upstairs (y 15–28):** Master Bedroom (+ en-suite), Jamie's Room, Upstairs Hall (attic hatch, linen wardrobe), Guest Room, Hall Bath (**cell signal at the window**), Lily's Room.
 - **Basement (y −13–0):** open storage, under-stairs hiding nook, **Boiler Room** (captives).
-- **Attic (y 29+):** plywood walkway over insulation to **the nest**: sleeping bag, lantern, wrappers, polaroids, the notebook, stolen keys.
+- **Attic (y 29+):** plywood walkway over insulation to **the nest**: sleeping bag (with Lily's pink ribbon on the pillow), lantern, wrappers, a propped-up sheet of plywood with the polaroids and nineteen tally marks, a family photo with the parents' faces scratched out, the notebook, stolen keys.
 - **Garage:** car, breaker panel, workbench (walkies, tape), manual release cord, ceiling hatch with stepladder (his route), side door. **Phone junction box on the outside wall.**
 - **Exterior:** rain, porch, driveway, street lamp, the gray van down the street, fenced back yard, Mrs. Okafor's lit porch.
 
