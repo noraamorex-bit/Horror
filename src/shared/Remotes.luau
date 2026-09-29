@@ -38,6 +38,7 @@ local NAMES = {
 	"DialogueChoice", -- (index) the line you picked
 	"Jumpscare", -- (head part) he got you: the camera snaps to his face
 	"Notice", -- ({Title, Body, Button}) a one-button card (first-night tips)
+	"QuickPlay", -- (kind) lobby: "Solo" or "Group" walks you into a queue circle
 }
 
 local Remotes = {}

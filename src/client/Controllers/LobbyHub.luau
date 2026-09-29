@@ -22,7 +22,12 @@ local function teleportScreen(): ScreenGui
 	return gui
 end
 
+local quick: Frame
+
 local function render(state)
+	if quick then
+		quick.Visible = state == nil
+	end
 	if not state then
 		panel.Visible = false
 		return
@@ -182,7 +187,7 @@ function LobbyHub.start()
 
 	ctx.Notice.show({
 		Title = "Welcome to Hollis Creek",
-		Body = "Walk into one of the white circles to queue for 1, 2, 3 or 4 players.\n\nWhen a circle is full, your group goes to the house together.",
+		Body = "Tap PLAY SOLO to start right away, or FIND PLAYERS to team up with others.\n\nYou can also walk into a white circle to queue for 1, 2, 3 or 4 players. Invite friends to play together!",
 		Button = "OK",
 	})
 
@@ -215,6 +220,31 @@ function LobbyHub.start()
 		ctx.Remotes.LeaveQueue:FireServer()
 	end)
 
+	-- one-tap play (no need to find the circles)
+	quick = UI.new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -24),
+		Size = UDim2.fromOffset(460, 66),
+		BackgroundTransparency = 1,
+		Parent = UI.Root,
+	})
+	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = quick })
+	for _, spec in { { "PLAY SOLO", "Solo", Color3.fromRGB(170, 60, 45) }, { "FIND PLAYERS", "Group", Color3.fromRGB(45, 90, 150) } } do
+		local b = UI.new("TextButton", {
+			Size = UDim2.fromOffset(220, 66),
+			Text = spec[1],
+			Font = UI.Font.Bold,
+			TextSize = 22,
+			TextColor3 = Color3.new(1, 1, 1),
+			BackgroundColor3 = spec[3],
+			Parent = quick,
+		})
+		UI.corner(b, 14)
+		UI.stroke(b, Color3.new(1, 1, 1), 2, 0.5)
+		b.Activated:Connect(function()
+			ctx.Remotes.QuickPlay:FireServer(spec[2])
+		end)
+	end
 	ctx.Remotes.Queue.OnClientEvent:Connect(render)
 	ctx.Remotes.Notify.OnClientEvent:Connect(function(text)
 		queueStatus.Text = text

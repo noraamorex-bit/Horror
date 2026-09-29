@@ -687,6 +687,46 @@ function LobbyServer.run(c)
 		lastSent[p] = nil
 	end)
 
+	-- one-tap queueing (phones): put the player in the right circle
+	ctx.Remotes.QuickPlay.OnServerEvent:Connect(function(player, kind)
+		if teleporting[player] or padOf(player) then
+			return
+		end
+		local char = player.Character
+		if not char then
+			return
+		end
+		local target
+		if kind == "Solo" then
+			for _, pad in pads do
+				if pad.Size == 1 and not pad.Teleporting then
+					target = pad
+				end
+			end
+		else
+			-- the group circle with the most people waiting; when they're all empty, the
+			-- smallest one (quickest to fill)
+			local best = -math.huge
+			for _, pad in pads do
+				if pad.Size > 1 and not pad.Teleporting and #pad.Members < pad.Size then
+					local score = #pad.Members * 10 - pad.Size
+					if score > best then
+						best, target = score, pad
+					end
+				end
+			end
+		end
+		if target then
+			local a = math.random() * math.pi * 2
+			local root = ctx.Util.getRoot(player)
+			if root then
+				-- moving the root part carries the whole character
+				root.CFrame = CFrame.new(target.Center + V(math.cos(a) * 2, 3.2, math.sin(a) * 2))
+			end
+		else
+			ctx.Remotes.Notify:FireClient(player, "Every circle is busy. Try again in a moment.", "info")
+		end
+	end)
 	ctx.Remotes.LeaveQueue.OnServerEvent:Connect(function(player)
 		if teleporting[player] then
 			return
