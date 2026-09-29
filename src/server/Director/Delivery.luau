@@ -54,54 +54,72 @@ local function walk(model: Model, points, speed: number, folder: Instance)
 	end
 end
 
--- The delivery man: a tall, thin R15 man in a black leather jacket and black jeans (Roblox's own
--- classic clothing), bald, with a realistic pale face texture: heavy brows, narrow eyes and a
--- crooked smirk. What makes him wrong is how he holds himself: hunched over the pizza boxes, head
--- lowered, staring from under his brows, and a slow tilt of the head while he talks.
--- The standard R15 body is used on purpose (it always loads); if even that fails, the part-built
--- Kit model with the same face stands in.
-local FACE_IMAGE = "rbxassetid://76270804185071" -- "Smirk" face texture (image of decal 134821089038344)
-local SHIRT = 382538295 -- Roblox: Guitar Tee with Black Jacket
-local PANTS = 382537569 -- Roblox: Black Jeans
--- pale skin to match the face texture
-local SKIN = Color3.fromRGB(228, 204, 186)
-local HEAD_BOW = math.rad(-12) -- head lowered
-local LEAN = math.rad(-7) -- shoulders hunched forward
+-- The delivery man is a normal Roblox avatar: Roblox's "Man Face" head, short brown hair, the
+-- red baseball cap and a bright red shirt with the TONY'S logo on the chest, dark jeans. He
+-- carries the two pizza boxes in both hands. The strangeness is in how he acts: he stands too
+-- still, head lowered, watching whoever answers and slowly tilting his head while he talks.
+-- If Roblox can't load the head, he gets the classic head and face; if even the avatar fails,
+-- the part-built Kit model (same uniform) stands in.
+local AVATAR = {
+	Head = 10725826963, -- Roblox: Man Face - Head
+	Hair = 9243976603, -- Roblox: Short Fringe - Brown
+	Hat = 1028606, -- Roblox: Red Baseball Cap
+}
+local SKIN = Color3.fromRGB(234, 190, 152)
+local SHIRT_RED = Color3.fromRGB(196, 32, 28)
+local JEANS = Color3.fromRGB(44, 50, 66)
+local HEAD_BOW = math.rad(-8) -- head a little lowered
+local LEAN = math.rad(-4) -- shoulders slightly forward
 
--- the face texture on a head part (replaces any default face decal)
-local function applyFace(head: BasePart)
-	for _, d in head:GetChildren() do
-		if d:IsA("Decal") then
-			d:Destroy()
-		end
-	end
-	local face = Instance.new("Decal")
-	face.Name = "face"
-	face.Face = Enum.NormalId.Front
-	face.Texture = FACE_IMAGE
-	face.Parent = head
+-- the pizza place's logo on his shirt
+local function logo(torso: BasePart)
+	local gui = Instance.new("SurfaceGui")
+	gui.Name = "ShirtLogo"
+	gui.Face = Enum.NormalId.Front
+	gui.CanvasSize = Vector2.new(200, 200)
+	gui.Parent = torso
+	local label = Instance.new("TextLabel")
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Position = UDim2.fromScale(0.5, 0.32)
+	label.Size = UDim2.fromScale(0.62, 0.2)
+	label.BackgroundColor3 = Color3.fromRGB(250, 240, 214)
+	label.TextColor3 = SHIRT_RED
+	label.Font = Enum.Font.GothamBlack
+	label.TextScaled = true
+	label.Text = "TONY'S"
+	label.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0.3, 0)
+	corner.Parent = label
 end
-Delivery.applyFace = applyFace
+
+local function describe(withHead: boolean)
+	local desc = Instance.new("HumanoidDescription")
+	if withHead then
+		desc.Head = AVATAR.Head
+	end
+	desc.HairAccessory = tostring(AVATAR.Hair)
+	desc.HatAccessory = tostring(AVATAR.Hat)
+	desc.HeadColor = SKIN
+	desc.LeftArmColor = SKIN
+	desc.RightArmColor = SKIN
+	desc.TorsoColor = SHIRT_RED
+	desc.LeftLegColor = JEANS
+	desc.RightLegColor = JEANS
+	desc.HeightScale = 1.05
+	desc.WidthScale = 0.95
+	desc.DepthScale = 0.95
+	desc.BodyTypeScale = 0
+	desc.ProportionScale = 0
+	return desc
+end
 
 local function avatarActor(folder: Instance, start: CFrame)
 	local Players = game:GetService("Players")
-	local desc = Instance.new("HumanoidDescription")
-	desc.Shirt = SHIRT
-	desc.Pants = PANTS
-	desc.HeadColor = SKIN
-	desc.TorsoColor = SKIN
-	desc.LeftArmColor = SKIN
-	desc.RightArmColor = SKIN
-	desc.LeftLegColor = SKIN
-	desc.RightLegColor = SKIN
-	-- tall and narrow, with long limbs
-	desc.HeightScale = 1.18
-	desc.WidthScale = 0.8
-	desc.DepthScale = 0.85
-	desc.HeadScale = 1
-	desc.BodyTypeScale = 0.35
-	desc.ProportionScale = 0.6
-	local model = Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
+	local okHead, built = pcall(function()
+		return Players:CreateHumanoidModelFromDescription(describe(true), Enum.HumanoidRigType.R15)
+	end)
+	local model = okHead and built or Players:CreateHumanoidModelFromDescription(describe(false), Enum.HumanoidRigType.R15)
 	local hum = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
 	local head = model:FindFirstChild("Head") :: BasePart
@@ -110,7 +128,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 	model.Name = "PizzaGuy"
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-	hum.WalkSpeed = 5.5
+	hum.WalkSpeed = 6
 	hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
 	local animate = model:FindFirstChild("Animate")
@@ -123,7 +141,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 	pcall(function()
 		root:SetNetworkOwner(nil)
 	end)
-	applyFace(head)
+	logo(torso)
 	-- carrying the pizza the ordinary way: upper arms down at his sides, forearms level, the two
 	-- boxes flat on his hands in front of his stomach
 	for _, name in { "RightShoulder", "LeftShoulder" } do
@@ -284,7 +302,7 @@ local function avatarActor(folder: Instance, start: CFrame)
 end
 
 local function partsActor(folder: Instance, start: CFrame)
-	local man, headModel, neck = Kit.deliveryMan(folder, start, FACE_IMAGE)
+	local man, headModel, neck = Kit.deliveryMan(folder, start)
 	local actor = { Model = man }
 	function actor.pivot(): CFrame
 		return man:GetPivot()
@@ -327,9 +345,12 @@ function Delivery.run(ctx, D, onDone)
 	folder.Name = "PizzaDelivery"
 	folder.Parent = world
 	local finished = false
+	-- the house goes quiet when the headlights come up the street (the piano fades out)
+	workspace:SetAttribute("Delivery", true)
 	local function finish()
 		if not finished then
 			finished = true
+			workspace:SetAttribute("Delivery", nil)
 			onDone()
 		end
 	end

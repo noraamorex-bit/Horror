@@ -154,6 +154,21 @@ function Atmosphere.start()
 	flash = Instance.new("ColorCorrectionEffect")
 	flash.Name = "Lightning"
 	flash.Parent = Lighting
+	-- Inside the lit house everything turns warm and golden (the storm outside stays cold and
+	-- blue). The warmth drains away in the basement, the attic, and when the power dies.
+	local warmth = Instance.new("ColorCorrectionEffect")
+	warmth.Name = "Warmth"
+	warmth.Parent = Lighting
+	local baseAmbient = Lighting.Ambient
+	local WARM_AMBIENT = Color3.fromRGB(40, 30, 22)
+	local warmOn: boolean? = nil
+	-- soft piano while the evening is still just an evening: indoors, first act, lights on
+	local piano = ctx.Effects.localSound("CozyPiano")
+	local pianoVol = 0
+	if piano then
+		piano.Volume = 0
+		piano:Play()
+	end
 	base.Ambient = Lighting.OutdoorAmbient
 	base.Brightness = Lighting.Brightness
 
@@ -211,6 +226,29 @@ function Atmosphere.start()
 		end
 		if windSound then
 			windSound.Volume = inside and 0.1 or 0.25
+		end
+		-- warm indoors (ground floor and upstairs) while the lights are on
+		local floor = inside and ctx.Rooms.floorOf(cam.CFrame.Position)
+		local cozy = inside and workspace:GetAttribute("Power") ~= false and (floor == "Ground" or floor == "Upstairs")
+		if cozy ~= warmOn then
+			warmOn = cozy
+			ctx.UI.tween(warmth, 1.2, cozy and {
+				TintColor = Color3.fromRGB(255, 230, 200),
+				Saturation = 0.22,
+				Contrast = 0.03,
+				Brightness = 0.03,
+			} or {
+				TintColor = Color3.new(1, 1, 1),
+				Saturation = 0,
+				Contrast = 0,
+				Brightness = 0,
+			})
+			ctx.UI.tween(Lighting, 1.2, { Ambient = cozy and WARM_AMBIENT or baseAmbient })
+		end
+		if piano then
+			local want = (cozy and workspace:GetAttribute("Act") == "Evening" and not workspace:GetAttribute("Delivery")) and 0.22 or 0
+			pianoVol += math.clamp(want - pianoVol, -0.03, 0.02)
+			piano.Volume = pianoVol
 		end
 		-- the ground mist follows the camera outdoors only
 		mistPart.CFrame = CFrame.new(cam.CFrame.Position.X, (inside and -500 or cam.CFrame.Position.Y - 4), cam.CFrame.Position.Z)

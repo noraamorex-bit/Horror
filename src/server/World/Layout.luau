@@ -247,7 +247,8 @@ Layout.Switches = {
 }
 
 -- Rooms whose lights start ON when the night begins
-Layout.StartLit = { Living = true, Kitchen = true, Hallway = true, UpperHall = true, Den = true }
+-- "Decor" is the circuit for sconces, fairy lights and under-cabinet strips (always on until the breaker goes)
+Layout.StartLit = { Living = true, Kitchen = true, Hallway = true, UpperHall = true, Den = true, Jamie = true, Decor = true }
 
 ---------------------------------------------------------------------------
 -- Intruder navigation nodes (root height). Tag = room name.
@@ -329,6 +330,11 @@ Layout.NoArt = {
 	{ "Ground", 34, 40.6, -10.6, -7 }, -- mudroom shelf and key board
 	{ "Ground", 23, 33, -10.6, -8.5 }, -- mudroom coat hooks
 	{ "Ground", -8.4, -5, -29, -23 }, -- hall mirror
+	{ "Ground", -8.4, -5, -12, 12 }, -- stair photo gallery and sconce
+	{ "Upstairs", -8.4, -5, -7, 17 }, -- the gallery continues up the stairwell
+	{ "Ground", 10, 12.4, -16.5, -12.3 }, -- hall sconce
+	{ "Upstairs", 10, 12.4, -22, -18 }, -- upstairs hall sconce
+	{ "Upstairs", 10, 12.4, 8, 12 }, -- upstairs hall sconce
 	{ "Upstairs", -10, -7.6, -27, -21 }, -- master dresser mirror
 	{ "Upstairs", -21, -11, 11, 12.6 }, -- master bath mirrors
 	{ "Upstairs", 14, 21, -6.6, -5 }, -- upstairs bath mirror

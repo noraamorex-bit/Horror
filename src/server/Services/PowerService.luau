@@ -16,7 +16,6 @@ local staticLit = {} -- room -> true (battery lanterns, fire, etc.)
 local flickering = false
 
 local OFF_COLOR = Color3.fromRGB(90, 88, 84)
-local ON_COLOR = Color3.fromRGB(255, 236, 200)
 
 function Power.init(c)
 	ctx = c
@@ -41,9 +40,11 @@ end
 
 local function applyLight(entry)
 	local on = mainOn and switches[entry.Room] == true
-	entry.Light.Enabled = on
+	if entry.Light then
+		entry.Light.Enabled = on
+	end
 	entry.Bulb.Material = on and Enum.Material.Neon or Enum.Material.SmoothPlastic
-	entry.Bulb.Color = on and ON_COLOR or OFF_COLOR
+	entry.Bulb.Color = on and entry.OnColor or OFF_COLOR
 end
 
 local function refreshRoom(room)
@@ -60,8 +61,10 @@ local function refreshAll()
 	end
 end
 
-function Power.registerLight(room: string, bulb: BasePart, light: Light)
-	local entry = { Room = room, Bulb = bulb, Light = light, Brightness = light.Brightness }
+-- light may be nil for a bulb that only glows (fairy lights between the ones that shine)
+function Power.registerLight(room: string, bulb: BasePart, light: Light?)
+	-- each bulb keeps its own warm colour while it's on
+	local entry = { Room = room, Bulb = bulb, Light = light, OnColor = bulb.Color }
 	table.insert(lights, entry)
 	applyLight(entry)
 end
@@ -145,7 +148,9 @@ function Power.flicker(duration: number)
 		local off = rng:NextNumber() < 0.55
 		for _, entry in lights do
 			if switches[entry.Room] then
-				entry.Light.Enabled = not off
+				if entry.Light then
+					entry.Light.Enabled = not off
+				end
 				entry.Bulb.Material = off and Enum.Material.SmoothPlastic or Enum.Material.Neon
 			end
 		end

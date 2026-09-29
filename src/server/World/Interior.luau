@@ -79,6 +79,22 @@ function Interior.build(ctx, root: Instance, refs)
 		ctx.Power.registerLight(room, bulb, light)
 	end
 
+	-- decorative lights (sconces, fairy lights, under-cabinet strips) are on their own circuit,
+	-- on from the start and dead when the breaker goes
+	local function decor(bulb: BasePart, light: Light?)
+		ctx.Power.registerLight("Decor", bulb, light)
+	end
+	local function sconce(parent, cf: CFrame, shade: Color3?)
+		local _, bulb, light = Kit.sconce(parent, cf, shade)
+		decor(bulb, light)
+	end
+	local function fairyLights(parent, a: Vector3, b: Vector3, sag: number, n: number, color: Color3?)
+		local _, bulbs = Kit.stringLights(parent, a, b, sag, n, color)
+		for _, bulb in bulbs do
+			decor(bulb, bulb:FindFirstChildOfClass("PointLight"))
+		end
+	end
+
 	local function pendant(parent, room: string, top: Vector3, drop: number, color: Color3?)
 		local _, bulb, light = Kit.pendant(parent, top, drop, color)
 		ctx.Power.registerLight(room, bulb, light)
@@ -151,6 +167,20 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.bookcase(living, F(-9.3, G, -6.5, NX), 6, 1.2, 8.5, 4)
 	Kit.ceilingFan(living, V(-24, G + 13, -14))
 
+	-- cozy: knitted throws, extra cushions, two mugs of cocoa still steaming, a basket of blankets
+	-- by the fire, warm sconces either side of the TV
+	local sofaCF = F(-24, G, -15.5, NZ)
+	Kit.throwBlanket(living, sofaCF, 3.8, -2.6, 2.4, Color3.fromRGB(226, 214, 190), Color3.fromRGB(170, 60, 50))
+	Kit.throwBlanket(living, F(-34, G, -21.5, PX), 3.8, 0, 2.2, Color3.fromRGB(150, 50, 44), Color3.fromRGB(230, 200, 150))
+	Kit.cushion(living, sofaCF * CF(1.2, 2.72, 0.45) * ANG(rad(14), rad(8), rad(5)), 1.2, Color3.fromRGB(226, 196, 140))
+	Kit.cushion(living, F(-15.2, G, -22.4, NX) * CF(0, 2.62, 0.45) * ANG(rad(14), 0, rad(-6)), 1.15, Color3.fromRGB(70, 96, 84))
+	Kit.cocoa(living, F(-21.9, G + 2.1, -22.0, NZ), Color3.fromRGB(190, 60, 50))
+	Kit.cocoa(living, F(-25.0, G + 2.1, -22.1, NZ) * ANG(0, rad(140), 0), Color3.fromRGB(236, 230, 214))
+	Kit.basket(living, F(-37.3, G, -5.4, PX), 1.9, 1.5)
+	for _, x in { -30.6, -17.4 } do
+		sconce(living, F(x, G + 8.4, -29.62, PZ))
+	end
+
 	-- grandfather clock in the corner, pendulum swinging behind the glass
 	local clockCF = F(-11.4, G, -28.25, PZ)
 	local _, clockFace = Kit.grandfatherClock(living, clockCF, WOOD_DARK)
@@ -209,6 +239,8 @@ function Interior.build(ctx, root: Instance, refs)
 		Kit.photoFrame(living, fpCF * CF(lx, 8.6, -1.85), 1.1 - i * 0.1, 0.9, WOOD_DARK, i)
 	end
 	Kit.picture(living, fpCF * CF(0, 10.9, -1.25), 4.2, 2.6, WOOD_DARK, 17)
+	-- warm fairy lights draped along the mantel edge
+	fairyLights(living, (fpCF * CF(-5.3, 8.45, -2.25)).Position, (fpCF * CF(5.3, 8.45, -2.25)).Position, 0.7, 16)
 	-- fire tools, the poker you can take
 	local toolBase = fpCF * CF(-6.1, 0, -1.2)
 	Kit.lathe(living, "ToolStand", toolBase, { { 0, 0.8 }, { 0.12, 0.8 }, { 0.2, 0.2 } }, C.Black, KM.Metal)
@@ -241,8 +273,8 @@ function Interior.build(ctx, root: Instance, refs)
 	flames.Parent = fireSpot
 	local fireLight = Instance.new("PointLight")
 	fireLight.Color = Color3.fromRGB(255, 150, 70)
-	fireLight.Range = 26
-	fireLight.Brightness = 1.6
+	fireLight.Range = 30
+	fireLight.Brightness = 2
 	fireLight.Shadows = true
 	fireLight.Enabled = false
 	fireLight.Parent = fireSpot
@@ -257,39 +289,21 @@ function Interior.build(ctx, root: Instance, refs)
 			Kit.cyl(living, "LogEnd", cf * CF(e * (len / 2 + 0.01), 0, 0), 0.04, dia - 0.12, Color3.fromRGB(196, 160, 112), KM.Wood)
 		end
 	end
-	local firePrompt
-	firePrompt = ctx.Interaction.prompt(fireSpot, { Action = "Put in firewood", Object = "Fireplace", Hold = 1, Distance = 8 }, function(player)
-		if fire.Lit then
-			return
+	local function stackLogs()
+		fire.Logs = true
+		-- a proper stack: two logs on the grate, one across them, two crossed on top, kindling
+		log(-0.1, 1.5, 0.35, 3.4, 0.62, 4, 1)
+		log(0.1, 1.5, -0.25, 3.2, 0.58, -3, 2)
+		log(0, 2.0, 0.05, 3.0, 0.55, 2, 3)
+		log(-0.7, 2.45, 0, 1.9, 0.45, 38, 4)
+		log(0.7, 2.45, 0, 1.9, 0.45, -38, 5)
+		for k = 1, 6 do
+			local stick = Kit.box(living, "Kindling", fireCF * CF(-0.6 + k * 0.2, 2.25 + (k % 2) * 0.1, 0.05) * ANG(0, rad(20 + k * 27), 0), V(1.3, 0.1, 0.1), Color3.fromRGB(150, 118, 80), KM.Wood)
+			stick.CFrame *= ANG(0, 0, rad(k % 2 == 0 and 15 or -12))
 		end
-		if not fire.Logs then
-			if not ctx.Inventory.take(player, "Firewood") then
-				ctx.Director.think(player, "No wood in here. There's a pile of firewood in the garage.")
-				return
-			end
-			fire.Logs = true
-			ctx.Audio.playAt("LogDrop", fireSpot.Position, { Caption = false })
-			-- a proper stack: two logs on the grate, one across them, two crossed on top, kindling
-			log(-0.1, 1.5, 0.35, 3.4, 0.62, 4, 1)
-			log(0.1, 1.5, -0.25, 3.2, 0.58, -3, 2)
-			log(0, 2.0, 0.05, 3.0, 0.55, 2, 3)
-			log(-0.7, 2.45, 0, 1.9, 0.45, 38, 4)
-			log(0.7, 2.45, 0, 1.9, 0.45, -38, 5)
-			for k = 1, 6 do
-				local stick = Kit.box(living, "Kindling", fireCF * CF(-0.6 + k * 0.2, 2.25 + (k % 2) * 0.1, 0.05) * ANG(0, rad(20 + k * 27), 0), V(1.3, 0.1, 0.1), Color3.fromRGB(150, 118, 80), KM.Wood)
-				stick.CFrame *= ANG(0, 0, rad(k % 2 == 0 and 15 or -12))
-			end
-			firePrompt.ActionText = "Light the fire"
-			firePrompt.HoldDuration = 2
-			return
-		end
-		if not ctx.Inventory.take(player, "Matches") then
-			ctx.Director.think(player, "I need matches. There's a box in the kitchen drawer by the stove.")
-			return
-		end
+	end
+	local function lightFire()
 		fire.Lit = true
-		firePrompt.Enabled = false
-		ctx.Audio.playAt("Matches", fireSpot.Position, { Caption = false })
 		fireEmitter.Enabled = true
 		flames.Enabled = true
 		fireLight.Enabled = true
@@ -298,13 +312,13 @@ function Interior.build(ctx, root: Instance, refs)
 		end
 		ctx.Audio.loopOn("FireCrackle", fireSpot, { Caption = false })
 		ctx.Power.setStaticLit("Living", true)
-		task.spawn(function()
-			while fireSpot.Parent do
-				fireLight.Brightness = 1.3 + math.random() * 0.6
-				task.wait(0.12 + math.random() * 0.15)
-			end
-		end)
-	end)
+		-- the firelight breathes (client-side flicker)
+		CollectionService:AddTag(fireLight, "Flicker")
+	end
+	-- Jamie got a fire going before everyone arrived: the living room glows from the start.
+	-- It's still the light that stays on when the power dies.
+	stackLogs()
+	lightFire()
 
 	-- the remote is lost in the couch
 	local remoteFound = false
@@ -437,6 +451,21 @@ function Interior.build(ctx, root: Instance, refs)
 	for _, span in { { 4, 10.8 }, { 17.2, 20.6 }, { 25.4, 28.2 } } do
 		Kit.upperCabinets(kitchen, F(-38.35, G + 8, (span[1] + span[2]) / 2, PX), span[2] - span[1], 1.6, 4.4, CAB)
 	end
+	-- warm light strips under the upper cabinets
+	for _, span in { { 4.2, 10.6 }, { 17.4, 20.4 }, { 25.6, 28.0 } } do
+		local strip = Kit.box(kitchen, "UnderCabinetLight", CF(-37.85, G + 7.93, (span[1] + span[2]) / 2), V(0.18, 0.05, span[2] - span[1] - 0.4), Color3.fromRGB(255, 214, 160), KM.Neon)
+		local l = Instance.new("PointLight")
+		l.Range = 9
+		l.Brightness = 0.75
+		l.Color = Color3.fromRGB(255, 196, 130)
+		l.Shadows = false
+		l.Parent = strip
+		decor(strip, l)
+	end
+	Kit.kettle(kitchen, F(-37.3, G + 3.65, 22.1, PX), Color3.fromRGB(190, 60, 50))
+	for i, z in { 11.6, 16.4 } do
+		Kit.plant(kitchen, F(-38.9, G + 3.8, z, PX), 0.4, "leafy", i == 1 and Color3.fromRGB(190, 110, 70) or Color3.fromRGB(230, 226, 214))
+	end
 	local cupboard = spot(kitchen, "Cupboard", CF(-37.45, G + 10.2, 5.7), V(0.2, 4, 3))
 	target("Cupboard", cupboard.Position)
 	local popcornTaken = false
@@ -459,6 +488,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.cabinets(kitchen, F(-25, G, 14.6, NZ), 6, 4.2, Color3.fromRGB(64, 84, 96), COUNTER)
 	Kit.box(kitchen, "IslandOverhang", F(-25, G + 3.65, 16.8, NZ), V(6.2, 0.3, 1.3), COUNTER, KM.Granite)
 	Kit.fruitBowl(kitchen, F(-24.2, G + 3.8, 14.4, NZ))
+	Kit.cookies(kitchen, F(-22.9, G + 3.8, 15.3, NZ))
 	Kit.vaseFlowers(kitchen, F(-26.6, G + 3.8, 14.2, NZ), 1.1, Color3.fromRGB(230, 230, 226), Color3.fromRGB(240, 200, 80), 5)
 	for _, x in { -27, -25, -23 } do
 		Kit.stool(kitchen, F(x, G, 18.6, NZ), WOOD_DARK)
@@ -467,6 +497,8 @@ function Interior.build(ctx, root: Instance, refs)
 	pendant(kitchen, "Kitchen", V(-23.5, G + 13, 14.6), 2.6)
 
 	-- dining table with four chairs, place settings and flowers
+	-- a warm rug under the dining table takes the chill off the tile
+	Kit.rug(kitchen, F(-15, G, 17.5, PX), 12, 9, Color3.fromRGB(140, 62, 48), Color3.fromRGB(206, 176, 128))
 	local _, tableH = Kit.diningTable(kitchen, F(-15, G, 17.5, PX), 9, 6, WOOD_MID)
 	for _, z in { 15.4, 19.6 } do
 		Kit.chair(kitchen, F(-19.4, G, z, PX), WOOD_MID, Color3.fromRGB(150, 60, 50))
@@ -478,6 +510,9 @@ function Interior.build(ctx, root: Instance, refs)
 	end
 	Kit.box(kitchen, "TableRunner", CF(-15, G + tableH + 0.005, 17.5), V(1.6, 0.02, 8), Color3.fromRGB(130, 50, 44), KM.Fabric)
 	Kit.vaseFlowers(kitchen, F(-15, G + tableH, 17.5, NZ), 1.3, Color3.fromRGB(70, 110, 140), Color3.fromRGB(220, 80, 110), 7)
+	for _, z in { 15.6, 19.4 } do
+		Kit.candle(kitchen, F(-15, G + tableH + 0.02, z, NZ), 0.9, 0.32)
+	end
 	pendant(kitchen, "Kitchen", V(-15, G + 13, 17.5), 3.2, Color3.fromRGB(150, 110, 60))
 
 	-- phone counter against the hall wall: landline, microwave, drawers
@@ -605,6 +640,14 @@ function Interior.build(ctx, root: Instance, refs)
 	lamp(hall, "Hallway", F(-6.55, G + conH, -27.7, PX), "table", Color3.fromRGB(200, 190, 170))
 	Kit.umbrellaStand(hall, F(8, G, -28.5, NZ))
 	Kit.plant(hall, F(-6.6, G, -11.4, PX), 1.4, "snake")
+	sconce(hall, F(11.62, G + 7.8, -14.4, NX))
+	sconce(hall, F(-7.62, G + 7.8, -9.4, PX))
+	-- family photos climbing the stairs with the treads
+	for i, z in { -3, 1.5, 6, 10.5 } do
+		local y = G + (z + 6) / 22.4 * 14 + 5.4
+		local w, h = (i % 2 == 0) and 1.7 or 2.2, (i % 2 == 0) and 2.2 or 1.7
+		Kit.picture(hall, F(-7.6, y, z, PX), w, h, i % 2 == 0 and WOOD_DARK or BRASS, 60 + i)
+	end
 
 	---------------------------------------------------------------------------
 	-- OFFICE (key-locked)
@@ -710,6 +753,13 @@ function Interior.build(ctx, root: Instance, refs)
 	lamp(den, "Den", F(28.2, G, 18.8, NZ), "floor")
 	Kit.ceilingFan(den, V(24, G + 13, 15))
 	Kit.plant(den, F(37, G, 7.2, NX), 1.4, "leafy")
+	-- cozy: throw and cushion on the sofa, cocoa and cookies for movie night, blanket basket
+	local denSofa = F(21.5, G, 17.5, NZ)
+	Kit.throwBlanket(den, denSofa, 3.8, 2.8, 2.4, Color3.fromRGB(196, 150, 90), Color3.fromRGB(120, 60, 40))
+	Kit.cushion(den, denSofa * CF(-1.4, 2.72, 0.45) * ANG(rad(14), rad(-8), rad(-5)), 1.2, Color3.fromRGB(190, 120, 70))
+	Kit.cocoa(den, F(19.5, G + 2, 12.4, NZ), Color3.fromRGB(70, 100, 140))
+	Kit.cookies(den, F(23.6, G + 2, 12.5, NZ))
+	Kit.basket(den, F(14.2, G, 21.4, PX), 1.9, 1.5, nil, { Color3.fromRGB(120, 60, 40), Color3.fromRGB(226, 214, 190), Color3.fromRGB(196, 150, 90) })
 
 	---------------------------------------------------------------------------
 	-- GARAGE
@@ -778,7 +828,7 @@ function Interior.build(ctx, root: Instance, refs)
 			return
 		end
 		if refs.Fire and refs.Fire.Logs then
-			ctx.Audio.caption("There's already wood in the fireplace.", nil, nil, { player })
+			ctx.Audio.caption("The fire's already going. There's plenty of wood in it.", nil, nil, { player })
 			return
 		end
 		ctx.Audio.playAt("LogDrop", pileSpot.Position, { Caption = false, Volume = 0.4 })
@@ -837,7 +887,8 @@ function Interior.build(ctx, root: Instance, refs)
 	---------------------------------------------------------------------------
 	local master = folder("Master")
 	Kit.rug(master, F(-30, U, -14.5, PX), 12, 16, Color3.fromRGB(150, 140, 120))
-	bed(master, "Under the master bed", -39.15, -18.25, -30.15, -10.75, U, Color3.fromRGB(62, 76, 110), PX, NX, "Master", WOOD_DARK)
+	local _, masterBedCF = bed(master, "Under the master bed", -39.15, -18.25, -30.15, -10.75, U, Color3.fromRGB(62, 76, 110), PX, NX, "Master", WOOD_DARK)
+	Kit.bedThrow(master, masterBedCF, 7.5, 9, Color3.fromRGB(196, 170, 130), Color3.fromRGB(140, 60, 50))
 	for _, z in { -20.1, -8.9 } do
 		Kit.nightstand(master, F(-38.1, U, z, PX), WOOD_DARK)
 		lamp(master, "Master", F(-38.1, U + 2.45, z, PX), "table", Color3.fromRGB(200, 196, 188))
@@ -849,6 +900,8 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.photoFrame(master, F(-9.8, U + dresserH, -23, NX), 0.9, 0.7, BRASS, 21)
 	Kit.vaseFlowers(master, F(-9.6, U + dresserH, -21.9, NX), 0.9, Color3.fromRGB(240, 240, 236), Color3.fromRGB(230, 140, 170), 9)
 	Kit.armchair(master, F(-36.9, U, -27.2, PZ), Color3.fromRGB(200, 190, 170))
+	Kit.throwBlanket(master, F(-36.9, U, -27.2, PZ), 3.8, 0, 2.2, Color3.fromRGB(120, 130, 150), Color3.fromRGB(230, 226, 214))
+	Kit.candle(master, F(-9.4, U + dresserH, -24.6, NX), 0.8, 0.4)
 	Kit.ceilingFan(master, V(-24, U + 13, -12))
 	Kit.plant(master, F(-10.6, U, -2.6, NX), 1.3, "leafy")
 
@@ -866,7 +919,19 @@ function Interior.build(ctx, root: Instance, refs)
 	---------------------------------------------------------------------------
 	local jamie = folder("Jamie")
 	Kit.rug(jamie, F(-24, U, 20, PX), 10, 12, Color3.fromRGB(40, 50, 70))
-	bed(jamie, "Under Jamie's bed", -39.15, 13.3, -31.35, 18.3, U, Color3.fromRGB(40, 70, 120), PX, NX, "Jamie", WOOD_MID)
+	local _, jamieBedCF = bed(jamie, "Under Jamie's bed", -39.15, 13.3, -31.35, 18.3, U, Color3.fromRGB(40, 70, 120), PX, NX, "Jamie", WOOD_MID)
+	Kit.bedThrow(jamie, jamieBedCF, 5, 7.8, Color3.fromRGB(150, 60, 50), Color3.fromRGB(230, 220, 200))
+	-- fairy lights along the wall over the bed, with polaroids clipped to the wire
+	do
+		local a, b, sag = V(-39.5, U + 10.6, 12.8), V(-39.5, U + 10.6, 29.2), 1.0
+		fairyLights(jamie, a, b, sag, 20)
+		for i, t in { 0.08, 0.17, 0.27, 0.82, 0.92 } do
+			local p = a:Lerp(b, t) - V(0, math.sin(t * math.pi) * sag + 0.5, 0)
+			local tilt = ANG(0, rad(90), rad((i % 2 == 0 and 6 or -5)))
+			Kit.box(jamie, "Polaroid", CF(p) * tilt, V(0.55, 0.66, 0.03), Color3.fromRGB(246, 244, 238), KM.Plastic)
+			Kit.box(jamie, "PolaroidPhoto", CF(p + V(0.02, 0.06, 0)) * tilt, V(0.45, 0.42, 0.02), Color3.fromHSV((i * 0.17) % 1, 0.35, 0.7), KM.Plastic)
+		end
+	end
 	Kit.nightstand(jamie, F(-38.1, U, 20.4, PX), WOOD_MID)
 	Kit.laptop(jamie, F(-38.1, U + 2.45, 20.4, PX) * ANG(0, rad(15), 0), false)
 	wardrobe(jamie, "Jamie's closet", -19.5, 26.35, -13.5, 29.15, U, NZ, "Jamie", WHITE_WOOD)
@@ -891,13 +956,16 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.plant(uhall, F(10.6, U + htH, -25.9, NX), 0.9, "leafy", Color3.fromRGB(240, 240, 236))
 	Kit.photoFrame(uhall, F(10.8, U + htH, -24.1, NX), 0.8, 0.6, WOOD_DARK, 41)
 	target("SignalSpot", V(37, U + 3, 1))
+	sconce(uhall, F(11.62, U + 7.8, -20, NX))
+	sconce(uhall, F(11.62, U + 7.8, 10, NX))
 
 	---------------------------------------------------------------------------
 	-- GUEST ROOM
 	---------------------------------------------------------------------------
 	local guest = folder("Guest")
 	Kit.rug(guest, F(21, U, -17, NZ), 11, 8, Color3.fromRGB(150, 120, 90))
-	bed(guest, "Under the guest bed", 14.1, -29.15, 20.6, -21.6, U, Color3.fromRGB(150, 130, 100), PZ, NZ, "Guest", WOOD_LIGHT)
+	local _, guestBedCF = bed(guest, "Under the guest bed", 14.1, -29.15, 20.6, -21.6, U, Color3.fromRGB(150, 130, 100), PZ, NZ, "Guest", WOOD_LIGHT)
+	Kit.bedThrow(guest, guestBedCF, 6.5, 7.55, Color3.fromRGB(110, 130, 110), Color3.fromRGB(230, 220, 200))
 	Kit.nightstand(guest, F(21.8, U, -28.1, PZ), WOOD_LIGHT)
 	lamp(guest, "Guest", F(21.8, U + 2.45, -28.1, PZ), "table", Color3.fromRGB(190, 170, 130))
 	wardrobe(guest, "Guest wardrobe", 32, -9.15, 38, -6.35, U, NZ, "Guest", WOOD_LIGHT)
@@ -958,7 +1026,8 @@ function Interior.build(ctx, root: Instance, refs)
 	local lily = folder("Lily")
 	Kit.vcyl(lily, "RoundRug", CF(24, U + 0.03, 17), 0.06, 11, Color3.fromRGB(240, 190, 210), KM.Fabric)
 	Kit.vcyl(lily, "RoundRugInner", CF(24, U + 0.06, 17), 0.03, 8, Color3.fromRGB(250, 220, 232), KM.Fabric)
-	bed(lily, "Under Lily's bed", 32, 22.2, 38.5, 29.15, U, Color3.fromRGB(235, 160, 195), NZ, PZ, "Lily", Color3.fromRGB(240, 236, 230))
+	local _, lilyBedCF = bed(lily, "Under Lily's bed", 32, 22.2, 38.5, 29.15, U, Color3.fromRGB(235, 160, 195), NZ, PZ, "Lily", Color3.fromRGB(240, 236, 230))
+	Kit.bedThrow(lily, lilyBedCF, 6.5, 6.95, Color3.fromRGB(250, 236, 200), Color3.fromRGB(230, 150, 180))
 	wardrobe(lily, "Lily's closet", 13.2, 8.65, 18.2, 11.45, U, PZ, "Lily", Color3.fromRGB(240, 236, 230))
 	-- toy chest
 	Kit.solid(lily, "ToyBox", CF(17.5, U + 1.1, 28.1), V(4, 2.2, 1.9), Color3.fromRGB(230, 200, 120), KM.Wood)
@@ -973,9 +1042,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.teddy(lily, F(34.2, U + 3.7, 27.4, NZ), 0.9, Color3.fromRGB(200, 160, 120))
 	Kit.teddy(lily, F(36.2, U + 3.7, 27.6, NZ) * ANG(0, rad(-20), 0), 0.75, Color3.fromRGB(235, 235, 235))
 	-- string lights along the back wall
-	for i = 0, 11 do
-		Kit.ball(lily, "FairyLight", V(20 + i * 1.6, U + 10.5 - math.sin(i / 11 * math.pi) * 0.8, 29.4), 0.3, Color3.fromRGB(255, 200, 150), KM.Neon)
-	end
+	fairyLights(lily, V(19.4, U + 10.6, 29.4), V(37.8, U + 10.6, 29.4), 0.9, 16, Color3.fromRGB(255, 196, 176))
 	local drawing = paper(lily, "Drawing", CF(24, U + 5.5, 8.42), V(2.2, 1.6, 0.05))
 	drawing.Color = Color3.fromRGB(250, 248, 240)
 	Kit.box(lily, "DrawingTape", CF(24, U + 6.25, 8.46), V(0.5, 0.15, 0.02), Color3.fromRGB(230, 220, 170), KM.Plastic)

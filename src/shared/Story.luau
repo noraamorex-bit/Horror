@@ -519,7 +519,7 @@ Story.Thoughts = {
 		PopcornBag = "Microwave popcorn. Extra butter. Now the microwave.",
 		PopcornBowl = "Smells amazing. The coffee table in the living room.",
 		Firewood = "Heavy. Okay, to the fireplace.",
-		Matches = "Matches. Now I can light the fire.",
+		Matches = "Matches. Good to have if the lights go out.",
 	},
 	Hide = "I have to stay quiet in here.|breath",
 	Captured = "My hands are tied to a pipe. I have to get loose, or wait for the others.|struggle",

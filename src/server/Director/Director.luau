@@ -416,6 +416,7 @@ function Director.startAct(name: string, cause: Player?)
 	end
 
 	if name == "Evening" then
+		workspace:SetAttribute("Delivery", nil)
 		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Windows" })
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint

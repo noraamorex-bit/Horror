@@ -591,11 +591,11 @@ end
 -- Lighting fixtures (return bulb part + light)
 ---------------------------------------------------------------------------
 local function bulbLight(m, pos: Vector3, range: number, brightness: number)
-	local bulb = Kit.ball(m, "LampBulb", pos, 0.5, Color3.fromRGB(255, 214, 160), M.Plastic)
+	local bulb = Kit.ball(m, "LampBulb", pos, 0.5, Color3.fromRGB(255, 206, 150), M.Plastic)
 	local light = Instance.new("PointLight")
 	light.Range = range
 	light.Brightness = brightness
-	light.Color = Color3.fromRGB(255, 190, 125)
+	light.Color = Color3.fromRGB(255, 180, 112)
 	light.Shadows = true
 	light.Parent = bulb
 	return bulb, light
@@ -613,7 +613,7 @@ function Kit.floorLamp(parent, cf: CFrame, shadeColor: Color3?)
 	Kit.vcyl(m, "ShadeTrim", cf * CF(0, 5.45, 0), 0.08, 1.94, darker(shade, 0.25), M.Fabric)
 	Kit.vcyl(m, "ShadeTrim", cf * CF(0, 6.76, 0), 0.08, 1.94, darker(shade, 0.25), M.Fabric)
 	Kit.ball(m, "Finial", (cf * CF(0, 7.1, 0)).Position, 0.18, C.Brass, M.Metal)
-	local bulb, light = bulbLight(m, (cf * CF(0, 5.8, 0)).Position, 20, 1.1)
+	local bulb, light = bulbLight(m, (cf * CF(0, 5.8, 0)).Position, 22, 1.35)
 	Kit.collider(m, cf * CF(0, 3.5, 0), V(0.6, 7, 0.6))
 	return m, bulb, light
 end
@@ -629,7 +629,7 @@ function Kit.tableLamp(parent, cf: CFrame, baseColor: Color3?, shadeColor: Color
 	Kit.vcyl(m, "Neck", cf * CF(0, 1.62, 0), 0.6, 0.1, C.Brass, M.Metal)
 	Kit.vcyl(m, "LampShade", cf * CF(0, 2.45, 0), 1.0, 1.4, shade, M.Fabric)
 	Kit.vcyl(m, "ShadeTrim", cf * CF(0, 1.96, 0), 0.06, 1.44, darker(shade, 0.25), M.Fabric)
-	local bulb, light = bulbLight(m, (cf * CF(0, 2.2, 0)).Position, 14, 0.8)
+	local bulb, light = bulbLight(m, (cf * CF(0, 2.2, 0)).Position, 16, 1.0)
 	return m, bulb, light
 end
 
@@ -644,9 +644,9 @@ function Kit.pendant(parent, top: Vector3, drop: number, color: Color3?)
 	Kit.vcyl(m, "ShadeRim", base * CF(0, 0.02, 0), 0.05, 1.64, C.Brass, M.Metal)
 	local bulb = Kit.ball(m, "PendantBulb", (base * CF(0, 0.15, 0)).Position, 0.5, Color3.fromRGB(255, 214, 160), M.Plastic)
 	local light = Instance.new("PointLight")
-	light.Range = 16
-	light.Brightness = 1
-	light.Color = Color3.fromRGB(255, 200, 140)
+	light.Range = 18
+	light.Brightness = 1.15
+	light.Color = Color3.fromRGB(255, 190, 125)
 	light.Shadows = true
 	light.Parent = bulb
 	return m, bulb, light
@@ -1085,7 +1085,15 @@ function Kit.candle(parent, cf: CFrame, h: number, d: number, lit: boolean?)
 	Kit.vcyl(m, "Candle", cf * CF(0, h / 2, 0), h, d, C.Cream, M.Plastic)
 	Kit.vcyl(m, "Wick", cf * CF(0, h + 0.06, 0), 0.12, 0.03, C.Black, M.Plastic)
 	if lit ~= false then
-		Kit.ellipsoid(m, "Flame", cf * CF(0, h + 0.2, 0), V(0.12, 0.26, 0.12), Color3.fromRGB(255, 196, 96), M.Neon)
+		local flame = Kit.ellipsoid(m, "Flame", cf * CF(0, h + 0.2, 0), V(0.12, 0.26, 0.12), Color3.fromRGB(255, 196, 96), M.Neon)
+		-- a small warm pool of light that flickers (client Ambience, "Flicker" tag)
+		local glow = Instance.new("PointLight")
+		glow.Range = 7
+		glow.Brightness = 0.55
+		glow.Color = Color3.fromRGB(255, 168, 90)
+		glow.Shadows = false
+		glow.Parent = flame
+		CollectionService:AddTag(glow, "Flicker")
 	end
 	return m
 end
@@ -1991,27 +1999,27 @@ end
 -- the pizza delivery man: too tall, too thin, too pale. cf = between his feet, facing forward.
 -- Returns the model, the head model (to turn and tilt), its neck CFrame relative to cf, and the pizza box.
 function Kit.deliveryMan(parent, cf: CFrame, faceImage: string?)
-	-- stand-in for the avatar: tall and thin, black leather jacket, black jeans, bald, a realistic
-	-- pale face texture on a classic head, carrying two pizza boxes in both hands
+	-- stand-in for the avatar, in the same uniform: red shirt with the TONY'S patch, dark jeans,
+	-- red cap, a classic Roblox head and face, carrying two pizza boxes in both hands
 	local m = Kit.model(parent, "PizzaGuy")
-	local skin = Color3.fromRGB(228, 204, 186)
-	local jacket = Color3.fromRGB(28, 28, 30)
-	local tee = Color3.fromRGB(40, 90, 96)
-	local pants = Color3.fromRGB(26, 26, 30)
+	local skin = Color3.fromRGB(234, 190, 152)
+	local jacket = Color3.fromRGB(196, 32, 28)
+	local tee = Color3.fromRGB(250, 240, 214)
+	local pants = Color3.fromRGB(44, 50, 66)
 	-- legs and shoes
 	for _, s in { -1, 1 } do
 		Kit.soft(m, "Leg", cf * CF(s * 0.42, 1.65, 0), V(0.62, 3.2, 0.62), 0.18, pants, M.Fabric)
 		Kit.soft(m, "Shoe", cf * CF(s * 0.42, 0.14, -0.15), V(0.6, 0.28, 1.05), 0.12, C.Black, M.Leather)
 	end
-	-- torso: the jacket hangs open over a dark tee
-	Kit.soft(m, "Torso", cf * CF(0, 4.45, 0), V(1.7, 2.6, 0.85), 0.25, jacket, M.Leather)
-	Kit.box(m, "Tee", cf * CF(0, 4.55, -0.43), V(0.62, 2.3, 0.03), tee, M.Fabric)
+	-- torso: the red uniform shirt with a cream TONY'S patch
+	Kit.soft(m, "Torso", cf * CF(0, 4.45, 0), V(1.7, 2.6, 0.85), 0.25, jacket, M.Fabric)
+	Kit.box(m, "Tee", cf * CF(0.35, 5.0, -0.43), V(0.6, 0.3, 0.03), tee, M.Fabric)
 	-- arms down at his sides, forearms level, hands under the boxes
 	for _, s in { -1, 1 } do
 		local shoulder = cf * CF(s * 1.05, 5.45, 0) * ANG(rad(14), 0, 0)
-		Kit.soft(m, "UpperArm", shoulder * CF(0, -0.85, 0), V(0.5, 1.8, 0.5), 0.2, jacket, M.Leather)
+		Kit.soft(m, "UpperArm", shoulder * CF(0, -0.85, 0), V(0.5, 1.8, 0.5), 0.2, jacket, M.Fabric)
 		local elbow = shoulder * CF(0, -1.75, 0) * ANG(rad(76), 0, 0)
-		Kit.soft(m, "Forearm", elbow * CF(0, -0.75, 0), V(0.44, 1.5, 0.44), 0.18, jacket, M.Leather)
+		Kit.soft(m, "Forearm", elbow * CF(0, -0.75, 0), V(0.44, 1.5, 0.44), 0.18, skin, M.Plastic)
 		Kit.ellipsoid(m, "Hand", elbow * CF(0, -1.62, 0), V(0.42, 0.5, 0.3), skin, M.Plastic)
 	end
 	-- the pizza: two boxes flat on his hands
@@ -2028,17 +2036,184 @@ function Kit.deliveryMan(parent, cf: CFrame, faceImage: string?)
 	mesh.MeshType = Enum.MeshType.Head
 	mesh.Scale = V(1.25, 1.25, 1.25)
 	mesh.Parent = skull
-	if faceImage then
-		local face = Instance.new("Decal")
-		face.Name = "face"
-		face.Face = Enum.NormalId.Front
-		face.Texture = faceImage
-		face.Parent = skull
-	end
+	local face = Instance.new("Decal")
+	face.Name = "face"
+	face.Face = Enum.NormalId.Front
+	face.Texture = faceImage or "rbxasset://textures/face.png"
+	face.Parent = skull
+	-- the red cap
+	local h = cf * neck
+	Kit.ellipsoid(head, "Cap", h * CF(0, 1.25, 0.02), V(1.55, 0.7, 1.55), jacket, M.Fabric)
+	Kit.box(head, "CapBrim", h * CF(0, 1.08, -0.85) * ANG(rad(-8), 0, 0), V(1.1, 0.07, 0.7), darker(jacket, 0.15), M.Fabric)
 	head.PrimaryPart = skull
 	Kit.collider(m, cf * CF(0, 3.6, 0), V(1.8, 7.2, 1.2))
 	m.PrimaryPart = Kit.box(m, "Root", cf, V(0.2, 0.2, 0.2), skin, M.Plastic, { Transparency = 1 })
 	return m, head, neck, box
+end
+
+---------------------------------------------------------------------------
+-- Cozy things
+---------------------------------------------------------------------------
+
+-- a knitted throw draped over a sofa or armchair back; sofaCF/depth as passed to Kit.sofa,
+-- x = offset along the sofa, w = width of the throw
+function Kit.throwBlanket(parent, sofaCF: CFrame, depth: number, x: number, w: number, color: Color3, stripe: Color3?)
+	local m = Kit.model(parent, "Throw")
+	local back = depth / 2 - 0.3
+	local st = stripe or lighter(color, 0.35)
+	-- over the top of the back, down in front of the back cushions, and down behind
+	local fz = back - 1.2 -- the front drape hangs just in front of the back cushions
+	local function frontZ(y: number): number
+		return fz + (y - 3.15) * 0.194 -- the drape leans back with the cushions (11 degrees)
+	end
+	Kit.soft(m, "ThrowTop", sofaCF * CF(x, 3.95, back - 0.45), V(w, 0.16, 1.6), 0.07, color, M.Fabric)
+	Kit.soft(m, "ThrowFront", sofaCF * CF(x, 3.15, fz) * ANG(rad(11), 0, 0), V(w, 1.7, 0.12), 0.05, color, M.Fabric)
+	Kit.soft(m, "ThrowBack", sofaCF * CF(x, 3.1, back + 0.38), V(w, 1.7, 0.12), 0.05, darker(color, 0.05), M.Fabric)
+	for _, y in { 3.5, 2.6 } do
+		Kit.box(m, "ThrowStripe", sofaCF * CF(x, y, frontZ(y) - 0.07) * ANG(rad(11), 0, 0), V(w + 0.01, 0.16, 0.02), st, M.Fabric)
+	end
+	-- a tassel fringe along the hanging edge
+	for k = 0, math.floor(w / 0.3) do
+		Kit.box(m, "Fringe", sofaCF * CF(x - w / 2 + 0.15 + k * 0.3, 2.2, frontZ(2.2)) * ANG(rad(11), 0, 0), V(0.05, 0.25, 0.05), st, M.Fabric)
+	end
+	return m
+end
+
+-- a folded throw across the foot of a bed (bedCF, w, l as passed to Kit.bed)
+function Kit.bedThrow(parent, bedCF: CFrame, w: number, l: number, color: Color3, stripe: Color3?)
+	local m = Kit.model(parent, "BedThrow")
+	local z = -(l - 0.45) / 2 + 1.2
+	Kit.soft(m, "ThrowFold", bedCF * CF(0, 3.72, z), V(w + 0.08, 0.2, 2), 0.08, color, M.Fabric)
+	for _, s in { -1, 1 } do
+		Kit.soft(m, "ThrowDrape", bedCF * CF(s * (w / 2 + 0.1), 3.1, z), V(0.12, 1.3, 2), 0.05, darker(color, 0.06), M.Fabric)
+	end
+	Kit.box(m, "ThrowStripe", bedCF * CF(0, 3.83, z + 0.6), V(w + 0.1, 0.02, 0.25), stripe or lighter(color, 0.35), M.Fabric)
+	return m
+end
+
+-- a plump square cushion; cf = centre, facing out along -Z
+function Kit.cushion(parent, cf: CFrame, size: number, color: Color3, piping: Color3?)
+	local m = Kit.model(parent, "Cushion")
+	Kit.soft(m, "Cushion", cf, V(size, size, size * 0.34), size * 0.16, color, M.Fabric)
+	Kit.box(m, "CushionButton", cf * CF(0, 0, -size * 0.17), V(size * 0.12, size * 0.12, 0.04), piping or darker(color, 0.25), M.Fabric)
+	return m
+end
+
+-- a round wicker basket with rolled-up blankets (or logs) standing in it
+function Kit.basket(parent, cf: CFrame, d: number, h: number, fill: string?, colors)
+	local m = Kit.model(parent, "Basket")
+	local wicker = Color3.fromRGB(176, 136, 86)
+	Kit.lathe(m, "Basket", cf, { { 0, d * 0.82 }, { 0.1, d * 0.9 }, { h, d } }, wicker, M.Fabric)
+	for k = 0, 3 do
+		Kit.vcyl(m, "BasketWeave", cf * CF(0, h * (0.2 + k * 0.22), 0), 0.06, d * (0.9 + k * 0.03) + 0.02, darker(wicker, 0.18), M.Fabric)
+	end
+	Kit.vcyl(m, "BasketFill", cf * CF(0, h - 0.1, 0), 0.08, d * 0.94, darker(wicker, 0.45), M.Fabric)
+	colors = colors or { Color3.fromRGB(196, 72, 60), Color3.fromRGB(226, 214, 190), Color3.fromRGB(80, 110, 90) }
+	for k, c in colors do
+		local a = k / #colors * math.pi * 2
+		local p = cf * CF(math.cos(a) * d * 0.2, h + 0.35, math.sin(a) * d * 0.2)
+		if fill == "logs" then
+			Kit.vcyl(m, "BasketLog", p * ANG(rad(8), a, 0), 1.6, 0.5, Color3.fromRGB(96, 70, 46), M.Wood)
+		else
+			Kit.vcyl(m, "BlanketRoll", p * ANG(rad(10), a, 0), 1.9, d * 0.34, c, M.Fabric)
+		end
+	end
+	return m
+end
+
+-- warm fairy lights hanging in a curve from a to b; every few bulbs carries a real light.
+-- Returns the bulbs and the lights (each light's bulb is lights[i].Parent).
+function Kit.stringLights(parent, a: Vector3, b: Vector3, sag: number, n: number, color: Color3?)
+	local m = Kit.model(parent, "FairyLights")
+	local c = color or Color3.fromRGB(255, 198, 130)
+	local function at(t: number): Vector3
+		return a:Lerp(b, t) - V(0, math.sin(t * math.pi) * sag, 0)
+	end
+	local segs = n * 2
+	for k = 0, segs - 1 do
+		local p0, p1 = at(k / segs), at((k + 1) / segs)
+		Kit.box(m, "LightWire", CFrame.lookAt((p0 + p1) / 2, p1), V(0.04, 0.04, (p1 - p0).Magnitude + 0.02), Color3.fromRGB(40, 50, 40), M.Plastic)
+	end
+	local bulbs, lights = {}, {}
+	for k = 0, n - 1 do
+		local p = at((k + 0.5) / n) - V(0, 0.12, 0)
+		local bulb = Kit.ellipsoid(m, "FairyBulb", CF(p), V(0.16, 0.24, 0.16), c, M.Neon)
+		table.insert(bulbs, bulb)
+		if k % 4 == 1 then
+			local l = Instance.new("PointLight")
+			l.Range = 8
+			l.Brightness = 0.55
+			l.Color = c
+			l.Shadows = false
+			l.Parent = bulb
+			table.insert(lights, l)
+		end
+	end
+	return m, bulbs, lights
+end
+
+-- a wall sconce with a small fabric shade; cf on the wall face, facing into the room
+function Kit.sconce(parent, cf: CFrame, shadeColor: Color3?)
+	local m = Kit.model(parent, "Sconce")
+	Kit.box(m, "SconcePlate", cf * CF(0, 0, 0.03), V(0.5, 0.9, 0.06), C.Brass, M.Metal)
+	Kit.cyl(m, "SconceArm", cf * CF(0, -0.1, -0.3) * ANG(0, rad(90), 0), 0.55, 0.1, C.Brass, M.Metal)
+	Kit.vcyl(m, "SconceCup", cf * CF(0, 0.0, -0.6), 0.2, 0.3, C.Brass, M.Metal)
+	Kit.lathe(m, "SconceShade", cf * CF(0, 0.15, -0.6), { { 0, 0.9 }, { 0.75, 0.6 } }, shadeColor or Color3.fromRGB(240, 222, 190), M.Fabric)
+	local bulb = Kit.ball(m, "SconceBulb", (cf * CF(0, 0.35, -0.6)).Position, 0.3, Color3.fromRGB(255, 206, 150), M.Neon)
+	local light = Instance.new("PointLight")
+	light.Range = 13
+	light.Brightness = 0.8
+	light.Color = Color3.fromRGB(255, 184, 116)
+	light.Shadows = false
+	light.Parent = bulb
+	return m, bulb, light
+end
+
+-- a mug of hot cocoa with marshmallows and a thin curl of steam
+function Kit.cocoa(parent, cf: CFrame, color: Color3)
+	local m, body = Kit.mug(parent, cf, color)
+	Kit.vcyl(m, "Cocoa", cf * CF(0, 0.49, 0), 0.03, 0.34, Color3.fromRGB(96, 58, 36), M.Plastic)
+	for k = 0, 2 do
+		Kit.box(m, "Marshmallow", cf * CF(-0.07 + k * 0.07, 0.5, (k % 2) * 0.06 - 0.03) * ANG(0, k, 0), V(0.08, 0.06, 0.08), Color3.fromRGB(250, 246, 238), M.Plastic)
+	end
+	local steam = Instance.new("ParticleEmitter")
+	steam.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	steam.Color = ColorSequence.new(Color3.fromRGB(245, 245, 245))
+	steam.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.85), NumberSequenceKeypoint.new(1, 1) })
+	steam.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.12), NumberSequenceKeypoint.new(1, 0.45) })
+	steam.Lifetime = NumberRange.new(1.2, 1.8)
+	steam.Rate = 4
+	steam.Speed = NumberRange.new(0.5, 0.8)
+	steam.SpreadAngle = Vector2.new(8, 8)
+	steam.EmissionDirection = Enum.NormalId.Top
+	steam.LightInfluence = 0.6
+	steam.Parent = body
+	return m, body
+end
+
+-- a plate of cookies
+function Kit.cookies(parent, cf: CFrame)
+	local m = Kit.plate(parent, cf, 1.1)
+	for k = 0, 4 do
+		local a = k / 5 * math.pi * 2
+		local c = Kit.vcyl(m, "Cookie", cf * CF(math.cos(a) * 0.26, 0.1 + (k % 2) * 0.04, math.sin(a) * 0.26) * ANG(rad((k % 2) * 8), 0, 0), 0.07, 0.36, Color3.fromRGB(196, 146, 84), M.Plastic)
+		Kit.box(m, "ChocChip", c.CFrame * CF(0.06, 0.04, 0.02), V(0.06, 0.02, 0.06), Color3.fromRGB(70, 40, 24), M.Plastic)
+	end
+	Kit.vcyl(m, "Cookie", cf * CF(0, 0.2, 0), 0.07, 0.36, Color3.fromRGB(200, 150, 88), M.Plastic)
+	return m
+end
+
+-- a stovetop kettle
+function Kit.kettle(parent, cf: CFrame, color: Color3)
+	local m = Kit.model(parent, "Kettle")
+	Kit.lathe(m, "Kettle", cf, { { 0, 0.9 }, { 0.12, 1.0 }, { 0.45, 0.95 }, { 0.75, 0.55 }, { 0.82, 0.3 } }, color, M.Metal)
+	Kit.vcyl(m, "KettleKnob", cf * CF(0, 0.88, 0), 0.1, 0.16, C.Black, M.Plastic)
+	Kit.cyl(m, "KettleSpout", cf * CF(0.55, 0.45, 0) * ANG(0, 0, rad(40)), 0.55, 0.13, color, M.Metal)
+	for k = 0, 4 do
+		local a = math.pi * (0.15 + k * 0.175)
+		Kit.ball(m, "KettleHandle", (cf * CF(math.cos(a) * 0.36, 0.8 + math.sin(a) * 0.3, 0)).Position, 0.1, C.Black, M.Plastic)
+	end
+	return m
 end
 
 return Kit

@@ -380,7 +380,7 @@ function Builder.ceilingLight(parent: Instance, pos: Vector3, opts)
 		Shape = Enum.PartType.Ball,
 		Size = Vector3.new(0.7, 0.7, 0.7),
 		CFrame = CFrame.new(pos + Vector3.new(0, -0.75, 0)),
-		Color = Color3.fromRGB(255, 212, 160),
+		Color = Color3.fromRGB(255, 204, 146),
 		Material = Enum.Material.Neon,
 		CastShadow = false,
 		CanCollide = false,
@@ -401,9 +401,9 @@ function Builder.ceilingLight(parent: Instance, pos: Vector3, opts)
 	})
 	Builder.cylinder(model, "Finial", pos + Vector3.new(0, -1.6, 0), 0.25, 0.25, Color3.fromRGB(196, 168, 104), Enum.Material.Metal)
 	local light = Instance.new("PointLight")
-	light.Range = opts.range or 24
-	light.Brightness = opts.brightness or 1.3
-	light.Color = opts.color or Color3.fromRGB(255, 214, 165)
+	light.Range = opts.range or 26
+	light.Brightness = opts.brightness or 1.45
+	light.Color = opts.color or Color3.fromRGB(255, 198, 138)
 	light.Shadows = opts.shadows ~= false
 	light.Parent = bulb
 	return bulb, light, model

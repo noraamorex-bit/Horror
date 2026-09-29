@@ -22,6 +22,8 @@ Sounds.Library = {
 	-- Ambience (client, looped)
 	Rain = { Id = "rbxassetid://9112853287", Volume = 0.8, Looped = true },
 	RainWindow = { Id = "rbxassetid://9112856881", Volume = 0.6, Looped = true },
+	-- APM (licensed for Roblox): "Solo Piano - Gentle Rain - Remastered", the cozy first act indoors
+	CozyPiano = { Id = "rbxassetid://9046644321", Volume = 0.22, Looped = true },
 	Wind = { Id = "rbxassetid://9120697823", Fallback = ENGINE_WIND, Volume = 0.12, Looped = true },
 	Thunder = { Id = "rbxassetid://9120016037", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
 	Thunder2 = { Id = "rbxassetid://9120016241", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
