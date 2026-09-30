@@ -82,6 +82,11 @@ local function show(payload)
 			end
 		end)
 	end
+	local brought = tonumber(ctx.Player:GetAttribute("StatReferrals")) or 0
+	local nextNeed = brought < 1 and 1 or brought < 3 and 3 or brought < 5 and 5 or nil
+	if nextNeed then
+		add({ Text = string.format("Bring %d more friend%s to unlock a new flashlight colour", nextNeed - brought, nextNeed - brought == 1 and "" or "s"), TextSize = 14, TextColor3 = UI.Color.Dim })
+	end
 	local countdown = add({ Text = "", TextSize = 14, TextColor3 = UI.Color.Dim })
 	task.spawn(function()
 		local left = payload.RestartIn or 60

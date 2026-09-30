@@ -74,7 +74,13 @@ local function setupCharacter(player: Player, char: Model)
 	light.Range = ctx.Config.Flashlight.Range
 	light.Angle = ctx.Config.Flashlight.Angle
 	light.Brightness = ctx.Config.Flashlight.Brightness
-	light.Color = Color3.fromRGB(255, 244, 222)
+	-- the colour you've unlocked by bringing friends (StatsService)
+	local function tint()
+		local c = player:GetAttribute("StatBeamColor")
+		light.Color = typeof(c) == "Color3" and c or Color3.fromRGB(255, 244, 222)
+	end
+	tint()
+	player:GetAttributeChangedSignal("StatBeamColor"):Connect(tint)
 	-- no shadows: the head (and hats/hair) would block its own beam. The owner also gets a
 	-- sharper local light that follows their camera (client Movement controller).
 	light.Shadows = false

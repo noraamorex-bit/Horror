@@ -87,6 +87,14 @@ end
 
 function Movement.start()
 	buildLocalFlashlight()
+	local function tint()
+		local c = player:GetAttribute("StatBeamColor")
+		local col = typeof(c) == "Color3" and c or Color3.fromRGB(255, 244, 222)
+		localBeam.Color = col
+		localGlow.Color = col
+	end
+	tint()
+	player:GetAttributeChangedSignal("StatBeamColor"):Connect(tint)
 	player:GetAttributeChangedSignal("FlashlightOn"):Connect(function()
 		if ctx.Effects then
 			ctx.Effects.playSound("FlashlightClick")

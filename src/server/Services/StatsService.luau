@@ -18,7 +18,28 @@ local board = nil -- OrderedDataStore: nights survived, for the lobby leaderboar
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {} }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic" }
+end
+
+--[[
+	Invite rewards: bring friends, get flashlight colours. A friend counts once, the first time
+	they ever play: they joined from your invite (LaunchData "ref:<userId>") or turned up in the
+	same server as you (a Roblox friend) on their first visit. They get the first colour too.
+]]
+Stats.Beams = {
+	{ Id = "Classic", Name = "Classic", Need = 0, Color = Color3.fromRGB(255, 244, 222) },
+	{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 176, 96) },
+	{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(190, 214, 255) },
+	{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 96, 80) },
+}
+
+local function beamUnlocked(d, id: string): boolean
+	for _, b in Stats.Beams do
+		if b.Id == id then
+			return d.Referrals >= b.Need or (b.Need == 1 and d.Referred)
+		end
+	end
+	return false
 end
 
 local function endingTotal(): number
@@ -48,7 +69,20 @@ local function mirror(player: Player)
 	end
 	table.sort(list)
 	player:SetAttribute("StatEndingList", table.concat(list, ","))
+	player:SetAttribute("StatReferrals", d.Referrals)
+	player:SetAttribute("StatReferred", d.Referred)
+	if not beamUnlocked(d, d.Beam) then
+		d.Beam = "Classic"
+	end
+	player:SetAttribute("StatBeam", d.Beam)
+	for _, b in Stats.Beams do
+		if b.Id == d.Beam then
+			player:SetAttribute("StatBeamColor", b.Color)
+		end
+	end
 end
+
+local checkReferral: (Player) -> () -- below: needs save()
 
 local function load(player: Player)
 	cache[player.UserId] = fresh()
@@ -69,6 +103,7 @@ local function load(player: Player)
 		end
 	end
 	mirror(player)
+	task.spawn(checkReferral, player)
 end
 
 local function save(userId: number)
@@ -93,6 +128,102 @@ local function save(userId: number)
 			end)
 		end)
 	end)
+end
+
+-- credit whoever brought this brand-new player
+local function creditReferrer(referrerId: number, newcomer: Player)
+	local online = Players:GetPlayerByUserId(referrerId)
+	if online and cache[referrerId] then
+		local d = cache[referrerId]
+		local before = d.Referrals
+		d.Referrals += 1
+		mirror(online)
+		save(referrerId)
+		for _, b in Stats.Beams do
+			if before < b.Need and d.Referrals >= b.Need then
+				ctx.Remotes.Notify:FireClient(online, newcomer.DisplayName .. " joined you. Flashlight colour unlocked: " .. b.Name, "done")
+				return
+			end
+		end
+		ctx.Remotes.Notify:FireClient(online, newcomer.DisplayName .. " joined you. Friends brought: " .. d.Referrals, "info")
+	elseif store then
+		task.spawn(pcall, function()
+			store:UpdateAsync("u" .. referrerId, function(old)
+				old = type(old) == "table" and old or {}
+				old.Referrals = (tonumber(old.Referrals) or 0) + 1
+				return old
+			end)
+		end)
+	end
+end
+
+checkReferral = function(player: Player)
+	-- only on arrival in the lobby (where invites and friends land), so moving on to a game
+	-- server can never count the same friend twice
+	local t0 = os.clock()
+	while workspace:GetAttribute("Mode") == nil and os.clock() - t0 < 5 do
+		task.wait(0.2)
+	end
+	if workspace:GetAttribute("Mode") ~= "Lobby" then
+		return
+	end
+	local d = cache[player.UserId]
+	if not d or d.Referred or d.Nights > 0 then
+		return
+	end
+	local referrer: number? = nil
+	local okJoin, join = pcall(function()
+		return player:GetJoinData()
+	end)
+	local launch = okJoin and type(join) == "table" and join.LaunchData
+	if type(launch) == "string" then
+		local id = tonumber(string.match(launch, "^ref:(%d+)$"))
+		if id and id ~= player.UserId then
+			referrer = id
+		end
+	end
+	if not referrer then
+		for _, other in Players:GetPlayers() do
+			if other ~= player then
+				local okF, isFriend = pcall(function()
+					return player:IsFriendsWithAsync(other.UserId)
+				end)
+				if okF and isFriend then
+					referrer = other.UserId
+					break
+				end
+			end
+		end
+	end
+	if not referrer then
+		return
+	end
+	d.Referred = true
+	mirror(player)
+	save(player.UserId)
+	ctx.Remotes.Notify:FireClient(player, "A friend brought you here. Flashlight colour unlocked: Ember", "done")
+	creditReferrer(referrer, player)
+end
+
+-- pick a flashlight colour you've unlocked
+function Stats.setBeam(player: Player, id: string)
+	local d = cache[player.UserId]
+	if not d or type(id) ~= "string" or not beamUnlocked(d, id) then
+		return
+	end
+	d.Beam = id
+	mirror(player)
+	save(player.UserId)
+end
+
+function Stats.beamColor(player: Player): Color3
+	local id = player:GetAttribute("StatBeam")
+	for _, b in Stats.Beams do
+		if b.Id == id then
+			return b.Color
+		end
+	end
+	return Stats.Beams[1].Color
 end
 
 -- A night ended for these players. Returns { [userId] = true } for everyone who saw this ending
@@ -165,6 +296,11 @@ function Stats.top(n: number)
 end
 
 function Stats.start()
+	if ctx.Remotes then
+		ctx.Remotes.SetBeam.OnServerEvent:Connect(function(player, id)
+			Stats.setBeam(player, id)
+		end)
+	end
 	for _, p in Players:GetPlayers() do
 		task.spawn(load, p)
 	end

@@ -98,9 +98,76 @@ function LobbyHub.start()
 	end
 	UI.new("Frame", { LayoutOrder = 2, Size = UDim2.fromOffset(150, 4), BackgroundTransparency = 1, Parent = menu })
 	local endingsBtn = menuButton(menu, "Endings", 3)
-	ctx.Social.button(menu, "invite", { LayoutOrder = 4, Size = UDim2.fromOffset(150, 30) })
-	ctx.Social.button(menu, "favorite", { LayoutOrder = 5, Size = UDim2.fromOffset(150, 30) })
+	local beamBtn = menuButton(menu, "Flashlight", 4)
+	ctx.Social.button(menu, "invite", { LayoutOrder = 5, Size = UDim2.fromOffset(150, 30) })
+	ctx.Social.button(menu, "favorite", { LayoutOrder = 6, Size = UDim2.fromOffset(150, 30) })
 	lobbyMenu = menu
+
+	-- flashlight colours, unlocked by bringing friends (StatsService.Beams)
+	local BEAMS = {
+		{ Id = "Classic", Name = "Classic", Need = 0, Color = Color3.fromRGB(255, 244, 222) },
+		{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 176, 96) },
+		{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(190, 214, 255) },
+		{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 96, 80) },
+	}
+	local me = game:GetService("Players").LocalPlayer
+	local beams = UI.new("Frame", {
+		AnchorPoint = Vector2.new(0, 0),
+		Position = UDim2.new(0, math.max(16, inset.X + 16) + 162, 0, inset.Y + 10),
+		Size = UDim2.fromOffset(240, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = UI.Color.Panel,
+		BackgroundTransparency = 0.15,
+		Visible = false,
+		ZIndex = 20,
+		Parent = UI.Root,
+	})
+	UI.corner(beams, 8)
+	UI.stroke(beams, Color3.new(1, 1, 1), 1, 0.8)
+	UI.padding(beams, 10)
+	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = beams })
+	local beamHead = UI.label({ LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 34), Text = "", TextSize = 13, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 21, Parent = beams })
+	local rows = {}
+	for i, b in BEAMS do
+		local row = UI.new("TextButton", {
+			LayoutOrder = i,
+			Size = UDim2.new(1, 0, 0, 30),
+			Text = "",
+			BackgroundColor3 = Color3.fromRGB(24, 24, 26),
+			BackgroundTransparency = 0.2,
+			ZIndex = 21,
+			Parent = beams,
+		})
+		UI.corner(row, 6)
+		local dot = UI.new("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0), Size = UDim2.fromOffset(12, 12), BackgroundColor3 = b.Color, ZIndex = 22, Parent = row })
+		UI.corner(dot, 6)
+		local label = UI.label({ Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -40, 1, 0), Text = b.Name, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 22, Parent = row })
+		local stroke = UI.stroke(row, Color3.new(1, 1, 1), 1, 1)
+		rows[b.Id] = { Row = row, Label = label, Stroke = stroke, Def = b }
+		row.Activated:Connect(function()
+			ctx.Remotes.SetBeam:FireServer(b.Id)
+		end)
+	end
+	local function showBeams()
+		local n = tonumber(me:GetAttribute("StatReferrals")) or 0
+		local referred = me:GetAttribute("StatReferred") == true
+		beamHead.Text = "Invite friends to unlock colours. Friends brought: " .. n
+		for id, r in rows do
+			local unlocked = n >= r.Def.Need or (r.Def.Need == 1 and referred)
+			local chosen = me:GetAttribute("StatBeam") == id or (me:GetAttribute("StatBeam") == nil and id == "Classic")
+			r.Label.Text = unlocked and r.Def.Name or (r.Def.Name .. "   ·   bring " .. r.Def.Need .. (r.Def.Need == 1 and " friend" or " friends"))
+			r.Label.TextTransparency = unlocked and 0 or 0.5
+			r.Row.AutoButtonColor = unlocked
+			r.Stroke.Transparency = chosen and 0.2 or 1
+		end
+	end
+	for _, a in { "StatReferrals", "StatReferred", "StatBeam" } do
+		me:GetAttributeChangedSignal(a):Connect(showBeams)
+	end
+	showBeams()
+	beamBtn.Activated:Connect(function()
+		beams.Visible = not beams.Visible
+	end)
 	local collection = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.55),
