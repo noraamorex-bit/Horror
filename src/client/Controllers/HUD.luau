@@ -56,6 +56,10 @@ function HUD.caption(text: string, _position: Vector3?)
 	if recentCaptions[text] and os.clock() - recentCaptions[text] < 1.5 then
 		return
 	end
+	-- sound captions are extras: skip them while something else is being said
+	if ctx.Pace and not ctx.Pace.tryTake(1.6) then
+		return
+	end
 	recentCaptions[text] = os.clock()
 	local isSound = text:sub(1, 1) == "["
 	local l = UI.label({
@@ -112,25 +116,30 @@ local function pumpNotes()
 	end
 	pumping = true
 	while #pendingNotes > 0 do
-		local clearFor = 0
-		while clearFor < 1.2 do
-			task.wait(0.1)
-			clearFor = screenBusy() and 0 or clearFor + 0.1
+		if ctx.Pace then
+			ctx.Pace.take(3.2)
+		else
+			local clearFor = 0
+			while clearFor < 1.2 do
+				task.wait(0.1)
+				clearFor = screenBusy() and 0 or clearFor + 0.1
+			end
 		end
 		local n = table.remove(pendingNotes, 1)
 		showNote(n[1], n[2])
-		task.wait(0.8)
 	end
 	pumping = false
 end
 
 function HUD.notify(text: string, kind: string?)
-	if kind ~= "done" and (screenBusy() or #pendingNotes > 0) then
-		table.insert(pendingNotes, { text, kind })
-		task.spawn(pumpNotes)
-		return
+	-- every note takes its turn (the same text twice in the queue is noise)
+	for _, n in pendingNotes do
+		if n[1] == text then
+			return
+		end
 	end
-	showNote(text, kind)
+	table.insert(pendingNotes, { text, kind })
+	task.spawn(pumpNotes)
 end
 
 showNote = function(text: string, kind: string?)
@@ -230,6 +239,12 @@ local lastFocus = { Id = nil, Done = -1 }
 
 -- the task the group should do next: the first unfinished required one, else any unfinished one
 local function focusObjective()
+	-- once help is on the way, staying alive is the only thing that matters
+	for _, o in objectives do
+		if o.Id == "Survive" and not o.Done then
+			return o
+		end
+	end
 	for _, o in objectives do
 		if not o.Done and not o.Optional then
 			return o
@@ -257,7 +272,7 @@ local function renderObjectivePanel()
 	objProgress.Text = total > 1 and string.format("Step %d of %d", math.min((o.StepsDone or 0) + 1, total), total) or ""
 	-- a step just got done: a little flash
 	if lastFocus.Id == o.Id and (o.StepsDone or 0) > lastFocus.Done then
-		objPanel.BackgroundColor3 = Color3.fromRGB(70, 110, 70)
+		objPanel.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 		UI.tween(objPanel, 0.8, { BackgroundColor3 = UI.Color.Panel })
 		if ctx.Effects then
 			ctx.Effects.playSound("ObjectiveDone", nil, { Caption = false, Volume = 0.2 })
@@ -287,11 +302,11 @@ local function renderJournal()
 		})
 	end
 	for _, o in objectives do
-		local mark = o.Done and "<font color=\"#78c878\">✓</font> " or (o.Optional and "◦ " or "• ")
+		local mark = o.Done and "<font color=\"#d8d8d8\">✓</font> " or (o.Optional and "◦ " or "• ")
 		line(mark .. (o.Done and ("<s>" .. o.Text .. "</s>") or ("<b>" .. o.Text .. "</b>")), 18, o.Done and UI.Color.Dim or UI.Color.Text)
 		if not o.Done then
 			for _, st in o.Steps or {} do
-				line("      " .. (st.Done and "<font color=\"#78c878\">✓</font> <s>" .. st.Text .. "</s>" or "–  " .. st.Text), 15, st.Done and UI.Color.Dim or Color3.fromRGB(205, 200, 190))
+				line("      " .. (st.Done and "<font color=\"#d8d8d8\">✓</font> <s>" .. st.Text .. "</s>" or "–  " .. st.Text), 15, st.Done and UI.Color.Dim or Color3.fromRGB(205, 200, 190))
 			end
 		end
 	end
@@ -360,7 +375,7 @@ local function build()
 		Text = "",
 		Font = UI.Font.Bold,
 		TextSize = 20,
-		TextColor3 = Color3.fromRGB(150, 180, 255),
+		TextColor3 = Color3.fromRGB(235, 235, 235),
 		TextStrokeTransparency = 0.5,
 		Parent = root,
 	})

@@ -114,7 +114,7 @@ function Phone.start()
 		Font = UI.Font.Bold,
 		TextSize = 17,
 		TextColor3 = Color3.new(1, 1, 1),
-		BackgroundColor3 = Color3.fromRGB(150, 40, 35),
+		BackgroundColor3 = Color3.fromRGB(60, 60, 60),
 		AutoButtonColor = false,
 		Parent = screen,
 	})
@@ -173,10 +173,10 @@ function Phone.start()
 		signalLabel.Text = bars .. (signal == 0 and "  No Service" or "  1 bar") .. "   " .. wifi
 		if player:GetAttribute("Calling") then
 			callButton.Text = string.format("CALLING... %d%%", math.floor((player:GetAttribute("CallProgress") or 0) * 100))
-			callButton.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
+			callButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
 		else
 			callButton.Text = signal > 0 and "HOLD TO CALL 911" or "CALL 911 (no signal)"
-			callButton.BackgroundColor3 = signal > 0 and Color3.fromRGB(150, 40, 35) or Color3.fromRGB(70, 60, 60)
+			callButton.BackgroundColor3 = signal > 0 and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(34, 34, 34)
 		end
 	end)
 end

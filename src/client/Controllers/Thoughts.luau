@@ -7,6 +7,40 @@
 local Thoughts = {}
 local ctx
 
+--[[
+	Pace — one message on screen at a time. Thoughts, notifications and sound captions all
+	take turns: each one claims the screen for a while, the next waits (captions, which are
+	extra, are simply dropped when the screen is taken).
+]]
+local Pace = { FreeAt = 0 }
+
+function Pace.blocked(): boolean
+	return (ctx.Notice ~= nil and ctx.Notice.isOpen()) or (ctx.Dialogue ~= nil and ctx.Dialogue.isOpen())
+end
+
+function Pace.isFree(): boolean
+	return os.clock() >= Pace.FreeAt and not Pace.blocked()
+end
+
+-- yields until it's this message's turn, then holds the screen for `seconds`
+function Pace.take(seconds: number)
+	local clearFor = 0
+	while clearFor < 0.6 do
+		task.wait(0.1)
+		clearFor = Pace.isFree() and clearFor + 0.1 or 0
+	end
+	Pace.FreeAt = os.clock() + seconds
+end
+
+-- a non-blocking claim: true (and the screen is held) only if it's free right now
+function Pace.tryTake(seconds: number): boolean
+	if not Pace.isFree() then
+		return false
+	end
+	Pace.FreeAt = os.clock() + seconds
+	return true
+end
+
 local queue = {}
 local running = false
 local frame: Frame
@@ -41,21 +75,8 @@ local function run()
 	end
 	running = true
 	while #queue > 0 do
-		-- never talk over a notice
-		if ctx.Notice and ctx.Notice.isOpen() then
-			local ready = false
-			ctx.Notice.whenClear(function()
-				ready = true
-			end)
-			repeat
-				task.wait(0.1)
-			until ready
-			task.wait(0.4)
-		end
-		-- nor over a conversation
-		while ctx.Dialogue and ctx.Dialogue.isOpen() do
-			task.wait(0.2)
-		end
+		-- never over a notice, a conversation or another message
+		Pace.take(ctx.Config.Thoughts.Duration + 2)
 		local item = table.remove(queue, 1)
 		line.Text = item.Text
 		tip.Text = hintText(item.Hint)
@@ -91,6 +112,7 @@ end
 function Thoughts.init(c)
 	ctx = c
 	ctx.Thoughts = Thoughts
+	ctx.Pace = Pace
 end
 
 function Thoughts.start()

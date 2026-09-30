@@ -23,9 +23,9 @@ local open = false
 local typing = 0
 local canChoose = false
 
-local NPC_COLOR = Color3.fromRGB(230, 90, 80)
-local YOU_COLOR = Color3.fromRGB(150, 200, 255)
-local FRIEND_COLOR = Color3.fromRGB(140, 215, 160)
+local NPC_COLOR = Color3.fromRGB(245, 245, 245)
+local YOU_COLOR = Color3.fromRGB(190, 190, 190)
+local FRIEND_COLOR = Color3.fromRGB(220, 220, 220)
 
 local ambient = false -- friends talking among themselves: the controls stay up
 
@@ -46,7 +46,7 @@ local function choose(i: number)
 	for _, b in buttons do
 		b.AutoButtonColor = false
 	end
-	buttons[i].BackgroundColor3 = Color3.fromRGB(70, 60, 50)
+	buttons[i].BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 	ctx.Remotes.DialogueChoice:FireServer(i)
 end
 
@@ -164,7 +164,7 @@ function Dialogue.start()
 	})
 	UI.new("UISizeConstraint", { MaxSize = Vector2.new(820, math.huge), MinSize = Vector2.new(420, 0), Parent = panel })
 	UI.corner(panel, 12)
-	UI.stroke(panel, Color3.fromRGB(120, 40, 36), 2, 0.3)
+	UI.stroke(panel, Color3.new(1, 1, 1), 1, 0.8)
 	UI.padding(panel, 16)
 	UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = panel })
 	speakerLabel = UI.label({
@@ -215,7 +215,7 @@ function Dialogue.start()
 			Parent = choiceFrame,
 		})
 		UI.corner(b, 8)
-		UI.stroke(b, Color3.fromRGB(200, 170, 120), 1.5, 0.5)
+		UI.stroke(b, Color3.new(1, 1, 1), 1, 0.7)
 		UI.new("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14), Parent = b })
 		-- Activated only fires for a deliberate tap or click, never a camera drag across it
 		b.Activated:Connect(function()

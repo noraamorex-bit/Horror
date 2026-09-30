@@ -22,10 +22,11 @@ UI.Color = {
 	Panel = Color3.fromRGB(14, 14, 16),
 	Paper = Color3.fromRGB(236, 230, 212),
 	Ink = Color3.fromRGB(40, 36, 30),
-	Accent = Color3.fromRGB(235, 190, 90),
-	Good = Color3.fromRGB(120, 200, 120),
-	Danger = Color3.fromRGB(220, 70, 60),
-	Info = Color3.fromRGB(130, 170, 230),
+	-- minimal and colourless: "accent" is just brighter white
+	Accent = Color3.fromRGB(245, 245, 245),
+	Good = Color3.fromRGB(215, 215, 215),
+	Danger = Color3.fromRGB(255, 255, 255),
+	Info = Color3.fromRGB(200, 200, 200),
 }
 
 function UI.new(className: string, props: { [string]: any }?, children: { Instance }?): any

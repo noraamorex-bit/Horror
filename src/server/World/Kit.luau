@@ -2196,6 +2196,7 @@ end
 -- a plate of cookies
 function Kit.cookies(parent, cf: CFrame)
 	local m = Kit.plate(parent, cf, 1.1)
+	m.Name = "CookiePlate" -- keeps its hand-made cookies (Props leaves it alone)
 	for k = 0, 4 do
 		local a = k / 5 * math.pi * 2
 		local c = Kit.vcyl(m, "Cookie", cf * CF(math.cos(a) * 0.26, 0.1 + (k % 2) * 0.04, math.sin(a) * 0.26) * ANG(rad((k % 2) * 8), 0, 0), 0.07, 0.36, Color3.fromRGB(196, 146, 84), M.Plastic)

@@ -11,6 +11,15 @@
 ]]
 
 local TweenService = game:GetService("TweenService")
+local PhysicsService = game:GetService("PhysicsService")
+
+-- door leaves never physically block Curtis (he shoulders through a half-open door instead of
+-- getting pinned behind it); players still bump into them as normal
+pcall(function()
+	PhysicsService:RegisterCollisionGroup("Doors")
+	PhysicsService:RegisterCollisionGroup("Intruder")
+	PhysicsService:CollisionGroupSetCollidable("Doors", "Intruder", false)
+end)
 
 local Doors = {}
 local ctx
@@ -49,6 +58,7 @@ local function updatePrompts(door)
 end
 
 local function tweenTo(door, target: number, time: number)
+	door.Target = target
 	if door.Tween then
 		door.Tween:Cancel()
 	end
@@ -119,6 +129,7 @@ function Doors.create(parent: Instance, op)
 		Material = Enum.Material.Wood,
 	})
 	model.PrimaryPart = panel
+	panel.CollisionGroup = "Doors"
 	-- inset panels for detail
 	for i = -1, 1, 2 do
 		local inset = alongX and Vector3.new(w * 0.7, h * 0.35, t + 0.08) or Vector3.new(t + 0.08, h * 0.35, w * 0.7)
@@ -221,7 +232,9 @@ function Doors.open(door, byWho: string?, fast: boolean?)
 		ctx.Audio.playAt("DoorSlam", door.Position)
 		ctx.Noise.emit(door.Position, ctx.Config.Noise.DoorSlam, "Door")
 	else
-		ctx.Audio.playAt("DoorOpen", door.Position, { Caption = if byWho == "Intruder" then nil else false })
+		-- he eases doors open; you only hear it if you're close
+		local sneaky = byWho == "Intruder"
+		ctx.Audio.playAt("DoorOpen", door.Position, { Caption = false, Volume = sneaky and 0.3 or nil, Range = sneaky and 30 or nil })
 		ctx.Noise.emit(door.Position, ctx.Config.Noise.Door, "Door")
 	end
 end
@@ -235,6 +248,15 @@ function Doors.close(door, player: Player?)
 	updatePrompts(door)
 	ctx.Audio.playAt("DoorClose", door.Position, { Caption = false })
 	ctx.Noise.emit(door.Position, ctx.Config.Noise.Door, "Door", player)
+end
+
+-- yanked shut from the other side
+function Doors.slamShut(door)
+	door.IsOpen = false
+	tweenTo(door, 0, 0.18)
+	updatePrompts(door)
+	ctx.Audio.playAt("DoorSlam", door.Position, { Volume = 1, CaptionText = "[The door is YANKED shut]" })
+	ctx.Noise.emit(door.Position, ctx.Config.Noise.DoorSlam, "Intruder")
 end
 
 function Doors.tryOpen(door, player: Player)
@@ -292,6 +314,11 @@ end
 ]]
 function Doors.intruderOpen(door, hurry: boolean?): number
 	if door.IsOpen then
+		-- ajar (or swinging shut): he pushes it the rest of the way
+		if (door.Target or door.Angle) < OPEN_ANGLE * 0.75 then
+			tweenTo(door, OPEN_ANGLE, hurry and 0.3 or 0.7)
+			ctx.Audio.playAt("DoorOpen", door.Position, { Volume = 0.5, Caption = false })
+		end
 		return 0
 	end
 	local wait = 0.4
@@ -316,10 +343,11 @@ function Doors.intruderOpen(door, hurry: boolean?): number
 	return wait + 0.3
 end
 
+-- closed, or only ajar: anything that stands in his way through the doorway
 function Doors.nearestClosed(pos: Vector3, radius: number)
 	local best, bestD = nil, radius
 	for _, door in list do
-		if not door.IsOpen then
+		if not door.IsOpen or (door.Target or door.Angle) < OPEN_ANGLE * 0.75 then
 			local d = (door.Position - pos).Magnitude
 			if d < bestD then
 				best, bestD = door, d

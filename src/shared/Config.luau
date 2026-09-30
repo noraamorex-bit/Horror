@@ -150,9 +150,9 @@ Config.Director = {
 	Ceiling = { Evening = 25, SmallThings = 65, SomeoneElse = 85, Guest = 100 },
 	Gap = {
 		Evening = { 30, 55 },
-		SmallThings = { 16, 32 },
-		SomeoneElse = { 18, 36 },
-		Guest = { 28, 55 },
+		SmallThings = { 30, 50 },
+		SomeoneElse = { 32, 55 },
+		Guest = { 45, 80 },
 	},
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },
@@ -164,7 +164,7 @@ Config.Thoughts = {
 	Duration = 5, -- seconds each line stays on screen
 	IdleHint = 35, -- seconds without progress before they remind themselves of the next task
 	FirstHint = 12, -- seconds into the night before the first task nudge
-	QuietGap = 2.5, -- seconds of quiet after a thought or conversation before a text or banter comes in
+	QuietGap = 4, -- seconds of quiet after a thought or conversation before a text or banter comes in
 }
 
 Config.ChatRange = 50

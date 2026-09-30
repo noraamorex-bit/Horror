@@ -213,6 +213,8 @@ local function refreshActive()
 		local on = isActive(name)
 		entry.Stroke.Color = on and ctx.UI.Color.Accent or Color3.new(1, 1, 1)
 		entry.Stroke.Transparency = on and 0 or 0.55
+		entry.Stroke.Thickness = on and 3 or 2
+		entry.Stroke.Transparency = on and 0 or 0.55
 	end
 end
 

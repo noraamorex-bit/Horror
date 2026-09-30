@@ -60,7 +60,8 @@ Sounds.Library = {
 	PowerUp = { Id = "rbxassetid://9117882503", Volume = 0.6, Range = 200, Caption = "[The fridge hums back to life]" },
 	MicrowaveHum = { Id = "rbxassetid://9114258913", Volume = 0.4, Looped = true, Range = 30, Caption = "[Microwave humming]" },
 	MicrowaveBeep = { Id = "rbxassetid://9118777437", Fallback = ENGINE_BEEP, Volume = 0.6, Range = 50, Caption = "[Beep beep beep]" },
-	Popcorn = { Id = "", Volume = 0.6, Range = 35, Caption = "[Popcorn popping]" },
+	-- ProSoundEffects "Popping Corn 4"
+	Popcorn = { Id = "rbxassetid://9117845085", Volume = 0.6, Range = 35, Caption = "[Popcorn popping]" },
 	Faucet = { Id = "rbxassetid://9119153987", Fallback = ENGINE_SPLASH, Volume = 0.3, Range = 20, Caption = "[Running water]" },
 	Toilet = { Id = "rbxassetid://9120106655", Fallback = ENGINE_SPLASH, Volume = 0.6, Range = 40, Caption = "[A toilet flushes]" },
 	PhoneRing = { Id = "rbxassetid://9117305259", Fallback = ENGINE_BEEP, Volume = 1, Looped = true, Range = 120, Caption = "[The landline is ringing]" },
@@ -73,13 +74,17 @@ Sounds.Library = {
 	GlassBreak = { Id = "rbxassetid://9114590297", Fallback = ENGINE_THUD, Volume = 1, Range = 160, Caption = "[GLASS SHATTERS]" },
 	CarEngine = { Id = "rbxassetid://9112952489", Volume = 0.8, Range = 150, Caption = "[A car engine starts]" },
 	Siren = { Id = "rbxassetid://9117810961", Fallback = ENGINE_WIND, Volume = 1, Looped = true, Range = 400, Caption = "[Sirens]" },
-	DogBark = { Id = "", Volume = 0.8, Range = 180, Caption = "[A dog barking next door]" },
+	DogBark = { Id = "rbxassetid://8678449977", Volume = 0.8, Range = 180, Caption = "[A dog barking next door]" },
 	Floorboard = { Id = "rbxassetid://9114496277", Fallback = ENGINE_STEP, Volume = 0.8, Range = 60, Caption = "[A floorboard creaks]" },
 	HatchCreak = { Id = "rbxassetid://9126263691", Fallback = ENGINE_THUD, Volume = 0.7, Range = 60, Caption = "[Something creaks in the ceiling]" },
 	Doorbell = { Id = "rbxassetid://91808856778507", Fallback = ENGINE_BEEP, Volume = 1, Range = 120, Caption = "[The doorbell rings]" },
 	Sting = { Id = "rbxassetid://9120769331", Volume = 0.8, Range = 40 },
 	-- APM "Eyes Scream Horror Hit": the moment he grabs you
 	Jumpscare = { Id = "rbxassetid://9041752524", Volume = 1 },
+	-- APM "FEAR HIT 12": the rare, sudden, loud sting (played only to whoever it scares)
+	Stinger = { Id = "rbxassetid://9043338954", Volume = 1 },
+	-- APM "BIG IMPACT HIT 11": a thunderclap right on top of the house
+	BigHit = { Id = "rbxassetid://9043338036", Fallback = ENGINE_THUD, Volume = 1, Range = 300, Caption = "[CRACK - thunder right overhead]" },
 	-- jump scares: loud, sudden, close
 	PlateCrash = { Id = "rbxassetid://9114592102", Fallback = ENGINE_THUD, Volume = 1, Range = 140, Caption = "[CRASH - something shatters in the kitchen]" },
 	CeilingThud = { Id = "rbxassetid://9113437538", Fallback = ENGINE_THUD, Volume = 1, Range = 90, Caption = "[A heavy THUD in the ceiling]" },

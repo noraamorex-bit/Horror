@@ -100,6 +100,15 @@ The ending card adds a line under each player: how many times they hid, were spo
 ### The secret ending: Case Closed
 Ten clue documents are **evidence** (`Story.Evidence`): the warm mug, the invoice, Lily's drawing, the notebook, the polaroids, the footprints, the trash can, the wet shower, the empty key hook and the lanyard. Reading a new one shows "Evidence n / 10" to everyone. If the group has read at least 7 (`Story.EvidenceNeeded`) when the police arrive, SIRENS becomes **CASE CLOSED**: the kids have already worked out who he is.
 
+### He's hiding, not haunting
+Before the hunt, Curtis is trying not to be found. Anything he does in person (a door easing open, food gone from the fridge, the music box) can only happen where he actually is, and only when nobody can see him (`Where` on an event in `Director/Events.luau`). He doesn't knock on walls or throw chairs for effect. The one loud thing he does by accident: if you spot him, he bolts, and sometimes knocks a chair flying on the way. Walk right up to him in the dark and he shoves you to the floor and runs. Open a door he's standing behind and it gets yanked shut in your face (a few minutes apart at most). Door leaves never trap him: he pushes half-open doors wide and walks through them.
+
+### Sudden scares, rarely
+A loud musical sting (APM "Fear Hit") lands with the big scares: a door slam, the plate smashing, the window bang, a thunderclap right on top of the house. It plays at most once every 2½ minutes, so it stays a shock.
+
+### One message at a time
+Thoughts, notifications and sound captions share the screen (`ctx.Pace` in `Thoughts.luau`). Each message waits its turn, sound captions are dropped while something else is being said, and the Director only fires a new event when nothing is being said (`Director.isQuiet`).
+
 ### He likes the dark
 While lurking, patrolling or searching, if he passes through a lit room that nobody is in and nobody can see him, he sometimes switches the light off (at most every 45 s). Rooms you left lit go dark one by one. The truth log explains it once.
 
@@ -315,6 +324,8 @@ All coordinates are in studs. The front of the house faces −Z (toward the stre
 
 - **Ground floor (y 1–14):** Living, Kitchen/Dining, Hallway/Foyer (main stairs up, basement door), Office (key-locked), Downstairs Bath (its door opens off the back hall, x≈15.6 on the z=−4 wall), Mudroom (door to garage), Den.
 - **Stairs** are solid flights: each step is a painted body under an oak tread with a nosing, on a sloped stringer. Players walk an invisible ramp through the middle of the treads that meets both floors flush (no lip), and the top tread collides so the ramp joins the landing. The basement stairwell is an open hole through every slab (the foundation is only a ring round the footprint), boxed in by headers; floor-level trim stops at stairwells.
+- **No flicker**: after the build, `World/Depth.luau` finds surfaces that sit in the same plane and face the same way (trim flush with walls, paint layers, window glass and frames, curtain folds) and pulls the smaller one out by 0.03 studs.
+- **Scale**: player avatars are scaled up to about 6.1 studs, adult height for the house's 13-stud ceilings. Curtis is 7.2 studs, thin and stooped: a sack mask with hollow eyes, a worn black work jacket and dirty jeans.
 - **Structure audit** (harness): every door and arch needs floor underfoot and open air on both sides; furniture may not intrude into doorways, stair ends or walls.
 - **Upstairs (y 15–28):** Master Bedroom (+ en-suite), Jamie's Room, Upstairs Hall (attic hatch, linen wardrobe), Guest Room, Hall Bath (**cell signal at the window**), Lily's Room.
 - **Basement (y −13–0):** open storage, under-stairs hiding nook, **Boiler Room** (captives). Unfinished and lived-in: exposed joists on a steel girder with lally columns, a sheet-metal duct, bare bulbs with pull cords, an old rec corner (sagging couch, tube TV, a sheeted ping-pong table and chair), stacked holiday tubs, the kids' bikes, a spare mattress against the wall, the sump pit, puddles, water stains and cobwebs.
@@ -386,7 +397,11 @@ src/
 ### Publishing
 `rojo build -o HomeAlone.rbxl`, then upload it with the Open Cloud Place Publishing API
 (`POST https://apis.roblox.com/universes/v1/{universeId}/places/{placeId}/versions?versionType=Published`,
-header `x-api-key`, body = the .rbxl as `application/octet-stream`). Use `versionType=Saved` to upload
+header `x-api-key`, body = the .rbxl as `application/octet-stream`). Before uploading, run
+`python3 tools/place_flags.py HomeAlone.rbxl`: it sets `AssetService.AllowInsertFreeAssets`, which Rojo
+can't write yet. The game needs that setting to load free Creator Store models for props
+(`World/Props.luau`: the popcorn bowl, the broken plate, plates, mugs, the fruit bowl, pumpkins,
+flowers and the kettle). Anything that fails to load keeps its hand-built version. Use `versionType=Saved` to upload
 without making the version live.
 
 ### Tuning quick reference (`src/shared/Config.luau`)

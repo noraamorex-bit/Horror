@@ -8,6 +8,8 @@ local Interior = require(script.Parent.Interior)
 local Finish = require(script.Parent.Finish)
 local Exterior = require(script.Parent.Exterior)
 local Neighborhood = require(script.Parent.Neighborhood)
+local Depth = require(script.Parent.Depth)
+local Props = require(script.Parent.Props)
 
 local World = {}
 local ctx
@@ -29,6 +31,10 @@ function World.build()
 	Interior.build(ctx, f, refs)
 	Exterior.build(ctx, f, refs)
 	Neighborhood.build(ctx, f)
+	-- last: pull apart any surfaces that would flicker against each other
+	Depth.resolve(f)
+	-- nicer Creator Store models for the small props, loaded in the background
+	Props.watch(f)
 	-- objective markers for doors
 	for _, door in ctx.Doors.all() do
 		ctx.Objectives.setTarget("Door_" .. door.Id, door.Position)

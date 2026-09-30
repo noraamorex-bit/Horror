@@ -4,6 +4,8 @@
 
 	Event fields:
 		Id, Acts = { [act] = true }, Weight, Tension, Once, Cooldown (s)
+		Where(ctx, data) -> Vector3    for things Curtis does in person: once he's really in the
+		                               house the event only happens right where he is, unseen
 		Cond(ctx, D) -> data | nil     only fires when this returns something
 		Run(ctx, D, data)              may yield
 		Force(ctx, D) -> data | nil    relaxed condition for guaranteed beats past their deadline
@@ -34,6 +36,19 @@ local function floorOf(ctx, root: BasePart): string
 end
 
 
+-- the loud musical sting that lands with a scare: rare, so it never stops being sudden
+local nextSting = 0
+local function sting(ctx, players: { Player })
+	if os.clock() < nextSting or #players == 0 then
+		return
+	end
+	nextSting = os.clock() + 150
+	for _, p in players do
+		ctx.Remotes.PlaySound:FireClient(p, "Stinger", nil, { Volume = 0.9 })
+	end
+end
+Events.sting = sting
+
 -- a loud sudden noise: shake and rattle everyone close enough to hear it clearly
 local function jolt(ctx, pos: Vector3, radius: number, nerve: number, shake: number)
 	local hit = {}
@@ -49,6 +64,7 @@ local function jolt(ctx, pos: Vector3, radius: number, nerve: number, shake: num
 			end
 		end
 	end
+	sting(ctx, hit)
 	return hit
 end
 
@@ -97,6 +113,9 @@ Events.List = {
 	---------------------------------------------------------------------------
 	{
 		Id = "DoorAjar",
+		Where = function(_, door)
+			return door.Position
+		end,
 		Acts = { SmallThings = true, SomeoneElse = true },
 		Weight = 3,
 		Tension = 8,
@@ -161,6 +180,9 @@ Events.List = {
 	---------------------------------------------------------------------------
 	{
 		Id = "FoodMissing",
+		Where = function(_, k)
+			return k.FridgePos
+		end,
 		Acts = { SmallThings = true },
 		Weight = 2,
 		Tension = 4,
@@ -350,6 +372,9 @@ Events.List = {
 	---------------------------------------------------------------------------
 	{
 		Id = "BreakerAgain",
+		Where = function()
+			return V(41, 8, -12.7)
+		end,
 		Acts = { Guest = true },
 		Weight = 2,
 		Tension = 10,
@@ -378,6 +403,36 @@ Events.List = {
 	-- JUMP SCARES: loud, sudden noises with a real cause
 	---------------------------------------------------------------------------
 	{
+		-- the storm: lightning strikes right by the house, the flash and the crack together
+		Id = "Thunderclap",
+		Acts = { Evening = true, SmallThings = true, SomeoneElse = true, Guest = true },
+		Weight = 2,
+		Tension = 8,
+		Cooldown = 260,
+		Cond = function(ctx)
+			local list = {}
+			for _, p in ctx.Util.activePlayers() do
+				local room = roomOf(ctx, p)
+				if room and room.Floor ~= "Basement" and not p:GetAttribute("Hiding") then
+					table.insert(list, p)
+				end
+			end
+			return #list > 0 and list or nil
+		end,
+		Run = function(ctx, D, list)
+			local root = ctx.Util.getRoot(list[1])
+			if not root then
+				return
+			end
+			ctx.Remotes.Lightning:FireAllClients(1.8, 0.05)
+			ctx.Audio.playAt("BigHit", root.Position + V(0, 40, 0), { Volume = 1 })
+			ctx.Audio.playAt("Thunder", root.Position + V(0, 40, 0), { Volume = 1, Caption = false })
+			ctx.Power.flicker(1.2)
+			jolt(ctx, root.Position, 200, 6, 0.6)
+			D.logTruth("Thunderclap")
+		end,
+	},
+	{
 		Id = "WindSlam",
 		Acts = { Evening = true },
 		Weight = 4,
@@ -405,6 +460,9 @@ Events.List = {
 	},
 	{
 		Id = "PlateCrash",
+		Where = function(_, pos)
+			return pos
+		end,
 		Acts = { SmallThings = true, SomeoneElse = true },
 		Weight = 4,
 		Tension = 14,
@@ -424,12 +482,14 @@ Events.List = {
 		Run = function(ctx, D, pos)
 			ctx.Audio.playAt("PlateCrash", pos + V(0, 2, 0), { Volume = 1 })
 			-- the pieces stay on the floor
-			local folder = ctx.World.folder():FindFirstChild("Kitchen") or ctx.World.folder()
+			local folder = Instance.new("Model")
+			folder.Name = "BrokenPlate" -- Props swaps in a proper broken-plate model
 			local rng = Random.new()
 			for i = 1, 9 do
-				local shard = ctx.Builder.block(folder, "PlateShard", pos + V(rng:NextNumber(-1.6, 1.6), 0.05, rng:NextNumber(-1.2, 1.2)), V(rng:NextNumber(0.25, 0.7), 0.06, rng:NextNumber(0.2, 0.5)), i <= 2 and Color3.fromRGB(70, 110, 150) or Color3.fromRGB(245, 243, 236), Enum.Material.SmoothPlastic, rng:NextNumber(0, 360), { CanCollide = false, CanQuery = false })
+				local shard = ctx.Builder.block(folder, "PlateShard", pos + V(rng:NextNumber(-0.8, 0.8), 0.05, rng:NextNumber(-0.6, 0.6)), V(rng:NextNumber(0.25, 0.7), 0.06, rng:NextNumber(0.2, 0.5)), i <= 2 and Color3.fromRGB(70, 110, 150) or Color3.fromRGB(245, 243, 236), Enum.Material.SmoothPlastic, rng:NextNumber(0, 360), { CanCollide = false, CanQuery = false })
 				shard.Name = "PlateShard"
 			end
+			folder.Parent = ctx.World.folder():FindFirstChild("Kitchen") or ctx.World.folder()
 			local hit = jolt(ctx, pos, 60, 12, 0.5)
 			D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.PlateCrash)
 			D.logTruth("PlateCrash")
@@ -437,6 +497,9 @@ Events.List = {
 	},
 	{
 		Id = "CeilingThud",
+		Where = function(_, data)
+			return data.Pos
+		end,
 		Acts = { SmallThings = true, SomeoneElse = true, Guest = true },
 		Weight = 3,
 		Tension = 12,
@@ -557,7 +620,7 @@ Events.List = {
 	},
 	{
 		Id = "ChairDrop",
-		Acts = { SmallThings = true, SomeoneElse = true, Guest = true },
+		Acts = {}, -- not scheduled: Intruder.lua knocks a chair over when he bolts after being seen
 		Weight = 2,
 		Tension = 10,
 		Cooldown = 200,
@@ -598,6 +661,9 @@ Events.List = {
 	{
 		-- Lily's music box starts playing upstairs while nobody is in her room
 		Id = "MusicBox",
+		Where = function(_, box)
+			return box.Position
+		end,
 		Acts = { SmallThings = true, SomeoneElse = true },
 		Weight = 3,
 		Tension = 10,
@@ -625,48 +691,12 @@ Events.List = {
 		end,
 	},
 	{
-		-- the upstairs shower turns on by itself, runs for a while, then stops
-		Id = "ShowerRan",
-		Acts = { SmallThings = true, SomeoneElse = true },
-		Weight = 3,
-		Tension = 10,
-		Once = true,
-		Cond = function(ctx)
-			local head = ctx.World.folder():FindFirstChild("ShowerHead", true)
-			if not head then
-				return nil
-			end
-			local inBath, near = false, false
-			for _, p in ctx.Util.activePlayers() do
-				local room, root = roomOf(ctx, p)
-				if room and room.Name == "HallBath" then
-					inBath = true
-				elseif root and (root.Position - head.Position).Magnitude < 55 then
-					near = true
-				end
-			end
-			return (near and not inBath) and head or nil
-		end,
-		Run = function(ctx, D, head)
-			local loop = ctx.Audio.loopOn("ShowerRun", head, { Volume = 0.9 })
-			local drips = head:FindFirstChildOfClass("ParticleEmitter")
-			if drips then
-				drips.Rate = 90
-			end
-			D.thinkNear(head.Position, 55, ctx.Story.Thoughts.Events.ShowerRan)
-			D.logTruth("ShowerRan")
-			task.wait(22)
-			if loop then
-				loop:Destroy()
-			end
-			if drips and drips.Parent then
-				drips.Rate = 3
-			end
-		end,
-	},
-	{
 		-- with everyone downstairs, the light in Lily's room comes on
 		Id = "LightUpstairs",
+		Where = function(ctx)
+			local r = ctx.Rooms.ByName.Lily
+			return r and r.Center or Vector3.zero
+		end,
 		Acts = { SmallThings = true },
 		Weight = 2,
 		Tension = 8,
@@ -688,6 +718,9 @@ Events.List = {
 	{
 		-- the unlocked back door is found swinging open, rain blowing in, wet prints on the tile
 		Id = "BackDoorOpen",
+		Where = function(_, door)
+			return door.Position
+		end,
 		Acts = { SmallThings = true, SomeoneElse = true },
 		Weight = 3,
 		Tension = 12,
@@ -722,54 +755,6 @@ Events.List = {
 			end
 			D.thinkNear(door.Position, 60, ctx.Story.Thoughts.Events.BackDoorOpen)
 			D.logTruth("BackDoorOpen")
-		end,
-	},
-	{
-		-- slow knocking from inside the wall, right next to someone who is alone
-		Id = "WallKnock",
-		Acts = { SomeoneElse = true, Guest = true },
-		Weight = 2,
-		Tension = 10,
-		Cooldown = 240,
-		Cond = function(ctx)
-			local players = ctx.Util.activePlayers()
-			for _, p in players do
-				local room, root = roomOf(ctx, p)
-				if room and root and room.Floor ~= "Basement" then
-					local alone = true
-					for _, q in players do
-						local r2 = q ~= p and ctx.Util.getRoot(q)
-						if r2 and (r2.Position - root.Position).Magnitude < 25 then
-							alone = false
-						end
-					end
-					if alone then
-						-- the closest wall of the room
-						local pos = root.Position
-						local cands = {
-							V(room.Min.X + 0.3, pos.Y, pos.Z),
-							V(room.Max.X - 0.3, pos.Y, pos.Z),
-							V(pos.X, pos.Y, room.Min.Z + 0.3),
-							V(pos.X, pos.Y, room.Max.Z - 0.3),
-						}
-						table.sort(cands, function(a, b)
-							return (a - pos).Magnitude < (b - pos).Magnitude
-						end)
-						return { Player = p, Pos = cands[1] }
-					end
-				end
-			end
-			return nil
-		end,
-		Run = function(ctx, D, data)
-			for _ = 1, 3 do
-				ctx.Audio.playAt("Knock", data.Pos, { Volume = 0.8, Range = 30, Caption = false })
-				task.wait(1.3)
-			end
-			ctx.Audio.caption("[Three slow knocks, inside the wall]", data.Pos, 30)
-			jolt(ctx, data.Pos, 20, 8, 0.3)
-			D.think(data.Player, ctx.Story.Thoughts.Events.WallKnock)
-			D.logTruth("WallKnock")
 		end,
 	},
 }

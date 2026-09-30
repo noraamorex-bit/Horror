@@ -120,6 +120,10 @@ local function avatarActor(folder: Instance, start: CFrame)
 		return Players:CreateHumanoidModelFromDescription(describe(true), Enum.HumanoidRigType.R15)
 	end)
 	local model = okHead and built or Players:CreateHumanoidModelFromDescription(describe(false), Enum.HumanoidRigType.R15)
+	-- grown-up height next to the (scaled-up) players
+	pcall(function()
+		model:ScaleTo(1.15)
+	end)
 	local hum = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
 	local head = model:FindFirstChild("Head") :: BasePart

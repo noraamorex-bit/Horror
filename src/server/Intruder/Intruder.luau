@@ -94,50 +94,87 @@ local function blockRig(): Model
 	return model
 end
 
--- Curtis as a Roblox avatar: a stitched burlap sack over his head (UGC "Stitched Burlap Horror
--- Mask" by BloodWarrior08; a dark knit beanie if it can't load), the blank "Stare" head underneath, a black jacket and black jeans (Roblox classic clothing), big and tall. Every catalog
--- piece is optional: if the head can't load he keeps the classic head, and if the avatar can't
--- be built at all the block rig stands in.
+-- Curtis as a Roblox avatar, built from catalog items (all optional, each tier falls back to a
+-- simpler one): a stained sack over his head with two hollow eye holes, a worn black work
+-- jacket, dirty torn jeans, sallow skin, tall and thin, stooped from weeks in the crawl space.
 local CURTIS = {
 	Head = 13692947484, -- Roblox: Stare - Head
-	Shirt = 382538295, -- Roblox: Guitar Tee with Black Jacket
-	Pants = 382537569, -- Roblox: Black Jeans
-	Mask = 127512374310237, -- UGC (BloodWarrior08): Stitched Burlap Horror Mask
+	Shirt = 382538295, -- Roblox: Guitar Tee with Black Jacket (under the layered jacket)
+	Pants = 382537569, -- Roblox: Black Jeans (under the layered jeans)
+	Mask = 14960376005, -- UGC (Luka's Workshop): Sack Head, hollow eyes
+	OldMask = 127512374310237, -- UGC (BloodWarrior08): Stitched Burlap Horror Mask
+	Jacket = 121103605760912, -- UGC (FATAL ARCHIVE): Black Worn Workwear Zip Up Jacket
+	Jeans = 108286714740006, -- UGC (Kool closet): Dirty Jeans
 }
-local function curtisDescription(withHead: boolean)
+local HEIGHT = 7.2 -- studs, a head taller than the players
+
+-- tier 1: everything; 2: classic clothes and the old mask; 3: no custom head either
+local function curtisDescription(tier: number)
 	local desc = Instance.new("HumanoidDescription")
-	local skin = Color3.fromRGB(196, 160, 130)
-	if withHead then
+	local skin = Color3.fromRGB(176, 158, 138)
+	if tier < 3 then
 		desc.Head = CURTIS.Head
 	end
-	desc.HatAccessory = tostring(CURTIS.Mask)
+	desc.HatAccessory = tostring(tier == 1 and CURTIS.Mask or CURTIS.OldMask)
 	desc.Shirt = CURTIS.Shirt
 	desc.Pants = CURTIS.Pants
+	if tier == 1 then
+		desc:SetAccessories({
+			{ AssetId = CURTIS.Jacket, AccessoryType = Enum.AccessoryType.Jacket, IsLayered = true, Order = 3 },
+			{ AssetId = CURTIS.Jeans, AccessoryType = Enum.AccessoryType.Pants, IsLayered = true, Order = 2 },
+		}, true)
+	end
 	desc.HeadColor = skin
 	desc.LeftArmColor = skin
 	desc.RightArmColor = skin
 	desc.TorsoColor = Color3.fromRGB(40, 40, 44)
 	desc.LeftLegColor = Color3.fromRGB(34, 34, 38)
 	desc.RightLegColor = Color3.fromRGB(34, 34, 38)
-	desc.HeightScale = 1.12
-	desc.WidthScale = 1.08
-	desc.DepthScale = 1.02
-	desc.BodyTypeScale = 0
-	desc.ProportionScale = 0
+	desc.HeightScale = 1.2
+	desc.WidthScale = 0.92
+	desc.DepthScale = 0.95
+	desc.HeadScale = 1
+	desc.BodyTypeScale = 0.35
+	desc.ProportionScale = 0.6
 	return desc
 end
 
+-- stooped: the upper body leans forward and the head juts out
+local function hunch(model: Model)
+	local upper = model:FindFirstChild("UpperTorso")
+	local head = model:FindFirstChild("Head")
+	local waist = upper and upper:FindFirstChild("Waist")
+	local neck = head and head:FindFirstChild("Neck")
+	if waist and waist:IsA("Motor6D") then
+		waist.C0 = waist.C0 * CFrame.Angles(math.rad(-16), 0, 0)
+	end
+	if neck and neck:IsA("Motor6D") then
+		neck.C0 = neck.C0 * CFrame.Angles(math.rad(10), 0, 0)
+	end
+end
+
 local function buildRig(): Model
-	local ok, result = pcall(function()
-		return Players:CreateHumanoidModelFromDescription(curtisDescription(true), Enum.HumanoidRigType.R15)
-	end)
-	if not ok then
+	local ok, result = false, nil
+	for tier = 1, 3 do
 		ok, result = pcall(function()
-			return Players:CreateHumanoidModelFromDescription(curtisDescription(false), Enum.HumanoidRigType.R15)
+			return Players:CreateHumanoidModelFromDescription(curtisDescription(tier), Enum.HumanoidRigType.R15)
 		end)
+		if ok and result then
+			break
+		end
 	end
 	local model = (ok and result) or blockRig()
 	model.Name = "Curtis"
+	if ok and result then
+		pcall(function()
+			local _, size = model:GetBoundingBox()
+			local accessoriesTop = size.Y
+			if accessoriesTop > 1 then
+				model:ScaleTo(model:GetScale() * math.clamp(HEIGHT / accessoriesTop, 0.8, 1.5))
+			end
+		end)
+		hunch(model)
+	end
 	local hum = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	hum.NameDisplayDistance = 0
@@ -231,6 +268,11 @@ local function ensureModel()
 	S.Root = model:FindFirstChild("HumanoidRootPart")
 	S.Head = model:FindFirstChild("Head")
 	S.Root.Anchored = true
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CollisionGroup = "Intruder"
+		end
+	end
 	S.Nav = Navigator.new(ctx, S.Humanoid, S.Root)
 	S.Tracks = {}
 	S.CurrentTrack = nil
@@ -532,14 +574,80 @@ end
 ---------------------------------------------------------------------------
 -- States
 ---------------------------------------------------------------------------
-STATES.Lurk = function(_, _visible)
+-- bolting after being seen: fast, to the far side of the house, and clumsy about it
+local function bolt(d)
+	d.Phase = "Flee"
+	d.FleeStart = now()
+	S.Nav:goTo(farNode(), { Speed = 15, Tolerance = 3, Hurry = true })
+	-- in his hurry he knocks a chair over (once a night; the one loud thing he does by accident)
+	if not S.KnockedChair and math.random() < 0.6 then
+		S.KnockedChair = true
+		task.delay(0.6, function()
+			if S.Root then
+				ctx.Audio.playAt("ChairDrop", pos(), { Volume = 1 })
+				ctx.Director.logTruth("ChairDrop")
+			end
+		end)
+	end
+end
+
+-- someone walked right up to him before he was ready: he shoves past them and runs
+local function shove(p: Player)
+	local r = rootOf(p)
+	if not r then
+		return
+	end
+	local hum = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+	faceToward(r.Position)
+	ctx.Audio.playAt("Stinger", r.Position, { Volume = 1, Only = { p } })
+	ctx.Audio.playAt("ManGrunt", S.Head.Position, { Caption = true })
+	ctx.Remotes.Shake:FireClient(p, 0.9, 0.9)
+	ctx.PlayerState.addNerve(p, -25)
+	if hum then
+		-- knocked flat for a moment
+		local away = V(r.Position.X - pos().X, 0, r.Position.Z - pos().Z)
+		away = away.Magnitude > 0.1 and away.Unit or V(0, 0, 1)
+		hum:ChangeState(Enum.HumanoidStateType.Physics)
+		r.AssemblyLinearVelocity = away * 28 + V(0, 12, 0)
+		task.delay(1.3, function()
+			if hum.Parent then
+				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+			end
+		end)
+	end
+	if not S.LoggedShove then
+		S.LoggedShove = true
+		ctx.Director.logTruthRaw(tostring(p:GetAttribute("RoleName") or p.Name) .. " walked right into Curtis in the dark. He shoved them down and ran.")
+	end
+	ctx.Director.onSighting(p)
+end
+
+STATES.Lurk = function(_, visible)
 	local d = S.Data
-	local I = ctx.Config.Intruder
 	local obs = observers()
+	-- too close: whether they've seen him or he's seen them, he can't stay hidden
+	if d.Phase ~= "Flee" then
+		local closest, closeD = nil, math.huge
+		for _, pl in ctx.Util.activePlayers() do
+			local r = rootOf(pl)
+			if r and math.abs(r.Position.Y - pos().Y) < 6 then
+				local dist = (r.Position - pos()).Magnitude
+				if dist < closeD then
+					closest, closeD = pl, dist
+				end
+			end
+		end
+		if closest and closeD < 8 and (table.find(obs, closest) or table.find(visible, closest)) then
+			shove(closest)
+			bolt(d)
+			return
+		end
+	end
 	if #obs > 0 and d.Phase ~= "Flee" then
 		if d.Phase ~= "Freeze" then
+			-- a heartbeat of stillness, staring back, then gone
 			d.Phase = "Freeze"
-			d.Until = now() + 1 + math.random() * 1.2
+			d.Until = now() + 0.5 + math.random() * 0.5
 			S.Nav:stop()
 			local r = rootOf(obs[1])
 			if r then
@@ -547,18 +655,20 @@ STATES.Lurk = function(_, _visible)
 			end
 		end
 		if now() >= d.Until then
-			d.Phase = "Flee"
-			S.Nav:goTo(farNode(), { Speed = 11, Tolerance = 3, Hurry = true })
+			bolt(d)
 		end
 		return
 	end
 	if d.Phase == "Freeze" or minPlayerDistance(pos()) < 6 then
-		d.Phase = "Flee"
-		S.Nav:goTo(farNode(), { Speed = 11, Tolerance = 3, Hurry = true })
+		bolt(d)
 		return
 	end
+	if d.Phase == "Flee" and S.Nav:isStuck() then
+		S.Nav:goTo(farNode(), { Speed = 15, Tolerance = 3, Hurry = true })
+	end
+	local I = ctx.Config.Intruder
 	if d.Phase == "Flee" then
-		if S.Nav.Arrived or now() - S.StateStart > 25 then
+		if S.Nav.Arrived or now() - (d.FleeStart or S.StateStart) > 25 then
 			d.Phase = "Wait"
 			d.Until = now() + 4 + math.random() * 5
 		end
@@ -1073,6 +1183,13 @@ function Intruder.setMode(mode: string, cause: Player?)
 				startPatrol()
 			end
 		end)
+	end
+end
+
+-- something gave him away (a door he was holding shut): he runs for it
+function Intruder.spook()
+	if S.State == "Lurk" and S.Data.Phase ~= "Flee" then
+		bolt(S.Data)
 	end
 end
 

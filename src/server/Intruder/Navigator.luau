@@ -13,7 +13,7 @@ Navigator.__index = Navigator
 
 local AGENT = {
 	AgentRadius = 1.8,
-	AgentHeight = 6,
+	AgentHeight = 7.5,
 	AgentCanJump = false,
 	AgentCanClimb = false,
 	WaypointSpacing = 4,

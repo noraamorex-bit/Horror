@@ -32,9 +32,39 @@ function PlayerState.setSpawnResolver(fn)
 	spawnResolver = fn
 end
 
+-- The house is built big (13-stud ceilings, counters and cupboards at real proportions), so a
+-- default-sized avatar feels like a child in it. Every character is scaled up to a grown-up's
+-- height; already-tall avatars are left as they are.
+local TARGET_HEIGHT = 6.1
+
+local function normalizeHeight(player: Player, char: Model, hum: Humanoid, head: BasePart)
+	if not player:HasAppearanceLoaded() then
+		local t0 = os.clock()
+		while not player:HasAppearanceLoaded() and os.clock() - t0 < 6 and char.Parent do
+			task.wait(0.2)
+		end
+	end
+	local root = hum.RootPart
+	if not root or not char.Parent then
+		return
+	end
+	local feet = root.Position.Y - root.Size.Y / 2 - hum.HipHeight
+	local height = head.Position.Y + head.Size.Y / 2 - feet
+	if height <= 0.5 then
+		return
+	end
+	local factor = math.clamp(TARGET_HEIGHT / height, 1, 1.4)
+	if factor > 1.02 then
+		pcall(function()
+			char:ScaleTo(char:GetScale() * factor)
+		end)
+	end
+end
+
 local function setupCharacter(player: Player, char: Model)
 	local hum = char:WaitForChild("Humanoid") :: Humanoid
 	local head = char:WaitForChild("Head") :: BasePart
+	task.spawn(pcall, normalizeHeight, player, char, hum, head)
 	hum.BreakJointsOnDeath = false
 	hum.WalkSpeed = ctx.Config.Movement.Walk
 	hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)

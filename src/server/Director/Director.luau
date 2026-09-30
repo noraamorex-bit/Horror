@@ -578,6 +578,24 @@ function Director.onDoorOpened(door, player: Player)
 	if door.Id == "BackDoor" and (state.Act == "Evening" or state.Act == "SmallThings") then
 		Director.logTruth("BackDoorUnlocked")
 	end
+	-- he's right on the other side, holding the handle: the door is torn back out of your hand
+	-- (rare: once every few minutes at most, and only if he really is there, unseen)
+	local ip = ctx.Intruder.position()
+	if ip and ctx.Intruder.getState() == "Lurk" and os.clock() >= (state.NextDoorHeld or 0)
+		and (ip - door.Position).Magnitude < 14 and not Perception.anyoneSees(ip) then
+		state.NextDoorHeld = os.clock() + 240
+		task.delay(0.4, function()
+			if not door.IsOpen then
+				return
+			end
+			ctx.Doors.slamShut(door)
+			ctx.Remotes.PlaySound:FireClient(player, "Stinger", nil, { Volume = 1 })
+			ctx.Remotes.Shake:FireClient(player, 0.7, 0.6)
+			ctx.PlayerState.addNerve(player, -18)
+			ctx.Intruder.spook()
+			Director.logTruth("DoorHeld")
+		end)
+	end
 end
 
 function Director.onDoorLockChanged(door, player: Player)
@@ -674,7 +692,11 @@ local function fire(e, data)
 	end)
 	-- friends standing together react out loud a moment later (Story.Banter.React)
 	if Director.reactBanter then
-		task.delay(3, Director.reactBanter, e.Id)
+		task.delay(7, function()
+			if Director.isQuiet() then
+				Director.reactBanter(e.Id)
+			end
+		end)
 	end
 end
 
@@ -684,6 +706,14 @@ local function tryEvent(e, force: boolean?): boolean
 		ok, data = pcall(e.Force, ctx, D)
 	end
 	if ok and data ~= nil then
+		-- something he does in person: it only happens where he really is, and never in view
+		if e.Where and ctx.Intruder.isInHouse() then
+			local ip = ctx.Intruder.position()
+			local okW, where = pcall(e.Where, ctx, data)
+			if not ip or not okW or not where or (where - ip).Magnitude > (e.Reach or 18) or D.Perception.anyoneSees(ip) then
+				return false
+			end
+		end
 		fire(e, data)
 		return true
 	end
@@ -711,7 +741,7 @@ local function schedule(actTime: number)
 			end
 		end
 	end
-	if os.clock() < state.NextEventAt then
+	if os.clock() < state.NextEventAt or not Director.isQuiet() then
 		return
 	end
 	local ceiling = ctx.Config.Director.Ceiling[state.Act] or 50

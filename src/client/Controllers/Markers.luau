@@ -47,7 +47,7 @@ local function make(pos: Vector3, big: boolean)
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.fromScale(0.5, 0),
 		Size = UDim2.fromOffset(size, size),
-		BackgroundColor3 = big and Color3.fromRGB(245, 200, 70) or Color3.fromRGB(235, 235, 235),
+		BackgroundColor3 = Color3.fromRGB(235, 235, 235),
 		BackgroundTransparency = 0.05,
 		Parent = gui,
 	})
@@ -84,6 +84,15 @@ function Markers.init(c)
 end
 
 function Markers.start()
+	-- a prompt on screen wins: markers step aside so their "!" and distance never sit on top of it
+	local PPS = game:GetService("ProximityPromptService")
+	local promptsShown = 0
+	PPS.PromptShown:Connect(function()
+		promptsShown += 1
+	end)
+	PPS.PromptHidden:Connect(function()
+		promptsShown = math.max(0, promptsShown - 1)
+	end)
 	folder = Instance.new("Folder")
 	folder.Name = "ObjectiveMarkers"
 	folder.Parent = workspace
@@ -97,7 +106,7 @@ function Markers.start()
 			return
 		end
 		local show = player:GetAttribute("InGame") == true and not player:GetAttribute("Hiding") and not player:GetAttribute("Captured")
-			and not workspace:GetAttribute("EndingActive")
+			and not workspace:GetAttribute("EndingActive") and promptsShown == 0
 		local t = os.clock()
 		for _, m in active do
 			m.Gui.Enabled = show

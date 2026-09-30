@@ -75,6 +75,9 @@
       "Loading": {
         "$path": "src/first/Loading.client.luau"
       }
+    },
+    "AssetService": {
+      "$className": "AssetService"
     }
   }
 }
