@@ -443,6 +443,24 @@ local function build()
 	UI.label({ Size = UDim2.new(1, 0, 0, 24), Text = "TONIGHT", Font = UI.Font.Title, TextSize = 22, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 0, Parent = journal })
 	journalList = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = 1, Parent = journal })
 	UI.new("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder, Parent = journalList })
+	-- a way out if you ever get wedged in the furniture (reset is off: it would break captures)
+	local stuck = UI.new("TextButton", {
+		LayoutOrder = 2,
+		Size = UDim2.fromOffset(120, 28),
+		Text = "I'm stuck",
+		Font = Enum.Font.GothamMedium,
+		TextSize = 14,
+		TextColor3 = UI.Color.Dim,
+		BackgroundColor3 = Color3.fromRGB(24, 24, 26),
+		BackgroundTransparency = 0.3,
+		Parent = journal,
+	})
+	UI.corner(stuck, 6)
+	UI.stroke(stuck, Color3.new(1, 1, 1), 1, 0.85)
+	stuck.Activated:Connect(function()
+		ctx.Remotes.Unstuck:FireServer()
+		HUD.setJournal(false)
+	end)
 
 	-- inventory (bottom-left)
 	inventoryLabel = UI.label({

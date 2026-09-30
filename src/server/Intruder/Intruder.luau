@@ -597,24 +597,14 @@ local function shove(p: Player)
 	if not r then
 		return
 	end
-	local hum = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
 	faceToward(r.Position)
-	ctx.Audio.playAt("Stinger", r.Position, { Volume = 1, Only = { p } })
-	ctx.Audio.playAt("ManGrunt", S.Head.Position, { Caption = true })
+	ctx.Audio.playAt("Stinger", r.Position, { Volume = 1, Caption = false })
+	ctx.Audio.caption("[A man shoves past you in the dark]", r.Position, 30)
 	ctx.Remotes.Shake:FireClient(p, 0.9, 0.9)
 	ctx.PlayerState.addNerve(p, -25)
-	if hum then
-		-- knocked flat for a moment
-		local away = V(r.Position.X - pos().X, 0, r.Position.Z - pos().Z)
-		away = away.Magnitude > 0.1 and away.Unit or V(0, 0, 1)
-		hum:ChangeState(Enum.HumanoidStateType.Physics)
-		r.AssemblyLinearVelocity = away * 28 + V(0, 12, 0)
-		task.delay(1.3, function()
-			if hum.Parent then
-				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-			end
-		end)
-	end
+	-- knocked flat for a moment: the player's own client owns their physics, so it does the fall
+	local away = V(r.Position.X - pos().X, 0, r.Position.Z - pos().Z)
+	ctx.Remotes.Knockdown:FireClient(p, away.Magnitude > 0.1 and away.Unit or V(0, 0, 1))
 	if not S.LoggedShove then
 		S.LoggedShove = true
 		ctx.Director.logTruthRaw(tostring(p:GetAttribute("RoleName") or p.Name) .. " walked right into Curtis in the dark. He shoved them down and ran.")

@@ -190,8 +190,23 @@ function Effects.start()
 	end)
 	ctx.Remotes.Figure.OnClientEvent:Connect(Effects.figure)
 	ctx.Remotes.PlaySound.OnClientEvent:Connect(Effects.playSound)
+	-- shoved off your feet: fall, slide back a little, get up
+	ctx.Remotes.Knockdown.OnClientEvent:Connect(function(dir: Vector3)
+		local char = game:GetService("Players").LocalPlayer.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if not hum or not root or typeof(dir) ~= "Vector3" then
+			return
+		end
+		hum:ChangeState(Enum.HumanoidStateType.FallingDown)
+		root.AssemblyLinearVelocity = dir * 26 + Vector3.new(0, 10, 0)
+		task.delay(1.2, function()
+			if hum.Parent and hum:GetState() == Enum.HumanoidStateType.FallingDown then
+				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+			end
+		end)
+	end)
 
-	local beatClock = 0
 	RunService:BindToRenderStep("HomeAloneEffects", Enum.RenderPriority.Camera.Value + 1, function(dt)
 		local nerve = player:GetAttribute("Nerve") or 100
 		local fear = 1 - nerve / 100
@@ -205,13 +220,18 @@ function Effects.start()
 
 		-- heartbeat below Heavy
 		local heavy = ctx.Config.Nerve.Heavy
-		if inGame and nerve < heavy and heartbeat then
-			beatClock += dt
-			local interval = 0.45 + (nerve / heavy) * 0.6
-			if beatClock >= interval then
-				beatClock = 0
-				heartbeat.Volume = 0.3 + fear * 0.5
-				heartbeat:Play()
+		if heartbeat then
+			local want = inGame and nerve < heavy
+			if want then
+				heartbeat.Looped = true
+				-- 96 bpm at the edge of panic, up to ~150 at the bottom
+				heartbeat.PlaybackSpeed = 1 + (1 - nerve / heavy) * 0.6
+				heartbeat.Volume = 0.25 + fear * 0.5
+				if not heartbeat.IsPlaying then
+					heartbeat:Play()
+				end
+			elseif heartbeat.IsPlaying then
+				heartbeat:Stop()
 			end
 		end
 		if breathing then

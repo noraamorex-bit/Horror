@@ -366,6 +366,34 @@ function PlayerState.start()
 		seenIntruder[p] = nil
 	end)
 
+	-- wedged somewhere: back to the nearest open spot on your floor (not while hidden or tied up)
+	local lastUnstuck = {}
+	ctx.Remotes.Unstuck.OnServerEvent:Connect(function(player)
+		if not player:GetAttribute("InGame") or player:GetAttribute("Hiding") or player:GetAttribute("Captured") or player:GetAttribute("Escaped") then
+			return
+		end
+		if os.clock() - (lastUnstuck[player] or 0) < 15 then
+			ctx.Remotes.Notify:FireClient(player, "Give it a moment and try again.", "info")
+			return
+		end
+		local root = ctx.Util.getRoot(player)
+		if not root then
+			return
+		end
+		lastUnstuck[player] = os.clock()
+		local best, bestD = nil, math.huge
+		for _, n in ctx.Layout.Nodes do
+			local d = (n.Pos - root.Position).Magnitude + math.abs(n.Pos.Y - root.Position.Y) * 2
+			if d > 2 and d < bestD then
+				best, bestD = n, d
+			end
+		end
+		if best then
+			ctx.Util.unseat(player)
+			PlayerState.placeStanding(player, CFrame.new(best.Pos + Vector3.new(0, 0.5, 0)))
+		end
+	end)
+
 	ctx.Remotes.Movement.OnServerEvent:Connect(function(player, intent)
 		if typeof(intent) ~= "table" then
 			return

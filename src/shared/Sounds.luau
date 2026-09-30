@@ -95,7 +95,8 @@ Sounds.Library = {
 
 	-- People
 	Breathing = { Id = "rbxassetid://9116457539", Volume = 0.25, Looped = true, Range = 12 },
-	Heartbeat = { Id = "", Fallback = ENGINE_THUD, Volume = 0.6, Pitch = 0.5 },
+	-- APM "HEARTBEAT 01 96BPM": looped, sped up and louder as your nerve goes
+	Heartbeat = { Id = "rbxassetid://9043365727", Volume = 0.6, Looped = true },
 	Cough = { Id = "rbxassetid://9113948412", Fallback = ENGINE_THUD, Volume = 1, Range = 60, Caption = "[A man coughing and choking]" },
 	Spray = { Id = "rbxassetid://9113044265", Fallback = ENGINE_SPLASH, Volume = 0.8, Range = 30, Caption = "[Pssshhht]" },
 	ZipTie = { Id = "rbxassetid://9118047781", Fallback = ENGINE_THUD, Volume = 0.6, Range = 25, Caption = "[Zip ties ratchet]" },

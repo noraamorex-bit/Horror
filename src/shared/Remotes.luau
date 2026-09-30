@@ -21,6 +21,7 @@ local NAMES = {
 	"Texts", -- (list of phone messages)
 	"Lobby", -- (state)
 	"Figure", -- (cframe, duration) a figure only this player sees
+	"Knockdown", -- (direction: Vector3) shoved off your feet (your client owns your physics)
 	"Queue", -- (state | nil) lobby: your queue circle
 	"Thought", -- (text, hintKey?) your character thinking out loud
 	"Dialogue", -- (line | nil) a conversation line, maybe with choices; nil closes the box
@@ -40,6 +41,7 @@ local NAMES = {
 	"Notice", -- ({Title, Body, Button}) a one-button card (first-night tips)
 	"QuickPlay", -- (kind) lobby: "Solo" or "Group" walks you into a queue circle
 	"SetBeam", -- (beamId) pick an unlocked flashlight colour
+	"Unstuck", -- () wedged in the scenery: move me to the nearest open spot
 }
 
 local Remotes = {}
