@@ -136,7 +136,7 @@ function Capture.capture(player: Player)
 		local char = player.Character
 		if char then
 			ctx.PlayerState.setFrozen(player, false)
-			char:PivotTo(CFrame.lookAt(slot.Pos, slot.Face))
+			ctx.PlayerState.placeStanding(player, CFrame.lookAt(slot.Pos, slot.Face))
 			task.wait()
 			ctx.PlayerState.setFrozen(player, true)
 		end
@@ -183,6 +183,17 @@ function Capture.capture(player: Player)
 end
 
 function Capture.start()
+	game:GetService("Players").PlayerRemoving:Connect(function(p)
+		local data = captives[p]
+		if data then
+			captives[p] = nil
+			slots[data.Slot] = nil
+			if data.Prompt then
+				data.Prompt:Destroy()
+			end
+		end
+		everCaptured[p] = nil
+	end)
 	ctx.Remotes.Struggle.OnServerEvent:Connect(function(player)
 		local data = captives[player]
 		if not data or not data.Prompt then

@@ -38,7 +38,8 @@ function Interaction.prompt(parent: Instance, opts, callback)
 	prompt.ActionText = opts.Action or "Use"
 	prompt.ObjectText = opts.Object or ""
 	prompt.HoldDuration = opts.Hold or 0
-	prompt.MaxActivationDistance = opts.Distance or 7
+	-- a little extra reach: phones and big rooms make "just out of range" frustrating
+	prompt.MaxActivationDistance = (opts.Distance or 7) + 1.5
 	prompt.KeyboardKeyCode = opts.Key or Enum.KeyCode.E
 	prompt.GamepadKeyCode = opts.Key == Enum.KeyCode.R and Enum.KeyCode.ButtonY or Enum.KeyCode.ButtonX
 	prompt.RequiresLineOfSight = if opts.LOS == nil then false else opts.LOS

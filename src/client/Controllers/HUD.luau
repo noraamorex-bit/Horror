@@ -56,12 +56,13 @@ function HUD.caption(text: string, _position: Vector3?)
 	if recentCaptions[text] and os.clock() - recentCaptions[text] < 1.5 then
 		return
 	end
-	-- sound captions are extras: skip them while something else is being said
-	if ctx.Pace and not ctx.Pace.tryTake(1.6) then
+	local isSound = text:sub(1, 1) == "["
+	-- sound captions are extras: skip them while something else is being said (spoken lines
+	-- and answers to what you just did always show)
+	if isSound and ctx.Pace and not ctx.Pace.tryTake(1.6) then
 		return
 	end
 	recentCaptions[text] = os.clock()
-	local isSound = text:sub(1, 1) == "["
 	local l = UI.label({
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,

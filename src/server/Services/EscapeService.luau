@@ -77,10 +77,14 @@ function Escape.callForHelp(method: string, player: Player?)
 	workspace:SetAttribute("PoliceETA", workspace:GetServerTimeNow() + eta)
 	workspace:SetAttribute("HelpMethod", method)
 
-	ctx.Objectives.complete("Call911")
-	ctx.Objectives.complete("Phone")
-	ctx.Objectives.complete("Neighbor")
-	ctx.Objectives.complete("Car")
+	-- the way out that worked is done; the other routes (and the search) simply stop mattering
+	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone" }, Neighbor = { "Neighbor" }, Car = { "Car" } }
+	for _, id in used[method] or { "Call911" } do
+		ctx.Objectives.complete(id)
+	end
+	for _, id in { "Call911", "Phone", "Neighbor", "Car", "Attic", "Investigate" } do
+		ctx.Objectives.dismiss(id)
+	end
 	ctx.Objectives.add("Survive")
 	ctx.Remotes.Notify:FireAllClients("Help is coming. Police ETA " .. ctx.Util.formatSeconds(eta) .. ". Survive.", "objective")
 	ctx.Director.logTruthRaw("Help was called (" .. method .. ").")
@@ -88,8 +92,12 @@ function Escape.callForHelp(method: string, player: Player?)
 		ctx.Intruder.onHelpCalled(player)
 	end
 
+	local night = state
 	task.delay(eta, function()
-		Escape.policeArrive()
+		-- a new night may have started since (the timer belongs to this one)
+		if state == night then
+			Escape.policeArrive()
+		end
 	end)
 end
 
@@ -166,7 +174,6 @@ function Escape.dawn()
 	end
 	state.HelpCalled = true
 	state.HelpMethod = "Dawn"
-	ctx.Remotes.Lightning:FireAllClients(0, 0) -- no-op flash to sync
 	task.spawn(Escape.policeArrive)
 end
 
@@ -187,7 +194,7 @@ function Escape.markEscaped(player: Player, where: string)
 		local char = player.Character
 		if char then
 			ctx.PlayerState.setFrozen(player, false)
-			char:PivotTo(CFrame.new(ctx.Layout.Outside.NeighborSafe + Vector3.new(math.random(-3, 3), 0, math.random(-2, 2))))
+			ctx.PlayerState.placeStanding(player, CFrame.new(ctx.Layout.Outside.NeighborSafe + Vector3.new(math.random(-3, 3), 0, math.random(-2, 2))))
 		end
 		ctx.Remotes.Fade:FireClient(player, false, 1.5)
 		ctx.Audio.caption("You're out. You're safe. The others aren't.", nil, nil, { player })
@@ -650,7 +657,7 @@ function Escape.setupBreakableWindow(glass: BasePart, op)
 			end
 			local side = (root.Position - glass.Position):Dot(inward) > 0 and -1 or 1
 			local target = glass.Position + inward * side * 3.5
-			player.Character:PivotTo(CFrame.new(Vector3.new(target.X, op.Center.Y - op.bottom + 3, target.Z)))
+			ctx.PlayerState.placeStanding(player, CFrame.new(Vector3.new(target.X, op.Center.Y - op.bottom + 3, target.Z)))
 			ctx.Noise.emit(glass.Position, 20, "Glass", player)
 			return
 		end

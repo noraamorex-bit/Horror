@@ -386,13 +386,6 @@ local function setGap()
 	end
 end
 
-local function sayAll(lines, gap: number?)
-	for _, line in lines do
-		ctx.Audio.caption(line)
-		task.wait(gap or 3)
-	end
-end
-
 function Director.startAct(name: string, cause: Player?)
 	state.Act = name
 	state.ActStart = os.clock()
@@ -497,7 +490,8 @@ function Director.startAct(name: string, cause: Player?)
 		end
 		ctx.Intruder.setMode("Hunt", cause)
 		Director.addTension(30)
-		task.spawn(sayAll, { "Somewhere in the house, something heavy hits the floor.", "He knows." }, 3)
+		Director.think(nil, "Somewhere in the house, something heavy hits the floor.")
+		Director.think(nil, "He knows.")
 	end
 end
 

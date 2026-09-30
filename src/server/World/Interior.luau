@@ -525,7 +525,8 @@ function Interior.build(ctx, root: Instance, refs)
 	local cupboard = spot(kitchen, "Cupboard", CF(-37.45, G + 10.2, 5.7), V(0.2, 4, 3))
 	target("Cupboard", cupboard.Position)
 	local popcornTaken = false
-	ctx.Interaction.prompt(cupboard, { Action = "Open", Object = "Cupboard", Distance = 8 }, function(player)
+	-- the prompt sits at the cupboard's bottom edge, where a hand (and a phone camera) reaches
+	ctx.Interaction.prompt(cupboard, { Action = "Open", Object = "Cupboard", Distance = 8, Offset = Vector3.new(0, -1.9, 0) }, function(player)
 		if popcornTaken or ctx.Objectives.isDone("Popcorn") then
 			ctx.Audio.caption("Cereal, crackers, a jar of peanut butter.", nil, nil, { player })
 			return

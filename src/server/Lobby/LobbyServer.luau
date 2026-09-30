@@ -540,22 +540,39 @@ local function teleportGroup(pad, group: { Player })
 	end
 	task.spawn(function()
 		local placeId = ctx.Mode.gamePlaceId()
-		local ok, err = pcall(function()
-			if RunService:IsStudio() then
-				error("Teleports don't work in a Studio test. Publish, then play in the Roblox app.")
+		local ok, err
+		-- Roblox's teleport service fails now and then: one quiet retry before telling anyone
+		for attempt = 1, 2 do
+			ok, err = pcall(function()
+				if RunService:IsStudio() then
+					error("Teleports don't work in a Studio test. Publish, then play in the Roblox app.")
+				end
+				local here = {}
+				for _, p in group do
+					if p.Parent then
+						table.insert(here, p)
+					end
+				end
+				if #here == 0 then
+					return
+				end
+				local code = TeleportService:ReserveServer(placeId)
+				local options = Instance.new("TeleportOptions")
+				options.ReservedServerAccessCode = code
+				options:SetTeleportData({ PartySize = #here, Mode = "Game" })
+				TeleportService:TeleportAsync(placeId, here, options)
+			end)
+			if ok or RunService:IsStudio() then
+				break
 			end
-			local code = TeleportService:ReserveServer(placeId)
-			local options = Instance.new("TeleportOptions")
-			options.ReservedServerAccessCode = code
-			options:SetTeleportData({ PartySize = #group, Mode = "Game" })
-			TeleportService:TeleportAsync(placeId, group, options)
-		end)
+			task.wait(2)
+		end
 		if not ok then
 			warn("[Lobby] teleport failed: " .. tostring(err))
 			for _, p in group do
 				teleporting[p] = nil
 				if p.Parent then
-					ctx.Remotes.Notify:FireClient(p, "Couldn't start the night: " .. tostring(err), "danger")
+					ctx.Remotes.Notify:FireClient(p, RunService:IsStudio() and tostring(err) or "Couldn't reach the house. Step back into a circle to try again.", "danger")
 				end
 			end
 			pad.Teleporting = false

@@ -56,6 +56,10 @@ local function normalizeHeight(player: Player, char: Model, hum: Humanoid, head:
 	local factor = math.clamp(TARGET_HEIGHT / height, 1, 1.4)
 	if factor > 1.02 then
 		pcall(function()
+			-- scaling happens about the root, so the feet would sink into the floor: lift the
+			-- character by the same amount first
+			local rootToFeet = root.Position.Y - feet
+			char:PivotTo(char:GetPivot() + Vector3.new(0, rootToFeet * (factor - 1) + 0.05, 0))
 			char:ScaleTo(char:GetScale() * factor)
 		end)
 	end
@@ -176,6 +180,19 @@ function PlayerState.setFlashlight(player: Player, on: boolean)
 end
 
 -- Freeze / unfreeze movement (hiding, captured, cutscenes)
+-- Place a character at a spot authored for a default-height body (root 3 studs above the
+-- floor): taller (scaled-up) characters are raised so their feet land on the floor, not in it.
+function PlayerState.placeStanding(player: Player, cf: CFrame)
+	local char = player.Character
+	if not char then
+		return
+	end
+	local hum = ctx.Util.getHumanoid(player)
+	local root = ctx.Util.getRoot(player)
+	local rootHeight = (root and hum) and (root.Size.Y / 2 + hum.HipHeight) or 3
+	char:PivotTo(cf + Vector3.new(0, math.max(0, rootHeight - 3), 0))
+end
+
 function PlayerState.setFrozen(player: Player, frozen: boolean)
 	local hum = ctx.Util.getHumanoid(player)
 	local root = ctx.Util.getRoot(player)

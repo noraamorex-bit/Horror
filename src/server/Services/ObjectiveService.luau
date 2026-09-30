@@ -167,6 +167,17 @@ function Objectives.step(id: string, key: string): boolean
 	return false
 end
 
+-- drop a task quietly (it no longer applies)
+function Objectives.dismiss(id: string)
+	for i, o in list do
+		if o.Id == id and not o.Done then
+			table.remove(list, i)
+			broadcast()
+			return
+		end
+	end
+end
+
 function Objectives.isStepDone(id: string, key: string): boolean
 	local o = find(id)
 	if not o then

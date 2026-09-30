@@ -13,6 +13,35 @@ local spots = {} -- list
 local occupantOf = {} -- spot -> player
 local spotOf = {} -- player -> spot
 local breath = {} -- player -> seconds of breath remaining
+local hiddenLook = {} -- player -> { [instance] = original Transparency }
+
+-- tucked away: nothing of the character pokes out through the bed or the closet door
+local function setHidden(player: Player, hidden: boolean)
+	local char = player.Character
+	if hidden then
+		if not char then
+			return
+		end
+		local saved = {}
+		for _, d in char:GetDescendants() do
+			if d:IsA("BasePart") or d:IsA("Decal") then
+				saved[d] = d.Transparency
+				d.Transparency = 1
+			end
+		end
+		hiddenLook[player] = saved
+	else
+		local saved = hiddenLook[player]
+		hiddenLook[player] = nil
+		if saved then
+			for d, t in saved do
+				if d.Parent then
+					d.Transparency = t
+				end
+			end
+		end
+	end
+end
 
 function Hiding.init(c)
 	ctx = c
@@ -22,6 +51,7 @@ function Hiding.reset()
 	for p in spotOf do
 		p:SetAttribute("Hiding", nil)
 		p:SetAttribute("HideView", nil)
+		setHidden(p, false)
 	end
 	spots = {}
 	occupantOf = {}
@@ -72,6 +102,7 @@ function Hiding.enter(player: Player, spot)
 	breath[player] = ctx.Config.Hiding.HoldBreathMax
 	ctx.PlayerState.setFrozen(player, true)
 	char:PivotTo(spot.Inside)
+	setHidden(player, true)
 	player:SetAttribute("HideView", spot.View)
 	player:SetAttribute("Hiding", spot.Name)
 	spot.Prompt.Enabled = false
@@ -95,9 +126,10 @@ function Hiding.exit(player: Player, forced: boolean?)
 	player:SetAttribute("HideView", nil)
 	player:SetAttribute("HoldingBreath", nil)
 	spot.Prompt.Enabled = true
+	setHidden(player, false)
 	local char = player.Character
 	if char and not forced then
-		char:PivotTo(spot.Exit)
+		ctx.PlayerState.placeStanding(player, spot.Exit)
 		ctx.PlayerState.setFrozen(player, false)
 	end
 end
@@ -129,6 +161,13 @@ function Hiding.isHoldingBreath(player: Player): boolean
 end
 
 function Hiding.start()
+	game:GetService("Players").PlayerRemoving:Connect(function(p)
+		if spotOf[p] then
+			Hiding.exit(p, true)
+		end
+		breath[p] = nil
+		hiddenLook[p] = nil
+	end)
 	ctx.Remotes.Hide.OnServerEvent:Connect(function(player, action)
 		if action == "Exit" then
 			Hiding.exit(player)

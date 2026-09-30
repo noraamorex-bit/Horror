@@ -13,6 +13,7 @@ local inbox = {} -- player -> list of {From, Body, Time}
 local calling = {} -- player -> progress seconds
 local delivered = {} -- key -> true
 local lastText = 0
+local lineShown = {} -- player -> how many dispatcher lines they've seen this call
 
 function Phone.init(c)
 	ctx = c
@@ -26,6 +27,7 @@ function Phone.reset()
 	calling = {}
 	delivered = {}
 	lastText = 0
+	lineShown = {}
 end
 
 function Phone.deliver(player: Player, from: string, body: string)
@@ -94,8 +96,12 @@ function Phone.start()
 		end
 	end)
 
+	game:GetService("Players").PlayerRemoving:Connect(function(p)
+		calling[p] = nil
+		lineShown[p] = nil
+		inbox[p] = nil
+	end)
 	task.spawn(function()
-		local lineShown = {}
 		while true do
 			local dt = task.wait(0.25)
 			for player, progress in calling do
@@ -126,6 +132,7 @@ function Phone.start()
 				end
 				if progress >= total then
 					calling[player] = nil
+					lineShown[player] = nil
 					player:SetAttribute("Calling", nil)
 					player:SetAttribute("CallProgress", nil)
 					ctx.Escape.callForHelp("Cell", player)

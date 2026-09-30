@@ -1626,8 +1626,10 @@ end
 function Kit.shrub(parent, cf: CFrame, size: number, seed: number?)
 	local m = Kit.model(parent, "Shrub")
 	local rng = Random.new(seed or math.floor(cf.Position.X * 5 + cf.Position.Z * 9))
-	for _ = 1, 6 do
-		local off = V(rng:NextNumber(-0.5, 0.5), rng:NextNumber(0.35, 0.8), rng:NextNumber(-0.5, 0.5)) * size
+	-- a low, wide base clump so the bush sits on the ground, then smaller clumps piled on top
+	Kit.ellipsoid(m, "Shrub", cf * CF(0, size * 0.28, 0), V(1.1, 0.62, 1.1) * size, LEAF[rng:NextInteger(1, #LEAF)], M.Leafy)
+	for _ = 1, 5 do
+		local off = V(rng:NextNumber(-0.45, 0.45), rng:NextNumber(0.4, 0.72), rng:NextNumber(-0.45, 0.45)) * size
 		Kit.ellipsoid(m, "Shrub", cf * CF(off), V(1, 0.8, 1) * size * rng:NextNumber(0.6, 0.85), LEAF[rng:NextInteger(1, #LEAF)], M.Leafy)
 	end
 	Kit.collider(m, cf * CF(0, size * 0.5, 0), V(size, size, size) * 0.8)
@@ -1841,7 +1843,8 @@ function Kit.mediaConsole(parent, cf: CFrame, w: number, d: number, h: number, c
 	end
 	Kit.box(m, "OpenShelf", cf * CF(0, 0.5 + (h - 0.62) / 2, -d / 2 + 0.3), V(third - 0.2, h - 0.8, 0.02), darker(color, 0.5), M.Wood)
 	Kit.box(m, "MidShelf", cf * CF(0, 0.5 + (h - 0.62) / 2, -0.1), V(third - 0.2, 0.08, d - 0.3), dark, M.Wood)
-	Kit.gameConsole(m, cf * CF(0, 0.55, -0.2))
+	-- the game console sits on top, beside the TV
+	Kit.gameConsole(m, cf * CF(w / 2 - 1.3, h, 0.1))
 	Kit.box(m, "CableBox", cf * CF(0, 0.5 + (h - 0.62) / 2 + 0.2, -0.2), V(1.6, 0.35, 1.0), Color3.fromRGB(22, 22, 24), M.Plastic)
 	Kit.box(m, "CableBoxLED", cf * CF(0.55, 0.5 + (h - 0.62) / 2 + 0.2, -0.71), V(0.3, 0.08, 0.02), Color3.fromRGB(60, 200, 90), M.Neon)
 	Kit.collider(m, cf * CF(0, h / 2, 0), V(w, h, d))
@@ -2307,6 +2310,24 @@ function Kit.suburbHouse(parent, cf: CFrame, opts)
 				for _, sx in { -1, 1 } do
 					Kit.box(m, "Shutter", wcf * CF(sx * 2.45, 0, -0.05), V(1.1, 5, 0.12), shutter, M.Wood)
 				end
+			end
+		end
+	end
+	-- the back of the house isn't a blank wall: plain windows on every floor and a back door
+	local backCols = math.max(2, math.floor(W / 9))
+	for floor = 1, stories do
+		for c = 1, backCols do
+			local x = -W / 2 + W * (c - 0.5) / backCols
+			local y = base + (floor - 1) * 11 + 6
+			if floor == 1 and c == backCols then
+				local bcf = cf * CF(x, base + 4.3, D / 2 + 0.15)
+				Kit.box(m, "BackDoorFrame", bcf, V(4.2, 8.6, 0.3), trim, M.Wood)
+				Kit.box(m, "BackDoor", bcf * CF(0, -0.2, 0.12), V(3.4, 8, 0.12), trim:Lerp(Color3.new(0, 0, 0), 0.25), M.Wood)
+			else
+				local wcf = cf * CF(x, y, D / 2 + 0.15)
+				Kit.box(m, "WindowFrame", wcf, V(3.6, 4.6, 0.3), trim, M.Wood)
+				Kit.box(m, "WindowDark", wcf * CF(0, 0, 0.1), V(3.0, 4.0, 0.1), Color3.fromRGB(22, 26, 32), M.Glass, { Reflectance = 0.2 })
+				Kit.box(m, "Mullion", wcf * CF(0, 0, 0.17), V(3.0, 0.18, 0.05), trim, M.Wood)
 			end
 		end
 	end

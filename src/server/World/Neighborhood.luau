@@ -24,6 +24,7 @@ end
 
 local CONCRETE = Color3.fromRGB(135, 135, 130)
 
+-- south-side lots sit back from the street: front walls at z = -120, 18 studs of lawn and drive
 -- { x, W, D, stories, siding, roof, door, lit windows, garage, porch, chimney, car colour or nil }
 local NORTH = {
 	{ -115, 34, 24, 2, Color3.fromRGB(176, 160, 132), Color3.fromRGB(58, 50, 46), Color3.fromRGB(40, 60, 70), { [2] = true }, true, false, true, Color3.fromRGB(80, 80, 86) },
@@ -57,7 +58,7 @@ function Neighborhood.build(ctx, root: Instance)
 	---------------------------------------------------------------------------
 	local function lot(spec, north: boolean, i: number)
 		local x, W, D = spec[1], spec[2], spec[3]
-		local front = north and -34 or -108 -- the front wall's z
+		local front = north and -34 or -120 -- the front wall's z (a proper front yard on both sides)
 		local cz = north and (front + D / 2) or (front - D / 2)
 		local facing = north and NZ or PZ
 		Kit.suburbHouse(f, F(x, 0.5, cz, facing), {
