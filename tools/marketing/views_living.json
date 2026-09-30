@@ -1,0 +1,3 @@
+[{"name":"living","mode":"inside","pos":[-31,5.2,-17],"look":[-9,6,-24.5],"fov":55,"ambient":0.08,"moon":0.0,"lightRadius":40,"maxLights":6,"lampGain":14,
+  "lights":[{"p":[-36,3,-12],"col":"#ff7a2e","b":16,"r":40},{"p":[-13.5,7.2,-22],"col":"#ffd9a8","b":5,"r":9,"decay":1.2},{"p":[-5,8,-24],"col":"#7f95c0","b":3,"r":12}],
+  "figures":[{"pos":[-9.3,1,-23],"face":[-30,-17],"sack":true}]}]
