@@ -106,7 +106,7 @@ barBack.BorderSizePixel = 0
 barBack.Parent = bg
 local bar = Instance.new("Frame")
 bar.Size = UDim2.fromScale(0, 1)
-bar.BackgroundColor3 = Color3.fromRGB(255, 180, 100)
+bar.BackgroundColor3 = Color3.fromRGB(235, 232, 226)
 bar.BorderSizePixel = 0
 bar.Parent = barBack
 

@@ -109,6 +109,14 @@ A loud musical sting (APM "Fear Hit") lands with the big scares: a door slam, th
 ### One message at a time
 Thoughts, notifications and sound captions share the screen (`ctx.Pace` in `Thoughts.luau`). Each message waits its turn, sound captions are dropped while something else is being said, and the Director only fires a new event when nothing is being said (`Director.isQuiet`).
 
+### Safety nets
+- **I'm stuck** (in the journal): moves you to the nearest open spot on your floor, 15 s cooldown. Reset stays off because it would break captures.
+- A player who leaves mid-night frees their hiding spot and restraint slot, and their phone call.
+- Hidden players are invisible to everyone, so nothing pokes through the bed or the wardrobe door.
+- Characters are placed feet-on-floor whatever their height when they're captured, leave a hiding spot, escape, climb through a window or use "I'm stuck".
+- If Curtis wedges on furniture while nobody can see him, he slips along to his next waypoint.
+- The police timer belongs to its night, and calling for help completes only the route that was used.
+
 ### He likes the dark
 While lurking, patrolling or searching, if he passes through a lit room that nobody is in and nobody can see him, he sometimes switches the light off (at most every 45 s). Rooms you left lit go dark one by one. The truth log explains it once.
 

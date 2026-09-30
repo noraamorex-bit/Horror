@@ -200,7 +200,19 @@ function Navigator:update()
 	elseif now - self.LastProgress > 1.6 then
 		self.LastProgress = now
 		self.Fails += 1
-		if self.Fails > 4 then
+		-- properly wedged (a chair leg, a bed corner) and nobody's looking: slip him along to the
+		-- next waypoint rather than let him grind against the furniture
+		local next = wps[math.min(self.Index, #wps)]
+		local perception = self.ctx.Director and self.ctx.Director.Perception
+		if self.Fails >= 4 and next and perception and not perception.anyoneSees(pos + Vector3.new(0, 2, 0))
+			and not perception.anyoneSees(next + Vector3.new(0, 2, 0)) and math.abs(next.Y - pos.Y) < 4 then
+			local model = self.Root:FindFirstAncestorWhichIsA("Model")
+			if model then
+				model:PivotTo(CFrame.lookAt(next + Vector3.new(0, pos.Y - next.Y + 0.2, 0), next + (next - pos) * Vector3.new(1, 0, 1) + Vector3.new(0, pos.Y - next.Y + 0.2, 0.001)))
+			end
+			self.Fails = 0
+			self:_compute()
+		elseif self.Fails > 4 then
 			self.Humanoid:MoveTo(goal)
 		else
 			self:_compute()
