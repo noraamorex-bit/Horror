@@ -686,22 +686,26 @@ function Director.onDoorLockChanged(door, player: Player)
 end
 
 function Director.checkAllCaptured()
-	if state.Act == "Lobby" or ctx.Ending.isOver() or ctx.Escape.helpCalled() then
+	if state.Act == "Lobby" or ctx.Ending.isOver() then
 		return
 	end
 	local session = ctx.Util.sessionPlayers()
 	if #session == 0 then
 		return
 	end
-	local anyCaptured = false
+	local anyCaptured, anyEscaped = false, false
 	for _, p in session do
 		if p:GetAttribute("Captured") then
 			anyCaptured = true
 		end
+		if p:GetAttribute("Escaped") then
+			anyEscaped = true
+		end
 	end
-	if #ctx.Util.activePlayers() == 0 and anyCaptured then
+	-- someone got out (the car, next door): their ending is already on its way
+	if #ctx.Util.activePlayers() == 0 and anyCaptured and not anyEscaped then
 		-- everyone is tied up: one last chance to struggle free before it's over (nobody left who
-		-- can struggle: it's over now)
+		-- can struggle: it's over now, police on the way or not)
 		local canStruggle = false
 		for _, p in session do
 			if p:GetAttribute("Captured") and not p:GetAttribute("Dead") then
@@ -709,16 +713,17 @@ function Director.checkAllCaptured()
 			end
 		end
 		if not canStruggle then
-			if not state.GoneQuietAt then
-				state.GoneQuietAt = os.clock() + 4
-			end
+			-- (cuts short a last chance already running: the last one who could struggle is gone)
+			state.GoneQuietAt = math.min(state.GoneQuietAt or math.huge, os.clock() + 4)
 			return
 		end
 		if not state.GoneQuietAt then
 			state.GoneQuietAt = os.clock() + (ctx.Config.Capture.LastChance or 45)
+			local line = ctx.Escape.helpCalled() and "He's getting away. Struggle free before he's gone!"
+				or "Nobody's coming. Struggle free before he comes back!"
 			for _, p in session do
 				if not p:GetAttribute("Dead") then
-					ctx.Remotes.Notify:FireClient(p, "Nobody's coming. Struggle free before he comes back!", "danger")
+					ctx.Remotes.Notify:FireClient(p, line, "danger")
 				end
 			end
 		end
@@ -727,16 +732,22 @@ function Director.checkAllCaptured()
 	end
 end
 
+-- everyone taken: with help on the way he slips out before it arrives; without, nobody comes
+function Director.lostEnding(): string
+	return ctx.Escape.helpCalled() and "GotAway" or "GoneQuiet"
+end
+
 local function lastChanceTick()
 	if state.GoneQuietAt then
 		if #ctx.Util.activePlayers() > 0 then
 			state.GoneQuietAt = nil
 		elseif os.clock() >= state.GoneQuietAt and not ctx.Ending.isOver() then
 			state.GoneQuietAt = nil
-			ctx.Ending.trigger("GoneQuiet")
+			ctx.Ending.trigger(Director.lostEnding())
 		end
 	end
 end
+Director._lastChanceTick = lastChanceTick -- (tests)
 
 ---------------------------------------------------------------------------
 -- Scheduling

@@ -165,7 +165,60 @@ local function fit(placeholder: Model, assetId: number)
 	prop.Parent = placeholder
 end
 
+-- Paintings: a canvas part with an "ArtDecal" attribute (World/Finish) gets the decal's picture
+local textures = {} -- decal asset id -> image content id | false
+local function decalTexture(assetId: number): string?
+	if textures[assetId] ~= nil then
+		return textures[assetId] or nil
+	end
+	while loading[assetId] do
+		task.wait(0.2)
+	end
+	if textures[assetId] ~= nil then
+		return textures[assetId] or nil
+	end
+	loading[assetId] = true
+	local ok, container = pcall(function()
+		return (AssetService :: any):LoadAssetAsync(assetId)
+	end)
+	loading[assetId] = nil
+	local tex = nil
+	if ok and container then
+		local d = (container :: Instance):FindFirstChildWhichIsA("Decal", true)
+		if d and d.Texture ~= "" then
+			tex = d.Texture
+		end
+		(container :: Instance):Destroy()
+	end
+	textures[assetId] = tex or false
+	return tex
+end
+
+local function paint(canvas: BasePart)
+	-- (a string: numeric attributes can't be trusted to keep every digit of a long asset id)
+	local id = tonumber(canvas:GetAttribute("ArtDecal"))
+	if not id then
+		return
+	end
+	local tex = decalTexture(id)
+	if not tex or not canvas.Parent then
+		return
+	end
+	local face = canvas:GetAttribute("ArtFace")
+	local decal = Instance.new("Decal")
+	decal.Name = "Art"
+	decal.Texture = tex
+	decal.Face = (Enum.NormalId :: any)[type(face) == "string" and face or "Front"]
+	-- a touch of age on the varnish
+	decal.Color3 = Color3.fromRGB(235, 228, 212)
+	decal.Parent = canvas
+end
+
 local function consider(inst: Instance)
+	if inst:IsA("BasePart") and inst:GetAttribute("ArtDecal") then
+		task.spawn(paint, inst)
+		return
+	end
 	if inst:IsA("Model") and inst.Name ~= "Prop" and not inst:FindFirstAncestor("Prop") then
 		local id = Props.Models[inst.Name]
 		if id then

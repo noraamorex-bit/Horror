@@ -1012,6 +1012,14 @@ STATES.CheckSpot = function(_, visible)
 		end
 		return
 	end
+	-- someone out in the open right behind him while he's at the door: forget the cupboard
+	for _, p in visible do
+		local r = rootOf(p)
+		if r and (r.Position - pos()).Magnitude < 10 and engage({ p }) then
+			S.SawHide[spot] = nil
+			return
+		end
+	end
 	if now() < d.Until then
 		return
 	end

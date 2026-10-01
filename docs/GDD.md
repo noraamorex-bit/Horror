@@ -215,12 +215,15 @@ When help has been called, a police timer starts (150 s by phone, 120 s via neig
 ### Endings
 | Ending | Condition |
 |---|---|
-| **Sirens** | The police arrive with at least one player free. Curtis is arrested near his van. |
+| **Sirens** | The police arrive with at least one player alive (free or zip-tied). Curtis is arrested near his van. |
 | **Locked In** | The police arrive while Curtis is trapped in the basement. He is arrested in the house. |
 | **Taillights** | Players drove out and brought help. |
 | **Next Door** | Mrs. Okafor made the call. |
 | **Gone Quiet** (bad) | Every player still in the house was captured before help was called. |
+| **He Got Away** (bad) | Help was called, but everyone was taken before it arrived: all dead, or all zip-tied with nobody breaking free in the 45 s last chance. Ends at once; the police timer doesn't run out on an empty house. |
 | **Dawn** | The session hit the 60-minute cap. |
+
+Paintings are real public-domain artworks: free Creator Store decals (`World/Art`), loaded onto the canvases at runtime by `World/Props`. Wall spans with furniture or fixtures in front are listed in `Layout.NoArt`.
 
 Every ending shows each player's fate (Escaped / Safe / Rescued / Captured) and the **What Really Happened** timeline.
 
@@ -262,7 +265,7 @@ If Curtis grabs you, the screen fades and you wake zip-tied in the boiler room. 
 
 ### The intruder AI (`src/server/Intruder`)
 A state machine with perception:
-- **Vision**: a 100° cone, raycast line of sight. Range depends on light: 80 studs lit, 22 dark, 110 if the target's flashlight is on. Crouching shortens it. Hidden players are invisible.
+- **Vision**: a 100° cone, raycast line of sight. Range depends on light: 80 studs lit, 22 dark, 110 if the target's flashlight is on. Crouching shortens it. Hidden players are invisible. Up close he doesn't need to face you: within 7 studs always, 11 if you're walking upright, 12 with your flashlight on, 16 if you're sprinting. Only a player who is crouched and still can stay right behind him (4 studs). If he's opening a cupboard and someone in the open is within 10 studs and in his senses, he drops the cupboard and goes for them.
 - **He always knows roughly where you are** (the hunt): every half second he feels where each player who isn't hiding is, and acts on where they were **3 s ago** (a bloodhound on your trail). Hiding makes the trail go cold; after you leave a hiding spot he can't feel you for **8 s**. Loud noises (sprinting, slammed doors, trying the exits) are felt immediately.
 - **Hearing**: noise events, reduced across floors; a loud noise ends his break early.
 

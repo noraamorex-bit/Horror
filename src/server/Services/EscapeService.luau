@@ -153,8 +153,18 @@ function Escape.policeArrive()
 	task.wait(8)
 
 	local kind
+	local anyFree = false
+	for _, p in ctx.Util.sessionPlayers() do
+		-- (still alive, even zip-tied: the police find them)
+		if p:GetAttribute("Escaped") or not p:GetAttribute("Dead") then
+			anyFree = true
+		end
+	end
 	if ctx.Intruder and ctx.Intruder.getState() == "Trapped" then
 		kind = "LockedIn"
+	elseif not anyFree then
+		-- they got here too late: nobody left alive in the house
+		kind = "GotAway"
 	elseif state.HelpMethod == "Car" then
 		kind = "Taillights"
 	elseif state.HelpMethod == "Neighbor" then

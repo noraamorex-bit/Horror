@@ -693,7 +693,18 @@ function HUD.start()
 	end)
 	updateInventory()
 	local acc = 0
+	local captionY = -110
 	RunService.RenderStepped:Connect(function(dt)
+		-- captions sit just above your character's thought while one is showing, never under it
+		local thought = UI.Root:FindFirstChild("Thought") :: GuiObject?
+		local want = -110
+		if thought and thought.Visible then
+			want = math.min(-110, -150 - thought.AbsoluteSize.Y - 8)
+		end
+		if want ~= captionY then
+			captionY = want
+			captionList:TweenPosition(UDim2.new(0.5, 0, 1, want), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+		end
 		acc += dt
 		if acc >= 0.1 then
 			acc = 0

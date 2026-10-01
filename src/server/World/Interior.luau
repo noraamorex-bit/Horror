@@ -1003,7 +1003,7 @@ function Interior.build(ctx, root: Instance, refs)
 	-- More places to hide downstairs: he hunts on every floor, and the ground floor is
 	-- where most of the night's work is
 	---------------------------------------------------------------------------
-	wardrobe(hall, "Coat closet", -7.2, 20, -4.4, 26, G, PX, "Hallway", WHITE_WOOD)
+	wardrobe(hall, "Coat closet", 8.6, 6, 11.4, 12, G, NX, "Hallway", WHITE_WOOD)
 	wardrobe(mud, "Utility closet", 34.6, 0.6, 39.4, 3.4, G, NZ, "Mudroom", WHITE_WOOD)
 	wardrobe(garage, "Storage cabinet", 41, -21.5, 43.8, -16, G, PX, "Garage", Color3.fromRGB(96, 100, 104))
 	-- crouched under a table or a desk, peeking out at floor level

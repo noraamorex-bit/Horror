@@ -93,7 +93,24 @@ function Perception.intruderSees(head: CFrame, player: Player, model: Instance):
 		return false
 	end
 	local I = ctx.Config.Intruder
-	if d > I.PeripheralRange then
+	-- up close he doesn't need to be facing you: he hears footsteps, breathing, sees the beam
+	-- swing across the wall. Only someone crouched and keeping still can stay behind him.
+	local aware = I.PeripheralRange
+	local root = char:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local v = root and root.AssemblyLinearVelocity or Vector3.zero
+	local moving = Vector3.new(v.X, 0, v.Z).Magnitude > 2
+	if player:GetAttribute("Sprinting") and moving then
+		aware = math.max(aware, I.HearSprint or 16)
+	elseif moving and not player:GetAttribute("Crouching") then
+		aware = math.max(aware, I.HearWalk or 11)
+	end
+	if player:GetAttribute("FlashlightOn") then
+		aware = math.max(aware, I.HearFlashlight or 12)
+	end
+	if player:GetAttribute("Crouching") and not moving then
+		aware = math.min(aware, 4)
+	end
+	if d > aware then
 		local flat = Vector3.new(to.X, 0, to.Z)
 		local look = Vector3.new(head.LookVector.X, 0, head.LookVector.Z)
 		if flat.Magnitude > 0.01 and look.Magnitude > 0.01 and look.Unit:Dot(flat.Unit) < math.cos(math.rad(I.FOV / 2)) then

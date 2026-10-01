@@ -14,6 +14,8 @@
 
 local CollectionService = game:GetService("CollectionService")
 
+local Art = require(script.Parent.Art)
+
 local Kit = {}
 
 local V = Vector3.new
@@ -1157,17 +1159,13 @@ end
 -- a framed picture; cf = centre of the picture, facing out from the wall
 function Kit.picture(parent, cf: CFrame, w: number, h: number, frameColor: Color3, seed: number?)
 	local m = Kit.model(parent, "Picture")
-	local rng = Random.new(seed or 5)
 	Kit.box(m, "PictureFrame", cf * CF(0, 0, 0.05), V(w + 0.3, h + 0.3, 0.1), frameColor, M.Wood)
 	Kit.box(m, "Mat", cf * CF(0, 0, 0), V(w, h, 0.02), Color3.fromRGB(238, 234, 224), M.Plastic)
-	-- a little landscape: sky, hills, ground
-	local iw, ih = w - 0.5, h - 0.5
-	local sky = Color3.fromHSV(rng:NextNumber(0.5, 0.65), rng:NextNumber(0.2, 0.5), rng:NextNumber(0.6, 0.9))
-	Kit.box(m, "Canvas", cf * CF(0, ih * 0.15, -0.02), V(iw, ih * 0.7, 0.02), sky, M.Fabric)
-	Kit.box(m, "Canvas", cf * CF(0, -ih * 0.35, -0.02), V(iw, ih * 0.3, 0.02), Color3.fromHSV(rng:NextNumber(0.2, 0.35), 0.4, 0.45), M.Fabric)
-	for k = 0, 1 do
-		Kit.ellipsoid(m, "Hill", cf * CF((k - 0.5) * iw * 0.45, -ih * 0.18, -0.025), V(iw * 0.55, ih * 0.45, 0.02), Color3.fromHSV(rng:NextNumber(0.22, 0.38), 0.35, 0.35 + k * 0.1), M.Fabric)
-	end
+	-- a real painting (World/Art), loaded onto the canvas at runtime by World/Props
+	local piece = Art.pick(w, h, seed or 5)
+	local canvas = Kit.box(m, "Canvas", cf * CF(0, 0, -0.02), V(w - 0.3, h - 0.3, 0.02), Color3.fromRGB(58, 52, 44), M.Fabric)
+	canvas:SetAttribute("ArtDecal", string.format("%d", piece.Id))
+	canvas:SetAttribute("ArtFace", "Front")
 	return m
 end
 

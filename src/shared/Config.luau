@@ -109,6 +109,9 @@ Config.Intruder = {
 	SightFlashlight = 110, -- a flashlight in the dark gives you away from across the house
 	CrouchSightMultiplier = 0.6,
 	PeripheralRange = 7, -- sensed regardless of facing
+	HearWalk = 11, -- walking (not crouched) this close: he notices you behind him
+	HearSprint = 16, -- running
+	HearFlashlight = 12, -- your beam on the walls around him
 	SoloChaseSlowdown = 1, -- studs/s slower when playing alone
 	ChaseLoseSightTime = 2.5, -- out of sight this long and he's back to following your trail
 	-- what he knows
@@ -194,6 +197,7 @@ Config.Badges = {
 	LockedIn = 0,
 	Dawn = 0,
 	GoneQuiet = 0,
+	GotAway = 0,
 }
 
 Config.PepperSpray = {

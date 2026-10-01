@@ -723,6 +723,11 @@ Story.Endings = {
 		Body = "Nobody calls. Nobody comes.\n\nJamie's parents come home on Sunday night to a dark house and a basement door locked from the outside. Everyone inside is alive: cold, terrified, zip-tied to the pipes.\n\nCurtis Vane's van is found abandoned at a rest stop in Indiana. He is still out there. Somewhere with an attic.",
 		Bad = true,
 	},
+	GotAway = {
+		Title = "HE GOT AWAY",
+		Body = "By the time the police kick in the front door, the house is silent.\n\nThe back door is open. Rain on the kitchen floor. Muddy prints going out, none coming back.\n\nThey search the house room by room. The attic is empty, except for the photographs. Hundreds of them. Every one of you.\n\nCurtis Vane was never found.",
+		Bad = true,
+	},
 	Dawn = {
 		Title = "DAWN",
 		Body = "The rain stops a little after five. Gray light, a dripping gutter, and then - finally - sirens.\n\nA neighbor on Birch Street had called about a gray van that hadn't moved in three weeks. The officer who ran the plate made the connection to the break-ins.\n\nYou lasted the whole night.",
@@ -756,7 +761,7 @@ Story.Evidence = { "WarmMug", "Invoice", "LilyDrawing", "Notebook", "Polaroids",
 Story.EvidenceNeeded = 7
 
 -- The lobby's endings collection: display order and a hint for the ones not found yet
-Story.EndingOrder = { "Sirens", "CaseClosed", "NextDoor", "Taillights", "LockedIn", "Dawn", "GoneQuiet" }
+Story.EndingOrder = { "Sirens", "CaseClosed", "NextDoor", "Taillights", "LockedIn", "Dawn", "GoneQuiet", "GotAway" }
 Story.EndingHints = {
 	Sirens = "Get a call through to 911 and hold out until they come.",
 	CaseClosed = "When the police come, have the whole story ready. Read everything.",
@@ -765,6 +770,7 @@ Story.EndingHints = {
 	LockedIn = "The basement door locks from the outside.",
 	Dawn = "Just... last until morning.",
 	GoneQuiet = "What happens if he takes everyone?",
+	GotAway = "Help is on the way. Don't let him take everyone before it arrives.",
 }
 
 Story.Fates = {

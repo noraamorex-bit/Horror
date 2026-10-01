@@ -32,12 +32,18 @@ local PALETTE = {
 	UpperHall = { Wall = Color3.fromRGB(214, 202, 178), Paper = "Stripes", Mat = "Plaster", Wainscot = WHITE, Curtain = Color3.fromRGB(120, 50, 45), Art = 3 },
 }
 
-local ART_COLORS = {
-	Color3.fromRGB(70, 90, 120), Color3.fromRGB(150, 110, 70), Color3.fromRGB(60, 100, 80),
-	Color3.fromRGB(180, 150, 110), Color3.fromRGB(120, 60, 60), Color3.fromRGB(200, 190, 170),
-}
+local ART = require(script.Parent.Art).List
+local ART_FALLBACK = Color3.fromRGB(58, 52, 44)
 
 function Finish.build(ctx, root: Instance)
+	-- a different painting on every wall, in a shuffled order
+	local artRng = Random.new(1031)
+	local artOrder = table.clone(ART)
+	for i = #artOrder, 2, -1 do
+		local j = artRng:NextInteger(1, i)
+		artOrder[i], artOrder[j] = artOrder[j], artOrder[i]
+	end
+	local artIndex = 0
 	local B = ctx.Builder
 	local L = ctx.Layout
 	local Util = ctx.Util
@@ -229,7 +235,18 @@ function Finish.build(ctx, root: Instance)
 					if bestA and artLeft > 0 and not reserved then
 						artLeft -= 1
 						local c = bestA + bestLen / 2
-						local w, h = math.min(bestLen - 1, 3 + rng:NextNumber() * 2), 2.4 + rng:NextNumber() * 1.2
+						artIndex = artIndex % #artOrder + 1
+						local piece = artOrder[artIndex]
+						local w, h
+						if piece.Kind == "P" then
+							w, h = 2.7, 3.5
+						elseif piece.Kind == "S" then
+							w, h = 3.0, 3.0
+						else
+							w, h = 4.4, 3.3
+						end
+						local fit = math.min(1, (bestLen - 1) / w)
+						w, h = w * fit, h * fit
 						local face = side.Fixed + side.Inward * (line.Offset + 0.08)
 						local cy = y0 + 7.2
 						local function art(nm, along0, along1, yb, yt, depth, color, mat)
@@ -245,7 +262,10 @@ function Finish.build(ctx, root: Instance)
 						end
 						art("PictureFrame", c - w / 2 - 0.25, c + w / 2 + 0.25, cy - h / 2 - 0.25, cy + h / 2 + 0.25, 0.14, Color3.fromRGB(60, 42, 30), Enum.Material.Wood)
 						art("Mat", c - w / 2, c + w / 2, cy - h / 2, cy + h / 2, 0.17, Color3.fromRGB(236, 232, 222), Enum.Material.SmoothPlastic)
-						art("Canvas", c - w / 2 + 0.35, c + w / 2 - 0.35, cy - h / 2 + 0.35, cy + h / 2 - 0.35, 0.19, ART_COLORS[rng:NextInteger(1, #ART_COLORS)], Enum.Material.Fabric)
+						local canvas = art("Canvas", c - w / 2 + 0.35, c + w / 2 - 0.35, cy - h / 2 + 0.35, cy + h / 2 - 0.35, 0.19, ART_FALLBACK, Enum.Material.Fabric)
+						canvas:SetAttribute("ArtDecal", string.format("%d", piece.Id))
+						-- the face that looks into the room
+						canvas:SetAttribute("ArtFace", side.AlongX and (side.Inward > 0 and "Back" or "Front") or (side.Inward > 0 and "Right" or "Left"))
 					end
 				end
 			end
