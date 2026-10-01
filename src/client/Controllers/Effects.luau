@@ -112,7 +112,7 @@ end
 -- a figure only you can see (built locally, gone in a moment)
 function Effects.figure(cf: CFrame, duration: number)
 	-- him: a still copy of the real thing, frozen mid-stare (the old block man if he isn't loaded)
-	local real = workspace:FindFirstChild("Curtis", true)
+	local real = ctx.Util.creature()
 	if real and real:IsA("Model") and real:GetAttribute("Creature") then
 		local ok, copy = pcall(function()
 			return real:Clone()
@@ -129,6 +129,7 @@ function Effects.figure(cf: CFrame, duration: number)
 			end
 			copy.Name = "Figure"
 			copy:SetAttribute("Creature", nil)
+			game:GetService("CollectionService"):RemoveTag(copy, "Creature")
 			copy:PivotTo(cf * CFrame.new(0, 2.3, 0))
 			copy.Parent = workspace
 			task.delay(duration, function()

@@ -36,6 +36,14 @@ local ok, err = pcall(function()
 	end)
 	local Perc = H.load("Server/Intruder/Perception")
 	Perc.clear = function(a, b) return ctx.Rooms.find(a) == ctx.Rooms.find(b) end
+	local msgs = {}
+	ctx.Remotes = setmetatable({}, { __index = function(t, k)
+		local r = { OnServerEvent = H.signal() }
+		r.FireClient = function(_, _, a) if k == "Notify" or k == "Thought" then table.insert(msgs, { T = T, K = k, A = type(a) == "string" and a or (type(a) == "table" and "(phone)" or tostring(a)) }) end end
+		r.FireAllClients = function(_, a) if k == "Notify" or k == "Thought" then table.insert(msgs, { T = T, K = k, A = tostring(a) }) end end
+		rawset(t, k, r)
+		return r
+	end })
 	local p = H.wrap(R.Instance.new("Player"))
 	p.Name = "Bot"
 	local char = H.Instance.new("Model")
@@ -144,6 +152,20 @@ local ok, err = pcall(function()
 	ctx.Escape.callForHelp("Cell", p)
 	run(200) report("after help")
 	print("  ending over:", ctx.Ending.isOver())
+	-- bursts: 3+ messages within 3 seconds
+	local bursts = 0
+	for i = 1, #msgs do
+		local j = i
+		while msgs[j + 1] and msgs[j + 1].T - msgs[i].T <= 3 do j += 1 end
+		if j - i + 1 >= 3 then
+			bursts += 1
+			if bursts <= 8 then
+				print(string.format("  BURST at %.1f:", msgs[i].T - 10000))
+				for k = i, j do print("     ", msgs[k].K, msgs[k].A:sub(1, 90)) end
+			end
+		end
+	end
+	print("  messages", #msgs, "bursts", bursts)
 end)
 print(ok and "NIGHT OK" or ("NIGHT FAIL: " .. tostring(err)))
 local seen = {}

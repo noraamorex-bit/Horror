@@ -258,7 +258,17 @@ services = {
 	RunService = { IsServer = function() return true end, IsClient = function() return false end, Heartbeat = signal(), RenderStepped = signal(), Stepped = signal(), BindToRenderStep = function(_, _, _, fn) table.insert(M.renderSteps, fn) end },
 	PathfindingService = stub("PathfindingService"),
 	TextChatService = stub("TextChatService"),
-	CollectionService = { AddTag = function() end, GetTagged = function() return {} end, GetInstanceAddedSignal = function() return signal() end },
+	CollectionService = (function()
+		local tags = {}
+		return {
+			AddTag = function(_, inst, tag) tags[tag] = tags[tag] or {}; table.insert(tags[tag], inst) end,
+			RemoveTag = function(_, inst, tag) local l = tags[tag]; if l then local i = table.find(l, inst); if i then table.remove(l, i) end end end,
+			HasTag = function(_, inst, tag) return tags[tag] ~= nil and table.find(tags[tag], inst) ~= nil end,
+			GetTagged = function(_, tag) return table.clone(tags[tag] or {}) end,
+			GetInstanceAddedSignal = function() return signal() end,
+			GetInstanceRemovedSignal = function() return signal() end,
+		}
+	end)(),
 	Lighting = wrap(roblox.Instance.new("Folder")),
 }
 

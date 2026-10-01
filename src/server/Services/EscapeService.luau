@@ -85,8 +85,8 @@ function Escape.callForHelp(method: string, player: Player?)
 	for _, id in { "Call911", "Phone", "Neighbor", "Car", "Attic", "Investigate" } do
 		ctx.Objectives.dismiss(id)
 	end
+	-- (the objective change and the police countdown on screen say it; no third message)
 	ctx.Objectives.add("Survive")
-	ctx.Remotes.Notify:FireAllClients("Help is coming. Police ETA " .. ctx.Util.formatSeconds(eta) .. ". Survive.", "objective")
 	ctx.Director.logTruthRaw("Help was called (" .. method .. ").")
 	if ctx.Intruder then
 		ctx.Intruder.onHelpCalled(player)

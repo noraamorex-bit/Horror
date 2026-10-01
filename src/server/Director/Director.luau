@@ -438,7 +438,7 @@ function Director.startAct(name: string, cause: Player?)
 					for _, p in ctx.Util.sessionPlayers() do
 						ctx.Phone.deliver(p, t.From, t.Body)
 					end
-					task.wait(3)
+					task.wait(6)
 				end
 				task.wait(4)
 				Director.think(nil, ctx.Story.Thoughts.SoloFriendsStuck)
@@ -619,7 +619,7 @@ function Director.startMomNews()
 			for _, p in ctx.Util.sessionPlayers() do
 				ctx.Phone.deliver(p, "Mom", line)
 			end
-			task.wait(3.5)
+			task.wait(5.5)
 		end
 		if state ~= myState then
 			return

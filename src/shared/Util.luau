@@ -141,4 +141,15 @@ function Util.material(name: string, fallback: string?): Enum.Material
 	return (Enum.Material :: any)[fallback or "SmoothPlastic"]
 end
 
+
+-- the intruder's model (tagged "Creature" by server/Intruder/Rig), or nil
+function Util.creature(): Model?
+	for _, m in game:GetService("CollectionService"):GetTagged("Creature") do
+		if m:IsA("Model") and m:IsDescendantOf(workspace) then
+			return m
+		end
+	end
+	return nil
+end
+
 return Util

@@ -297,7 +297,7 @@ function Atmosphere.start()
 			lookClock -= 0.25
 			if (not curtis or not curtis.Parent) and lookClock <= 0 then
 				lookClock = 2
-				local found = workspace:FindFirstChild("Curtis", true)
+				local found = ctx.Util.creature()
 				curtis = found and found:IsA("Model") and found or nil
 			end
 			local state = workspace:GetAttribute("IntruderState")

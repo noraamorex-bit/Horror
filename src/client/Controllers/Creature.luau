@@ -43,7 +43,7 @@ local function find()
 	if model and model.Parent then
 		return
 	end
-	local found = workspace:FindFirstChild("Curtis", true)
+	local found = ctx.Util.creature()
 	if found and found:IsA("Model") and found:GetAttribute("Creature") then
 		bind(found)
 	else

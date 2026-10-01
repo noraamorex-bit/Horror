@@ -213,6 +213,7 @@ function Rig.build(Builder): Model
 	hum.RequiresNeck = false
 	hum.Parent = model
 	model:SetAttribute("Creature", true)
+	game:GetService("CollectionService"):AddTag(model, "Creature")
 	return model
 end
 
