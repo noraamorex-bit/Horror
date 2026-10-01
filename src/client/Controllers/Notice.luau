@@ -104,13 +104,13 @@ function Notice.start()
 	UI.padding(card, 26)
 	UI.modal(card)
 	UI.new("UIListLayout", { Padding = UDim.new(0, 16), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = card })
-	titleLabel = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = UI.Font.Title, TextSize = 36, LayoutOrder = 1, ZIndex = 51, Parent = card })
-	bodyLabel = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, TextSize = 22, TextColor3 = Color3.fromRGB(215, 210, 200), LayoutOrder = 2, ZIndex = 51, Parent = card })
+	titleLabel = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = UI.Font.Title, TextSize = 30, LayoutOrder = 1, ZIndex = 51, Parent = card })
+	bodyLabel = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, TextSize = 18, TextColor3 = Color3.fromRGB(215, 210, 200), LayoutOrder = 2, ZIndex = 51, Parent = card })
 	okButton = UI.new("TextButton", {
 		Size = UDim2.fromOffset(220, 64),
 		Text = "OK",
 		Font = UI.Font.Bold,
-		TextSize = 26,
+		TextSize = 18,
 		TextColor3 = Color3.fromRGB(15, 15, 15),
 		BackgroundColor3 = Color3.fromRGB(240, 236, 228),
 		LayoutOrder = 3,

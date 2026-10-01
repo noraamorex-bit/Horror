@@ -88,14 +88,26 @@ local function run()
 		end
 		line.Text = item.Text
 		tip.Text = hintText(item.Hint)
+		tip.Visible = tip.Text ~= ""
 		frame.Visible = true
+		local stroke = frame:FindFirstChildOfClass("UIStroke")
 		line.TextTransparency = 1
 		tip.TextTransparency = 1
+		frame.BackgroundTransparency = 1
+		if stroke then
+			stroke.Transparency = 1
+			ctx.UI.tween(stroke, 0.3, { Transparency = 0.88 })
+		end
+		ctx.UI.tween(frame, 0.3, { BackgroundTransparency = 0.3 })
 		ctx.UI.tween(line, 0.4, { TextTransparency = 0 })
 		ctx.UI.tween(tip, 0.4, { TextTransparency = 0.1 })
 		task.wait(ctx.Config.Thoughts.Duration)
 		ctx.UI.tween(line, 0.4, { TextTransparency = 1 })
 		ctx.UI.tween(tip, 0.4, { TextTransparency = 1 })
+		ctx.UI.tween(frame, 0.4, { BackgroundTransparency = 1 })
+		if stroke then
+			ctx.UI.tween(stroke, 0.4, { Transparency = 1 })
+		end
 		task.wait(0.45)
 	end
 	frame.Visible = false
@@ -125,40 +137,32 @@ end
 
 function Thoughts.start()
 	local UI = ctx.UI
-	frame = UI.new("Frame", {
+	frame = UI.box({
 		Name = "Thought",
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -150),
-		Size = UDim2.fromOffset(900, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
+		BackgroundTransparency = 0.3,
 		Visible = false,
 		Parent = UI.Root,
-	})
-	UI.new("UIListLayout", { Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = frame })
-	line = UI.label({
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
+	}, { 8, 16 })
+	UI.new("UIListLayout", { Padding = UDim.new(0, 4), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = frame })
+	line = UI.fitLabel({
 		Text = "",
-		Font = Enum.Font.GothamMedium,
-		TextSize = 32,
+		Font = UI.Font.Body,
+		TextSize = 25,
 		TextColor3 = Color3.fromRGB(245, 240, 228),
-		TextStrokeTransparency = 0.35,
 		RichText = false,
 		LayoutOrder = 1,
 		Parent = frame,
-	})
-	tip = UI.label({
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
+	}, 680)
+	tip = UI.fitLabel({
 		Text = "",
 		Font = UI.Font.Bold,
-		TextSize = 22,
-		TextColor3 = UI.Color.Accent,
-		TextStrokeTransparency = 0.4,
+		TextSize = 17,
+		TextColor3 = UI.Color.Dim,
 		LayoutOrder = 2,
 		Parent = frame,
-	})
+	}, 680)
 	ctx.Remotes.Thought.OnClientEvent:Connect(Thoughts.say)
 end
 

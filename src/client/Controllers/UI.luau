@@ -11,8 +11,9 @@ local UI = {}
 
 UI.Font = {
 	Title = Enum.Font.SpecialElite,
-	Body = Enum.Font.GothamMedium,
-	Bold = Enum.Font.GothamBold,
+	-- everything you read mid-game is heavy and compact: bold body, black for emphasis
+	Body = Enum.Font.GothamBold,
+	Bold = Enum.Font.GothamBlack,
 	Mono = Enum.Font.Code,
 }
 
@@ -77,12 +78,47 @@ function UI.padding(parent: Instance, px: number)
 	})
 end
 
+-- A dark rounded box that hugs its contents (AutomaticSize XY): the standard backing for any
+-- text shown over the game, so it reads on any background. `pad` = { vertical, horizontal }.
+function UI.box(props: { [string]: any }, pad: { number }?): Frame
+	local defaults = {
+		Size = UDim2.new(),
+		AutomaticSize = Enum.AutomaticSize.XY,
+		BackgroundColor3 = UI.Color.Panel,
+		BackgroundTransparency = 0.28,
+	}
+	for k, v in props do
+		defaults[k] = v
+	end
+	local f = UI.new("Frame", defaults)
+	UI.corner(f, 8)
+	UI.stroke(f, Color3.new(1, 1, 1), 1, 0.88)
+	local pv, ph = (pad and pad[1]) or 6, (pad and pad[2]) or 12
+	UI.new("UIPadding", {
+		PaddingTop = UDim.new(0, pv),
+		PaddingBottom = UDim.new(0, pv),
+		PaddingLeft = UDim.new(0, ph),
+		PaddingRight = UDim.new(0, ph),
+		Parent = f,
+	})
+	return f
+end
+
+-- a label that grows to fit its text, wrapping at `maxWidth`
+function UI.fitLabel(props: { [string]: any }, maxWidth: number): TextLabel
+	props.Size = props.Size or UDim2.new()
+	props.AutomaticSize = Enum.AutomaticSize.XY
+	local l = UI.label(props)
+	UI.new("UISizeConstraint", { MaxSize = Vector2.new(maxWidth, math.huge), Parent = l })
+	return l
+end
+
 function UI.label(props: { [string]: any }): TextLabel
 	local defaults = {
 		BackgroundTransparency = 1,
 		Font = UI.Font.Body,
 		TextColor3 = UI.Color.Text,
-		TextSize = 18,
+		TextSize = 16,
 		TextWrapped = true,
 		RichText = true,
 	}

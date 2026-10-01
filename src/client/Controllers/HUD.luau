@@ -63,23 +63,27 @@ function HUD.caption(text: string, _position: Vector3?)
 		return
 	end
 	recentCaptions[text] = os.clock()
-	local l = UI.label({
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		Text = text,
-		TextSize = 23,
-		Font = isSound and UI.Font.Bold or UI.Font.Body,
-		TextColor3 = isSound and Color3.fromRGB(215, 215, 200) or UI.Color.Text,
-		TextStrokeTransparency = 0.4,
-		TextTransparency = 1,
-		TextStrokeColor3 = Color3.new(0, 0, 0),
+	local box = UI.box({
+		BackgroundTransparency = 1,
 		LayoutOrder = math.floor(os.clock() * 100),
 		Parent = captionList,
-	})
+	}, { 4, 10 })
+	local stroke = box:FindFirstChildOfClass("UIStroke") :: UIStroke
+	stroke.Transparency = 1
+	local l = UI.fitLabel({
+		Text = text,
+		TextSize = 18,
+		Font = isSound and UI.Font.Bold or UI.Font.Body,
+		TextColor3 = isSound and Color3.fromRGB(205, 205, 195) or UI.Color.Text,
+		TextTransparency = 1,
+		Parent = box,
+	}, 560)
 	UI.tween(l, 0.25, { TextTransparency = 0 })
+	UI.tween(box, 0.25, { BackgroundTransparency = 0.35 })
+	UI.tween(stroke, 0.25, { Transparency = 0.9 })
 	local kids = {}
 	for _, c in captionList:GetChildren() do
-		if c:IsA("TextLabel") then
+		if c:IsA("Frame") then
 			table.insert(kids, c)
 		end
 	end
@@ -91,10 +95,12 @@ function HUD.caption(text: string, _position: Vector3?)
 	end
 	local life = math.clamp(#text / 18, 3.5, 8)
 	task.delay(life, function()
-		if l.Parent then
-			UI.tween(l, 0.6, { TextTransparency = 1, TextStrokeTransparency = 1 })
+		if box.Parent then
+			UI.tween(l, 0.6, { TextTransparency = 1 })
+			UI.tween(box, 0.6, { BackgroundTransparency = 1 })
+			UI.tween(stroke, 0.6, { Transparency = 1 })
 			task.wait(0.6)
-			l:Destroy()
+			box:Destroy()
 		end
 	end)
 end
@@ -163,14 +169,16 @@ showNote = function(text: string, kind: string?)
 		Parent = notifyList,
 	})
 	UI.corner(frame, 8)
-	UI.padding(frame, 8)
+	UI.stroke(frame, Color3.new(1, 1, 1), 1, 0.88)
+	UI.new("UIPadding", { PaddingTop = UDim.new(0, 7), PaddingBottom = UDim.new(0, 7), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), Parent = frame })
 	UI.new("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = color, Parent = frame })
 	UI.label({
-		Size = UDim2.new(1, -10, 0, 0),
-		Position = UDim2.fromOffset(10, 0),
+		Size = UDim2.new(1, -12, 0, 0),
+		Position = UDim2.fromOffset(12, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		Text = text,
-		TextSize = 20,
+		TextSize = 17,
+		Font = (kind == "danger" or kind == "objective") and UI.Font.Bold or UI.Font.Body,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = frame,
 	})
@@ -310,10 +318,10 @@ local function renderJournal()
 	end
 	for _, o in objectives do
 		local mark = o.Done and "<font color=\"#d8d8d8\">✓</font> " or (o.Optional and "◦ " or "• ")
-		line(mark .. (o.Done and ("<s>" .. o.Text .. "</s>") or ("<b>" .. o.Text .. "</b>")), 18, o.Done and UI.Color.Dim or UI.Color.Text)
+		line(mark .. (o.Done and ("<s>" .. o.Text .. "</s>") or o.Text), 16, o.Done and UI.Color.Dim or UI.Color.Text)
 		if not o.Done then
 			for _, st in o.Steps or {} do
-				line("      " .. (st.Done and "<font color=\"#d8d8d8\">✓</font> <s>" .. st.Text .. "</s>" or "–  " .. st.Text), 15, st.Done and UI.Color.Dim or Color3.fromRGB(205, 200, 190))
+				line("      " .. (st.Done and "<font color=\"#d8d8d8\">✓</font> <s>" .. st.Text .. "</s>" or "–  " .. st.Text), 14, st.Done and UI.Color.Dim or Color3.fromRGB(205, 200, 190))
 			end
 		end
 	end
@@ -343,6 +351,10 @@ local meterFrame: Frame
 local meterFill: Frame
 local meterLabel: TextLabel
 local etaLabel: TextLabel
+local etaBox: Frame
+local hintBox: Frame
+local inventoryTop: Frame
+local inventoryBottom: Frame
 local crosshair: Frame
 
 local function bar(parent, width, color)
@@ -363,35 +375,43 @@ local function build()
 	local inset = GuiService:GetGuiInset()
 
 	-- clock (top-left, under the Roblox top bar)
-	local clock = UI.new("Frame", {
+	-- the left column: time / act / room, and under it what you're carrying (on phones)
+	local leftCol = UI.new("Frame", {
 		Name = "Clock",
 		Position = UDim2.fromOffset(18, inset.Y + 10),
-		Size = UDim2.fromOffset(260, 70),
+		Size = UDim2.new(),
+		AutomaticSize = Enum.AutomaticSize.XY,
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
-	clockLabel = UI.label({ Size = UDim2.new(1, 0, 0, 30), Text = "", Font = UI.Font.Title, TextSize = 28, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.6, Parent = clock })
-	actLabel = UI.label({ Position = UDim2.fromOffset(0, 30), Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 15, Font = UI.Font.Bold, TextColor3 = Color3.fromRGB(214, 208, 196), TextStrokeTransparency = 0.45, TextXAlignment = Enum.TextXAlignment.Left, Parent = clock })
-	roomLabel = UI.label({ Position = UDim2.fromOffset(0, 48), Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 15, Font = UI.Font.Bold, TextColor3 = UI.Color.Accent, TextStrokeTransparency = 0.45, TextXAlignment = Enum.TextXAlignment.Left, Parent = clock })
+	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = leftCol })
+	local clock = UI.box({ LayoutOrder = 1, Parent = leftCol }, { 6, 10 })
+	UI.new("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder, Parent = clock })
+	clockLabel = UI.fitLabel({ Text = "", Font = UI.Font.Bold, TextSize = 21, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 1, Parent = clock }, 240)
+	actLabel = UI.fitLabel({ Text = "", TextSize = 14, TextColor3 = Color3.fromRGB(200, 196, 186), TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, Parent = clock }, 240)
+	roomLabel = UI.fitLabel({ Text = "", TextSize = 14, TextColor3 = UI.Color.Accent, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 3, Parent = clock }, 240)
+	inventoryTop = UI.box({ LayoutOrder = 2, Visible = false, Parent = leftCol }, { 6, 10 })
 
 	-- police ETA (top center)
-	etaLabel = UI.label({
+	etaBox = UI.box({
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, inset.Y + 8),
-		Size = UDim2.fromOffset(320, 26),
+		Visible = false,
+		Parent = root,
+	}, { 4, 12 })
+	etaLabel = UI.fitLabel({
 		Text = "",
 		Font = UI.Font.Bold,
-		TextSize = 20,
-		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextStrokeTransparency = 0.5,
-		Parent = root,
-	})
+		TextSize = 17,
+		TextColor3 = Color3.fromRGB(240, 240, 240),
+		Parent = etaBox,
+	}, 300)
 
 	-- notifications (top center)
 	notifyList = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, inset.Y + 38),
-		Size = UDim2.fromOffset(460, 200),
+		Size = UDim2.fromOffset(400, 200),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
@@ -405,7 +425,7 @@ local function build()
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
-	UI.new("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Bottom, Parent = captionList })
+	UI.new("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Bottom, HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = captionList })
 
 	-- chapter card
 	chapterFrame = UI.new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.38), Size = UDim2.fromOffset(800, 120), BackgroundTransparency = 1, Visible = false, Parent = root })
@@ -417,36 +437,37 @@ local function build()
 	objPanel = UI.new("Frame", {
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -18, 0, topY),
-		Size = UDim2.fromOffset(360, 0),
+		Size = UDim2.fromOffset(300, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = UI.Color.Panel,
-		BackgroundTransparency = 0.3,
+		BackgroundTransparency = 0.28,
 		Visible = false,
 		Parent = root,
 	})
-	UI.corner(objPanel, 10)
-	UI.padding(objPanel, 12)
+	UI.corner(objPanel, 8)
+	UI.stroke(objPanel, Color3.new(1, 1, 1), 1, 0.88)
+	UI.new("UIPadding", { PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), Parent = objPanel })
 	UI.new("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = objPanel })
-	UI.label({ Size = UDim2.new(1, 0, 0, 18), Text = "OBJECTIVE", Font = UI.Font.Bold, TextSize = 15, TextColor3 = UI.Color.Accent, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 1, Parent = objPanel })
-	objTitle = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = "", Font = UI.Font.Bold, TextSize = 22, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, Parent = objPanel })
-	objStep = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = "", TextSize = 18, TextColor3 = Color3.fromRGB(215, 210, 200), TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 3, Parent = objPanel })
-	objProgress = UI.label({ Size = UDim2.new(1, 0, 0, 16), Text = "", TextSize = 13, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 4, Parent = objPanel })
+	UI.label({ Size = UDim2.new(1, 0, 0, 14), Text = "OBJECTIVE", Font = UI.Font.Bold, TextSize = 12, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 1, Parent = objPanel })
+	objTitle = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = "", Font = UI.Font.Bold, TextSize = 19, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, Parent = objPanel })
+	objStep = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = "", TextSize = 15, TextColor3 = Color3.fromRGB(215, 210, 200), TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 3, Parent = objPanel })
+	objProgress = UI.label({ Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 11, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 4, Parent = objPanel })
 
 	-- journal (right, under the objective panel)
 	journal = UI.new("Frame", {
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -18, 0, topY + 140),
-		Size = UDim2.fromOffset(330, 0),
+		Size = UDim2.fromOffset(310, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = UI.Color.Panel,
-		BackgroundTransparency = 0.25,
+		BackgroundTransparency = 0.2,
 		Visible = false,
 		Parent = root,
 	})
 	UI.corner(journal, 10)
 	UI.padding(journal, 12)
 	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = journal })
-	UI.label({ Size = UDim2.new(1, 0, 0, 24), Text = "TONIGHT", Font = UI.Font.Title, TextSize = 22, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 0, Parent = journal })
+	UI.label({ Size = UDim2.new(1, 0, 0, 18), Text = "TONIGHT", Font = UI.Font.Bold, TextSize = 14, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 0, Parent = journal })
 	journalList = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = 1, Parent = journal })
 	UI.new("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder, Parent = journalList })
 	-- a way out if you ever get wedged in the furniture (reset is off: it would break captures)
@@ -469,36 +490,42 @@ local function build()
 	end)
 
 	-- inventory (bottom-left)
-	inventoryLabel = UI.label({
+	inventoryBottom = UI.box({
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 18, 1, -18),
-		Size = UDim2.fromOffset(300, 150),
-		Text = "",
-		TextSize = 15,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Bottom,
-		TextStrokeTransparency = 0.6,
+		Visible = false,
 		Parent = root,
-	})
+	}, { 6, 10 })
+	inventoryLabel = UI.fitLabel({
+		Text = "",
+		TextSize = 14,
+		LineHeight = 1.1,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = inventoryBottom,
+	}, 260)
 
 	-- stamina + context meter + hints (bottom center)
 	staminaBar, staminaFill = bar(root, 220, Color3.fromRGB(220, 220, 210))
 	staminaBar.AnchorPoint = Vector2.new(0.5, 1)
 	staminaBar.Position = UDim2.new(0.5, 0, 1, -28)
 	meterFrame = UI.new("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -60), Size = UDim2.fromOffset(320, 36), BackgroundTransparency = 1, Visible = false, Parent = root })
-	meterLabel = UI.label({ Size = UDim2.new(1, 0, 0, 20), Text = "", Font = UI.Font.Bold, TextSize = 16, Parent = meterFrame })
+	meterLabel = UI.label({ Size = UDim2.new(1, 0, 0, 20), Text = "", Font = UI.Font.Bold, TextSize = 14, TextStrokeTransparency = 0.4, Parent = meterFrame })
 	local mf, fill = bar(meterFrame, 320, UI.Color.Accent)
 	mf.Position = UDim2.fromOffset(0, 24)
 	meterFill = fill
-	hintLabel = UI.label({
+	hintBox = UI.box({
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -6),
-		Size = UDim2.fromOffset(700, 24),
-		Text = "",
-		TextSize = 18,
-		TextColor3 = UI.Color.Dim,
+		BackgroundTransparency = 0.45,
+		Visible = false,
 		Parent = root,
-	})
+	}, { 3, 10 })
+	hintLabel = UI.fitLabel({
+		Text = "",
+		TextSize = 14,
+		TextColor3 = Color3.fromRGB(190, 188, 182),
+		Parent = hintBox,
+	}, 680)
 
 	crosshair = UI.new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(4, 4), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.6, Parent = root })
 	UI.corner(crosshair, 2)
@@ -557,6 +584,11 @@ local function update()
 	else
 		roomLabel.Text = ""
 	end
+	clockLabel.Visible = clockLabel.Text ~= ""
+	actLabel.Visible = actLabel.Text ~= ""
+	roomLabel.Visible = roomLabel.Text ~= ""
+	local clockBox = clockLabel.Parent :: GuiObject
+	clockBox.Visible = clockLabel.Visible or actLabel.Visible
 
 	-- police ETA
 	local eta = workspace:GetAttribute("PoliceETA")
@@ -608,19 +640,20 @@ local function update()
 		journal.AnchorPoint = Vector2.new(1, 0)
 		journal.Position = UDim2.new(1, -18, 0, topY + 140)
 	end
-	etaLabel.Position = UDim2.new(0.5, 0, 0, (insetY + 8) / s)
-	notifyList.Position = UDim2.new(0.5, 0, 0, (insetY + 8) / s + 30)
-	-- on touch screens the thumbstick owns the bottom-left corner
-	if UI.isTouch() then
-		inventoryLabel.AnchorPoint = Vector2.new(0, 0)
-		inventoryLabel.Position = UDim2.fromOffset(18, (insetY + 8) / s + 74)
-		inventoryLabel.TextYAlignment = Enum.TextYAlignment.Top
-	else
-		inventoryLabel.AnchorPoint = Vector2.new(0, 1)
-		inventoryLabel.Position = UDim2.new(0, 18, 1, -18)
-		inventoryLabel.TextYAlignment = Enum.TextYAlignment.Bottom
+	etaBox.Position = UDim2.new(0.5, 0, 0, (insetY + 8) / s)
+	notifyList.Position = UDim2.new(0.5, 0, 0, (insetY + 8) / s + (etaLabel.Text ~= "" and 34 or 0))
+	-- on touch screens the thumbstick owns the bottom-left corner: what you carry goes under
+	-- the clock instead
+	local hasItems = inventoryLabel.Text ~= ""
+	local wantParent = UI.isTouch() and inventoryTop or inventoryBottom
+	if inventoryLabel.Parent ~= wantParent then
+		inventoryLabel.Parent = wantParent
 	end
+	inventoryTop.Visible = UI.isTouch() and hasItems
+	inventoryBottom.Visible = not UI.isTouch() and hasItems
+	etaBox.Visible = etaLabel.Text ~= ""
 	hintLabel.Text = hintText()
+	hintBox.Visible = hintLabel.Text ~= ""
 	crosshair.Visible = player:GetAttribute("InGame") == true and not player:GetAttribute("Hiding")
 	root.Visible = not workspace:GetAttribute("EndingActive")
 end

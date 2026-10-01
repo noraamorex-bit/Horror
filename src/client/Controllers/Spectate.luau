@@ -84,17 +84,20 @@ function Spectate.init(c)
 end
 
 function Spectate.start()
-	label = ctx.UI.label({
+	local box = ctx.UI.box({
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -36),
-		Size = UDim2.new(0.9, 0, 0, 30),
-		Text = "",
-		TextSize = 18,
-		TextColor3 = ctx.UI.Color.Text,
-		TextStrokeTransparency = 0.4,
 		Visible = false,
 		Parent = ctx.UI.Root,
-	})
+	}, { 5, 12 })
+	label = ctx.UI.fitLabel({
+		Text = "",
+		TextSize = 16,
+		Parent = box,
+	}, 640)
+	label:GetPropertyChangedSignal("Visible"):Connect(function()
+		box.Visible = label.Visible
+	end)
 	player:GetAttributeChangedSignal("Dead"):Connect(refresh)
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not active or processed then

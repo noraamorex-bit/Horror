@@ -165,13 +165,14 @@ function Dialogue.start()
 	UI.new("UISizeConstraint", { MaxSize = Vector2.new(820, math.huge), MinSize = Vector2.new(420, 0), Parent = panel })
 	UI.corner(panel, 12)
 	UI.stroke(panel, Color3.new(1, 1, 1), 1, 0.8)
-	UI.padding(panel, 16)
+	UI.padding(panel, 14)
 	UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = panel })
 	speakerLabel = UI.label({
-		Size = UDim2.new(1, 0, 0, 22),
+		Size = UDim2.new(1, 0, 0, 18),
 		Text = "",
 		Font = UI.Font.Bold,
-		TextSize = 20,
+		TextSize = 15,
+		TextColor3 = UI.Color.Dim,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		LayoutOrder = 1,
 		ZIndex = 21,
@@ -181,7 +182,7 @@ function Dialogue.start()
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		Text = "",
-		TextSize = 26,
+		TextSize = 21,
 		TextWrapped = true,
 		RichText = false,
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -202,11 +203,11 @@ function Dialogue.start()
 	for i = 1, 2 do
 		local b = UI.new("TextButton", {
 			Name = "Choice" .. i,
-			Size = UDim2.new(1, 0, 0, 54),
+			Size = UDim2.new(1, 0, 0, 44),
 			BackgroundColor3 = Color3.fromRGB(34, 32, 30),
 			Text = "",
-			Font = UI.Font.Bold,
-			TextSize = 22,
+			Font = UI.Font.Body,
+			TextSize = 18,
 			TextColor3 = Color3.fromRGB(245, 236, 220),
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextWrapped = true,
@@ -224,9 +225,9 @@ function Dialogue.start()
 		buttons[i] = b
 	end
 	waitingLabel = UI.label({
-		Size = UDim2.new(1, 0, 0, 22),
+		Size = UDim2.new(1, 0, 0, 18),
 		Text = "",
-		TextSize = 18,
+		TextSize = 14,
 		TextColor3 = UI.Color.Dim,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		LayoutOrder = 4,
