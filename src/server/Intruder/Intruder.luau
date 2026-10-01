@@ -533,6 +533,29 @@ local function withdraw()
 	S.Nav:goTo(goal, { Speed = I.WalkSpeed })
 end
 
+-- he doesn't really leave: creeps (silently) to somewhere close but out of the way, and waits
+-- for whoever's hiding to think it's over
+local function ambush(at: Vector3, target: Player?, checked: { [any]: boolean }?)
+	local I = ctx.Config.Intruder
+	local best, bestScore = nil, -math.huge
+	for _, n in ctx.Layout.Nodes do
+		local d = (n.Pos - at).Magnitude
+		if d > 8 and d < 20 and math.abs(n.Pos.Y - at.Y) < 6 then
+			-- in sight of the spot he searched is better (he wants to see you come out)
+			local score = -math.abs(d - 13) + (Perception.clear(n.Pos + V(0, 3, 0), at + V(0, 2, 0), { S.Model }, nil) and 6 or 0)
+			if score > bestScore then
+				best, bestScore = n, score
+			end
+		end
+	end
+	if not best then
+		withdraw()
+		return
+	end
+	setState("Ambush", { Pos = at, Target = target, Checked = checked or {}, Until = now() + I.AmbushTime + math.random() * 5 })
+	S.Nav:goTo(best.Pos, { Speed = I.SneakSpeed, Tolerance = 2.5 })
+end
+
 local function resume()
 	if S.Mode == "Lurk" then
 		setState("Lurk", { Phase = "Pick" })
@@ -878,7 +901,32 @@ STATES.Search = function(_, visible)
 				return
 			end
 		end
-		withdraw()
+		if not d.Ambushed and math.random() < I.AmbushChance then
+			ambush(d.Pos, d.Target, d.Checked)
+		else
+			withdraw()
+		end
+	end
+end
+
+--[[
+	Ambush: he walked off without a sound and is standing just round the corner, watching.
+	Come out too soon and he's right there. Then one more look, and he really leaves.
+]]
+STATES.Ambush = function(_, visible)
+	if engage(visible) then
+		return
+	end
+	local d = S.Data
+	local I = ctx.Config.Intruder
+	if S.Nav.Arrived and not d.Waiting then
+		d.Waiting = true
+		S.Nav:stop()
+		faceToward(d.Pos)
+	end
+	if now() >= d.Until then
+		-- one more look, at a spot he hasn't opened yet
+		setState("Search", { Pos = d.Pos, Target = d.Target, Checked = d.Checked, Checks = I.SearchChecks - 1, Ambushed = true })
 	end
 end
 
@@ -1049,7 +1097,7 @@ local function gaitFor(speed: number): string
 		return "Reach"
 	elseif speed > 0.6 then
 		return "Walk"
-	elseif st == "Lurk" or st == "Withdraw" then
+	elseif st == "Lurk" or st == "Withdraw" or st == "Ambush" then
 		return "Stare"
 	end
 	return "Idle"
@@ -1214,7 +1262,7 @@ function Intruder.setMode(mode: string, cause: Player?)
 				return
 			end
 			-- already hunting: carry on
-			if S.State == "Prowl" or S.State == "Chase" or S.State == "Search" or S.State == "CheckSpot" or S.State == "Withdraw" or S.State == "Retreat" or S.State == "Stunned" then
+			if S.State == "Prowl" or S.State == "Chase" or S.State == "Search" or S.State == "CheckSpot" or S.State == "Withdraw" or S.State == "Ambush" or S.State == "Retreat" or S.State == "Stunned" then
 				return
 			end
 			startHunt()
@@ -1242,6 +1290,11 @@ end
 -- his head, for the capture jumpscare
 function Intruder.getHead(): BasePart?
 	return S.Head
+end
+
+-- (tests) his internal state, to simulate walking where there's no physics
+function Intruder._state()
+	return S
 end
 
 function Intruder.getState(): string
@@ -1337,7 +1390,7 @@ function Intruder.onPlayerHid(player: Player, spot)
 	local heard = (spot.Position - pos()).Magnitude < 9
 	if table.find(S.Visible, player) or heard then
 		S.SawHide[spot] = true
-		if S.Mode == "Hunt" and (S.State == "Prowl" or S.State == "Chase" or S.State == "Search" or S.State == "Withdraw") then
+		if S.Mode == "Hunt" and (S.State == "Prowl" or S.State == "Chase" or S.State == "Search" or S.State == "Withdraw" or S.State == "Ambush") then
 			checkSpot(spot, "Search", { Pos = spot.Position, Target = player, Started = true, Checks = 1, Checked = { [spot] = true } })
 		end
 	end

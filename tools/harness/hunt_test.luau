@@ -28,11 +28,34 @@ local ok, err = pcall(function()
 	local R = H.roblox
 	-- a controllable clock: waits advance it, so spawned loops run straight through
 	local T = 5000
+	local R = H.roblox
 	H.clock = function() return T end
 	H.task.wait = function(s) T += (s or 0.03); return s or 0.03 end
 	local hb = H.services.RunService.Heartbeat
+	-- straight-line paths (there's no navmesh in here)
+	rawset(H.services.PathfindingService, "CreatePath", function()
+		local path = { Status = H.roblox.Enum.PathStatus.Success }
+		function path:ComputeAsync(a, b) self.A, self.B = a, b end
+		function path:GetWaypoints() return { { Position = self.A }, { Position = self.B } } end
+		return path
+	end)
 	local function tick(seconds)
-		for _ = 1, math.floor(seconds / 0.1) do T += 0.1; hb:Fire(0.1) end
+		for _ = 1, math.floor(seconds / 0.1) do
+			T += 0.1
+			-- walk him toward his navigation goal (no physics in here)
+			local st = ctx.Intruder._state()
+			if st.Root and st.Nav and st.Nav.Goal and not st.Root.Anchored then
+				local p = st.Root.Position
+				local g = st.Nav.Goal
+				local step = (st.Humanoid.WalkSpeed or 10) * 0.1
+				local dv = g - p
+				if dv.Magnitude > 0.1 then
+					local np = dv.Magnitude <= step and g or p + dv.Unit * step
+					st.Root.CFrame = R.CFrame.lookAt(np, np + R.Vector3.new(dv.X, 0, dv.Z + 1e-4))
+				end
+			end
+			hb:Fire(0.1)
+		end
 	end
 	local function mkPlayer(name, at)
 		local p = H.wrap(R.Instance.new("Player"))
@@ -56,6 +79,7 @@ local ok, err = pcall(function()
 	H.services.Players.GetPlayers = function() return { a, b } end
 	print("hiding spots", #ctx.Hiding.all())
 	local I = ctx.Intruder
+	ctx.Config.Intruder.AmbushChance = 1
 	ctx.Director.startAct("SomeoneElse")
 	I.setMode("Hunt")
 	print("placed at", I.position(), "alex", aRoot.Position, ctx.Util.getRoot(a) and ctx.Util.getRoot(a).Position)

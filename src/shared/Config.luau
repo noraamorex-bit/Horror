@@ -120,6 +120,8 @@ Config.Intruder = {
 	SeeHideCheckChance = 1, -- he saw you get in
 	OpenFindChance = 0.85, -- he opens your spot without having seen you
 	BreathHoldSave = 0.55, -- holding your breath cuts that by this much
+	AmbushChance = 0.4, -- after a search: pretend to leave, wait round the corner
+	AmbushTime = 9, -- (+0-5 s)
 	-- between hunts
 	WithdrawMin = 22,
 	WithdrawMax = 34,
