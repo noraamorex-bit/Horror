@@ -11,6 +11,7 @@ local CollectionService = game:GetService("CollectionService")
 
 local Kit = require(script.Parent.Kit)
 local Textures = require(script.Parent.Textures)
+local TVScreens = require(script.Parent.TVScreens)
 
 local Interior = {}
 
@@ -274,7 +275,12 @@ function Interior.build(ctx, root: Instance, refs)
 	tvLabel.TextScaled = true
 	tvLabel.TextWrapped = true
 	tvLabel.Text = ""
+	tvLabel.Visible = false
 	tvLabel.Parent = gui
+	-- the real picture: a broadcast per channel (TVScreens)
+	local tvScreens = TVScreens.build(gui, function()
+		return ctx.Director and ctx.Director.clockString and ctx.Director.clockString() or ""
+	end)
 	local tvGlow = Instance.new("SurfaceLight")
 	tvGlow.Face = Enum.NormalId.Front
 	tvGlow.Range = 18
@@ -398,13 +404,11 @@ function Interior.build(ctx, root: Instance, refs)
 			tvState.Sound = nil
 		end
 		if text == "" then
-			tvLabel.Text = ""
-			tvLabel.BackgroundColor3 = Color3.fromRGB(8, 10, 14)
+			tvScreens.off()
 			tvGlow.Enabled = false
 			return
 		end
-		tvLabel.Text = text
-		tvLabel.BackgroundColor3 = bg
+		tvScreens.show(text)
 		tvGlow.Enabled = true
 		tvGlow.Color = bg:Lerp(Color3.new(1, 1, 1), 0.5)
 		if sound then
@@ -418,16 +422,61 @@ function Interior.build(ctx, root: Instance, refs)
 			tvShow("", Color3.new(), nil)
 			return
 		end
-		local bg = ch.Sound == "TVStatic" and Color3.fromRGB(90, 90, 90) or Color3.fromRGB(25, 35, 60)
-		tvShow(ch.Name, bg, ch.Sound)
+		local bg = ch.Screen == "Static" and Color3.fromRGB(90, 90, 90) or (ch.Screen == "News" and Color3.fromRGB(30, 60, 140) or Color3.fromRGB(40, 40, 46))
+		tvShow(ch.Screen or "Static", bg, ch.Sound)
 		ctx.Audio.caption(ch.Line, screen.Position, 30)
+		-- Mom said channel 7
+		if ch.Screen == "News" then
+			ctx.Objectives.step("News", "Ch7")
+			-- someone has to actually sit through it: ~8 seconds in front of the screen while
+			-- the objective is up (also covers the TV already being on 7 when Mom texts)
+			local myToken = {}
+			tvState.WatchToken = myToken
+			task.spawn(function()
+				local seen = 0
+				while tvState.WatchToken == myToken and tvState.Channel == i and screen.Parent do
+					task.wait(1)
+					if tvState.WatchToken ~= myToken or not ctx.Power.isOn() or tvState.Alert then
+						continue
+					end
+					local watchers = {}
+					for _, p in ctx.Util.activePlayers() do
+						local r = ctx.Util.getRoot(p)
+						if r and (r.Position - screen.Position).Magnitude < 30 then
+							table.insert(watchers, p)
+						end
+					end
+					local wanted = ctx.Objectives.has("News") and not ctx.Objectives.isDone("News")
+					if not wanted then
+						seen = 0
+						continue
+					end
+					if #watchers == 0 then
+						continue
+					end
+					if seen == 0 then
+						ctx.Objectives.step("News", "Ch7")
+					end
+					seen += 1
+					if seen >= 8 then
+						ctx.Objectives.complete("News")
+						if ctx.Director and ctx.Director.onNewsWatched then
+							ctx.Director.onNewsWatched(watchers)
+						end
+						break
+					end
+				end
+			end)
+		else
+			tvState.WatchToken = nil
+		end
 	end
 	function tvState.emergencyAlert(duration: number)
 		if not ctx.Power.isOn() then
 			return false
 		end
 		tvState.Alert = true
-		tvShow("EMERGENCY ALERT SYSTEM\nFLASH FLOOD WARNING\nHOLLIS COUNTY", Color3.fromRGB(150, 20, 20), "TVAlert")
+		tvShow("Alert", Color3.fromRGB(150, 20, 20), "TVAlert")
 		ctx.Audio.caption("[The TV switches channels by itself - a loud alert tone]", screen.Position, 70)
 		task.delay(duration, function()
 			tvState.Alert = false
@@ -453,8 +502,12 @@ function Interior.build(ctx, root: Instance, refs)
 			end
 			tvState.On = true
 			tvPrompt.ActionText = "Change channel"
+			ctx.Objectives.step("News", "TV")
 		end
 		tvState.setChannel((tvState.Channel % #ctx.Story.TV) + 1)
+		-- say what's on, so channel 7 is easy to find
+		local ch = ctx.Story.TV[tvState.Channel]
+		tvPrompt.ObjectText = ch and ch.Name or "TV"
 	end)
 	ctx.Power.onChanged(function(on)
 		if not on then

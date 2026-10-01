@@ -96,6 +96,11 @@ Story.Tasks = {
 		{ Key = "Answer", Text = "The pizza's here. Answer the front door", Target = "Door_FrontDoor" },
 	} },
 	-- Act II
+	News = { Title = "Watch the news", Steps = {
+		{ Key = "TV", Text = "Turn on the TV in the living room", Target = "TV" },
+		{ Key = "Ch7", Text = "Change to channel 7", Target = "TV" },
+		{ Key = "Watch", Text = "Watch the report", Target = "TV" },
+	} },
 	LockUp = { Title = "Lock up for the night", Steps = {
 		{ Key = "BackDoor", Text = "Lock the back door in the kitchen", Target = "Door_BackDoor" },
 		{ Key = "GarageSide", Text = "Lock the garage side door", Target = "Door_GarageSide" },
@@ -231,8 +236,39 @@ Story.Texts = {
 	},
 	SmallThings = {
 		{ At = 60, From = "Mrs. Okafor (next door)", Body = "Hi Jamie honey! Is your dad's friend still staying with you? I saw a man at the side door Tuesday. Stay dry!", Role = "Host" },
-		{ At = 150, From = "Mom", Body = "Everything ok? Did you lock up?", Role = "Host" },
 		{ At = 230, From = "Riley's mom", Body = "Roads are bad honey, stay over at Jamie's tonight ok?", Role = "Tinkerer" },
+	},
+}
+
+---------------------------------------------------------------------------
+-- Act II: Mom texts about the news. You answer on your phone (pick a reply), then go and watch.
+---------------------------------------------------------------------------
+Story.MomNews = {
+	Texts = {
+		"Are you watching the news?? Turn on channel 7 right now.",
+		"They're saying a man has been getting into houses here in Hollis Creek. Living in them while the families are out.",
+	},
+	Ask = {
+		"What?? We're fine. The doors are locked.",
+		"Mom you're scaring me. What does he look like?",
+	},
+	Answers = {
+		"Good. Keep them locked. Watch channel 7, they're showing what they know.",
+		"Tall. They don't have his face. Just watch channel 7, honey. Please.",
+	},
+	After = "Text me after you've watched it. Love you.",
+	-- once the report has been on for a while
+	Thoughts = {
+		"Living inside houses. For weeks. And nobody noticed.",
+		"Mrs. Okafor said she saw a man at our side door on Tuesday...",
+	},
+	AskAfter = {
+		"Watched it. That's really creepy.",
+		"Mrs. Okafor saw a man at our side door this week...",
+	},
+	AnswersAfter = {
+		"I know. Stay together tonight, all of you. Call me if anything feels off.",
+		"WHAT. Okay. Stay together and keep your phone on you. If anything feels wrong, call 911 first, then me.",
 	},
 }
 
@@ -392,10 +428,10 @@ Story.Calls = {
 -- TV channels
 ---------------------------------------------------------------------------
 Story.TV = {
-	{ Name = "Ch 4 - Movie", Line = "The movie starts. Somebody groans at the cheesy opening credits.", Sound = "TVShow" },
-	{ Name = "Ch 7 - News", Line = "'...police in Hollis County say a string of odd break-ins - food taken, nothing valuable - may be linked. Residents are asked to report any vehicle that seems out of place...'", Sound = "TVShow" },
-	{ Name = "Ch 11 - Weather", Line = "'...four inches of rain overnight. Creek Road is now closed. If you don't have to go out tonight, don't.'", Sound = "TVShow" },
-	{ Name = "Ch 12 - Static", Line = "Snow. The cable box can't find a signal.", Sound = "TVStatic" },
+	{ Name = "Ch 4 - Movie", Screen = "Movie", Line = "An old black-and-white movie. A couple hear noises upstairs.", Sound = "TVShow" },
+	{ Name = "Ch 7 - News", Screen = "News", Line = "'...a man police believe has been living inside homes in Hollis Creek, sometimes for weeks, while families were out. Food taken. Nothing valuable. Do not approach him...'", Sound = "TVShow" },
+	{ Name = "Ch 11 - Weather", Screen = "Weather", Line = "'...four more inches tonight. Creek Road is closed. If you don't have to go out, don't.'", Sound = "TVShow" },
+	{ Name = "Ch 12 - Static", Screen = "Static", Line = "No signal. The cable box can't find anything.", Sound = "TVStatic" },
 }
 
 ---------------------------------------------------------------------------

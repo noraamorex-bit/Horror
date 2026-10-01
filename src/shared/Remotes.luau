@@ -42,6 +42,7 @@ local NAMES = {
 	"QuickPlay", -- (kind) lobby: "Solo" or "Group" walks you into a queue circle
 	"SetBeam", -- (beamId) pick an unlocked flashlight colour
 	"Unstuck", -- () wedged in the scenery: move me to the nearest open spot
+	"PhoneReply", -- (index) the text you picked to send back
 }
 
 local Remotes = {}

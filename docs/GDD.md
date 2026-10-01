@@ -186,6 +186,8 @@ The Director plays low-intensity events. Each one needs conditions to be met, fo
 - **Loud, sudden noises** (each with a real cause in the truth log, each shakes the screen and costs nerve): a plate **smashes** in the empty kitchen (the shards stay on the floor), a heavy **thud in the ceiling** right above an upstairs player (dust rains down), someone **bangs on the window** next to a lone player, a door handle is **yanked** hard, a chair **crashes over** in an empty room.
 - **The Window.** A lone player near a ground-floor window sees Curtis outside, lit for a moment by lightning. Nobody else sees it.
 - Texts: Mrs. Okafor asks whether "your dad's friend" is still staying with them, because she saw a man at the side door on Tuesday.
+- **Mom and the news.** A few seconds after the doors are locked, Mom texts: *turn on channel 7*, a man has been living inside houses in Hollis Creek. You **text back** from your phone (two reply choices; the phone shows the whole conversation as chat bubbles). A new objective appears: **Watch the news** (turn on the TV → channel 7 → watch the report). Sitting through ~8 s of the report in front of the screen completes it; your character reacts, the truth log notes it, and later Mom asks if you saw it (another reply). Act II can't end until the news has been watched (or a hard time limit passes).
+- **The TV.** Every channel is a real broadcast on the screen: 7 News (BREAKING NEWS bar, suspect silhouette "MALE · 40s · 6'4\"", scrolling ticker, live clock), 11 Weather (radar, FLASH FLOOD WARNING), Ch 4's 1958 black-and-white film with subtitles, Ch 12 colour bars and NO SIGNAL, and the red Emergency Alert screen. The prompt names the channel you're on.
 
 ### Act III — "Someone Else" (6–9 min)
 *This isn't the storm.*
@@ -255,6 +257,7 @@ If Curtis grabs you, the screen fades and you wake zip-tied in the boiler room. 
 - **Rescue**: a friend holds the prompt for 5 s, or 2.5 s with the multitool.
 - **Struggle**: mash **Space**. It's slow and noisy.
 - Curtis comes back regularly to check on his captives.
+- **One second chance only.** Getting caught a second time is fatal: a jumpscare, then you're out of the night and **spectate** your friends (tap to switch; with nobody left, the camera watches the house from the street). Your fate on the recap reads *Didn't make it*.
 
 ### The intruder AI (`src/server/Intruder`)
 A state machine with perception:
@@ -265,7 +268,7 @@ A state machine with perception:
 | State | Behaviour |
 |---|---|
 | `Offstage` | Acts I–II. In the attic. The Director fakes his presence with real, logged events. |
-| `Lurk` | Act III. Moves between shadow nodes **only while unobserved**. Peeks at players from doorways. Retreats when spotted. |
+| `Lurk` | Before the power is cut. Hidden most of the time. Every so often he picks a spot 14–38 studs from the loneliest player, in their line of sight but not where they're looking, and **stands there watching**. Once seen he holds the stare for a beat and slips away; he vanishes as soon as nobody is looking. Walk up to him and he shoves you and bolts. |
 | `Patrol` | Act IV. Sweeps rooms, weighted toward noise and recent sightings, checking hiding spots. |
 | `Investigate` | Walks to a noise, looks around. |
 | `Stalk` | Has seen a player who hasn't seen him. Follows quietly, closes in from behind. |

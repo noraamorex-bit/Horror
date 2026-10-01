@@ -9,7 +9,8 @@
 local Phone = {}
 local ctx
 
-local inbox = {} -- player -> list of {From, Body, Time}
+local inbox = {} -- player -> list of {From, Body, Time, Thread, Mine}
+local pending = {} -- player -> { Thread, Options, OnPick } a reply the player can send
 local calling = {} -- player -> progress seconds
 local delivered = {} -- key -> true
 local lastText = 0
@@ -21,21 +22,58 @@ end
 
 function Phone.reset()
 	for p in inbox do
-		ctx.Remotes.Texts:FireClient(p, {})
+		ctx.Remotes.Texts:FireClient(p, { Messages = {} })
 	end
 	inbox = {}
+	pending = {}
 	calling = {}
 	delivered = {}
 	lastText = 0
 	lineShown = {}
 end
 
+local function push(player: Player)
+	local r = pending[player]
+	ctx.Remotes.Texts:FireClient(player, {
+		Messages = inbox[player] or {},
+		Reply = r and { Thread = r.Thread, Options = r.Options } or nil,
+	})
+end
+
 function Phone.deliver(player: Player, from: string, body: string)
 	inbox[player] = inbox[player] or {}
-	table.insert(inbox[player], { From = from, Body = body, Time = ctx.Director and ctx.Director.clockString() or "" })
-	ctx.Remotes.Texts:FireClient(player, inbox[player])
+	table.insert(inbox[player], { From = from, Body = body, Thread = from, Time = ctx.Director and ctx.Director.clockString() or "" })
+	push(player)
 	ctx.Remotes.Notify:FireClient(player, from .. ": " .. body:split("\n")[1], "text")
 	ctx.Audio.playFor(player, "PhoneVibrate")
+end
+
+-- Let the player text back in a thread: they pick one of `options` on their phone; it's sent
+-- as their message and onPick(index) runs. Unanswered after `timeout` seconds: the first one.
+function Phone.ask(player: Player, thread: string, options: { string }, onPick: ((number) -> ())?, timeout: number?)
+	local mine = { Thread = thread, Options = options, OnPick = onPick }
+	pending[player] = mine
+	push(player)
+	ctx.Remotes.Notify:FireClient(player, "Tap PHONE to reply to " .. thread, "info")
+	task.delay(timeout or 75, function()
+		if pending[player] == mine then
+			Phone.answer(player, 1)
+		end
+	end)
+end
+
+function Phone.answer(player: Player, index: number)
+	local r = pending[player]
+	if not r or type(index) ~= "number" or not r.Options[index] then
+		return
+	end
+	pending[player] = nil
+	inbox[player] = inbox[player] or {}
+	table.insert(inbox[player], { From = "You", Body = r.Options[index], Thread = r.Thread, Mine = true, Time = ctx.Director and ctx.Director.clockString() or "" })
+	push(player)
+	if r.OnPick then
+		task.spawn(r.OnPick, index)
+	end
 end
 
 -- Called by the Director every second with the current act and act time. A text that is due
@@ -95,11 +133,15 @@ function Phone.start()
 			player:SetAttribute("Calling", nil)
 		end
 	end)
+	ctx.Remotes.PhoneReply.OnServerEvent:Connect(function(player, index)
+		Phone.answer(player, index)
+	end)
 
 	game:GetService("Players").PlayerRemoving:Connect(function(p)
 		calling[p] = nil
 		lineShown[p] = nil
 		inbox[p] = nil
+		pending[p] = nil
 	end)
 	task.spawn(function()
 		while true do

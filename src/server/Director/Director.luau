@@ -596,9 +596,75 @@ function Director.onDoorOpened(door, player: Player)
 	end
 end
 
+-- Act II: Mom texts about the news report, you text back, then go watch channel 7
+function Director.startMomNews()
+	if state.MomNews or state.Act ~= "SmallThings" then
+		return
+	end
+	state.MomNews = true
+	local M = ctx.Story.MomNews
+	local myState = state
+	task.spawn(function()
+		for _, line in M.Texts do
+			if state ~= myState then
+				return
+			end
+			for _, p in ctx.Util.sessionPlayers() do
+				ctx.Phone.deliver(p, "Mom", line)
+			end
+			task.wait(3.5)
+		end
+		if state ~= myState then
+			return
+		end
+		ctx.Objectives.add("News")
+		-- the TV may already be on (or even on 7): tick off what's already done
+		local tv = ctx.World.refs().TV
+		if tv and tv.On then
+			ctx.Objectives.step("News", "TV")
+		end
+		for _, p in ctx.Util.sessionPlayers() do
+			ctx.Phone.ask(p, "Mom", M.Ask, function(i)
+				task.wait(2.5)
+				if state == myState then
+					ctx.Phone.deliver(p, "Mom", M.Answers[i] or M.Answers[1])
+					task.wait(3)
+					ctx.Phone.deliver(p, "Mom", M.After)
+				end
+			end)
+		end
+	end)
+end
+
+-- the report has been on long enough for the people in front of the TV to take it in
+function Director.onNewsWatched(watchers: { Player })
+	local M = ctx.Story.MomNews
+	local myState = state
+	for _, line in M.Thoughts do
+		Director.think(watchers, line)
+	end
+	Director.logTruthRaw("You watched the 7 News report about a man living inside Hollis Creek homes.")
+	task.delay(14, function()
+		if state ~= myState then
+			return
+		end
+		for _, p in ctx.Util.sessionPlayers() do
+			ctx.Phone.ask(p, "Mom", M.AskAfter, function(i)
+				task.wait(2.5)
+				if state == myState then
+					ctx.Phone.deliver(p, "Mom", M.AnswersAfter[i] or M.AnswersAfter[1])
+				end
+			end)
+		end
+	end)
+end
+
 function Director.onDoorLockChanged(door, player: Player)
 	if door.Locked and (door.Id == "BackDoor" or door.Id == "GarageSide") then
 		ctx.Objectives.step("LockUp", door.Id)
+		if ctx.Objectives.isDone("LockUp") and state.Act == "SmallThings" then
+			task.delay(5, Director.startMomNews)
+		end
 	end
 	if door.Id == "BackDoor" and door.Locked and (state.Act == "Evening" or state.Act == "SmallThings") then
 		Director.logTruth("BackDoorUnlocked")
@@ -996,7 +1062,13 @@ local function actTick()
 		end
 		done = state.DeliveryDone == true or (state.DeliveryAt ~= nil and os.clock() - state.DeliveryAt > 240)
 	elseif state.Act == "SmallThings" then
-		done = (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet) or actTime >= maxT
+		-- Mom's news texts come once the house is locked (or, if nobody gets round to it, partway
+		-- through the act); the act waits for the report to be watched
+		if not state.MomNews and actTime >= maxT * 0.55 then
+			Director.startMomNews()
+		end
+		local newsDone = state.MomNews and (not ctx.Objectives.has("News") or ctx.Objectives.isDone("News"))
+		done = (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet and newsDone) or (actTime >= maxT and newsDone) or actTime >= maxT + 120
 	elseif state.Act == "SomeoneElse" then
 		done = actTime >= maxT and not ctx.Escape.helpCalled()
 	end
