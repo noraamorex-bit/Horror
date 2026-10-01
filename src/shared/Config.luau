@@ -116,10 +116,10 @@ Config.Intruder = {
 	HideGrace = 8, -- after leaving a hiding spot, he can't feel you for this long
 	-- searching hiding spots
 	SearchChecks = 2,
-	TrueSpotWeight = 1.8, -- the spot you're really in is this much likelier to be opened
+	TrueSpotWeight = 1.5, -- the spot you're really in is this much likelier to be opened
 	SeeHideCheckChance = 1, -- he saw you get in
-	OpenFindChance = 0.85, -- he opens your spot without having seen you
-	BreathHoldSave = 0.55, -- holding your breath cuts that by this much
+	OpenFindChance = 0.75, -- he opens your spot without having seen you
+	BreathHoldSave = 0.6, -- holding your breath cuts that by this much
 	AmbushChance = 0.4, -- after a search: pretend to leave, wait round the corner
 	AmbushTime = 9, -- (+0-5 s)
 	-- between hunts

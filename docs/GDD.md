@@ -271,12 +271,14 @@ A state machine with perception:
 | `Lurk` | After the blackout, for ~35 s before the hunt starts. Hidden most of the time. He picks a spot 14–38 studs from the loneliest player, in their line of sight but not where they're looking, and **stands there staring**. Once seen he holds the stare for a beat and slips away. Walk up to him and he shoves you and bolts. |
 | `Prowl` | The hunt. A door slams and he **runs** (15 studs/s; you sprint at 17 for ~7 s) to where he feels the nearest player is, heavy footsteps thundering through the house. |
 | `Chase` | He can see you: **18 studs/s, 22 lunging** in the last 10 studs, and he doesn't tire. Lose his sight for 2.5 s and he's back on your trail. |
-| `Search` | His target hid. He goes to where he last felt them, stands and listens, then tears open up to **2 hiding spots** nearby (the one you're really in a bit more often; one he saw you use always first). |
-| `CheckSpot` | Opens a spot. Saw you get in: caught. Otherwise 85% you're found, much less if you're holding your breath. |
+| `Search` | His target hid. He goes to where he last felt them, stands and listens, then tears open up to **2 hiding spots** nearby (the one you're really in 1.5x as likely; one he saw you use always first). |
+| `CheckSpot` | Opens a spot. Saw you get in: caught. Otherwise 75% you're found, 30% if you're holding your breath. |
 | `Ambush` | 40% of the time after a failed search he only pretends to leave: creeps off silently (too slow for footsteps) to a spot 8–20 studs away with a view of the area, stands there 9–14 s, then comes back for one more look at a spot he hasn't opened. Leave your hiding place too soon and he's right there. |
 | `Withdraw` | Gives up for now: walks off somewhere dark and stands there 22–34 s (half that once help is called). This is when you move. Seen within 30 studs, he comes anyway. |
 | `Retreat` | After pepper spray or a capture. |
 | `Trapped` | Locked in the basement. Tries to force the door (~90 s). |
+
+**Balance check** (`tools/harness/sim_test.luau`, bots on the ground floor, room-based line of sight, 3 runs x 5 min): a bot that never hides is caught 17 times (about once a minute); one that hides when he's coming and holds its breath when he's close is caught twice in 20 hides.
 
 **Hiding spots (19):** every bedroom has a bed and a closet; upstairs linen wardrobe and shower curtain; downstairs the den closet, a coat closet at the back of the front hall, a utility closet in the mudroom, a storage cabinet in the garage, under the dining table, under the office desk, and behind the long curtains in the living room and the den; under the basement stairs. When he searches he looks at up to two spots within 18 studs, so a room with several spots is safer than a dead end.
 
