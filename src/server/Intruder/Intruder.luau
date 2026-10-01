@@ -518,6 +518,10 @@ local function withdraw()
 	if S.Frenzy then
 		dur *= 0.5
 	end
+	-- alone, you get a little longer to get things done
+	if #ctx.Util.sessionPlayers() <= 1 then
+		dur *= 1.3
+	end
 	local goal = farNode()
 	local boiler = ctx.Rooms.ByName.Boiler
 	if ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.CaptiveCheckInterval and boiler then

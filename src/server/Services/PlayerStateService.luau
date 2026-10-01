@@ -344,6 +344,16 @@ local function slowTick(dt: number)
 		end
 		seenIntruder[player] = sees
 		player:SetAttribute("SeesIntruder", sees or nil)
+		-- him being close, even unseen (outside your hiding spot, behind the wall): your heart
+		-- starts pounding
+		local ip = ctx.Intruder and ctx.Intruder.position()
+		local myRoot = ctx.Util.getRoot(player)
+		if ip and myRoot and math.abs(ip.Y - myRoot.Position.Y) < 8 then
+			local d = (ip - myRoot.Position).Magnitude
+			if d < N.NearIntruderRadius then
+				delta -= N.NearIntruderDrain * (1 - d / N.NearIntruderRadius) * 2
+			end
+		end
 
 		PlayerState.addNerve(player, delta * dt)
 

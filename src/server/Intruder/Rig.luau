@@ -183,8 +183,17 @@ function Rig.build(Builder): Model
 		stick(head, "Streak", V(0.035, 0.42, 0.03), onMask(sx * 0.19, -0.2, -0.008) * CFrame.Angles(0, 0, sx * 0.08), Color3.fromRGB(58, 54, 50))
 	end
 	-- a pin of light, deep in each eye, slightly different heights: he is looking at you
-	ellipsoid(stick(head, "Glint", V(0.045, 0.045, 0.03), onMask(-0.15, 0.03, 0.0), GLINT, Enum.Material.Neon))
-	ellipsoid(stick(head, "Glint", V(0.045, 0.045, 0.03), onMask(0.15, 0.06, 0.0), GLINT, Enum.Material.Neon))
+	ellipsoid(stick(head, "Glint", V(0.07, 0.07, 0.03), onMask(-0.15, 0.03, 0.0), GLINT, Enum.Material.Neon))
+	ellipsoid(stick(head, "Glint", V(0.07, 0.07, 0.03), onMask(0.15, 0.06, 0.0), GLINT, Enum.Material.Neon))
+	-- a cold, faint light just in front of the mask: in a pitch-black room you can only just
+	-- make out the face
+	local glowAt = stick(head, "FaceGlow", V(0.1, 0.1, 0.1), onMask(0, 0.05, 0.75), GLINT, nil, { Transparency = 1, CastShadow = false })
+	local glow = Instance.new("PointLight")
+	glow.Color = Color3.fromRGB(196, 206, 232)
+	glow.Brightness = 0.6
+	glow.Range = 3.4
+	glow.Shadows = false
+	glow.Parent = glowAt
 	-- the mouth: a long black oval hanging open
 	ellipsoid(stick(head, "Mouth", V(0.17, 0.4, 0.1), onMask(0, -0.31, -0.035), HOLE))
 	-- cracks from the brow down past the left eye
