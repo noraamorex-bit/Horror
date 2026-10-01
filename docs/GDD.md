@@ -277,6 +277,8 @@ A state machine with perception:
 | `Retreat` | After pepper spray or a capture. |
 | `Trapped` | Locked in the basement. Tries to force the door (~90 s). |
 
+**Hiding spots (19):** every bedroom has a bed and a closet; upstairs linen wardrobe and shower curtain; downstairs the den closet, a coat closet at the back of the front hall, a utility closet in the mudroom, a storage cabinet in the garage, under the dining table, under the office desk, and behind the long curtains in the living room and the den; under the basement stairs. When he searches he looks at up to two spots within 18 studs, so a room with several spots is safer than a dead end.
+
 The loop is **hear him coming → break line of sight → hide → hold your breath when the doors open → move while it's quiet**. If you don't hide, he gets you. There is no safety in numbers any more; friends matter because they can cut you loose (once: a second capture kills). Calling for help makes him frantic: shorter breaks, and he goes straight for the caller. He opens doors, and locked doors cost him 5 s.
 
 ### The Director (`src/server/Director`)

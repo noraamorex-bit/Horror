@@ -609,7 +609,7 @@ function Interior.build(ctx, root: Instance, refs)
 	-- dining table with four chairs, place settings and flowers
 	-- a warm rug under the dining table takes the chill off the tile
 	Kit.rug(kitchen, F(-15, G, 17.5, PX), 12, 9, Color3.fromRGB(140, 62, 48), Color3.fromRGB(206, 176, 128))
-	local _, tableH = Kit.diningTable(kitchen, F(-15, G, 17.5, PX), 9, 6, WOOD_MID)
+	local diningTable, tableH = Kit.diningTable(kitchen, F(-15, G, 17.5, PX), 9, 6, WOOD_MID)
 	for _, z in { 15.4, 19.6 } do
 		Kit.chair(kitchen, F(-19.4, G, z, PX), WOOD_MID, Color3.fromRGB(150, 60, 50))
 		Kit.chair(kitchen, F(-10.6, G, z, NX), WOOD_MID, Color3.fromRGB(150, 60, 50))
@@ -762,7 +762,7 @@ function Interior.build(ctx, root: Instance, refs)
 	---------------------------------------------------------------------------
 	local office = folder("Office")
 	Kit.rug(office, F(26, G, -20, NZ), 16, 12, Color3.fromRGB(58, 68, 92), Color3.fromRGB(172, 150, 110))
-	local _, deskH = Kit.desk(office, F(32, G, -21.5, PX), 6.8, 3.4, WOOD_DARK)
+	local officeDesk, deskH = Kit.desk(office, F(32, G, -21.5, PX), 6.8, 3.4, WOOD_DARK)
 	Kit.officeChair(office, F(35.2, G, -21.5, NX), Color3.fromRGB(46, 40, 38))
 	Kit.monitor(office, F(31.0, G + deskH, -21.8, PX), 2.8, 1.8)
 	Kit.keyboard(office, F(32.6, G + deskH, -21.8, PX))
@@ -998,6 +998,65 @@ function Interior.build(ctx, root: Instance, refs)
 			(p :: BasePart).CanCollide = true
 		end
 	end
+
+	---------------------------------------------------------------------------
+	-- More places to hide downstairs: he hunts on every floor, and the ground floor is
+	-- where most of the night's work is
+	---------------------------------------------------------------------------
+	wardrobe(hall, "Coat closet", -7.2, 20, -4.4, 26, G, PX, "Hallway", WHITE_WOOD)
+	wardrobe(mud, "Utility closet", 34.6, 0.6, 39.4, 3.4, G, NZ, "Mudroom", WHITE_WOOD)
+	wardrobe(garage, "Storage cabinet", 41, -21.5, 43.8, -16, G, PX, "Garage", Color3.fromRGB(96, 100, 104))
+	-- crouched under a table or a desk, peeking out at floor level
+	local function underHide(part: BasePart?, name: string, room: string, inside: Vector3, eye: Vector3, look: Vector3, exitPos: Vector3)
+		if not part then
+			return
+		end
+		local out = (exitPos - inside) * V(1, 0, 1)
+		ctx.Hiding.register(part, {
+			Name = name,
+			Room = room,
+			Inside = CFrame.lookAt(inside, inside + (look - inside) * V(1, 0, 1)),
+			View = CFrame.lookAt(eye, look),
+			Exit = CFrame.lookAt(exitPos, exitPos + out),
+			PromptOffset = part.CFrame:PointToObjectSpace(V(exitPos.X, part.Position.Y, exitPos.Z):Lerp(part.Position, 0.55)),
+		})
+	end
+	underHide(diningTable and diningTable:FindFirstChild("TableTop", true) :: BasePart?, "Under the dining table", "Kitchen",
+		V(-15, G + 1, 14.4), V(-15, G + 1.4, 13.4), V(-15, G + 2.2, 3), V(-15, G + 3, 10.8))
+	underHide(officeDesk and officeDesk:FindFirstChild("DeskTop", true) :: BasePart?, "Under the desk", "Office",
+		V(31.6, G + 1, -22.6), V(30.4, G + 1.4, -22.6), V(14, G + 3, -19), V(28, G + 3, -22.6))
+	-- behind the long curtains at a window (one per room)
+	local function curtainHide(roomName: string, name: string)
+		local r = ctx.Rooms.ByName[roomName]
+		local best: BasePart? = nil
+		for _, d in root:GetDescendants() do
+			if d:IsA("BasePart") and d.Name == "Curtain" and d.Size.Y > 6 and ctx.Rooms.contains(r, d.Position) then
+				if not best or d.Position.X + d.Position.Z < best.Position.X + best.Position.Z then
+					best = d
+				end
+			end
+		end
+		if not best then
+			return
+		end
+		local sz = best.Size
+		local normal = sz.X < sz.Z and V(1, 0, 0) or V(0, 0, 1)
+		local inward = normal * (normal:Dot((r.Center - best.Position) * V(1, 0, 1)) >= 0 and 1 or -1)
+		local along = V(normal.Z, 0, normal.X)
+		local base = V(best.Position.X, G, best.Position.Z)
+		local inside = base - inward * 0.2 + V(0, 3, 0)
+		ctx.Hiding.register(best, {
+			Name = name,
+			Room = roomName,
+			Inside = CFrame.lookAt(inside, inside + inward),
+			-- peeking round the edge of the curtain into the room
+			View = CFrame.lookAt(base + inward * 0.35 + along * 1.15 + V(0, 5.2, 0), base + inward * 14 + along * 3 + V(0, 4.4, 0)),
+			Exit = CFrame.lookAt(base + inward * 2.6 + V(0, 3, 0), base + inward * 8 + V(0, 3, 0)),
+			PromptOffset = best.CFrame:PointToObjectSpace(base + inward * 0.3 + V(0, 3.5, 0)),
+		})
+	end
+	curtainHide("Living", "Behind the living room curtains")
+	curtainHide("Den", "Behind the den curtains")
 
 	---------------------------------------------------------------------------
 	-- MASTER BEDROOM + BATH

@@ -77,6 +77,9 @@ end
 
 local nearbyLights: { Light } = {}
 local lightScan = 0
+local duck, duckWant, duckClock = 0, 0, 0
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Exclude
 local overlap = OverlapParams.new()
 overlap.FilterType = Enum.RaycastFilterType.Exclude
 
@@ -135,6 +138,25 @@ function Creature.start()
 		phase += speed * dt * Pose.phaseRate(gait)
 		local t = os.clock()
 		local target = Pose.get(gait, phase, t, seed)
+		-- he has to stoop under door frames and low ceilings: bend at the hips and knees
+		duckClock -= dt
+		if duckClock <= 0 then
+			duckClock = 0.1
+			rayParams.FilterDescendantsInstances = { model }
+			local top = root.Position.Y + 4.0 -- his hood, standing straight
+			local hit = workspace:Raycast(root.Position, Vector3.new(0, 4.6, 0), rayParams)
+				or workspace:Raycast(root.Position + root.CFrame.LookVector * 1.4, Vector3.new(0, 4.6, 0), rayParams)
+			duckWant = hit and math.clamp(top - hit.Position.Y + 0.35, 0, 2.2) or 0
+		end
+		duck += (duckWant - duck) * (1 - math.exp(-dt * 10))
+		if duck > 0.02 then
+			local root0 = target.Root or CFrame.identity
+			target.Root = CFrame.new(0, -duck * 0.45, 0) * root0 * CFrame.Angles(-duck * 0.3, 0, 0)
+			target.Neck = (target.Neck or CFrame.identity) * CFrame.Angles(duck * 0.25, 0, 0)
+			for _, hip in { "LeftHip", "RightHip" } do
+				target[hip] = (target[hip] or CFrame.identity) * CFrame.Angles(duck * 0.3, 0, 0)
+			end
+		end
 		local alpha = 1 - math.exp(-dt * 14)
 		for name, motor in motors do
 			local want = target[name] or CFrame.identity
