@@ -1327,6 +1327,11 @@ function Intruder._state()
 	return S
 end
 
+-- out in the house, hunting (as opposed to hiding in the walls)
+function Intruder.isHunting(): boolean
+	return S.Mode == "Hunt" and S.InHouse == true
+end
+
 function Intruder.getState(): string
 	return S.State
 end

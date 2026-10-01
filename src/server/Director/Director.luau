@@ -754,6 +754,10 @@ local function canFire(e): boolean
 	if not e.Acts[state.Act] then
 		return false
 	end
+	-- once he's out hunting, the house stops playing tricks: he can't be in two places at once
+	if not e.DuringHunt and ctx.Intruder.isHunting() then
+		return false
+	end
 	if e.Once and state.Fired[e.Id] then
 		return false
 	end

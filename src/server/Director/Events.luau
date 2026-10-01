@@ -236,6 +236,7 @@ Events.List = {
 	---------------------------------------------------------------------------
 	{
 		Id = "DogBark",
+		DuringHunt = true, -- ambience, not him
 		Acts = { Evening = true, SmallThings = true, SomeoneElse = true, Guest = true },
 		Weight = 2,
 		Tension = 4,
@@ -348,6 +349,7 @@ Events.List = {
 	---------------------------------------------------------------------------
 	{
 		Id = "Floorboard",
+		DuringHunt = true, -- ambience, not him
 		Acts = { Evening = true, SmallThings = true, SomeoneElse = true },
 		Weight = 2,
 		Tension = 6,
@@ -372,6 +374,7 @@ Events.List = {
 	---------------------------------------------------------------------------
 	{
 		Id = "BreakerAgain",
+		DuringHunt = true, -- only when he's really standing at the panel
 		Where = function()
 			return V(41, 8, -12.7)
 		end,
@@ -387,7 +390,8 @@ Events.List = {
 				local r = ctx.Rooms.find(root.Position)
 				return r ~= nil and (r.Name == "Garage" or r.Name == "Mudroom")
 			end)
-			if nearGarage or not ctx.Intruder.isInHouse() then
+			local ip = ctx.Intruder.position()
+			if nearGarage or not ctx.Intruder.isInHouse() or not ip or (ip - V(41, 8, -12.7)).Magnitude > 22 then
 				return nil
 			end
 			return true
@@ -405,6 +409,7 @@ Events.List = {
 	{
 		-- the storm: lightning strikes right by the house, the flash and the crack together
 		Id = "Thunderclap",
+		DuringHunt = true, -- ambience, not him
 		Acts = { Evening = true, SmallThings = true, SomeoneElse = true, Guest = true },
 		Weight = 2,
 		Tension = 8,
