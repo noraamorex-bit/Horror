@@ -213,7 +213,21 @@ end
 local function placeAt(pos: Vector3, look: Vector3?)
 	ensureModel()
 	S.Root.Anchored = false
-	S.Model:PivotTo(CFrame.lookAt(pos, look or (pos + V(0, 0, -1))))
+	-- stand him on the floor under `pos` (markers are a few studs up; his root is higher than
+	-- a player's)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { S.Model }
+	local hit = workspace:Raycast(pos + V(0, 1, 0), V(0, -10, 0), params)
+	local rootY = (S.Humanoid and S.Humanoid.HipHeight or Rig.HipHeight) + S.Root.Size.Y / 2
+	if hit then
+		pos = V(pos.X, hit.Position.Y + rootY + 0.05, pos.Z)
+	end
+	local lookAt = look and V(look.X, pos.Y, look.Z) or (pos + V(0, 0, -1))
+	if (lookAt - pos).Magnitude < 0.01 then
+		lookAt = pos + V(0, 0, -1)
+	end
+	S.Model:PivotTo(CFrame.lookAt(pos, lookAt))
 	pcall(function()
 		S.Root:SetNetworkOwner(nil)
 	end)
@@ -378,7 +392,8 @@ local function recordTrails()
 			S.Trails[p] = {}
 			S.WasHidden[p] = true
 		else
-			if S.WasHidden[p] then
+			-- just out of hiding, just cut free, or the hunt just began: a few seconds' grace
+			if S.WasHidden[p] or S.Trails[p] == nil then
 				S.WasHidden[p] = nil
 				S.UnhidAt[p] = now()
 			end
@@ -797,6 +812,21 @@ STATES.Prowl = function(_, visible)
 	-- ran right into them in the dark
 	if tryGrab(target) then
 		return
+	end
+	-- they're somewhere he can't follow (up in the attic): he waits under it a while, then
+	-- leaves them be
+	local tr = rootOf(target)
+	if S.Nav.Arrived and tr and (tr.Position - pos()).Magnitude > 10 then
+		d.WaitSince = d.WaitSince or now()
+		if now() - d.WaitSince > 12 then
+			S.Ignore[target] = now() + 25
+			d.WaitSince = nil
+			S.HuntTarget = nil
+			withdraw()
+			return
+		end
+	else
+		d.WaitSince = nil
 	end
 	-- somewhere he can't get to (the attic, a roof): leave them be for a while
 	if S.Nav:isStuck() then

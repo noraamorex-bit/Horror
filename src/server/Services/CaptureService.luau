@@ -200,7 +200,9 @@ function Capture.capture(player: Player)
 		end
 		ctx.Audio.playAt("ZipTie", slot.Pos)
 		ctx.Remotes.Fade:FireClient(player, false, 2.5)
-		ctx.Audio.caption("Your wrists are zip-tied to a pipe. Mash SPACE to struggle - or wait for your friends.", nil, nil, { player })
+		local alone = #ctx.Util.sessionPlayers() <= 1
+		ctx.Audio.caption(alone and "Your wrists are zip-tied to a pipe. Keep pressing STRUGGLE to break free."
+			or "Your wrists are zip-tied to a pipe. Keep pressing STRUGGLE, or wait for your friends.", nil, nil, { player })
 
 		local root = ctx.Util.getRoot(player)
 		if root then

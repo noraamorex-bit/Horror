@@ -650,7 +650,7 @@ Story.Thoughts = {
 		},
 		Guest = {
 			"Someone has been living in the attic. And he's still in the house.",
-			"We need to get help. Stay together. Stay in the light.",
+			"We need to get help. And when we hear him coming, we hide.",
 		},
 	},
 	Events = {
@@ -739,8 +739,7 @@ Story.SurvivalTips = {
 -- The hunt (server/Intruder): what your character thinks when he starts coming
 Story.Hunt = {
 	First = {
-		"Footsteps. Running. Coming this way.",
-		"He knows where we are. HIDE.",
+		"Footsteps. Running. He knows where we are.",
 	},
 	FirstNotice = "He's hunting you. Hide before he sees you.",
 	Wave = {
