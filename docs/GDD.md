@@ -102,6 +102,7 @@ Ten clue documents are **evidence** (`Story.Evidence`): the warm mug, the invoic
 
 ### He's hiding, not haunting
 Before the hunt, Curtis is trying not to be found. Anything he does in person (a door easing open, food gone from the fridge, the music box) can only happen where he actually is, and only when nobody can see him (`Where` on an event in `Director/Events.luau`). He doesn't knock on walls or throw chairs for effect. The one loud thing he does by accident: if you spot him, he bolts, and sometimes knocks a chair flying on the way. Walk right up to him in the dark and he shoves you to the floor and runs. Open a door he's standing behind and it gets yanked shut in your face (a few minutes apart at most). Door leaves never trap him: he pushes half-open doors wide and walks through them.
+Once the hunt begins he is physically in the house, so the house's tricks stop: only events marked `DuringHunt` (storm, the neighbour's dog, floorboards, and the second breaker flip when he's really at the panel) still play.
 
 ### Sudden scares, rarely
 A loud musical sting (APM "Fear Hit") lands with the big scares: a door slam, the plate smashing, the window bang, a thunderclap right on top of the house. It plays at most once every 2½ minutes, so it stays a shock.
