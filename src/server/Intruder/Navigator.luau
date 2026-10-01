@@ -78,13 +78,37 @@ function Navigator:_compute()
 			self.Waypoints = list
 			self.Index = math.min(2, #list)
 		else
-			self.Waypoints = { goal }
-			self.Index = 1
-			self.Fails += 1
+			-- no path (goal inside furniture, off the navmesh): head for the closest known
+			-- walkable spot instead of walking face-first into a wall; twice in a row and the
+			-- goal is given up so the brain picks something else
+			self.PathFails = (self.PathFails or 0) + 1
+			local alt = self.PathFails <= 2 and self:_nearestNode(goal) or nil
+			if alt and (alt - goal).Magnitude > 0.5 then
+				self.Goal = alt
+				self:_compute()
+				return
+			end
+			self.Waypoints = nil
+			self.Fails = 99
+			self.Arrived = true
+			self.Humanoid:MoveTo(self.Root.Position)
+			return
 		end
+		self.PathFails = 0
 		self.LastProgress = os.clock()
 		self:_step()
 	end)
+end
+
+function Navigator:_nearestNode(p: Vector3): Vector3?
+	local best, bd = nil, 18
+	for _, n in self.ctx.Layout and self.ctx.Layout.Nodes or {} do
+		local d = (n.Pos - p).Magnitude
+		if d < bd and math.abs(n.Pos.Y - p.Y) < 8 then
+			best, bd = n.Pos, d
+		end
+	end
+	return best
 end
 
 -- opts: Speed, Tolerance, Hurry
@@ -98,6 +122,7 @@ function Navigator:goTo(goal: Vector3, opts)
 	end
 	self.Arrived = false
 	self.Fails = 0
+	self.PathFails = 0
 	self.LastProgress = os.clock()
 	self:_compute()
 end

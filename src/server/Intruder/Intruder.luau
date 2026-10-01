@@ -970,6 +970,12 @@ STATES.CheckSpot = function(_, visible)
 			end
 		end
 		if S.Nav.Arrived or now() - S.StateStart > 12 then
+			-- couldn't get there: don't pretend to search a cupboard from across the room
+			if (pos() - spot.Exit.Position).Magnitude > 7 then
+				S.SawHide[spot] = nil
+				resume()
+				return
+			end
 			d.Phase = "Open"
 			d.Until = now() + 1.3
 			S.Nav:stop()
