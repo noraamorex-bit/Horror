@@ -96,8 +96,25 @@ function Lobby.start()
 	end)
 
 	ctx.Remotes.Lobby.OnClientEvent:Connect(render)
+	-- waiting outside before the night: third person; in the house: first person
+	local function camera()
+		if player:GetAttribute("InGame") then
+			player.CameraMinZoomDistance = 0.5
+			player.CameraMaxZoomDistance = 0.5
+			player.CameraMode = Enum.CameraMode.LockFirstPerson
+		else
+			player.CameraMode = Enum.CameraMode.Classic
+			player.CameraMaxZoomDistance = 22
+			player.CameraMinZoomDistance = 9
+		end
+	end
+	camera()
+	player.CharacterAdded:Connect(function()
+		task.defer(camera)
+	end)
 	player:GetAttributeChangedSignal("InGame"):Connect(function()
 		render(lastState)
+		camera()
 	end)
 	player:GetAttributeChangedSignal("Role"):Connect(showRole)
 end

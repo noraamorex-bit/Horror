@@ -173,6 +173,8 @@ function Doors.create(parent: Instance, op)
 		Offset = offset,
 		Sign = sign,
 		Angle = 0,
+		-- how far it swings (a door that opens against a side wall stops short of it)
+		OpenAngle = op.openDeg and math.rad(op.openDeg) or OPEN_ANGLE,
 		IsOpen = false,
 		Locked = op.locked == true,
 		LockType = op.lock,
@@ -226,7 +228,7 @@ function Doors.open(door, byWho: string?, fast: boolean?)
 		return
 	end
 	door.IsOpen = true
-	tweenTo(door, OPEN_ANGLE, fast and 0.35 or 0.9)
+	tweenTo(door, door.OpenAngle, fast and 0.35 or 0.9)
 	updatePrompts(door)
 	if fast then
 		ctx.Audio.playAt("DoorSlam", door.Position)
@@ -315,8 +317,8 @@ end
 function Doors.intruderOpen(door, hurry: boolean?): number
 	if door.IsOpen then
 		-- ajar (or swinging shut): he pushes it the rest of the way
-		if (door.Target or door.Angle) < OPEN_ANGLE * 0.75 then
-			tweenTo(door, OPEN_ANGLE, hurry and 0.3 or 0.7)
+		if (door.Target or door.Angle) < door.OpenAngle * 0.75 then
+			tweenTo(door, door.OpenAngle, hurry and 0.3 or 0.7)
 			ctx.Audio.playAt("DoorOpen", door.Position, { Volume = 0.5, Caption = false })
 		end
 		return 0
@@ -347,7 +349,7 @@ end
 function Doors.nearestClosed(pos: Vector3, radius: number)
 	local best, bestD = nil, radius
 	for _, door in list do
-		if not door.IsOpen or (door.Target or door.Angle) < OPEN_ANGLE * 0.75 then
+		if not door.IsOpen or (door.Target or door.Angle) < door.OpenAngle * 0.75 then
 			local d = (door.Position - pos).Magnitude
 			if d < bestD then
 				best, bestD = door, d

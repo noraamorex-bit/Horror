@@ -126,7 +126,7 @@ Layout.InteriorWalls = {
 	{ floor = "Ground", x1 = 6, z1 = -0.4, x2 = 6, z2 = 22, openings = {} },
 	{ floor = "Ground", x1 = 6, z1 = -0.4, x2 = 12, z2 = -0.4, openings = {} },
 	{ floor = "Ground", x1 = 6, z1 = 22, x2 = 12, z2 = 22, openings = {
-		door(9, "Basement", "Basement Door", { w = 4.4, lock = "Key", key = "BasementKey", into = "+", hinge = "max" }),
+		door(9, "Basement", "Basement Door", { w = 4.4, lock = "Key", key = "BasementKey", into = "-", hinge = "max", openDeg = 84 }),
 	} },
 	{ floor = "Ground", x1 = 12, z1 = -10, x2 = 40, z2 = -10, openings = {} },
 	-- the back hall (front hall -> mudroom -> garage) runs along the office wall; the bathroom opens off it to the north

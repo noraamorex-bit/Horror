@@ -51,8 +51,29 @@ function LobbyHub.init(c)
 	ctx = c
 end
 
+-- The lobby is third person (the house is first person, and StarterPlayer is set up for that).
+-- The server asks for it too, but the client applies it itself, on every spawn, so a slow
+-- property replication can never leave a phone stuck in first person.
+local function thirdPerson()
+	local player = game:GetService("Players").LocalPlayer
+	player.CameraMode = Enum.CameraMode.Classic
+	player.CameraMaxZoomDistance = 22
+	player.CameraMinZoomDistance = 9
+	local cam = workspace.CurrentCamera
+	if cam then
+		cam.CameraType = Enum.CameraType.Custom
+	end
+end
+
 function LobbyHub.start()
 	local UI = ctx.UI
+	thirdPerson()
+	local lp = game:GetService("Players").LocalPlayer
+	lp.CharacterAdded:Connect(function()
+		task.defer(thirdPerson)
+		task.delay(1, thirdPerson)
+	end)
+	task.delay(2, thirdPerson)
 	local inset = GuiService:GetGuiInset()
 	local title = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0),
