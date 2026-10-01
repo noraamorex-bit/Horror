@@ -44,9 +44,14 @@ local ok, err = pcall(function()
 	p:SetAttribute("InGame", true)
 	ctx.Director.startAct("SomeoneElse")
 	ctx.Intruder.setMode("Lurk")
-	H.task.wait(1)
 	local hb = H.services.RunService.Heartbeat
 	for _ = 1, 5 do hb:Fire(0.1) end
+	print("hidden at first:", not ctx.Intruder.isInHouse())
+	-- stand the player somewhere, looking away from the front hall, then let him appear
+	rootPart.CFrame = R.CFrame.lookAt(R.Vector3.new(2, 4, 0), R.Vector3.new(2, 4, -20))
+	head.CFrame = rootPart.CFrame + R.Vector3.new(0, 1.5, 0)
+	ctx.Intruder.appearNow()
+	for _ = 1, 3 do hb:Fire(0.1) end
 	print("state", ctx.Intruder.getState(), "inHouse", ctx.Intruder.isInHouse(), "pos", ctx.Intruder.position())
 	local p1 = p
 	local root = ctx.Util.getRoot(p1)

@@ -97,33 +97,62 @@ local function template(assetId: number): Model?
 end
 
 -- put the loaded model where the placeholder is, as big as it is
+-- the world-space box around a model's visible parts (min corner, max corner)
+local function worldBox(model: Instance): (Vector3?, Vector3?)
+	local mn, mx
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d.Transparency < 0.99 then
+			local cf, sz = d.CFrame, d.Size / 2
+			for _, sx in { -1, 1 } do
+				for _, sy in { -1, 1 } do
+					for _, sz2 in { -1, 1 } do
+						local p = cf:PointToWorldSpace(Vector3.new(sx * sz.X, sy * sz.Y, sz2 * sz.Z))
+						mn = mn and mn:Min(p) or p
+						mx = mx and mx:Max(p) or p
+					end
+				end
+			end
+		end
+	end
+	return mn, mx
+end
+
+-- Put the loaded model where the placeholder is, as big as it is. Creators build their models
+-- upright in the world, but the model's own pivot is often turned (that's what laid the plates
+-- and the fruit bowl on their sides): so the model keeps its authored world orientation, and
+-- only turns about the vertical to match the placeholder.
 local function fit(placeholder: Model, assetId: number)
 	local tpl = template(assetId)
 	if not tpl or not placeholder.Parent or placeholder:GetAttribute("PropSwapped") then
 		return
 	end
-	local okBox, cf, size = pcall(function()
-		return placeholder:GetBoundingBox()
-	end)
-	if not okBox then
+	local pmn, pmx = worldBox(placeholder)
+	if not pmn or not pmx then
 		return
 	end
-	-- the placeholder's own orientation (its pivot), centred on its box
-	local pivot = placeholder:GetPivot()
-	local base = CFrame.new(cf.Position) * (pivot - pivot.Position)
+	local size = pmx - pmn
+	local centre = (pmn + pmx) / 2
+	local look = placeholder:GetPivot().LookVector
+	local yaw = math.atan2(-look.X, -look.Z)
 	local prop = tpl:Clone()
 	prop.Name = "Prop"
-	local bcf, bsize = prop:GetBoundingBox()
-	prop.WorldPivot = bcf
+	local bmn, bmx = worldBox(prop)
+	if not bmn or not bmx then
+		prop:Destroy()
+		return
+	end
+	local bsize = bmx - bmn
+	prop.WorldPivot = CFrame.new((bmn + bmx) / 2)
 	local horiz = math.max(size.X, size.Z) / math.max(bsize.X, bsize.Z, 0.01)
 	local vert = size.Y / math.max(bsize.Y, 0.01)
 	local s = math.clamp(FLAT[placeholder.Name] and horiz or math.min(horiz, vert), 0.02, 50)
 	pcall(function()
 		prop:ScaleTo(prop:GetScale() * s)
 	end)
-	local _, nsize = prop:GetBoundingBox()
-	-- stand it on the placeholder's base
-	prop:PivotTo(base * CFrame.new(0, -size.Y / 2 + nsize.Y / 2, 0))
+	local nmn, nmx = worldBox(prop)
+	local h = (nmn and nmx) and (nmx.Y - nmn.Y) or bsize.Y * s
+	-- stand it on the placeholder's base, turned only about the vertical
+	prop:PivotTo(CFrame.new(centre.X, pmn.Y + h / 2, centre.Z) * CFrame.Angles(0, yaw, 0))
 	for _, d in placeholder:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.Transparency = 1

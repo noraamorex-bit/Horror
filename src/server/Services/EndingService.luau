@@ -41,6 +41,8 @@ function Ending.trigger(kind: string)
 		local fate
 		if p:GetAttribute("Escaped") then
 			fate = ctx.Story.Fates.Escaped
+		elseif p:GetAttribute("Dead") then
+			fate = ctx.Story.Fates.Dead
 		elseif p:GetAttribute("Captured") then
 			fate = kind == "GoneQuiet" and ctx.Story.Fates.Captured or ctx.Story.Fates.Rescued
 		else

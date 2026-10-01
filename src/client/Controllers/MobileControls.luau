@@ -46,6 +46,9 @@ local function currentSet(): { string }
 	if ctx.Dialogue and ctx.Dialogue.blocksControls() then
 		return {}
 	end
+	if player:GetAttribute("Dead") then
+		return {}
+	end
 	if player:GetAttribute("Captured") then
 		return { "Struggle" }
 	end
@@ -288,7 +291,7 @@ function MobileControls.start()
 	pill("JOURNAL", "Journal", 1)
 	pill("PHONE", "Phone", 2)
 
-	for _, attr in { "InGame", "Hiding", "Captured", "Escaped", "Item_Flashlight", "Item_PepperSpray" } do
+	for _, attr in { "InGame", "Hiding", "Captured", "Escaped", "Dead", "Item_Flashlight", "Item_PepperSpray" } do
 		player:GetAttributeChangedSignal(attr):Connect(function()
 			if gui.Enabled then
 				layout()

@@ -722,6 +722,7 @@ Story.Fates = {
 	Safe = "Safe",
 	Rescued = "Found by police",
 	Captured = "Captured",
+	Dead = "Didn't make it",
 }
 
 return Story

@@ -76,8 +76,16 @@ local function run()
 	running = true
 	while #queue > 0 do
 		-- never over a notice, a conversation or another message
-		Pace.take(ctx.Config.Thoughts.Duration + 2)
+		Pace.take(ctx.Config.Thoughts.Duration + 0.8)
+		-- a thought that waited too long no longer fits the moment: let it go
 		local item = table.remove(queue, 1)
+		while item and os.clock() - item.Time > (item.Hint and 20 or 9) do
+			item = table.remove(queue, 1)
+		end
+		if not item then
+			Pace.FreeAt = 0
+			break
+		end
 		line.Text = item.Text
 		tip.Text = hintText(item.Hint)
 		frame.Visible = true
@@ -105,7 +113,7 @@ function Thoughts.say(text: string, hint: string?)
 	if last and last.Text == text then
 		return
 	end
-	table.insert(queue, { Text = text, Hint = hint })
+	table.insert(queue, { Text = text, Hint = hint, Time = os.clock() })
 	task.spawn(run)
 end
 

@@ -21,6 +21,9 @@ function Capture.reset()
 		p:SetAttribute("Captured", nil)
 		p:SetAttribute("StruggleProgress", nil)
 	end
+	for _, p in game:GetService("Players"):GetPlayers() do
+		p:SetAttribute("Dead", nil)
+	end
 	slots = {}
 	captives = {}
 	everCaptured = {}
@@ -77,19 +80,74 @@ function Capture.release(player: Player, by: Player?)
 	ctx.PlayerState.setFrozen(player, false)
 	ctx.Audio.playAt("ZipTie", ctx.Layout.RestraintSlots[data.Slot].Pos, { CaptionText = "[Snip]" })
 	if by then
-		ctx.Audio.caption((by:GetAttribute("RoleName") or by.Name) .. " cut you free.", nil, nil, { player })
+		ctx.Audio.caption((by:GetAttribute("RoleName") or by.Name) .. " cut you free. Don't get caught again.", nil, nil, { player })
 		ctx.PlayerState.addNerve(player, 25)
 	else
-		ctx.Audio.caption("The zip tie finally snaps!", nil, nil, { player })
+		ctx.Audio.caption("The zip tie finally snaps! You won't get a second chance.", nil, nil, { player })
 	end
 	if ctx.Director then
 		ctx.Director.onRescue(player, by)
 	end
 end
 
-function Capture.capture(player: Player)
-	if captives[player] or player:GetAttribute("Escaped") then
+-- Caught a second time: no zip ties. He doesn't make the same mistake twice.
+-- The player is out of the night and watches the others (client Spectate).
+function Capture.kill(player: Player): boolean
+	if player:GetAttribute("Dead") or player:GetAttribute("Escaped") then
 		return false
+	end
+	if ctx.Hiding.spotOf(player) then
+		ctx.Hiding.exit(player, true)
+	end
+	ctx.Util.unseat(player)
+	ctx.PlayerState.setFlashlight(player, false)
+	player:SetAttribute("NightCaught", (tonumber(player:GetAttribute("NightCaught")) or 0) + 1)
+	if ctx.Inventory.take(player, "CarKeys") then
+		ctx.Escape.returnCarKeysToNest()
+	end
+	player:SetAttribute("Dead", true)
+	player:SetAttribute("Captured", true)
+	player:SetAttribute("StruggleProgress", nil)
+	local head = ctx.Intruder and ctx.Intruder.getHead and ctx.Intruder.getHead()
+	local scareTime = 0
+	if head and head.Parent then
+		ctx.Remotes.Jumpscare:FireClient(player, head)
+		scareTime = 0.9
+	end
+	task.delay(scareTime, function()
+		ctx.Remotes.Fade:FireClient(player, true, 0.3)
+		ctx.Remotes.Shake:FireClient(player, 1.2, 0.6)
+		ctx.Audio.caption("He doesn't bother with zip ties this time.", nil, nil, { player })
+	end)
+	task.delay(1.6 + scareTime, function()
+		-- the body is gone from the house; you watch your friends from here on
+		local char = player.Character
+		if char then
+			ctx.PlayerState.setFrozen(player, true)
+			char:PivotTo(CFrame.new(220, -60, 220))
+		end
+		ctx.Remotes.Fade:FireClient(player, false, 2)
+	end)
+	for _, other in ctx.Util.sessionPlayers() do
+		if other ~= player then
+			ctx.PlayerState.addNerve(other, -ctx.Config.Nerve.FriendCaptured * 1.5)
+			ctx.Remotes.Notify:FireClient(other, tostring(player:GetAttribute("RoleName") or player.Name) .. " is gone. Don't get caught twice.", "danger")
+		end
+	end
+	if ctx.Director then
+		ctx.Director.logTruthRaw(tostring(player:GetAttribute("RoleName") or player.Name) .. " was caught a second time. Curtis didn't take any chances.")
+		ctx.Director.checkAllCaptured()
+	end
+	return true
+end
+
+function Capture.capture(player: Player)
+	if captives[player] or player:GetAttribute("Escaped") or player:GetAttribute("Dead") then
+		return false
+	end
+	-- you only get away once
+	if everCaptured[player] then
+		return Capture.kill(player)
 	end
 	local slotIndex = freeSlot()
 	if not slotIndex then

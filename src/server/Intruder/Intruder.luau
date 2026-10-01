@@ -115,14 +115,18 @@ local function curtisDescription(tier: number)
 	if tier < 3 then
 		desc.Head = CURTIS.Head
 	end
-	desc.HatAccessory = tostring(tier == 1 and CURTIS.Mask or CURTIS.OldMask)
 	desc.Shirt = CURTIS.Shirt
 	desc.Pants = CURTIS.Pants
 	if tier == 1 then
+		-- SetAccessories(..., true) replaces the rigid accessories too, so the mask goes in the
+		-- same list (setting HatAccessory before it was wiping the mask)
 		desc:SetAccessories({
+			{ AssetId = CURTIS.Mask, AccessoryType = Enum.AccessoryType.Hat, IsLayered = false },
 			{ AssetId = CURTIS.Jacket, AccessoryType = Enum.AccessoryType.Jacket, IsLayered = true, Order = 3 },
 			{ AssetId = CURTIS.Jeans, AccessoryType = Enum.AccessoryType.Pants, IsLayered = true, Order = 2 },
 		}, true)
+	else
+		desc.HatAccessory = tostring(CURTIS.OldMask)
 	end
 	desc.HeadColor = skin
 	desc.LeftArmColor = skin
@@ -186,16 +190,29 @@ local function buildRig(): Model
 	hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
 	local head = model:FindFirstChild("Head") :: BasePart
-	if head and not model:FindFirstChildOfClass("Accessory") then
-		-- no mask loaded: a dark knit beanie pulled low: a rounded crown and a folded cuff
+	local function headWear(): boolean
+		for _, acc in model:GetChildren() do
+			if acc:IsA("Accessory") then
+				local handle = acc:FindFirstChild("Handle")
+				local att = handle and handle:FindFirstChildWhichIsA("Attachment")
+				if att and (att.Name == "HatAttachment" or att.Name == "FaceFrontAttachment" or att.Name == "HairAttachment" or att.Name == "FaceCenterAttachment") then
+					return true
+				end
+			end
+		end
+		return false
+	end
+	if head and not headWear() then
+		-- the mask didn't load: a stained burlap sack over his head, with two hollow eye holes and
+		-- a rope cinched at the neck (the same look as the store art)
 		local hs = head.Size
-		local function knit(name: string, size: Vector3, offset: CFrame, mesh: Enum.MeshType?)
+		local function piece(name: string, size: Vector3, offset: CFrame, color: Color3, mesh: Enum.MeshType?, material: Enum.Material?)
 			local p = ctx.Builder.part(model, {
 				Name = name,
 				Size = size,
 				CFrame = head.CFrame * offset,
-				Color = Color3.fromRGB(32, 32, 36),
-				Material = Enum.Material.Fabric,
+				Color = color,
+				Material = material or Enum.Material.Fabric,
 				Anchored = false,
 				CanCollide = false,
 				CanQuery = false,
@@ -212,9 +229,14 @@ local function buildRig(): Model
 			weld.Parent = p
 			return p
 		end
-		knit("Cap", Vector3.new(hs.X * 1.1, hs.Y * 0.7, hs.Z * 1.1), CFrame.new(0, hs.Y * 0.38, 0), Enum.MeshType.Sphere)
-		local cuff = knit("CapCuff", Vector3.new(hs.Y * 0.2, hs.X * 1.14, hs.Z * 1.14), CFrame.new(0, hs.Y * 0.3, 0) * CFrame.Angles(0, 0, math.pi / 2), nil)
-		cuff.Shape = Enum.PartType.Cylinder
+		local burlap = Color3.fromRGB(122, 100, 68)
+		piece("Sack", Vector3.new(hs.X * 1.28, hs.Y * 1.5, hs.Z * 1.28), CFrame.new(0, hs.Y * 0.12, 0), burlap, Enum.MeshType.Sphere)
+		piece("SackTop", Vector3.new(hs.X * 0.9, hs.Y * 0.5, hs.Z * 0.9), CFrame.new(0.05, hs.Y * 0.78, -0.02) * CFrame.Angles(0, 0, math.rad(12)), burlap:Lerp(Color3.new(0, 0, 0), 0.1), Enum.MeshType.Sphere)
+		for _, sx in { -1, 1 } do
+			piece("EyeHole", Vector3.new(hs.X * 0.26, hs.Y * 0.3, 0.08), CFrame.new(sx * hs.X * 0.22, hs.Y * 0.12, -hs.Z * 0.62), Color3.new(0, 0, 0), Enum.MeshType.Sphere, Enum.Material.SmoothPlastic)
+		end
+		local rope = piece("Rope", Vector3.new(hs.Y * 0.16, hs.X * 1.12, hs.Z * 1.12), CFrame.new(0, -hs.Y * 0.48, 0) * CFrame.Angles(0, 0, math.pi / 2), Color3.fromRGB(84, 70, 50))
+		rope.Shape = Enum.PartType.Cylinder
 	end
 	return model
 end
@@ -547,9 +569,28 @@ local function pickPatrolGoal(): Vector3
 				w += 3
 			end
 		end
-		table.insert(entries, { n.Pos, w })
+		-- he knows this house and he's listening: a hunch about where people are (rooms near
+		-- someone weigh more, never the exact spot)
+		for _, pl in ctx.Util.activePlayers() do
+			local r = rootOf(pl)
+			if r and math.abs(r.Position.Y - n.Pos.Y) < 8 and (r.Position - n.Pos).Magnitude < 24 then
+				w += 4
+			end
+		end
+		-- somewhere he hasn't just looked
+		local seen = S.Visited and S.Visited[n]
+		if seen and now() - seen < 45 then
+			w *= 0.2
+		end
+		table.insert(entries, { n, w })
 	end
-	return ctx.Util.weighted(entries) or p
+	local pick = ctx.Util.weighted(entries)
+	if pick then
+		S.Visited = S.Visited or {}
+		S.Visited[pick] = now()
+		return pick.Pos
+	end
+	return p
 end
 
 local function startPatrol()
@@ -574,16 +615,70 @@ end
 ---------------------------------------------------------------------------
 -- States
 ---------------------------------------------------------------------------
+--[[
+	Lurk (before the hunt): he is hiding, not wandering. Most of the time he's out of sight in
+	the walls and the attic (parked, not in the house). Now and then he makes an appearance: he
+	stands somewhere you can see from where you are, but aren't looking at yet. Turn around and
+	he's there, at the end of the hall, staring. Once he's been seen (or after a while) he walks
+	out of sight and is gone again. Walk right up to him and he shoves you down and runs.
+]]
+local function lurkSpot(): (Vector3?, Player?)
+	local players = ctx.Util.activePlayers()
+	if #players == 0 then
+		return nil, nil
+	end
+	-- the loneliest player is the one he shows himself to
+	table.sort(players, function(a, b)
+		return ctx.PlayerState.friendsNear(a) < ctx.PlayerState.friendsNear(b)
+	end)
+	local candidates = {}
+	for _, p in players do
+		local eye, look = Perception.eyeOf(p)
+		local r = rootOf(p)
+		if not eye or not look or not r then
+			continue
+		end
+		local spots = {}
+		for _, n in ctx.Layout.Nodes do
+			table.insert(spots, n.Pos)
+		end
+		for _, sp in ctx.Layout.PeekSpots do
+			table.insert(spots, sp.Pos)
+		end
+		for _, pos in spots do
+			local d = (pos - r.Position).Magnitude
+			local to = pos + V(0, 2.5, 0) - eye
+			if math.abs(pos.Y - r.Position.Y) < 6 and d > 14 and d < 38 and ctx.Rooms.floorOf(pos) ~= "Attic" then
+				-- in plain view from where they stand, but not where they're looking right now
+				if look:Dot(to.Unit) < 0.2 and Perception.clear(eye, pos + V(0, 2.5, 0), { p.Character :: Instance }, S.Model)
+					and not Perception.anyoneSees(pos + V(0, 2.5, 0), S.Model) then
+					table.insert(candidates, { pos, p })
+				end
+			end
+		end
+		if #candidates > 0 then
+			break
+		end
+	end
+	local pick = ctx.Util.choice(candidates)
+	if pick then
+		return pick[1], pick[2]
+	end
+	return nil, nil
+end
+
 -- bolting after being seen: fast, to the far side of the house, and clumsy about it
 local function bolt(d)
-	d.Phase = "Flee"
+	d.Phase = "Leave"
+	d.Bolting = true
 	d.FleeStart = now()
+	d.UnseenSince = nil
 	S.Nav:goTo(farNode(), { Speed = 15, Tolerance = 3, Hurry = true })
 	-- in his hurry he knocks a chair over (once a night; the one loud thing he does by accident)
 	if not S.KnockedChair and math.random() < 0.6 then
 		S.KnockedChair = true
 		task.delay(0.6, function()
-			if S.Root then
+			if S.Root and S.InHouse then
 				ctx.Audio.playAt("ChairDrop", pos(), { Volume = 1 })
 				ctx.Director.logTruth("ChairDrop")
 			end
@@ -591,7 +686,7 @@ local function bolt(d)
 	end
 end
 
--- someone walked right up to him before he was ready: he shoves past them and runs
+-- someone walked right up to him: he shoves past them and runs
 local function shove(p: Player)
 	local r = rootOf(p)
 	if not r then
@@ -612,114 +707,111 @@ local function shove(p: Player)
 	ctx.Director.onSighting(p)
 end
 
-STATES.Lurk = function(_, visible)
+local function hideAway(d)
+	park()
+	d.Phase = "Hidden"
+	d.Bolting = false
+	d.Until = now() + 25 + math.random() * 30
+end
+
+STATES.Lurk = function(dt, visible)
 	local d = S.Data
+	local I = ctx.Config.Intruder
+	if d.Phase == nil or d.Phase == "Pick" then
+		hideAway(d)
+	end
+	if d.Phase == "Hidden" then
+		-- in the walls: rooms go dark behind you now and then (he moves easier in the dark)
+		d.LightClock = (d.LightClock or 20) - dt
+		if d.LightClock <= 0 and ctx.Power.isOn() then
+			d.LightClock = 30
+			local occupied = {}
+			for _, p in ctx.Util.activePlayers() do
+				local r = rootOf(p)
+				local room = r and ctx.Rooms.find(r.Position)
+				if room then
+					occupied[room.Name] = true
+				end
+			end
+			for _, room in ctx.Rooms.List do
+				if not occupied[room.Name] and ctx.Power.isRoomSwitchOn(room.Name) and math.random() < 0.2 then
+					ctx.Power.setSwitch(room.Name, false)
+					if not S.LoggedLights then
+						S.LoggedLights = true
+						ctx.Director.logTruthRaw("The lights that kept going off in empty rooms were Curtis. He moves easier in the dark.")
+					end
+					break
+				end
+			end
+		end
+		if now() < d.Until then
+			return
+		end
+		local spot, who = lurkSpot()
+		if not spot or not who then
+			d.Until = now() + 6
+			return
+		end
+		local r = rootOf(who)
+		placeAt(spot, r and V(r.Position.X, spot.Y, r.Position.Z) or nil)
+		S.Nav:stop()
+		d.Phase = "Watch"
+		d.Target = who
+		d.Until = now() + 12
+		d.SeenAt = nil
+		return
+	end
+	if not S.InHouse then
+		return
+	end
 	local obs = observers()
 	-- too close: whether they've seen him or he's seen them, he can't stay hidden
-	if d.Phase ~= "Flee" then
-		local closest, closeD = nil, math.huge
+	if not d.Bolting then
 		for _, pl in ctx.Util.activePlayers() do
 			local r = rootOf(pl)
-			if r and math.abs(r.Position.Y - pos().Y) < 6 then
-				local dist = (r.Position - pos()).Magnitude
-				if dist < closeD then
-					closest, closeD = pl, dist
-				end
+			if r and math.abs(r.Position.Y - pos().Y) < 6 and (r.Position - pos()).Magnitude < 8
+				and (table.find(obs, pl) or table.find(visible, pl)) then
+				shove(pl)
+				bolt(d)
+				return
 			end
 		end
-		if closest and closeD < 8 and (table.find(obs, closest) or table.find(visible, closest)) then
-			shove(closest)
-			bolt(d)
-			return
-		end
 	end
-	if #obs > 0 and d.Phase ~= "Flee" then
-		if d.Phase ~= "Freeze" then
-			-- a heartbeat of stillness, staring back, then gone
-			d.Phase = "Freeze"
-			d.Until = now() + 0.5 + math.random() * 0.5
-			S.Nav:stop()
-			local r = rootOf(obs[1])
-			if r then
-				faceToward(r.Position)
+	if d.Phase == "Watch" then
+		local t = d.Target
+		local r = t and valid(t) and rootOf(t)
+		if r then
+			faceToward(r.Position)
+		end
+		if #obs > 0 and not d.SeenAt then
+			d.SeenAt = now()
+			if t and table.find(obs, t) then
+				ctx.Director.onSighting(t)
 			end
 		end
-		if now() >= d.Until then
-			bolt(d)
+		-- seen: a long second of staring back; not seen: he gives up after a while
+		if (d.SeenAt and now() - d.SeenAt > 1.2 + math.random() * 0.6) or now() > d.Until then
+			d.Phase = "Leave"
+			d.UnseenSince = nil
+			d.FleeStart = now()
+			S.Nav:goTo(farNode(), { Speed = I.WalkSpeed, Tolerance = 3 })
 		end
 		return
 	end
-	if d.Phase == "Freeze" or minPlayerDistance(pos()) < 6 then
-		bolt(d)
-		return
-	end
-	if d.Phase == "Flee" and S.Nav:isStuck() then
-		S.Nav:goTo(farNode(), { Speed = 15, Tolerance = 3, Hurry = true })
-	end
-	local I = ctx.Config.Intruder
-	if d.Phase == "Flee" then
-		if S.Nav.Arrived or now() - (d.FleeStart or S.StateStart) > 25 then
-			d.Phase = "Wait"
-			d.Until = now() + 4 + math.random() * 5
-		end
-		return
-	end
-	if d.Phase == "Move" then
-		if S.Nav.Arrived then
-			if d.Peek then
-				d.Phase = "Peek"
-				d.Until = now() + 7
-			else
-				d.Phase = "Wait"
-				d.Until = now() + 3 + math.random() * 5
+	if d.Phase == "Leave" then
+		-- the moment nobody can see him, he's gone
+		if #obs == 0 then
+			d.UnseenSince = d.UnseenSince or now()
+			if now() - d.UnseenSince > 1.2 then
+				hideAway(d)
 			end
+		else
+			d.UnseenSince = nil
 		end
-		return
-	end
-	if d.Phase == "Peek" then
-		faceToward(d.Peek.Look)
-		if now() >= d.Until then
-			d.Phase = "Pick"
-		end
-		return
-	end
-	if d.Phase == "Wait" then
-		if now() >= d.Until then
-			d.Phase = "Pick"
-		end
-		return
-	end
-	-- Pick somewhere to go
-	S.StateStart = now()
-	if math.random() < 0.45 then
-		local options = {}
-		for _, spot in ctx.Layout.PeekSpots do
-			local watched = false
-			for _, pl in ctx.Util.activePlayers() do
-				local r = rootOf(pl)
-				if r and math.abs(r.Position.Y - spot.Look.Y) < 6 and (r.Position - spot.Look).Magnitude < 40 then
-					watched = true
-				end
-			end
-			if watched and minPlayerDistance(spot.Pos) > 16 then
-				table.insert(options, spot)
-			end
-		end
-		local peek = ctx.Util.choice(options)
-		if peek then
-			d.Peek = peek
-			d.Phase = "Move"
-			S.Nav:goTo(peek.Pos, { Speed = I.SneakSpeed, Tolerance = 2 })
-			return
+		if S.Nav.Arrived or S.Nav:isStuck() or now() - (d.FleeStart or 0) > 25 then
+			S.Nav:goTo(farNode(), { Speed = d.Bolting and 15 or I.WalkSpeed, Tolerance = 3, Hurry = d.Bolting })
 		end
 	end
-	d.Peek = nil
-	local candidates = nodes(function(n)
-		return n.Shadow and n.Room ~= "Attic" and minPlayerDistance(n.Pos) > 24
-	end)
-	local node = ctx.Util.choice(candidates)
-	d.Phase = "Move"
-	S.Nav:goTo(node and node.Pos or farNode(), { Speed = I.SneakSpeed })
 end
 
 STATES.Patrol = function(_, visible)
@@ -785,7 +877,11 @@ STATES.Stalk = function(_, visible)
 	if table.find(visible, t) then
 		d.LastSeen = now()
 		d.LastPos = r.Position
-		follow(r.Position, ctx.Config.Intruder.SneakSpeed + 1.5)
+		local dist = (r.Position - pos()).Magnitude
+		local I = ctx.Config.Intruder
+		-- creeping up behind someone who hasn't noticed him: walking pace, then a lunge
+		local speed = dist < 12 and 15 or (dist < 24 and I.SneakSpeed + 1.5 or I.WalkSpeed + 1.5)
+		follow(r.Position, speed)
 		if tryGrab(t) then
 			return
 		end
@@ -814,6 +910,8 @@ STATES.Chase = function(_, visible)
 	if table.find(visible, t) then
 		d.LastSeen = now()
 		d.LastPos = r.Position
+		local v = r.AssemblyLinearVelocity
+		d.LastVel = V(v.X, 0, v.Z)
 	elseif now() - d.LastSeen > I.ChaseLoseSightTime then
 		S.ChaseCooldownUntil = now() + 12
 		setState("Search", { Pos = d.LastPos or r.Position })
@@ -822,7 +920,16 @@ STATES.Chase = function(_, visible)
 	-- he's heard them running: head for where they are even between glimpses
 	-- (alone, you get a fairer chance: he's a step slower and gives up sooner)
 	local solo = #ctx.Util.sessionPlayers() <= 1
-	follow(r.Position, I.ChaseSpeed - (solo and (I.SoloChaseSlowdown or 1.5) or 0))
+	-- out of sight for a moment: he runs to where they were heading, not where they are
+	local target = r.Position
+	if not table.find(visible, t) and d.LastPos then
+		local ahead = (d.LastVel or V()) * math.min(now() - d.LastSeen + 0.6, 1.8)
+		if ahead.Magnitude > 10 then
+			ahead = ahead.Unit * 10
+		end
+		target = d.LastPos + ahead
+	end
+	follow(target, I.ChaseSpeed - (solo and (I.SoloChaseSlowdown or 1.5) or 0))
 	tryGrab(t)
 end
 
@@ -1053,6 +1160,10 @@ local function animate(dt: number)
 end
 
 local function think(dt: number)
+	if S.State == "Lurk" and S.Model and not S.InHouse then
+		STATES.Lurk(dt, {})
+		return
+	end
 	if not S.Model or not S.InHouse then
 		return
 	end
@@ -1156,11 +1267,10 @@ function Intruder.setMode(mode: string, cause: Player?)
 		park()
 		setState("Offstage")
 	elseif mode == "Lurk" then
-		enterHouse(function()
-			if S.Mode == "Lurk" then
-				setState("Lurk", { Phase = "Pick" })
-			end
-		end)
+		-- hidden in the walls to begin with; he shows himself when he chooses
+		ensureModel()
+		park()
+		setState("Lurk", { Phase = "Hidden", Until = now() + 18 + math.random() * 12 })
 	elseif mode == "Hunt" then
 		enterHouse(function()
 			if S.Mode ~= "Hunt" or S.State == "Trapped" or S.State == "Frantic" then
@@ -1176,9 +1286,16 @@ function Intruder.setMode(mode: string, cause: Player?)
 	end
 end
 
+-- (tests, and the Director if it ever wants a scare on cue) make his next appearance now
+function Intruder.appearNow()
+	if S.State == "Lurk" and S.Data.Phase == "Hidden" then
+		S.Data.Until = 0
+	end
+end
+
 -- something gave him away (a door he was holding shut): he runs for it
 function Intruder.spook()
-	if S.State == "Lurk" and S.Data.Phase ~= "Flee" then
+	if S.State == "Lurk" and S.InHouse and not S.Data.Bolting then
 		bolt(S.Data)
 	end
 end

@@ -30,7 +30,7 @@ local ORDER = if mode == "Lobby"
 	then { "UI", "Input", "Notice", "Social", "Effects", "Atmosphere", "LobbyHub" }
 	else {
 		"UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD",
-		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue",
+		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate",
 	}
 
 local modules = {}

@@ -127,7 +127,13 @@ local function pumpNotes()
 			end
 		end
 		local n = table.remove(pendingNotes, 1)
-		showNote(n[1], n[2])
+		-- stale notes are dropped (an objective or a danger note keeps a little longer)
+		local keep = (n[2] == "objective" or n[2] == "danger" or n[2] == "done" or n[2] == "text") and 20 or 10
+		if os.clock() - (n[3] or 0) <= keep then
+			showNote(n[1], n[2])
+		else
+			ctx.Pace.FreeAt = 0
+		end
 	end
 	pumping = false
 end
@@ -139,7 +145,7 @@ function HUD.notify(text: string, kind: string?)
 			return
 		end
 	end
-	table.insert(pendingNotes, { text, kind })
+	table.insert(pendingNotes, { text, kind, os.clock() })
 	task.spawn(pumpNotes)
 end
 
@@ -527,6 +533,9 @@ local function hintText(): string
 	if workspace:GetAttribute("EndingActive") then
 		return ""
 	end
+	if player:GetAttribute("Dead") then
+		return ""
+	end
 	if player:GetAttribute("Captured") then
 		return touch and "Mash STRUGGLE" or "Mash SPACE to struggle"
 	end
@@ -564,7 +573,9 @@ local function update()
 
 	-- context meter
 	local label, value, color = nil, 0, UI.Color.Accent
-	if player:GetAttribute("Captured") then
+	if player:GetAttribute("Dead") then
+		label = nil
+	elseif player:GetAttribute("Captured") then
 		label, value, color = "STRUGGLE", player:GetAttribute("StruggleProgress") or 0, UI.Color.Danger
 	elseif player:GetAttribute("Calling") then
 		label, value, color = "Calling 911 - keep the signal", player:GetAttribute("CallProgress") or 0, UI.Color.Info

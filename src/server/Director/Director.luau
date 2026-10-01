@@ -575,8 +575,12 @@ function Director.onDoorOpened(door, player: Player)
 	-- he's right on the other side, holding the handle: the door is torn back out of your hand
 	-- (rare: once every few minutes at most, and only if he really is there, unseen)
 	local ip = ctx.Intruder.position()
-	if ip and ctx.Intruder.getState() == "Lurk" and os.clock() >= (state.NextDoorHeld or 0)
-		and (ip - door.Position).Magnitude < 14 and not Perception.anyoneSees(ip) then
+	local lurking = ctx.Intruder.getState() == "Lurk" and os.clock() >= (state.NextDoorHeld or 0)
+	-- right there and unseen, or hidden somewhere in the house (then only now and then, and only
+	-- an inside door: that's where he moves between rooms)
+	local behindIt = ip and (ip - door.Position).Magnitude < 14 and not Perception.anyoneSees(ip)
+	local hiddenNear = not ip and not door.Exterior and math.random() < 0.18
+	if lurking and (behindIt or hiddenNear) then
 		state.NextDoorHeld = os.clock() + 240
 		task.delay(0.4, function()
 			if not door.IsOpen then
@@ -623,11 +627,26 @@ function Director.checkAllCaptured()
 		end
 	end
 	if #ctx.Util.activePlayers() == 0 and anyCaptured then
-		-- everyone is tied up: one last chance to struggle free before it's over
+		-- everyone is tied up: one last chance to struggle free before it's over (nobody left who
+		-- can struggle: it's over now)
+		local canStruggle = false
+		for _, p in session do
+			if p:GetAttribute("Captured") and not p:GetAttribute("Dead") then
+				canStruggle = true
+			end
+		end
+		if not canStruggle then
+			if not state.GoneQuietAt then
+				state.GoneQuietAt = os.clock() + 4
+			end
+			return
+		end
 		if not state.GoneQuietAt then
 			state.GoneQuietAt = os.clock() + (ctx.Config.Capture.LastChance or 45)
 			for _, p in session do
-				ctx.Remotes.Notify:FireClient(p, "Nobody's coming. Struggle free before he comes back!", "danger")
+				if not p:GetAttribute("Dead") then
+					ctx.Remotes.Notify:FireClient(p, "Nobody's coming. Struggle free before he comes back!", "danger")
+				end
 			end
 		end
 	else
