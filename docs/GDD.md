@@ -38,7 +38,7 @@ Roles are dealt when the night starts. Each role has a personality blurb and one
 | Observer | **Casey Brooks**, 17. Notices everything. Nobody listens. | Hears sounds from farther away. Gets extra detail when examining clues. |
 
 ### The intruder — Curtis Vane
-In game he is a Roblox avatar with a stitched burlap sack over his head (UGC "Stitched Burlap Horror Mask" by BloodWarrior08; a dark knit beanie if it can't load), the blank-eyed "Stare" head (Roblox) under it, a black jacket and black jeans (Roblox classic clothing), big and tall.
+In game (`server/Intruder/Rig`, built from parts, no catalog dependency) he is a head and a half taller than you, starved thin and stooped: a long, torn black coat with the hood up, a strip of bare ribbed chest, and arms too long for his body, with bare grey forearms and fingers that hang past his knees, nails black. Under the hood is a cracked, grimy porcelain mask: tall hollow eyes sagging at the corners with soot running down from them, a pin of light deep in each, and a long black mouth hanging open mid-scream. Lank black hair hangs out of the hood. The clients animate him procedurally (`shared/CreaturePose`, `client/Controllers/Creature`): he runs bent almost double with his head craned up at you and his arms flailing, walks with long slow strides and his head cocked hard to one side, stands dead still and stares, and his head snaps round at random. Near him your flashlight stutters, lights flicker, and his running footfalls shake the screen.
 Curtis Vane, 41, is a laid-off insulation contractor. In April his company re-insulated the Whitakers' attic. The invoice has a temporary garage keypad code on it. **Nobody ever reset it.**
 
 After he lost his job and then his apartment, Curtis came back. For nineteen days he has lived in the crawl space above the garage and the main attic. This is called *phrogging*. He comes down when the house is empty. He eats a little from the fridge, showers while the family is at Lily's swim practice, and keeps a notebook of their schedule. Lily, who is seven, saw him once at night. Her parents told her it was a dream.
@@ -262,23 +262,22 @@ If Curtis grabs you, the screen fades and you wake zip-tied in the boiler room. 
 ### The intruder AI (`src/server/Intruder`)
 A state machine with perception:
 - **Vision**: a 100° cone, raycast line of sight. Range depends on light: 80 studs lit, 22 dark, 110 if the target's flashlight is on. Crouching shortens it. Hidden players are invisible.
-- **Hearing**: noise events, reduced across floors.
-- **Memory**: last known position of each player, "saw hide" records, interest decay.
+- **He always knows roughly where you are** (the hunt): every half second he feels where each player who isn't hiding is, and acts on where they were **3 s ago** (a bloodhound on your trail). Hiding makes the trail go cold; after you leave a hiding spot he can't feel you for **8 s**. Loud noises (sprinting, slammed doors, trying the exits) are felt immediately.
+- **Hearing**: noise events, reduced across floors; a loud noise ends his break early.
 
 | State | Behaviour |
 |---|---|
 | `Offstage` | Acts I–II. In the attic. The Director fakes his presence with real, logged events. |
-| `Lurk` | Before the power is cut. Hidden most of the time. Every so often he picks a spot 14–38 studs from the loneliest player, in their line of sight but not where they're looking, and **stands there watching**. Once seen he holds the stare for a beat and slips away; he vanishes as soon as nobody is looking. Walk up to him and he shoves you and bolts. |
-| `Patrol` | Act IV. Sweeps rooms, weighted toward noise and recent sightings, checking hiding spots. |
-| `Investigate` | Walks to a noise, looks around. |
-| `Stalk` | Has seen a player who hasn't seen him. Follows quietly, closes in from behind. |
-| `Chase` | Short bursts (≤ 15 s) against isolated players. Gives up after losing sight for 4 s. |
-| `Search` | Checks the last-known area and hiding spots. |
-| `Retreat` | Backs off from groups in lit rooms, after pepper spray, or after a capture. |
-| `Frantic` | Help has been called. Hunts the caller briefly, then flees the house. |
+| `Lurk` | After the blackout, for ~35 s before the hunt starts. Hidden most of the time. He picks a spot 14–38 studs from the loneliest player, in their line of sight but not where they're looking, and **stands there staring**. Once seen he holds the stare for a beat and slips away. Walk up to him and he shoves you and bolts. |
+| `Prowl` | The hunt. A door slams and he **runs** (15 studs/s; you sprint at 17 for ~7 s) to where he feels the nearest player is, heavy footsteps thundering through the house. |
+| `Chase` | He can see you: **18 studs/s, 22 lunging** in the last 10 studs, and he doesn't tire. Lose his sight for 2.5 s and he's back on your trail. |
+| `Search` | His target hid. He goes to where he last felt them, stands and listens, then tears open up to **2 hiding spots** nearby (the one you're really in a bit more often; one he saw you use always first). |
+| `CheckSpot` | Opens a spot. Saw you get in: caught. Otherwise 85% you're found, much less if you're holding your breath. |
+| `Withdraw` | Gives up for now: walks off somewhere dark and stands there 22–34 s (half that once help is called). This is when you move. Seen within 30 studs, he comes anyway. |
+| `Retreat` | After pepper spray or a capture. |
 | `Trapped` | Locked in the basement. Tries to force the door (~90 s). |
 
-He opens doors, forces privacy locks (5 s), avoids light before Act IV, and prefers lone targets. **He will not grab a player in front of two or more alert, lit witnesses.** That rule is the core of "together is safe."
+The loop is **hear him coming → break line of sight → hide → hold your breath when the doors open → move while it's quiet**. If you don't hide, he gets you. There is no safety in numbers any more; friends matter because they can cut you loose (once: a second capture kills). Calling for help makes him frantic: shorter breaks, and he goes straight for the caller. He opens doors, and locked doors cost him 5 s.
 
 ### The Director (`src/server/Director`)
 - It tracks **tension** (0–100), which rises with events, sightings and chases and decays over time.

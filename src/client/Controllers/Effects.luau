@@ -111,6 +111,32 @@ end
 
 -- a figure only you can see (built locally, gone in a moment)
 function Effects.figure(cf: CFrame, duration: number)
+	-- him: a still copy of the real thing, frozen mid-stare (the old block man if he isn't loaded)
+	local real = workspace:FindFirstChild("Curtis", true)
+	if real and real:IsA("Model") and real:GetAttribute("Creature") then
+		local ok, copy = pcall(function()
+			return real:Clone()
+		end)
+		if ok and copy then
+			for _, d in copy:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Anchored = true
+					d.CanCollide = false
+					d.CanQuery = false
+				elseif d:IsA("Sound") or d:IsA("Humanoid") then
+					d:Destroy()
+				end
+			end
+			copy.Name = "Figure"
+			copy:SetAttribute("Creature", nil)
+			copy:PivotTo(cf * CFrame.new(0, 2.3, 0))
+			copy.Parent = workspace
+			task.delay(duration, function()
+				copy:Destroy()
+			end)
+			return
+		end
+	end
 	local model = Instance.new("Model")
 	model.Name = "Figure"
 	local dark = Color3.fromRGB(18, 18, 20)

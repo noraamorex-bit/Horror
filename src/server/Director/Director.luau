@@ -481,6 +481,13 @@ function Director.startAct(name: string, cause: Player?)
 			end
 			task.wait(6)
 			ctx.Remotes.Notify:FireAllClients("That wasn't the storm. Something flipped the main breaker.", "danger")
+			-- a glimpse or two of him in the dark, then the hunt begins
+			local myState = state
+			task.wait(ctx.Config.Director.HuntDelay or 35)
+			if state == myState and state.Act == "SomeoneElse" then
+				ctx.Intruder.setMode("Hunt")
+				Director.addTension(30)
+			end
 		end)
 	elseif name == "Guest" then
 		ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Trap" }, { Neighbor = true, Car = true, Trap = true })

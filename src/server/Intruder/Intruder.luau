@@ -1,19 +1,22 @@
 --[[
 	Intruder — Curtis Vane. A state machine with perception (see GDD §4).
 
-	Modes (set by the Director): Offstage (acts I-II), Lurk (act III), Hunt (act IV).
-	States: Offstage, Lurk, Patrol, Investigate, Stalk, Chase, Search, CheckSpot,
-	        Retreat, Stunned, Frantic, Trapped, Gone, Stopped.
+	Modes (set by the Director): Offstage (acts I-II), Lurk (glimpses, before the hunt),
+	Hunt (from the blackout on).
 
-	The one rule that makes "together is safe" work: he will not grab a player in front of
-	Config.Intruder.GroupWitnesses (or more) alert, lit witnesses.
+	The hunt: he always knows roughly where everyone who isn't hiding is (where they were a
+	few seconds ago) and comes for the nearest at a run. Once he sees you he's faster than you.
+	The only way out is to break his line of sight and hide somewhere he didn't see you go;
+	then he searches nearby hiding spots, gives up, and backs off for a while before the next
+	hunt. States: Prowl, Chase, Search, CheckSpot, Withdraw, Retreat, Stunned, Trapped, plus
+	Lurk/Offstage/Gone/Stopped.
 ]]
 
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local Perception = require(script.Parent.Perception)
 local Navigator = require(script.Parent.Navigator)
+local Rig = require(script.Parent.Rig)
 
 local Intruder = {}
 local ctx
@@ -48,6 +51,16 @@ local function fresh()
 		Visible = {},
 		LastCaptiveCheck = os.clock(),
 		ChaseCooldownUntil = 0,
+		-- the hunt
+		Trails = {},
+		WasHidden = {},
+		UnhidAt = {},
+		Ignore = {},
+		StungAt = {},
+		LastFelt = {},
+		HuntTarget = nil,
+		Waves = 0,
+		Frenzy = false,
 		Tracks = {},
 		CurrentTrack = nil,
 		StepClock = 0,
@@ -94,91 +107,13 @@ local function blockRig(): Model
 	return model
 end
 
--- Curtis as a Roblox avatar, built from catalog items (all optional, each tier falls back to a
--- simpler one): a stained sack over his head with two hollow eye holes, a worn black work
--- jacket, dirty torn jeans, sallow skin, tall and thin, stooped from weeks in the crawl space.
-local CURTIS = {
-	Head = 13692947484, -- Roblox: Stare - Head
-	Shirt = 382538295, -- Roblox: Guitar Tee with Black Jacket (under the layered jacket)
-	Pants = 382537569, -- Roblox: Black Jeans (under the layered jeans)
-	Mask = 14960376005, -- UGC (Luka's Workshop): Sack Head, hollow eyes
-	OldMask = 127512374310237, -- UGC (BloodWarrior08): Stitched Burlap Horror Mask
-	Jacket = 121103605760912, -- UGC (FATAL ARCHIVE): Black Worn Workwear Zip Up Jacket
-	Jeans = 108286714740006, -- UGC (Kool closet): Dirty Jeans
-}
-local HEIGHT = 7.2 -- studs, a head taller than the players
-
--- tier 1: everything; 2: classic clothes and the old mask; 3: no custom head either
-local function curtisDescription(tier: number)
-	local desc = Instance.new("HumanoidDescription")
-	local skin = Color3.fromRGB(176, 158, 138)
-	if tier < 3 then
-		desc.Head = CURTIS.Head
-	end
-	desc.Shirt = CURTIS.Shirt
-	desc.Pants = CURTIS.Pants
-	if tier == 1 then
-		-- SetAccessories(..., true) replaces the rigid accessories too, so the mask goes in the
-		-- same list (setting HatAccessory before it was wiping the mask)
-		desc:SetAccessories({
-			{ AssetId = CURTIS.Mask, AccessoryType = Enum.AccessoryType.Hat, IsLayered = false },
-			{ AssetId = CURTIS.Jacket, AccessoryType = Enum.AccessoryType.Jacket, IsLayered = true, Order = 3 },
-			{ AssetId = CURTIS.Jeans, AccessoryType = Enum.AccessoryType.Pants, IsLayered = true, Order = 2 },
-		}, true)
-	else
-		desc.HatAccessory = tostring(CURTIS.OldMask)
-	end
-	desc.HeadColor = skin
-	desc.LeftArmColor = skin
-	desc.RightArmColor = skin
-	desc.TorsoColor = Color3.fromRGB(40, 40, 44)
-	desc.LeftLegColor = Color3.fromRGB(34, 34, 38)
-	desc.RightLegColor = Color3.fromRGB(34, 34, 38)
-	desc.HeightScale = 1.2
-	desc.WidthScale = 0.92
-	desc.DepthScale = 0.95
-	desc.HeadScale = 1
-	desc.BodyTypeScale = 0.35
-	desc.ProportionScale = 0.6
-	return desc
-end
-
--- stooped: the upper body leans forward and the head juts out
-local function hunch(model: Model)
-	local upper = model:FindFirstChild("UpperTorso")
-	local head = model:FindFirstChild("Head")
-	local waist = upper and upper:FindFirstChild("Waist")
-	local neck = head and head:FindFirstChild("Neck")
-	if waist and waist:IsA("Motor6D") then
-		waist.C0 = waist.C0 * CFrame.Angles(math.rad(-16), 0, 0)
-	end
-	if neck and neck:IsA("Motor6D") then
-		neck.C0 = neck.C0 * CFrame.Angles(math.rad(10), 0, 0)
-	end
-end
-
 local function buildRig(): Model
-	local ok, result = false, nil
-	for tier = 1, 3 do
-		ok, result = pcall(function()
-			return Players:CreateHumanoidModelFromDescription(curtisDescription(tier), Enum.HumanoidRigType.R15)
-		end)
-		if ok and result then
-			break
-		end
-	end
+	local ok, result = pcall(Rig.build, ctx.Builder)
 	local model = (ok and result) or blockRig()
-	model.Name = "Curtis"
-	if ok and result then
-		pcall(function()
-			local _, size = model:GetBoundingBox()
-			local accessoriesTop = size.Y
-			if accessoriesTop > 1 then
-				model:ScaleTo(model:GetScale() * math.clamp(HEIGHT / accessoriesTop, 0.8, 1.5))
-			end
-		end)
-		hunch(model)
+	if not ok then
+		warn("[Intruder] rig failed, using the block rig: " .. tostring(result))
 	end
+	model.Name = "Curtis"
 	local hum = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	hum.NameDisplayDistance = 0
@@ -189,55 +124,6 @@ local function buildRig(): Model
 	hum.WalkSpeed = ctx.Config.Intruder.WalkSpeed
 	hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
-	local head = model:FindFirstChild("Head") :: BasePart
-	local function headWear(): boolean
-		for _, acc in model:GetChildren() do
-			if acc:IsA("Accessory") then
-				local handle = acc:FindFirstChild("Handle")
-				local att = handle and handle:FindFirstChildWhichIsA("Attachment")
-				if att and (att.Name == "HatAttachment" or att.Name == "FaceFrontAttachment" or att.Name == "HairAttachment" or att.Name == "FaceCenterAttachment") then
-					return true
-				end
-			end
-		end
-		return false
-	end
-	if head and not headWear() then
-		-- the mask didn't load: a stained burlap sack over his head, with two hollow eye holes and
-		-- a rope cinched at the neck (the same look as the store art)
-		local hs = head.Size
-		local function piece(name: string, size: Vector3, offset: CFrame, color: Color3, mesh: Enum.MeshType?, material: Enum.Material?)
-			local p = ctx.Builder.part(model, {
-				Name = name,
-				Size = size,
-				CFrame = head.CFrame * offset,
-				Color = color,
-				Material = material or Enum.Material.Fabric,
-				Anchored = false,
-				CanCollide = false,
-				CanQuery = false,
-				Massless = true,
-			})
-			if mesh then
-				local m = Instance.new("SpecialMesh")
-				m.MeshType = mesh
-				m.Parent = p
-			end
-			local weld = Instance.new("WeldConstraint")
-			weld.Part0 = head
-			weld.Part1 = p
-			weld.Parent = p
-			return p
-		end
-		local burlap = Color3.fromRGB(122, 100, 68)
-		piece("Sack", Vector3.new(hs.X * 1.28, hs.Y * 1.5, hs.Z * 1.28), CFrame.new(0, hs.Y * 0.12, 0), burlap, Enum.MeshType.Sphere)
-		piece("SackTop", Vector3.new(hs.X * 0.9, hs.Y * 0.5, hs.Z * 0.9), CFrame.new(0.05, hs.Y * 0.78, -0.02) * CFrame.Angles(0, 0, math.rad(12)), burlap:Lerp(Color3.new(0, 0, 0), 0.1), Enum.MeshType.Sphere)
-		for _, sx in { -1, 1 } do
-			piece("EyeHole", Vector3.new(hs.X * 0.26, hs.Y * 0.3, 0.08), CFrame.new(sx * hs.X * 0.22, hs.Y * 0.12, -hs.Z * 0.62), Color3.new(0, 0, 0), Enum.MeshType.Sphere, Enum.Material.SmoothPlastic)
-		end
-		local rope = piece("Rope", Vector3.new(hs.Y * 0.16, hs.X * 1.12, hs.Z * 1.12), CFrame.new(0, -hs.Y * 0.48, 0) * CFrame.Angles(0, 0, math.pi / 2), Color3.fromRGB(84, 70, 50))
-		rope.Shape = Enum.PartType.Cylinder
-	end
 	return model
 end
 
@@ -245,7 +131,7 @@ local function loadAnims()
 	local hum = S.Humanoid :: Humanoid
 	local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator")
 	animator.Parent = hum
-	if hum.RigType ~= Enum.HumanoidRigType.R15 then
+	if hum.RigType ~= Enum.HumanoidRigType.R15 or (S.Model and S.Model:GetAttribute("Creature")) then
 		return
 	end
 	for name, id in ANIMS do
@@ -416,37 +302,6 @@ local function farNode(): Vector3
 	return best and best.Pos or ctx.Layout.Attic.GarageHatchBelow
 end
 
-local function friendsNear(target: Player, radius: number, needLit: boolean): number
-	local tr = rootOf(target)
-	if not tr then
-		return 0
-	end
-	local count = 0
-	for _, p in ctx.Util.activePlayers() do
-		if p ~= target and not p:GetAttribute("Hiding") then
-			local r = rootOf(p)
-			if r and (r.Position - tr.Position).Magnitude <= radius and (not needLit or ctx.PlayerState.isLit(p)) then
-				count += 1
-			end
-		end
-	end
-	return count
-end
-
--- alert, lit witnesses who can see him right now
-local function witnesses(target: Player): number
-	local count = 0
-	for _, p in ctx.Util.activePlayers() do
-		if p ~= target and not p:GetAttribute("Hiding") then
-			local r = rootOf(p)
-			if r and (r.Position - pos()).Magnitude <= 45 and ctx.PlayerState.isLit(p) and Perception.playerSees(p, S.Head.Position, S.Model) then
-				count += 1
-			end
-		end
-	end
-	return count
-end
-
 local function pickTarget(visible: { Player }): Player?
 	local best, bestScore = nil, -math.huge
 	for _, p in visible do
@@ -493,13 +348,9 @@ local function tryGrab(target: Player): boolean
 	if not r or (r.Position - pos()).Magnitude > ctx.Config.Intruder.GrabRange then
 		return false
 	end
-	if witnesses(target) >= ctx.Config.Intruder.GroupWitnesses then
-		ctx.Audio.caption("He stops dead. Too many of you are watching.", pos(), 40)
-		retreat(r.Position, 25)
-		return true
-	end
 	if ctx.Capture.capture(target) then
 		S.Memory[target] = nil
+		S.HuntTarget = nil
 		local boiler = ctx.Rooms.ByName.Boiler
 		retreat(nil, ctx.Config.Intruder.RetreatAfterCapture, boiler and V(boiler.Center.X, -10, boiler.Center.Z) or nil)
 		return true
@@ -507,108 +358,182 @@ local function tryGrab(target: Player): boolean
 	return false
 end
 
+---------------------------------------------------------------------------
+-- The hunt: what he knows
+---------------------------------------------------------------------------
+--[[
+	He always knows roughly where you are: every half second he "hears" where each player who
+	isn't hiding is, and acts on where you were SenseDelay seconds ago (a bloodhound on your
+	trail, not a camera on you). Hide and the trail goes cold. Come out and he doesn't feel you
+	again for HideGrace seconds, so you can slip away. If he can see you, he knows exactly.
+]]
+local function recordTrails()
+	if now() - (S.TrailClock or 0) < 0.5 then
+		return
+	end
+	S.TrailClock = now()
+	for _, p in ctx.Util.activePlayers() do
+		local r = rootOf(p)
+		if p:GetAttribute("Hiding") or not r then
+			S.Trails[p] = {}
+			S.WasHidden[p] = true
+		else
+			if S.WasHidden[p] then
+				S.WasHidden[p] = nil
+				S.UnhidAt[p] = now()
+			end
+			local tr = S.Trails[p] or {}
+			S.Trails[p] = tr
+			table.insert(tr, { T = now(), Pos = r.Position })
+			if #tr > 24 then
+				table.remove(tr, 1)
+			end
+		end
+	end
+	for p in S.Trails do
+		if not valid(p) then
+			S.Trails[p] = nil
+		end
+	end
+end
+
+-- where he thinks this player is right now (nil: he has no idea)
+local function sensed(p: Player): Vector3?
+	if not valid(p) or p:GetAttribute("Hiding") then
+		return nil
+	end
+	local r = rootOf(p)
+	if r and table.find(S.Visible, p) then
+		return r.Position
+	end
+	local I = ctx.Config.Intruder
+	if now() - (S.UnhidAt[p] or -1e9) < I.HideGrace or now() < (S.Ignore[p] or 0) then
+		return nil
+	end
+	local tr = S.Trails[p]
+	if not tr or #tr == 0 then
+		return nil
+	end
+	local want = now() - I.SenseDelay
+	local best = tr[1]
+	for _, e in tr do
+		if e.T <= want then
+			best = e
+		end
+	end
+	return best.Pos
+end
+
+-- the nearest player he can feel (sticks with the current one unless another is much closer)
+local function huntTarget(): (Player?, Vector3?)
+	local best, bestPos, bestD = nil, nil, math.huge
+	local here = pos()
+	for _, p in ctx.Util.activePlayers() do
+		local at = sensed(p)
+		if at then
+			local d = (at - here).Magnitude + math.abs(at.Y - here.Y) * 2.5
+			if p == S.HuntTarget then
+				d *= 0.7
+			end
+			if d < bestD then
+				best, bestPos, bestD = p, at, d
+			end
+		end
+	end
+	return best, bestPos
+end
+
+local function startChase(target: Player)
+	setState("Chase", { Target = target, LastSeen = now() })
+	S.HuntTarget = target
+	ctx.Director.addTension(20)
+	-- the moment he sees you: a sting only you hear, the screen jolts
+	if now() - (S.StungAt[target] or -1e9) > 18 then
+		S.StungAt[target] = now()
+		ctx.Audio.playFor(target, "Stinger")
+		ctx.Remotes.Shake:FireClient(target, 0.6, 0.6)
+		if ctx.Director.thinkOnce then
+			ctx.Director.thinkOnce(target, "HuntSeen", ctx.Story.Hunt.Seen)
+		end
+	end
+	ctx.Audio.caption("[Heavy footsteps - running at you]", pos(), 60)
+end
+
 local function engage(visible: { Player }): boolean
-	if #visible == 0 then
+	if #visible == 0 or now() < S.ChaseCooldownUntil then
 		return false
 	end
 	local target = pickTarget(visible)
 	if not target then
 		return false
 	end
-	local tr = rootOf(target) :: BasePart
-	-- a lit group: back off
-	if ctx.PlayerState.isLit(target) and friendsNear(target, 25, true) >= ctx.Config.Intruder.GroupWitnesses then
-		retreat(tr.Position, 20)
-		return true
-	end
-	if Perception.playerSees(target, S.Head.Position, S.Model) and now() >= S.ChaseCooldownUntil then
-		setState("Chase", { Target = target, LastSeen = now() })
-		ctx.Director.addTension(20)
-		ctx.Remotes.Shake:FireClient(target, 0.4, 0.6)
-		ctx.Audio.caption("[Heavy footsteps - coming fast]", pos(), 60)
-	else
-		setState("Stalk", { Target = target, LastSeen = now() })
-	end
+	startChase(target)
 	return true
-end
-
-local function spotNear(p: Vector3, radius: number)
-	local spots = ctx.Hiding.spotsNear(p, radius)
-	-- spots he saw someone use come first
-	for _, s in spots do
-		if S.SawHide[s] then
-			return s
-		end
-	end
-	return ctx.Util.choice(spots)
 end
 
 local function checkSpot(spot, returnState: string, returnData: any?)
 	setState("CheckSpot", { Spot = spot, Return = returnState, ReturnData = returnData, Phase = "Approach" })
-	S.Nav:goTo(spot.Exit.Position, { Speed = ctx.Config.Intruder.WalkSpeed + 1, Tolerance = 2.5 })
+	S.Nav:goTo(spot.Exit.Position, { Speed = ctx.Config.Intruder.ProwlSpeed, Tolerance = 2.5, Hurry = true })
 end
 
-local function pickPatrolGoal(): Vector3
+-- the next hiding spot to tear open around `at`: one he saw someone use first, then (a little
+-- more often) the one they're really in, then any
+local function searchSpot(at: Vector3, target: Player?, checked: { [any]: boolean })
 	local entries = {}
-	local p = pos()
-	for _, n in ctx.Layout.Nodes do
-		if (n.Pos - p).Magnitude < 12 then
-			continue
-		end
-		local w = 1
-		if n.Shadow then
-			w += 0.5
-		end
-		for _, ev in S.Noises do
-			if now() - ev.Time < 60 and (ev.Position - n.Pos).Magnitude < 25 then
-				w += 3
+	for _, s in ctx.Hiding.spotsNear(at, 18) do
+		if not checked[s] then
+			local w = 1
+			if S.SawHide[s] then
+				w = 20
+			elseif target and ctx.Hiding.occupant(s) == target then
+				w = ctx.Config.Intruder.TrueSpotWeight
 			end
+			table.insert(entries, { s, w })
 		end
-		for _, m in S.Memory do
-			if now() - m.Time < 90 and (m.Pos - n.Pos).Magnitude < 25 then
-				w += 3
-			end
-		end
-		-- he knows this house and he's listening: a hunch about where people are (rooms near
-		-- someone weigh more, never the exact spot)
-		for _, pl in ctx.Util.activePlayers() do
-			local r = rootOf(pl)
-			if r and math.abs(r.Position.Y - n.Pos.Y) < 8 and (r.Position - n.Pos).Magnitude < 24 then
-				w += 4
-			end
-		end
-		-- somewhere he hasn't just looked
-		local seen = S.Visited and S.Visited[n]
-		if seen and now() - seen < 45 then
-			w *= 0.2
-		end
-		table.insert(entries, { n, w })
 	end
-	local pick = ctx.Util.weighted(entries)
-	if pick then
-		S.Visited = S.Visited or {}
-		S.Visited[pick] = now()
-		return pick.Pos
-	end
-	return p
+	return ctx.Util.weighted(entries)
 end
 
-local function startPatrol()
-	setState("Patrol", {})
-	local boiler = ctx.Rooms.ByName.Boiler
-	if ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > ctx.Config.Intruder.CaptiveCheckInterval and boiler then
-		S.LastCaptiveCheck = now()
-		S.Nav:goTo(V(boiler.Center.X + 4, -10, boiler.Center.Z), { Speed = ctx.Config.Intruder.WalkSpeed })
-		return
+-- a new hunt: a door slams somewhere, and he starts running
+local function startHunt()
+	setState("Prowl", {})
+	S.HuntTarget = nil
+	S.Waves += 1
+	ctx.Audio.playAt("DoorSlam", pos(), { CaptionText = "[A door SLAMS somewhere in the house]", CaptionRange = 200 })
+	local H = ctx.Story.Hunt
+	if S.Waves == 1 then
+		for _, line in H.First do
+			ctx.Director.think(nil, line)
+		end
+		ctx.Remotes.Notify:FireAllClients(H.FirstNotice, "danger")
+	elseif math.random() < 0.5 then
+		ctx.Director.think(nil, ctx.Util.choice(H.Wave))
 	end
-	S.Nav:goTo(pickPatrolGoal(), { Speed = ctx.Config.Intruder.WalkSpeed })
+end
+
+-- he lets the house go quiet: walks off somewhere dark and waits, listening
+local function withdraw()
+	local I = ctx.Config.Intruder
+	local dur = I.WithdrawMin + math.random() * (I.WithdrawMax - I.WithdrawMin)
+	if S.Frenzy then
+		dur *= 0.5
+	end
+	local goal = farNode()
+	local boiler = ctx.Rooms.ByName.Boiler
+	if ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.CaptiveCheckInterval and boiler then
+		S.LastCaptiveCheck = now()
+		goal = V(boiler.Center.X + 4, -10, boiler.Center.Z)
+	end
+	setState("Withdraw", { Until = now() + dur })
+	S.HuntTarget = nil
+	S.Nav:goTo(goal, { Speed = I.WalkSpeed })
 end
 
 local function resume()
 	if S.Mode == "Lurk" then
 		setState("Lurk", { Phase = "Pick" })
 	else
-		startPatrol()
+		startHunt()
 	end
 end
 
@@ -814,149 +739,170 @@ STATES.Lurk = function(dt, visible)
 	end
 end
 
-STATES.Patrol = function(_, visible)
+--[[
+	Prowl: running to wherever he feels the nearest player is. Heavy, fast footsteps through the
+	house; you hear him long before you see him. Seeing anyone turns it into a chase.
+]]
+STATES.Prowl = function(_, visible)
 	if engage(visible) then
 		return
 	end
 	local d = S.Data
-	if S.Nav.Arrived or S.Nav:isStuck() then
-		if not d.Linger then
-			d.Linger = now() + 2 + math.random() * 3
-			if math.random() < 0.4 then
-				local spot = spotNear(pos(), 18)
-				if spot then
-					checkSpot(spot, "Patrol")
-					return
-				end
-			end
-		elseif now() >= d.Linger then
-			startPatrol()
-		end
-	end
-end
-
-STATES.Investigate = function(_, visible)
-	if engage(visible) then
+	local I = ctx.Config.Intruder
+	-- the one he was after just vanished into a hiding spot: search where he last felt them
+	local was = S.HuntTarget
+	if was and valid(was) and was:GetAttribute("Hiding") and S.LastFelt[was] then
+		setState("Search", { Pos = S.LastFelt[was], Target = was, Checked = {} })
+		S.HuntTarget = nil
 		return
 	end
-	local d = S.Data
-	if d.Retarget then
-		d.Retarget = false
-		S.Nav:goTo(reachable(d.Pos), { Speed = d.Radius and d.Radius >= 40 and 12 or ctx.Config.Intruder.WalkSpeed + 1, Tolerance = 3 })
-	end
-	if now() - S.StateStart > 35 then
-		startPatrol()
+	local target, at = huntTarget()
+	if not target or not at then
+		-- nobody to feel (all hidden, or just out of hiding): he gives up for now
+		if now() - S.StateStart > 2 then
+			withdraw()
+		end
 		return
 	end
-	if S.Nav.Arrived or S.Nav:isStuck() then
-		if not d.LookUntil then
-			d.LookUntil = now() + 3
-			d.LookDir = math.random() * math.pi * 2
-		elseif now() < d.LookUntil then
-			d.LookDir += 0.35
-			faceToward(pos() + V(math.cos(d.LookDir), 0, math.sin(d.LookDir)) * 5)
-		else
-			local spot = math.random() < 0.55 and spotNear(pos(), 14)
-			if spot then
-				checkSpot(spot, "Patrol")
-			else
-				startPatrol()
-			end
-		end
-	end
-end
-
-STATES.Stalk = function(_, visible)
-	local d = S.Data
-	local t = d.Target
-	if not valid(t) then
-		startPatrol()
+	S.HuntTarget = target
+	S.LastFelt[target] = at
+	follow(reachable(at), (at - pos()).Magnitude > 40 and I.ProwlSpeed or I.ProwlSpeed - 1.5)
+	-- ran right into them in the dark
+	if tryGrab(target) then
 		return
 	end
-	local r = rootOf(t) :: BasePart
-	if table.find(visible, t) then
-		d.LastSeen = now()
-		d.LastPos = r.Position
-		local dist = (r.Position - pos()).Magnitude
-		local I = ctx.Config.Intruder
-		-- creeping up behind someone who hasn't noticed him: walking pace, then a lunge
-		local speed = dist < 12 and 15 or (dist < 24 and I.SneakSpeed + 1.5 or I.WalkSpeed + 1.5)
-		follow(r.Position, speed)
-		if tryGrab(t) then
-			return
+	-- somewhere he can't get to (the attic, a roof): leave them be for a while
+	if S.Nav:isStuck() then
+		d.StuckSince = d.StuckSince or now()
+		if now() - d.StuckSince > 6 then
+			S.Ignore[target] = now() + 20
+			d.StuckSince = nil
+			S.HuntTarget = nil
 		end
-		if Perception.playerSees(t, S.Head.Position, S.Model) and now() >= S.ChaseCooldownUntil then
-			engage({ t })
-		end
-	elseif now() - d.LastSeen > 3 then
-		setState("Search", { Pos = d.LastPos or r.Position })
+	else
+		d.StuckSince = nil
 	end
+	-- he got to where they were and they're not there (and not hidden): keep following the trail
 end
 
+--[[
+	Chase: he can see you. He's faster than you and doesn't tire; up close he lunges. Get out of
+	his sight and he's back to following your trail, a few seconds behind.
+]]
 STATES.Chase = function(_, visible)
 	local d = S.Data
 	local t = d.Target
 	local I = ctx.Config.Intruder
 	if not valid(t) then
-		startPatrol()
+		startHunt()
+		return
+	end
+	if t:GetAttribute("Hiding") then
+		-- hid out of his sight (in sight, onPlayerHid already sent him to that spot)
+		setState("Search", { Pos = d.LastPos or pos(), Target = t, Checked = {} })
 		return
 	end
 	local r = rootOf(t) :: BasePart
-	if now() - S.StateStart > I.ChaseMaxTime * ((#ctx.Util.sessionPlayers() <= 1) and 0.75 or 1) then
-		S.ChaseCooldownUntil = now() + 20
-		setState("Search", { Pos = r.Position })
-		return
-	end
-	if table.find(visible, t) then
+	local seen = table.find(visible, t) ~= nil
+	if seen then
 		d.LastSeen = now()
 		d.LastPos = r.Position
 		local v = r.AssemblyLinearVelocity
 		d.LastVel = V(v.X, 0, v.Z)
 	elseif now() - d.LastSeen > I.ChaseLoseSightTime then
-		S.ChaseCooldownUntil = now() + 12
-		setState("Search", { Pos = d.LastPos or r.Position })
+		-- lost sight: back on the trail
+		S.HuntTarget = t
+		setState("Prowl", {})
 		return
 	end
-	-- he's heard them running: head for where they are even between glimpses
-	-- (alone, you get a fairer chance: he's a step slower and gives up sooner)
-	local solo = #ctx.Util.sessionPlayers() <= 1
-	-- out of sight for a moment: he runs to where they were heading, not where they are
-	local target = r.Position
-	if not table.find(visible, t) and d.LastPos then
+	-- out of sight for a moment: he runs to where they were heading
+	local goal = r.Position
+	if not seen and d.LastPos then
 		local ahead = (d.LastVel or V()) * math.min(now() - d.LastSeen + 0.6, 1.8)
 		if ahead.Magnitude > 10 then
 			ahead = ahead.Unit * 10
 		end
-		target = d.LastPos + ahead
+		goal = d.LastPos + ahead
 	end
-	follow(target, I.ChaseSpeed - (solo and (I.SoloChaseSlowdown or 1.5) or 0))
+	local solo = #ctx.Util.sessionPlayers() <= 1
+	local speed = I.ChaseSpeed - (solo and I.SoloChaseSlowdown or 0)
+	if seen and (r.Position - pos()).Magnitude < 10 then
+		speed = I.LungeSpeed
+	end
+	follow(goal, speed)
 	tryGrab(t)
 end
 
+--[[
+	Search: someone hid. He goes to where he last felt them, stands still and listens, then
+	tears open hiding spots nearby - one he saw you use first. Two at most, then he leaves.
+]]
 STATES.Search = function(_, visible)
 	if engage(visible) then
 		return
 	end
 	local d = S.Data
+	local I = ctx.Config.Intruder
+	d.Checked = d.Checked or {}
 	if not d.Started then
 		d.Started = true
-		d.Checked = 0
-		S.Nav:goTo(reachable(d.Pos), { Speed = ctx.Config.Intruder.WalkSpeed + 2, Tolerance = 3 })
+		d.Checks = d.Checks or 0
+		S.Nav:goTo(reachable(d.Pos), { Speed = I.ProwlSpeed - 2, Tolerance = 3 })
 	end
 	if now() - S.StateStart > 30 then
-		startPatrol()
+		withdraw()
 		return
 	end
+	-- someone else is out in the open meanwhile: he can feel them, but finishes here first
 	if S.Nav.Arrived or S.Nav:isStuck() then
-		if d.Checked < 2 then
-			local spot = spotNear(d.Pos, 22)
+		if not d.ListenUntil then
+			d.ListenUntil = now() + 2 + math.random() * 1.5
+			S.Nav:stop()
+			ctx.Audio.playAt("ManWhisper", S.Head.Position, { CaptionText = "[Slow, heavy breathing. Listening.]", CaptionRange = 22 })
+			return
+		end
+		if now() < d.ListenUntil then
+			return
+		end
+		if d.Checks < I.SearchChecks then
+			local spot = searchSpot(d.Pos, d.Target, d.Checked)
 			if spot then
-				d.Checked += 1
+				d.Checks += 1
+				d.Checked[spot] = true
+				d.ListenUntil = nil
 				checkSpot(spot, "Search", d)
 				return
 			end
 		end
-		startPatrol()
+		withdraw()
+	end
+end
+
+--[[
+	Withdraw: the house goes quiet. He walks off somewhere dark and waits. This is the time to
+	move. Run into him (or into his sight up close) and it's over early.
+]]
+STATES.Withdraw = function(_, visible)
+	local d = S.Data
+	local I = ctx.Config.Intruder
+	for _, p in visible do
+		local r = rootOf(p)
+		if r and (r.Position - pos()).Magnitude < I.WithdrawNotice then
+			startChase(p)
+			return
+		end
+	end
+	if S.Nav.Arrived and not d.Idle then
+		d.Idle = true
+		S.Nav:stop()
+	end
+	if now() >= d.Until then
+		-- nobody out to hunt: keep waiting, quietly
+		if huntTarget() then
+			startHunt()
+		else
+			d.Until = now() + 4 + math.random() * 4
+		end
 	end
 end
 
@@ -991,27 +937,17 @@ STATES.CheckSpot = function(_, visible)
 	local I = ctx.Config.Intruder
 	local found = false
 	if occupant then
-		local chance
-		if S.SawHide[spot] then
-			chance = I.SeeHideCheckChance
-		else
-			chance = I.RandomHideCheckChance
-			if (occupant:GetAttribute("Nerve") or 100) < ctx.Config.Nerve.Heavy then
-				chance += I.LowNerveHideBonus
-			end
-			if occupant:GetAttribute("HoldingBreath") then
-				chance *= 0.4
-			end
+		-- he saw you get in: he opens it and you're his. Otherwise he usually still finds you
+		-- once he opens the right door, unless you hold your breath and keep still
+		local chance = S.SawHide[spot] and I.SeeHideCheckChance or I.OpenFindChance
+		if occupant:GetAttribute("HoldingBreath") and not S.SawHide[spot] then
+			chance *= 1 - I.BreathHoldSave
 		end
 		found = math.random() < chance
 	end
 	S.SawHide[spot] = nil
 	if found and occupant then
-		if witnesses(occupant) >= I.GroupWitnesses then
-			ctx.Hiding.exit(occupant)
-			retreat(spot.Position, 25)
-			return
-		end
+		ctx.Audio.playAt("DoorYank", spot.Position, { CaptionText = "[The door is ripped open]", CaptionRange = 50 })
 		ctx.Hiding.exit(occupant, true)
 		ctx.Capture.capture(occupant)
 		local boiler = ctx.Rooms.ByName.Boiler
@@ -1028,7 +964,7 @@ STATES.CheckSpot = function(_, visible)
 		S.Data = d.ReturnData
 		S.Nav.Arrived = true
 	else
-		startPatrol()
+		startHunt()
 	end
 end
 
@@ -1048,56 +984,17 @@ STATES.Stunned = function()
 	end
 end
 
-STATES.Frantic = function(_, visible)
-	local d = S.Data
-	local I = ctx.Config.Intruder
-	if d.Phase == "Hunt" then
-		if now() - S.StateStart > I.FranticTime then
-			d.Phase = "Flee"
-			ctx.Director.logTruthRaw("Curtis gave up and ran for his van.")
-			S.Nav:goTo(V(71, 1, -3), { Speed = 15, Tolerance = 3, Hurry = true })
-			d.FleeStage = 1
-			d.FleeStart = now()
-			return
-		end
-		local target = (#visible > 0 and pickTarget(visible)) or (valid(d.Caller) and d.Caller) or nil
-		if target then
-			local r = rootOf(target)
-			if r then
-				follow(r.Position, I.ChaseSpeed - 1)
-				if table.find(visible, target) then
-					tryGrab(target)
-				end
-			end
-		elseif S.Nav.Arrived then
-			S.Nav:goTo(pickPatrolGoal(), { Speed = 12 })
-		end
-		return
-	end
-	-- Flee: out the garage side door, to the van, gone
-	if d.FleeStage == 1 and (S.Nav.Arrived or S.Nav:isStuck()) then
-		d.FleeStage = 2
-		S.Nav:goTo(ctx.Layout.Outside.Van + V(12, 3, 0), { Speed = 15, Tolerance = 5 })
-	elseif d.FleeStage == 2 and (S.Nav.Arrived or now() - d.FleeStart > 40) then
-		if not Perception.anyoneSees(S.Head.Position, S.Model) or now() - d.FleeStart > 50 then
-			setState("Gone")
-			park()
-		end
-	end
-end
-
 STATES.Trapped = function()
 	local d = S.Data
 	local I = ctx.Config.Intruder
 	local door = ctx.Doors.get("Basement")
 	if not door then
-		startPatrol()
+		startHunt()
 		return
 	end
 	if not door.Locked or door.IsOpen then
 		S.Nav.DoorFilter = nil
-		setState("Patrol", {})
-		startPatrol()
+		startHunt()
 		return
 	end
 	local t = now() - S.StateStart
@@ -1108,7 +1005,7 @@ STATES.Trapped = function()
 		ctx.Audio.playAt("DoorForce", door.Position, { CaptionText = "[The basement door bursts open]", CaptionRange = 120 })
 		ctx.Director.logTruthRaw("Curtis forced the basement door open.")
 		ctx.Remotes.Notify:FireAllClients("The basement door just gave way.", "danger")
-		startPatrol()
+		startHunt()
 		return
 	end
 	if t > I.TrappedEscapeTime - 25 then
@@ -1133,34 +1030,61 @@ end
 ---------------------------------------------------------------------------
 -- Think loop
 ---------------------------------------------------------------------------
+-- which gait the clients should animate (client/Controllers/Creature)
+local function gaitFor(speed: number): string
+	local st = S.State
+	if st == "Stunned" then
+		return "Stunned"
+	elseif st == "CheckSpot" and S.Data.Phase == "Open" then
+		return "Reach"
+	elseif speed > 12 then
+		return "Chase"
+	elseif st == "Search" or st == "CheckSpot" then
+		return "Search"
+	elseif st == "Chase" and speed < 2 then
+		return "Reach"
+	elseif speed > 0.6 then
+		return "Walk"
+	elseif st == "Lurk" or st == "Withdraw" then
+		return "Stare"
+	end
+	return "Idle"
+end
+
 local function animate(dt: number)
 	local v = S.Root.AssemblyLinearVelocity
 	local speed = V(v.X, 0, v.Z).Magnitude
-	if speed > 12 then
-		playTrack("Run", speed / 16)
-	elseif speed > 0.6 then
-		playTrack("Walk", math.max(speed / 9, 0.5))
-	else
-		playTrack("Idle", 1)
+	if S.Tracks.Run then
+		if speed > 12 then
+			playTrack("Run", speed / 16)
+		elseif speed > 0.6 then
+			playTrack("Walk", math.max(speed / 9, 0.5))
+		else
+			playTrack("Idle", 1)
+		end
 	end
-	-- his footsteps: loud when running, soft when walking, silent when sneaking
+	local gait = gaitFor(speed)
+	if S.Model:GetAttribute("Gait") ~= gait then
+		S.Model:SetAttribute("Gait", gait)
+	end
+	-- his footsteps, in time with his stride: thunder when he runs, slow and heavy otherwise
 	S.StepClock += dt
-	local interval = speed > 12 and 0.35 or 0.65
+	local running = speed > 12
+	local interval = running and math.max(3.75 / speed, 0.18) or math.max(2.6 / math.max(speed, 1), 0.3)
 	if speed > ctx.Config.Intruder.SneakSpeed + 0.5 and S.StepClock >= interval then
 		S.StepClock = 0
-		local running = speed > 12
 		S.CaptionClock -= interval
 		local caption = S.CaptionClock <= 0
 		if caption then
 			S.CaptionClock = running and 2 or 5
 		end
 		ctx.Audio.playAt("Footstep", pos() - V(0, 2.5, 0), {
-			Volume = running and 1 or 0.45,
-			Pitch = 0.8,
-			Range = running and 80 or 40,
+			Volume = running and 1 or 0.5,
+			Pitch = running and 0.72 or 0.8,
+			Range = running and 95 or 40,
 			Caption = caption,
 			CaptionText = running and "[Heavy footsteps, running]" or "[Heavy footsteps]",
-			CaptionRange = running and 60 or 28,
+			CaptionRange = running and 70 or 28,
 		})
 	end
 end
@@ -1179,6 +1103,9 @@ local function think(dt: number)
 	end
 	S.Nav:update()
 	animate(dt)
+	if S.Mode == "Hunt" then
+		recordTrails()
+	end
 	local visible = {}
 	local head = S.Head.CFrame
 	for _, p in ctx.Util.activePlayers() do
@@ -1193,7 +1120,7 @@ local function think(dt: number)
 	S.Visible = visible
 	-- he prefers the dark: passing through a lit, empty room nobody can see, he sometimes
 	-- reaches for the switch (rooms go dark one by one while you're elsewhere)
-	if (state == "Lurk" or state == "Patrol" or state == "Search") and #visible == 0 and ctx.Power.isOn() then
+	if (state == "Lurk" or state == "Withdraw" or state == "Prowl") and #visible == 0 and ctx.Power.isOn() then
 		S.LightsClock = (S.LightsClock or 0) - dt
 		if S.LightsClock <= 0 then
 			S.LightsClock = 4
@@ -1279,14 +1206,16 @@ function Intruder.setMode(mode: string, cause: Player?)
 		setState("Lurk", { Phase = "Hidden", Until = now() + 18 + math.random() * 12 })
 	elseif mode == "Hunt" then
 		enterHouse(function()
-			if S.Mode ~= "Hunt" or S.State == "Trapped" or S.State == "Frantic" then
+			if S.Mode ~= "Hunt" or S.State == "Trapped" or S.State == "Gone" then
 				return
 			end
-			local r = cause and rootOf(cause)
-			if r then
-				setState("Investigate", { Pos = r.Position, Radius = 60, Retarget = true })
-			else
-				startPatrol()
+			-- already hunting: carry on
+			if S.State == "Prowl" or S.State == "Chase" or S.State == "Search" or S.State == "CheckSpot" or S.State == "Withdraw" or S.State == "Retreat" or S.State == "Stunned" then
+				return
+			end
+			startHunt()
+			if cause and valid(cause) then
+				S.HuntTarget = cause
 			end
 		end)
 	end
@@ -1354,32 +1283,58 @@ function Intruder.reset()
 	workspace:SetAttribute("IntruderState", nil)
 end
 
+-- help is coming: he knows he's out of time. Shorter breaks between hunts, and he comes
+-- straight for whoever made the call.
 function Intruder.onHelpCalled(caller: Player?)
-	if not S.InHouse or S.State == "Trapped" or S.State == "Gone" or S.State == "Stopped" then
+	if S.Mode == "Offstage" or S.Mode == "Stopped" or S.State == "Trapped" or S.State == "Gone" then
 		return
 	end
-	setState("Frantic", { Phase = "Hunt", Caller = caller })
-	S.Mode = "Hunt"
-	ctx.Audio.caption("[A man shouting somewhere in the house]", pos(), 90)
+	S.Frenzy = true
+	if S.Mode ~= "Hunt" or not S.InHouse then
+		-- still hiding in the walls: not any more
+		Intruder.setMode("Hunt", caller)
+		return
+	end
+	ctx.Audio.caption("[A man screaming somewhere in the house]", pos(), 120)
+	if S.State == "Withdraw" or S.State == "Lurk" or S.State == "Retreat" then
+		startHunt()
+	end
+	if caller and valid(caller) then
+		S.HuntTarget = caller
+		S.UnhidAt[caller] = nil
+	end
 end
 
+-- someone is trying the doors and windows: he hears it
 function Intruder.onExitAttempt(position: Vector3, player: Player)
 	if S.Mode ~= "Hunt" or not S.InHouse then
 		return
 	end
-	if S.State == "Patrol" or S.State == "Investigate" or S.State == "Search" then
-		setState("Investigate", { Pos = position, Radius = 60, Retarget = true })
+	if S.State == "Withdraw" then
+		startHunt()
+	end
+	if (S.State == "Prowl" or S.State == "Withdraw") and valid(player) and not player:GetAttribute("Hiding") then
+		S.HuntTarget = player
+		S.UnhidAt[player] = nil
+		S.Ignore[player] = nil
+		-- the noise gives the place away right now, not a few seconds late
+		local tr = S.Trails[player]
+		if tr then
+			table.insert(tr, { T = now() - ctx.Config.Intruder.SenseDelay, Pos = position })
+		end
 	end
 end
 
+-- he saw you get in (or heard it right next to him): he's coming to that exact spot
 function Intruder.onPlayerHid(player: Player, spot)
-	if not S.InHouse then
+	if not S.InHouse or not S.Root then
 		return
 	end
-	if table.find(S.Visible, player) then
+	local heard = (spot.Position - pos()).Magnitude < 9
+	if table.find(S.Visible, player) or heard then
 		S.SawHide[spot] = true
-		if (S.State == "Stalk" or S.State == "Chase") and S.Data.Target == player then
-			checkSpot(spot, "Patrol")
+		if S.Mode == "Hunt" and (S.State == "Prowl" or S.State == "Chase" or S.State == "Search" or S.State == "Withdraw") then
+			checkSpot(spot, "Search", { Pos = spot.Position, Target = player, Started = true, Checks = 1, Checked = { [spot] = true } })
 		end
 	end
 end
@@ -1445,19 +1400,15 @@ function Intruder.start()
 		if #S.Noises > 20 then
 			table.remove(S.Noises, 1)
 		end
-		if S.State == "Patrol" or S.State == "Search" then
-			setState("Investigate", { Pos = ev.Position, Radius = ev.Radius, Retarget = true })
-		elseif S.State == "Investigate" then
-			local d = S.Data
-			if (ev.Radius >= (d.Radius or 0) or now() - S.StateStart > 3) and (ev.Position - d.Pos).Magnitude > 6 then
-				d.Pos = ev.Position
-				d.Radius = ev.Radius
-				d.LookUntil = nil
-				if now() - (d.LastRetarget or 0) > 1.5 then
-					d.LastRetarget = now()
-					d.Retarget = true
-				end
-			end
+		-- something loud while he's lying low: the break is over
+		if S.State == "Withdraw" and (ev.Radius or 0) >= 30 and S.Data.Until - now() > 4 then
+			startHunt()
+		end
+		-- whoever made it is felt right away
+		local who = ev.Source
+		if who and valid(who) and S.Trails[who] and (S.State == "Prowl" or S.State == "Withdraw") then
+			S.UnhidAt[who] = nil
+			table.insert(S.Trails[who], { T = now() - ctx.Config.Intruder.SenseDelay, Pos = ev.Position })
 		end
 	end)
 

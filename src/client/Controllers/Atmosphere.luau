@@ -306,8 +306,8 @@ function Atmosphere.start()
 				dist = (curtis:GetPivot().Position - cam.CFrame.Position).Magnitude
 			end
 			local inNight = game:GetService("Players").LocalPlayer:GetAttribute("InGame") == true
-			local chasing = inNight and (state == "Chase" or state == "Frantic") and dist < 140
-			local hunting = inNight and (state == "Stalk" or state == "Search" or state == "Investigate" or state == "CheckSpot") and dist < 70
+			local chasing = inNight and state == "Chase" and dist < 140
+			local hunting = inNight and (state == "Prowl" or state == "Search" or state == "CheckSpot") and dist < 80
 			local wantChase = chasing and math.clamp(1.2 - dist / 140, 0.35, 1) * 0.5 or 0
 			local wantDread = (hunting and not chasing) and math.clamp(1 - dist / 70, 0.2, 1) * 0.3 or 0
 			-- the chase slams in; everything else eases

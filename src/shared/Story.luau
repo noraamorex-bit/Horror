@@ -732,8 +732,23 @@ Story.Endings = {
 -- shown once, the first night someone plays, when he starts moving around the house
 Story.SurvivalTips = {
 	Title = "HE'S IN THE HOUSE",
-	Body = "• Hide in closets, wardrobes, under beds, behind the shower curtain.\n• When he's close, hold your BREATH.\n• He sees you in the light and hears you run. Crouch in the dark.\n• Stick together: friends can cut you free if he takes you.\n• Get help: fix the phone line, find a signal, reach the neighbor, or take the car.",
+	Body = "• He always knows roughly where you are. When you hear him running, HIDE: closets, wardrobes, under beds, the shower.\n• Don't let him see you get in. Run, break his line of sight, then hide.\n• When he opens the doors around you, hold your BREATH.\n• Once he sees you, you can't outrun him for long.\n• When it goes quiet, he's resting. That's when you move: fix the phone line, find a signal, reach the neighbor, or take the car.",
 	Button = "GOT IT",
+}
+
+-- The hunt (server/Intruder): what your character thinks when he starts coming
+Story.Hunt = {
+	First = {
+		"Footsteps. Running. Coming this way.",
+		"He knows where we are. HIDE.",
+	},
+	FirstNotice = "He's hunting you. Hide before he sees you.",
+	Wave = {
+		"A door slammed. He's moving again.",
+		"He's coming. Find somewhere to hide. Now.",
+		"Those footsteps again. Getting closer.",
+	},
+	Seen = "He saw me. RUN. Get out of his sight and hide.",
 }
 
 -- Evidence: the clue documents that tell you who he is. Read enough of them (between you)

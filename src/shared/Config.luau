@@ -95,29 +95,38 @@ Config.Flashlight = {
 }
 
 Config.Intruder = {
-	WalkSpeed = 9,
+	WalkSpeed = 9, -- lying low between hunts
 	SneakSpeed = 6.5,
-	ChaseSpeed = 16.5,
+	ProwlSpeed = 15, -- running to where he feels you are (you sprint at 17, briefly)
+	ChaseSpeed = 18, -- he can see you: faster than you, and he doesn't tire
+	LungeSpeed = 22, -- the last few steps
 	GrabRange = 5,
 	FOV = 100, -- degrees
 	SightLit = 80,
 	SightDark = 22,
-	SightFlashlight = 110,
+	SightFlashlight = 110, -- a flashlight in the dark gives you away from across the house
 	CrouchSightMultiplier = 0.6,
 	PeripheralRange = 7, -- sensed regardless of facing
-	ChaseMaxTime = 15, -- x0.75 when playing alone
-	SoloChaseSlowdown = 1.5, -- studs/s slower when playing alone
-	ChaseLoseSightTime = 4,
+	SoloChaseSlowdown = 1, -- studs/s slower when playing alone
+	ChaseLoseSightTime = 2.5, -- out of sight this long and he's back to following your trail
+	-- what he knows
+	SenseDelay = 3, -- he feels where you were this many seconds ago
+	HideGrace = 8, -- after leaving a hiding spot, he can't feel you for this long
+	-- searching hiding spots
+	SearchChecks = 2,
+	TrueSpotWeight = 1.8, -- the spot you're really in is this much likelier to be opened
+	SeeHideCheckChance = 1, -- he saw you get in
+	OpenFindChance = 0.85, -- he opens your spot without having seen you
+	BreathHoldSave = 0.55, -- holding your breath cuts that by this much
+	-- between hunts
+	WithdrawMin = 22,
+	WithdrawMax = 34,
+	WithdrawNotice = 30, -- seen this close while he's lying low, and he comes anyway
 	StunTime = 7,
-	RetreatAfterStun = 35,
-	RetreatAfterCapture = 40,
+	RetreatAfterStun = 30,
+	RetreatAfterCapture = 35,
 	CaptiveCheckInterval = 150,
 	ForceLockTime = 5,
-	GroupWitnesses = 2, -- he won't grab in front of this many lit, alert witnesses
-	SeeHideCheckChance = 1,
-	RandomHideCheckChance = 0.3,
-	LowNerveHideBonus = 0.25,
-	FranticTime = 60,
 	TrappedEscapeTime = 90,
 	ThinkRate = 0.1,
 }

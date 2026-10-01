@@ -17,6 +17,7 @@ ctx.Rooms = require(Shared.Rooms)
 ctx.Sounds = require(Shared.Sounds)
 ctx.Story = require(Shared.Story)
 ctx.Util = require(Shared.Util)
+ctx.CreaturePose = require(Shared.CreaturePose)
 
 -- the server tells us whether this is the lobby or a night in the house
 local mode = workspace:GetAttribute("Mode")
@@ -30,7 +31,7 @@ local ORDER = if mode == "Lobby"
 	then { "UI", "Input", "Notice", "Social", "Effects", "Atmosphere", "LobbyHub" }
 	else {
 		"UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD",
-		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate",
+		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature",
 	}
 
 local modules = {}
