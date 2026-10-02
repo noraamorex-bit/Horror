@@ -208,17 +208,17 @@ Config.Badges = {
 ]]
 Config.Shop = {
 	Passes = {
-		{ Key = "Supporter", Id = 0, Price = 49, Name = "Supporter", Desc = "A SUPPORTER tag in the lobby, a gold flashlight and a star on the donation board." },
-		{ Key = "Colours", Id = 0, Price = 79, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
-		{ Key = "Battery", Id = 0, Price = 99, Name = "Long-life battery", Desc = "Your flashlight battery lasts twice as long." },
-		{ Key = "PepperSpray", Id = 0, Price = 149, Name = "Pepper spray", Desc = "Start every night with a can of pepper spray (one use)." },
+		{ Key = "Supporter", Id = 2008280313, Price = 49, Name = "Supporter", Desc = "A SUPPORTER tag in the lobby, a gold flashlight and a star on the donation board." },
+		{ Key = "Colours", Id = 2005832310, Price = 79, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
+		{ Key = "Battery", Id = 2005388315, Price = 99, Name = "Long-life battery", Desc = "Your flashlight battery lasts twice as long." },
+		{ Key = "PepperSpray", Id = 2006030307, Price = 149, Name = "Pepper spray", Desc = "Start every night with a can of pepper spray (one use)." },
 	},
 	Donations = {
-		{ Id = 0, Amount = 10 },
-		{ Id = 0, Amount = 50 },
-		{ Id = 0, Amount = 100 },
-		{ Id = 0, Amount = 500 },
-		{ Id = 0, Amount = 1000 },
+		{ Id = 3715928524, Amount = 10 },
+		{ Id = 3715928529, Amount = 50 },
+		{ Id = 3715928536, Amount = 100 },
+		{ Id = 3715928539, Amount = 500 },
+		{ Id = 3715928542, Amount = 1000 },
 	},
 }
 
