@@ -342,6 +342,10 @@ local function build(root: Folder)
 		end
 	end
 	Kit.mailbox(root, CFrame.lookAt(ORIGIN + V(5.4, 0.5, 20.6), ORIGIN + V(5.4, 0.5, 22)))
+	-- the donation board on the front lawn, turned toward where you spawn (ShopService)
+	if ctx.Shop then
+		ctx.Shop.buildBoard(root, CFrame.lookAt(ORIGIN + V(15, 0.5, 5), ORIGIN + V(2, 0.5, 13)))
+	end
 	-- the survivors' board beside the queue circles (top 10 by nights survived, refreshed)
 	do
 		local boardCF = CFrame.lookAt(ORIGIN + V(-39, 7, -13), ORIGIN + V(0, 7, -13))

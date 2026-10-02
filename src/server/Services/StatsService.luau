@@ -31,12 +31,20 @@ Stats.Beams = {
 	{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 176, 96) },
 	{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(190, 214, 255) },
 	{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 96, 80) },
+	-- game passes (ShopService): Supporter's gold, and Ghost with the colours pass
+	{ Id = "Gold", Name = "Gold", Pass = "Supporter", Color = Color3.fromRGB(255, 212, 120) },
+	{ Id = "Ghost", Name = "Ghost", Pass = "Colours", Color = Color3.fromRGB(196, 255, 222) },
 }
 
-local function beamUnlocked(d, id: string): boolean
+local function beamUnlocked(d, id: string, player: Player?): boolean
+	local colours = player ~= nil and player:GetAttribute("Pass_Colours") == true
 	for _, b in Stats.Beams do
 		if b.Id == id then
-			return d.Referrals >= b.Need or (b.Need == 1 and d.Referred)
+			if b.Pass then
+				-- (each pass colour is its own: Gold is the supporters')
+				return player ~= nil and player:GetAttribute("Pass_" .. b.Pass) == true
+			end
+			return colours or d.Referrals >= b.Need or (b.Need == 1 and d.Referred)
 		end
 	end
 	return false
@@ -71,7 +79,7 @@ local function mirror(player: Player)
 	player:SetAttribute("StatEndingList", table.concat(list, ","))
 	player:SetAttribute("StatReferrals", d.Referrals)
 	player:SetAttribute("StatReferred", d.Referred)
-	if not beamUnlocked(d, d.Beam) then
+	if not beamUnlocked(d, d.Beam, player) then
 		d.Beam = "Classic"
 	end
 	player:SetAttribute("StatBeam", d.Beam)
@@ -94,6 +102,9 @@ local function load(player: Player)
 			local d = fresh()
 			d.Nights = tonumber(data.Nights) or 0
 			d.Escapes = tonumber(data.Escapes) or 0
+			d.Referrals = tonumber(data.Referrals) or 0
+			d.Referred = data.Referred == true
+			d.Beam = type(data.Beam) == "string" and data.Beam or "Classic"
 			for k, v in (type(data.Endings) == "table" and data.Endings or {}) do
 				if v then
 					d.Endings[k] = true
@@ -120,10 +131,14 @@ local function save(userId: number)
 				for k in d.Endings do
 					endings[k] = true
 				end
+				-- (invites and the chosen beam ride along: a save must never wipe them)
 				return {
 					Nights = math.max(tonumber(old.Nights) or 0, d.Nights),
 					Escapes = math.max(tonumber(old.Escapes) or 0, d.Escapes),
 					Endings = endings,
+					Referrals = math.max(tonumber(old.Referrals) or 0, d.Referrals),
+					Referred = old.Referred == true or d.Referred,
+					Beam = d.Beam,
 				}
 			end)
 		end)
@@ -140,7 +155,7 @@ local function creditReferrer(referrerId: number, newcomer: Player)
 		mirror(online)
 		save(referrerId)
 		for _, b in Stats.Beams do
-			if before < b.Need and d.Referrals >= b.Need then
+			if b.Need and before < b.Need and d.Referrals >= b.Need then
 				ctx.Remotes.Notify:FireClient(online, newcomer.DisplayName .. " joined you. Flashlight colour unlocked: " .. b.Name, "done")
 				return
 			end
@@ -208,12 +223,17 @@ end
 -- pick a flashlight colour you've unlocked
 function Stats.setBeam(player: Player, id: string)
 	local d = cache[player.UserId]
-	if not d or type(id) ~= "string" or not beamUnlocked(d, id) then
+	if not d or type(id) ~= "string" or not beamUnlocked(d, id, player) then
 		return
 	end
 	d.Beam = id
 	mirror(player)
 	save(player.UserId)
+end
+
+-- passes changed (ShopService): re-check what's unlocked and update the attributes
+function Stats.refresh(player: Player)
+	mirror(player)
 end
 
 function Stats.beamColor(player: Player): Color3

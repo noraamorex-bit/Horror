@@ -130,6 +130,8 @@ function LobbyHub.start()
 		{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 176, 96) },
 		{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(190, 214, 255) },
 		{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 96, 80) },
+		{ Id = "Gold", Name = "Gold", Pass = "Supporter", PassName = "Supporter pass", Color = Color3.fromRGB(255, 212, 120) },
+		{ Id = "Ghost", Name = "Ghost", Pass = "Colours", PassName = "Colours pass", Color = Color3.fromRGB(196, 255, 222) },
 	}
 	local me = game:GetService("Players").LocalPlayer
 	local beams = UI.new("Frame", {
@@ -166,6 +168,13 @@ function LobbyHub.start()
 		local stroke = UI.stroke(row, Color3.new(1, 1, 1), 1, 1)
 		rows[b.Id] = { Row = row, Label = label, Stroke = stroke, Def = b }
 		row.Activated:Connect(function()
+			-- a pass colour you don't have yet: show it in the shop
+			if b.Pass and not me:GetAttribute("Pass_" .. b.Pass) then
+				if ctx.ShopUI then
+					ctx.ShopUI.open("Passes")
+				end
+				return
+			end
 			ctx.Remotes.SetBeam:FireServer(b.Id)
 		end)
 	end
@@ -173,16 +182,26 @@ function LobbyHub.start()
 		local n = tonumber(me:GetAttribute("StatReferrals")) or 0
 		local referred = me:GetAttribute("StatReferred") == true
 		beamHead.Text = "Invite friends to unlock colours. Friends brought: " .. n
+		local colours = me:GetAttribute("Pass_Colours") == true
 		for id, r in rows do
-			local unlocked = n >= r.Def.Need or (r.Def.Need == 1 and referred)
+			local unlocked
+			if r.Def.Pass then
+				unlocked = me:GetAttribute("Pass_" .. r.Def.Pass) == true
+			else
+				unlocked = colours or n >= r.Def.Need or (r.Def.Need == 1 and referred)
+			end
 			local chosen = me:GetAttribute("StatBeam") == id or (me:GetAttribute("StatBeam") == nil and id == "Classic")
-			r.Label.Text = unlocked and r.Def.Name or (r.Def.Name .. "   ·   bring " .. r.Def.Need .. (r.Def.Need == 1 and " friend" or " friends"))
+			if r.Def.Pass then
+				r.Label.Text = unlocked and r.Def.Name or (r.Def.Name .. "   ·   " .. r.Def.PassName)
+			else
+				r.Label.Text = unlocked and r.Def.Name or (r.Def.Name .. "   ·   bring " .. r.Def.Need .. (r.Def.Need == 1 and " friend" or " friends"))
+			end
 			r.Label.TextTransparency = unlocked and 0 or 0.5
 			r.Row.AutoButtonColor = unlocked
 			r.Stroke.Transparency = chosen and 0.2 or 1
 		end
 	end
-	for _, a in { "StatReferrals", "StatReferred", "StatBeam" } do
+	for _, a in { "StatReferrals", "StatReferred", "StatBeam", "Pass_Colours", "Pass_Supporter" } do
 		me:GetAttributeChangedSignal(a):Connect(showBeams)
 	end
 	showBeams()

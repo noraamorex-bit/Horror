@@ -144,6 +144,10 @@ function PlayerState.assignRoles(players: { Player })
 		for item, n in role.Items do
 			ctx.Inventory.give(p, item, n)
 		end
+		-- the pepper spray pass: a can of your own, one spray
+		if p:GetAttribute("Pass_PepperSpray") then
+			ctx.Inventory.give(p, "PepperSpray", 1)
+		end
 	end
 end
 
@@ -297,7 +301,9 @@ local function slowTick(dt: number)
 
 		-- flashlight battery
 		if player:GetAttribute("FlashlightOn") then
-			local b = (player:GetAttribute("Battery") or 0) - dt * (100 / ctx.Config.Flashlight.BatterySeconds)
+			-- (the long-life battery pass: twice as long)
+			local life = ctx.Config.Flashlight.BatterySeconds * (player:GetAttribute("Pass_Battery") and 2 or 1)
+			local b = (player:GetAttribute("Battery") or 0) - dt * (100 / life)
 			player:SetAttribute("Battery", math.max(0, b))
 			if b <= 0 then
 				PlayerState.setFlashlight(player, false)

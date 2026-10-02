@@ -200,6 +200,28 @@ Config.Badges = {
 	GotAway = 0,
 }
 
+--[[
+	Shop (server/Services/ShopService, client/Controllers/Shop). Game passes and donation products
+	are created in the Creator Hub (Monetization); paste their IDs here. Id 0 = not set up yet:
+	the item still shows in the shop, marked "Soon". Price is only shown until Roblox reports the
+	real one.
+]]
+Config.Shop = {
+	Passes = {
+		{ Key = "Supporter", Id = 0, Price = 49, Name = "Supporter", Desc = "A SUPPORTER tag in the lobby, a gold flashlight and a star on the donation board." },
+		{ Key = "Colours", Id = 0, Price = 79, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
+		{ Key = "Battery", Id = 0, Price = 99, Name = "Long-life battery", Desc = "Your flashlight battery lasts twice as long." },
+		{ Key = "PepperSpray", Id = 0, Price = 149, Name = "Pepper spray", Desc = "Start every night with a can of pepper spray (one use)." },
+	},
+	Donations = {
+		{ Id = 0, Amount = 10 },
+		{ Id = 0, Amount = 50 },
+		{ Id = 0, Amount = 100 },
+		{ Id = 0, Amount = 500 },
+		{ Id = 0, Amount = 1000 },
+	},
+}
+
 Config.PepperSpray = {
 	Uses = 2,
 	Range = 12,

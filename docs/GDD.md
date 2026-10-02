@@ -321,6 +321,22 @@ Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host
 
 ---
 
+### Shop & donations (`ShopService`, client `Shop`)
+A **SHOP** button sits on the right edge of the lobby screen. A gold "!" pulses on it until you open it. The panel has two tabs:
+
+| Game pass | Price | What it does |
+|---|---|---|
+| Supporter | 49 R$ | A ★ SUPPORTER tag above you in the lobby, the Gold flashlight, and a star on the donation board |
+| Flashlight colours | 79 R$ | Every invite colour, plus the Ghost beam |
+| Long-life battery | 99 R$ | Your flashlight battery lasts twice as long |
+| Pepper spray | 149 R$ | You start every night with a can of pepper spray (one use) |
+
+**Support** takes donations of 10, 50, 100, 500 or 1000 R$ (developer products) and shows the top 10 supporters. The **donation board** on the front lawn of the lobby lists them too, and its DONATE prompt opens this tab.
+- Each receipt is counted once: a DataStore key per purchase id, then a total in the `Donations_v1` OrderedDataStore.
+- Everyone in the server sees a thank-you message.
+- Ownership becomes `Pass_<Key>` player attributes, checked on join and set right after a purchase.
+- Pass and product IDs go in `Config.Shop`. An ID of 0 shows the item as "Soon".
+
 ## 5. Level Layout — 14 Alder Lane
 
 All coordinates are in studs. The front of the house faces −Z (toward the street).

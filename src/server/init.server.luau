@@ -68,6 +68,11 @@ Stats.start()
 -- Lobby servers: queue circles that teleport groups into their own game server
 local mode = ctx.Mode.get()
 workspace:SetAttribute("Mode", mode)
+
+-- game passes and donations (both places: a purchase can land wherever the player is)
+local Shop = require(Services.ShopService)
+Shop.init(ctx)
+Shop.start()
 if mode == "Lobby" then
 	require(script.Lobby.LobbyServer).run(ctx)
 	return
