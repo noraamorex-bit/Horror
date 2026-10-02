@@ -323,6 +323,14 @@ local function startGame()
 	end
 	state.GameStart = os.clock()
 	broadcastLobby()
+	-- the opening shot (client Intro): the house from the street, a flash of lightning, and for
+	-- an instant someone standing in the upstairs window. He's been here all along.
+	if ctx.Intruder.prepare then
+		ctx.Intruder.prepare()
+	end
+	for _, p in participants do
+		ctx.Remotes.Intro:FireClient(p)
+	end
 	Director.startAct("Evening")
 end
 

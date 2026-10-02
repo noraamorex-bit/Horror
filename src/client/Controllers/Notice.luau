@@ -53,20 +53,32 @@ local function close()
 	showNext()
 end
 
+-- held back (the night's opening shot is playing): cards wait, then come in order
+local holdUntil = 0
+
+function Notice.hold(seconds: number)
+	holdUntil = os.clock() + seconds
+	task.delay(seconds + 0.05, function()
+		if not current and os.clock() >= holdUntil then
+			showNext()
+		end
+	end)
+end
+
 function Notice.show(data, onClose: (() -> ())?)
 	data.OnClose = onClose
 	table.insert(queue, data)
-	if not current then
+	if not current and os.clock() >= holdUntil then
 		showNext()
 	end
 end
 
 function Notice.isOpen(): boolean
-	return current ~= nil
+	return current ~= nil or os.clock() < holdUntil
 end
 
 function Notice.whenClear(fn: () -> ())
-	if current then
+	if current or os.clock() < holdUntil then
 		table.insert(waiting, fn)
 	else
 		task.spawn(fn)

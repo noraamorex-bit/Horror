@@ -1378,6 +1378,11 @@ function Intruder.stop()
 	end
 end
 
+-- build him (offstage) ahead of time, so clients can show a copy of him (the opening shot)
+function Intruder.prepare()
+	ensureModel()
+end
+
 function Intruder.reset()
 	S = fresh()
 	workspace:SetAttribute("IntruderState", nil)

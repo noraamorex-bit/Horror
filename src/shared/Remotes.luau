@@ -25,6 +25,7 @@ local NAMES = {
 	"Queue", -- (state | nil) lobby: your queue circle
 	"Thought", -- (text, hintKey?) your character thinking out loud
 	"Dialogue", -- (line | nil) a conversation line, maybe with choices; nil closes the box
+	"Intro", -- () the night's opening shot: the house from the street, and him in the window
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})

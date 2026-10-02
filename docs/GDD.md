@@ -321,6 +321,14 @@ Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host
 
 ---
 
+### Opening shot (client `Intro`)
+At the start of each night, for a player's first 3 nights, the camera holds on the house from across the street for 4.6 seconds:
+- black bars top and bottom, and the caption "14 Alder Lane · Friday, 8:47 PM";
+- at 1.5 seconds, lightning, and for 0.55 seconds he stands in the upstairs front window;
+- then a cut inside.
+
+Notices and the chapter card wait until the shot ends (`Notice.hold`). It exists for retention: players see the threat in the first seconds, while the acts keep their slow build.
+
 ### Shop & donations (`ShopService`, client `Shop`)
 A **SHOP** button sits on the right edge of the lobby screen. A gold "!" pulses on it until you open it. The panel has two tabs:
 

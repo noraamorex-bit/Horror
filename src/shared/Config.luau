@@ -30,8 +30,9 @@ Config.LobbyCountdown = 10
 -- Act lengths in minutes. An act ends at Max, or earlier once its exit condition is met (never before Min).
 Config.TimeScale = 1
 Config.Acts = {
-	Evening = { Min = 4, Max = 7 },
-	SmallThings = { Min = 5, Max = 8 },
+	-- (kept short: the cozy part sets the mood, but players came for him)
+	Evening = { Min = 2.5, Max = 5 },
+	SmallThings = { Min = 4, Max = 6 },
 	SomeoneElse = { Min = 6, Max = 9 },
 }
 Config.HardCapMinutes = 60

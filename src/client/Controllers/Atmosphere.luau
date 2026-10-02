@@ -175,6 +175,7 @@ end
 
 function Atmosphere.init(c)
 	ctx = c
+	ctx.Atmosphere = Atmosphere
 end
 
 function Atmosphere.start()
