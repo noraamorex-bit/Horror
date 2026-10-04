@@ -88,6 +88,60 @@ await page.evaluate(([world, cr, W, H]) => {
   // the photos on his wall: real pictures of the family's rooms
   window.PHOTOS = [];
 }, [world, { parts: cr.parts }, W, H]);
+// staged Roblox avatars (spec.avatars), with a phone in their hands if asked
+if (spec.avatars && spec.avatars.length) {
+  await page.addScriptTag({ path: 'avatar.js' });
+  await page.evaluate((avatars) => {
+    const T = THREE;
+    for (const a of avatars) {
+      const g = window.buildAvatar(a);
+      g.position.set(...a.pos); g.rotation.y = a.yaw || 0;
+      window.S.add(g); g.updateMatrixWorld(true);
+      if (a.phone) {
+        const l = new T.Vector3(), r = new T.Vector3(), head = new T.Vector3();
+        g.userData.hands.l.getWorldPosition(l); g.userData.hands.r.getWorldPosition(r); g.userData.headNode.getWorldPosition(head);
+        head.y += 0.86;
+        const at = (a.phone.hand === 'r' ? r.clone() : a.phone.hand === 'l' ? l.clone() : l.clone().add(r).multiplyScalar(0.5)).add(new T.Vector3(...(a.phone.offset || [0, 0, 0])));
+        const ph = new T.Group(); ph.position.copy(at); window.S.add(ph); ph.lookAt(head);
+        const body = new T.Mesh(new T.BoxGeometry(0.62, 1.12, 0.09), new T.MeshStandardMaterial({ color: 0x141418, roughness: 0.35, metalness: 0.3 }));
+        ph.add(body);
+        const scr = new T.Mesh(new T.PlaneGeometry(0.55, 1.02), new T.MeshStandardMaterial({ color: 0xd8e8ff, emissive: 0xd8e8ff, emissiveIntensity: 2.4 }));
+        scr.position.z = 0.05; ph.add(scr);
+        const lens = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 0.04, 16), new T.MeshStandardMaterial({ color: 0x2a2a30 }));
+        lens.rotation.x = Math.PI / 2; lens.position.set(-0.17, 0.4, -0.06); ph.add(lens);
+        const glow = new T.PointLight(0xb8d2ff, a.phone.light ?? 3.0, 6, 1.8); glow.position.set(0, 0, 0.5); ph.add(glow);
+      }
+    }
+  }, spec.avatars);
+}
+// extra props for staged shots (spec.extras: boxes/balls with optional glow)
+if (spec.extras && spec.extras.length) {
+  await page.evaluate((extras) => {
+    const T = THREE;
+    for (const e of extras) {
+      const geo = e.shape === 'ball' ? new T.SphereGeometry(0.5, 32, 20) : (e.shape === 'cyl' ? new T.CylinderGeometry(0.5, 0.5, 1, 32) : new T.BoxGeometry(1, 1, 1));
+      const o = { color: new T.Color(`rgb(${e.col[0]},${e.col[1]},${e.col[2]})`), roughness: e.rough ?? 0.75, metalness: 0 };
+      if (e.emissive) { o.emissive = new T.Color(`rgb(${e.emissive[0]},${e.emissive[1]},${e.emissive[2]})`); o.emissiveIntensity = e.ei ?? 1.5; }
+      let mat = new T.MeshStandardMaterial(o);
+      if (e.face !== undefined) {
+        // a Roblox face drawn on one side of the head (0..5 = +x,-x,+y,-y,+z,-z)
+        const c = document.createElement('canvas'); c.width = c.height = 256;
+        const g = c.getContext('2d');
+        g.fillStyle = `rgb(${e.col[0]},${e.col[1]},${e.col[2]})`; g.fillRect(0, 0, 256, 256);
+        g.fillStyle = '#111';
+        for (const x of [88, 168]) { g.beginPath(); g.ellipse(x, 104, 13, 26, 0, 0, Math.PI * 2); g.fill(); }
+        g.lineWidth = 13; g.lineCap = 'round'; g.strokeStyle = '#111';
+        g.beginPath(); g.arc(128, 128, 62, 0.22 * Math.PI, 0.78 * Math.PI); g.stroke();
+        const tex = new T.CanvasTexture(c); tex.colorSpace = T.SRGBColorSpace;
+        const mats = [0, 1, 2, 3, 4, 5].map(i => i === e.face ? new T.MeshStandardMaterial(Object.assign({}, o, { map: tex, color: new T.Color(1, 1, 1) })) : mat);
+        mat = mats;
+      }
+      const m = new T.Mesh(geo, mat);
+      m.position.set(...e.pos); m.rotation.set(...(e.rot || [0, 0, 0]), 'YXZ'); m.scale.set(...e.s);
+      window.S.add(m);
+    }
+  }, spec.extras);
+}
 if (photos.length) {
   await page.evaluate(async (photos) => {
     const T = THREE; const loader = new T.TextureLoader();
