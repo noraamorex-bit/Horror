@@ -24,6 +24,25 @@
   function mat(col, extra) {
     return new T.MeshStandardMaterial(Object.assign({ color: new T.Color(col), roughness: 0.62, metalness: 0 }, extra || {}));
   }
+  function scaredTexture(skin) {
+    const c = document.createElement('canvas'); c.width = c.height = 512;
+    const g = c.getContext('2d');
+    g.fillStyle = skin; g.fillRect(0, 0, 512, 512);
+    // wide eyes: whites with small pupils
+    for (const x of [192, 320]) {
+      g.fillStyle = '#ffffff'; g.beginPath(); g.ellipse(x, 230, 38, 46, 0, 0, Math.PI * 2); g.fill();
+      g.lineWidth = 6; g.strokeStyle = '#16120f'; g.stroke();
+      g.fillStyle = '#16120f'; g.beginPath(); g.ellipse(x, 236, 13, 15, 0, 0, Math.PI * 2); g.fill();
+    }
+    // brows up
+    g.strokeStyle = '#2a1d14'; g.lineWidth = 11; g.lineCap = 'round';
+    for (const [x, s] of [[192, -1], [320, 1]]) { g.beginPath(); g.moveTo(x - 30, 162 + s * 10); g.lineTo(x + 30, 162 - s * 10); g.stroke(); }
+    // open mouth
+    g.fillStyle = '#3a1414'; g.beginPath(); g.ellipse(256, 335, 34, 42, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ffffff'; g.fillRect(232, 296, 48, 10);
+    const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8;
+    return t;
+  }
   function faceTexture(skin) {
     const c = document.createElement('canvas'); c.width = c.height = 512;
     const g = c.getContext('2d');
@@ -66,7 +85,7 @@
     const neck = joint(waist, 0, 1.62, 0); neck.rotation.set(P.neckX, P.neckY, P.neckZ);
     add(neck, new T.CylinderGeometry(0.32, 0.32, 0.3, 20), mSkin, 0, 0.1, 0);
     const headGeo = rbox(1.22, 1.22, 1.22, 0.42, 8);
-    const faceMat = new T.MeshStandardMaterial({ map: faceTexture(C.skin), roughness: 0.6 });
+    const faceMat = new T.MeshStandardMaterial({ map: (o.face === 'scared' ? scaredTexture : faceTexture)(C.skin), roughness: 0.6 });
     add(neck, headGeo, [mSkin, mSkin, mSkin, mSkin, mSkin, faceMat], 0, 0.86, 0);
     // messy hair: a cap with tufts
     const mHair = mat(C.hair, { roughness: 0.95 });
