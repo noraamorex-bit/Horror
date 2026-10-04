@@ -5,7 +5,7 @@
 
 local Story = {}
 
-Story.Title = "HOME ALONE"
+Story.Title = "someone lives in our attic."
 Story.Address = "14 Alder Lane, Hollis Creek"
 
 ---------------------------------------------------------------------------

@@ -258,7 +258,7 @@ function Shop.buildBoard(parent: Instance, cf: CFrame)
 		return l
 	end
 	line(0.05, 0.1, "SUPPORT THE GAME", Enum.Font.GothamBlack, Color3.fromRGB(245, 242, 235)).TextXAlignment = Enum.TextXAlignment.Center
-	line(0.16, 0.06, "Home Alone is made by one person. Every Robux helps.", Enum.Font.GothamMedium, Color3.fromRGB(170, 166, 158)).TextXAlignment = Enum.TextXAlignment.Center
+	line(0.16, 0.06, "This game is made by one person. Every Robux helps.", Enum.Font.GothamMedium, Color3.fromRGB(170, 166, 158)).TextXAlignment = Enum.TextXAlignment.Center
 	line(0.25, 0.055, "TOP SUPPORTERS", Enum.Font.GothamBold, Color3.fromRGB(255, 214, 120))
 	boardRows = {}
 	for i = 1, 10 do

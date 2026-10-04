@@ -78,7 +78,7 @@ function Lobby.start()
 	UI.padding(card, 24)
 	UI.modal(card)
 	UI.new("UIListLayout", { Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = card })
-	UI.label({ Size = UDim2.new(1, 0, 0, 52), Text = ctx.Story.Title, Font = UI.Font.Title, TextSize = 50, LayoutOrder = 1, Parent = card })
+	UI.label({ Size = UDim2.new(1, 0, 0, 52), Text = ctx.Story.Title, Font = UI.Font.Title, TextSize = 40, LayoutOrder = 1, Parent = card })
 	status = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = "", TextSize = 24, LayoutOrder = 2, Parent = card })
 	readyButton = UI.new("TextButton", {
 		Size = UDim2.fromOffset(220, 64),

@@ -94,8 +94,8 @@ local function label(text: string, y: number, h: number, font: Enum.Font, color:
 	l.Parent = bg
 	return l
 end
-label("HOME ALONE", 0.44, 0.12, Enum.Font.Merriweather, Color3.fromRGB(236, 230, 218))
-label("Your parents are gone for the weekend. Your friends are over. You are not alone.", 0.575, 0.04, Enum.Font.GothamMedium, Color3.fromRGB(170, 166, 158))
+label("someone lives in our attic.", 0.45, 0.09, Enum.Font.Merriweather, Color3.fromRGB(236, 230, 218))
+label("Your parents are gone for the weekend. Your friends are over. You are not alone.", 0.565, 0.04, Enum.Font.GothamMedium, Color3.fromRGB(170, 166, 158))
 local status = label("Loading...", 0.8, 0.03, Enum.Font.Gotham, Color3.fromRGB(130, 126, 120))
 local barBack = Instance.new("Frame")
 barBack.AnchorPoint = Vector2.new(0.5, 0)

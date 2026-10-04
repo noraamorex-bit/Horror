@@ -282,7 +282,7 @@ function Shop.start()
 	refreshPasses()
 
 	-- support: a line about why, the amounts, the top supporters
-	UI.label({ LayoutOrder = 1, Size = UDim2.new(1, -6, 0, 40), Text = "Home Alone is made by one person. Every Robux helps keep it going, and puts your name on the board in the lobby.", TextSize = 14, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 42, Parent = pages.Support })
+	UI.label({ LayoutOrder = 1, Size = UDim2.new(1, -6, 0, 40), Text = "This game is made by one person. Every Robux helps keep it going, and puts your name on the board in the lobby.", TextSize = 14, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 42, Parent = pages.Support })
 	local amounts = UI.new("Frame", { LayoutOrder = 2, Size = UDim2.new(1, -6, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, ZIndex = 42, Parent = pages.Support })
 	UI.new("UIGridLayout", { CellSize = UDim2.fromOffset(96, 44), CellPadding = UDim2.fromOffset(8, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = amounts })
 	for i, d in ctx.Config.Shop.Donations do
