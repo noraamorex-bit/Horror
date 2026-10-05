@@ -25,6 +25,13 @@ local ok, err = pcall(function()
 	Stats.setSettings(p, 0/0, 0, true)
 	assert(p:GetAttribute("SetMusic") == 0.25 and p:GetAttribute("SetShake") == false, "junk settings ignored")
 	print("settings ok")
+	-- fastest wins: only a faster time replaces your best
+	assert(p:GetAttribute("StatBest") == nil, "no best yet")
+	assert(Stats.recordWin(p, 900.7) == true and p:GetAttribute("StatBest") == 900, "first win sets best")
+	assert(Stats.recordWin(p, 1200) == false and p:GetAttribute("StatBest") == 900, "slower win keeps best")
+	assert(Stats.recordWin(p, 640) == true and p:GetAttribute("StatBest") == 640, "faster win is new best")
+	assert(Stats.recordWin(p, 0) == false, "zero ignored")
+	print("fastest ok")
 end)
 print(ok and "STATS OK" or ("STATS FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

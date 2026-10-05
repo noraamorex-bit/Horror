@@ -212,6 +212,14 @@ function Escape.markEscaped(player: Player, where: string)
 		ctx.Hiding.exit(player, true)
 	end
 	player:SetAttribute("Escaped", where)
+	-- a win: how long it took goes on the fastest-wins board
+	if ctx.Director and ctx.Director.elapsedSeconds then
+		local t = math.floor(ctx.Director.elapsedSeconds())
+		player:SetAttribute("WinTime", t)
+		if ctx.Stats and ctx.Stats.recordWin(player, t) then
+			player:SetAttribute("NewBest", true)
+		end
+	end
 	ctx.PlayerState.setFlashlight(player, false)
 	ctx.Remotes.Fade:FireClient(player, true, 0.8)
 	task.delay(1, function()

@@ -73,6 +73,7 @@ local ok, err = pcall(function()
 		assert(ctx.Ending.isOver() and e[1] and e[1][3].Kind == "Taillights" and e[1][3].Headline == "YOU ESCAPED", "solo car escape should end the night as Taillights")
 		assert(#kinds(fired, "Result") == 0, "no separate result card when the night is over")
 		assert(e[1][3].Shots and #e[1][3].Shots > 0, "the ending has a cutscene")
+		assert(e[1][3].WinTime ~= nil, "a solo car escape is a timed win")
 	end
 	-- co-op: one escapes, one is still inside
 	if MODE == "coop" then

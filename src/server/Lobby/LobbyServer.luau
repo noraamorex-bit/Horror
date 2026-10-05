@@ -346,13 +346,13 @@ local function build(root: Folder)
 	if ctx.Shop then
 		ctx.Shop.buildBoard(root, CFrame.lookAt(ORIGIN + V(15, 0.5, 5), ORIGIN + V(2, 0.5, 13)))
 	end
-	-- the survivors' board beside the queue circles (top 10 by nights survived, refreshed)
-	do
-		local boardCF = CFrame.lookAt(ORIGIN + V(-39, 7, -13), ORIGIN + V(0, 7, -13))
+	-- two boards beside the queue circles (top 10, refreshed): nights survived, and fastest wins
+	local function leaderboard(name: string, at: Vector3, heading: string, empty: string, which: string?)
+		local boardCF = CFrame.lookAt(ORIGIN + at, ORIGIN + V(0, at.Y, at.Z))
 		for _, s in { -1, 1 } do
 			Kit.box(root, "BoardPost", boardCF * CFrame.new(s * 5.2, -3.3, 0.3), V(0.5, 7.4, 0.5), Color3.fromRGB(60, 44, 32), Kit.M.Wood, { CanCollide = true })
 		end
-		local sign = Kit.box(root, "SurvivorBoard", boardCF, V(11, 7, 0.4), Color3.fromRGB(26, 22, 20), Kit.M.Wood, { CanCollide = true })
+		local sign = Kit.box(root, name, boardCF, V(11, 7, 0.4), Color3.fromRGB(26, 22, 20), Kit.M.Wood, { CanCollide = true })
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = Enum.NormalId.Front
 		gui.CanvasSize = Vector2.new(550, 350)
@@ -364,7 +364,7 @@ local function build(root: Folder)
 		title.Font = Enum.Font.Merriweather
 		title.TextScaled = true
 		title.TextColor3 = Color3.fromRGB(255, 200, 130)
-		title.Text = "NIGHTS SURVIVED"
+		title.Text = heading
 		title.Parent = gui
 		local body = Instance.new("TextLabel")
 		body.Position = UDim2.fromOffset(24, 64)
@@ -375,7 +375,7 @@ local function build(root: Folder)
 		body.TextXAlignment = Enum.TextXAlignment.Left
 		body.TextYAlignment = Enum.TextYAlignment.Top
 		body.TextColor3 = Color3.fromRGB(230, 224, 212)
-		body.Text = "Survive a night to get on the board."
+		body.Text = empty
 		body.Parent = gui
 		local lamp = Kit.box(root, "BoardLamp", boardCF * CFrame.new(0, 4, -0.6), V(3, 0.3, 0.6), Color3.fromRGB(255, 210, 150), Enum.Material.Neon)
 		local l = Instance.new("SpotLight")
@@ -387,11 +387,12 @@ local function build(root: Folder)
 		l.Parent = lamp
 		task.spawn(function()
 			while sign.Parent do
-				local top = ctx.Stats and ctx.Stats.top(10) or {}
+				local top = ctx.Stats and ctx.Stats.top(10, which) or {}
 				if #top > 0 then
 					local lines = {}
 					for i, e in top do
-						table.insert(lines, string.format("%d.  %s  —  %d", i, e.Name, e.Value))
+						local value = if which == "Fastest" then ctx.Util.formatSeconds(e.Value) else tostring(e.Value)
+						table.insert(lines, string.format("%d.  %s  —  %s", i, e.Name, value))
 					end
 					body.Text = table.concat(lines, "\n")
 				end
@@ -399,6 +400,8 @@ local function build(root: Folder)
 			end
 		end)
 	end
+	leaderboard("SurvivorBoard", V(-39, 7, -13), "NIGHTS SURVIVED", "Survive a night to get on the board.", nil)
+	leaderboard("FastestBoard", V(-39, 7, 1), "FASTEST WINS", "Win a night to set a time.", "Fastest")
 	Kit.hydrant(root, CFrame.new(ORIGIN + V(-34, 0.75, 22.5)))
 	for i, t in { { -48, -50 }, { 58, -52 }, { -58, 2 }, { 62, 4 }, { -118, 8 }, { 118, 10 }, { -20, 70 }, { 40, 72 }, { -90, 72 } } do
 		if i % 3 == 0 then

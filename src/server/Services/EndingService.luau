@@ -136,8 +136,11 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 		end
 		local R = ctx.Story.Results
 		local res = outcome == "Died" and R.Died or R.Escaped
+		local winTime = outcome ~= "Died" and player:GetAttribute("WinTime") or nil
 		ctx.Remotes.Result:FireClient(player, {
 			Outcome = outcome,
+			Time = winTime and ctx.Util.formatSeconds(winTime) or nil,
+			NewBest = player:GetAttribute("NewBest") == true,
 			Title = res.Title,
 			Good = res.Good,
 			Line = ctx.Story.ResultLines[outcome == "Died" and "Died" or (where or "Car")],
@@ -211,6 +214,17 @@ function Ending.trigger(kind: string)
 		end
 	end
 
+	-- fastest wins: everyone still standing at a good ending (escapers were timed on the way out)
+	local seconds = ctx.Director.elapsedSeconds and math.floor(ctx.Director.elapsedSeconds()) or 0
+	for _, p in ctx.Util.sessionPlayers() do
+		if not bad and not p:GetAttribute("Escaped") and not p:GetAttribute("Dead") and seconds > 0 then
+			p:SetAttribute("WinTime", seconds)
+			if ctx.Stats and ctx.Stats.recordWin(p, seconds) then
+				p:SetAttribute("NewBest", true)
+			end
+		end
+	end
+
 	-- saved stats; who saw this ending for the first time
 	local firstFor = {}
 	if ctx.Stats then
@@ -239,6 +253,8 @@ function Ending.trigger(kind: string)
 			Shots = shots,
 			Car = car,
 			Duration = ctx.Director.elapsedString(),
+			WinTime = p:GetAttribute("WinTime") and ctx.Util.formatSeconds(p:GetAttribute("WinTime")) or nil,
+			NewBest = p:GetAttribute("NewBest") == true,
 			RestartIn = restartIn,
 			ReturnToLobby = ctx.Reserved == true,
 			InGame = p:GetAttribute("InGame") == true,

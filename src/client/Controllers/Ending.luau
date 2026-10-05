@@ -87,7 +87,7 @@ local function button(parent: Instance, text: string, primary: boolean, order: n
 end
 
 --[[
-	opts: Headline, Good, Line, EndingTitle?, NewEnding?, Duration?, Spectate?, Lobby?, RestartIn?,
+	opts: Headline, Good, Line, EndingTitle?, NewEnding?, Duration?, WinTime?, NewBest?, Spectate?, Lobby?, RestartIn?,
 	ReturnToLobby?
 ]]
 local function showCard(opts)
@@ -158,7 +158,16 @@ local function showCard(opts)
 	task.delay(0.4, function()
 		UI.tween(body, 0.6, { TextTransparency = 0 })
 	end)
-	if opts.Duration then
+	if opts.WinTime then
+		-- a win: your time, for the fastest-wins board in the lobby
+		line({ Text = "YOUR TIME  " .. tostring(opts.WinTime), Font = UI.Font.Bold, TextSize = 20, TextColor3 = UI.Color.Text })
+		if opts.NewBest then
+			local best = line({ Text = "★ NEW PERSONAL BEST", Font = UI.Font.Bold, TextSize = 15, TextColor3 = GOLD, TextTransparency = 1 })
+			task.delay(1.1, function()
+				UI.tween(best, 0.5, { TextTransparency = 0 })
+			end)
+		end
+	elseif opts.Duration then
 		line({ Text = "Night lasted " .. tostring(opts.Duration), TextSize = 14, TextColor3 = UI.Color.Dim })
 	end
 
@@ -319,6 +328,8 @@ local function onResult(payload)
 		Headline = payload.Title,
 		Good = payload.Good,
 		Line = payload.Line,
+		WinTime = payload.Time,
+		NewBest = payload.NewBest,
 		Spectate = payload.CanSpectate,
 		ReturnToLobby = payload.ReturnToLobby,
 	})
@@ -348,6 +359,8 @@ local function onEnding(payload)
 			Line = payload.Short,
 			NewEnding = newEnding,
 			Duration = payload.Duration,
+			WinTime = payload.WinTime,
+			NewBest = payload.NewBest,
 			ReturnToLobby = payload.ReturnToLobby,
 			RestartIn = payload.RestartIn,
 		})

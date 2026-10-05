@@ -329,8 +329,12 @@ function LobbyHub.start()
 			return
 		end
 		record.Text = string.format("NIGHTS %d   ·   SURVIVED %d   ·   ENDINGS %d / %d", nights, player:GetAttribute("StatEscapes") or 0, player:GetAttribute("StatEndings") or 0, player:GetAttribute("StatEndingTotal") or 0)
+		local best = player:GetAttribute("StatBest")
+		if type(best) == "number" and best > 0 then
+			record.Text ..= "   ·   BEST " .. ctx.Util.formatSeconds(best)
+		end
 	end
-	for _, a in { "StatNights", "StatEscapes", "StatEndings" } do
+	for _, a in { "StatNights", "StatEscapes", "StatEndings", "StatBest" } do
 		player:GetAttributeChangedSignal(a):Connect(showRecord)
 	end
 	showRecord()

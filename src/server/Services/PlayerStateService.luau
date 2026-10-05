@@ -123,7 +123,7 @@ local function onPlayerAdded(player: Player)
 end
 
 function PlayerState.resetPlayer(player: Player)
-	for _, attr in { "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead" } do
+	for _, attr in { "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead", "WinTime", "NewBest" } do
 		player:SetAttribute(attr, nil)
 	end
 	player:SetAttribute("Nerve", ctx.Config.Nerve.Max)

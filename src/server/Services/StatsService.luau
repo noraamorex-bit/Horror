@@ -15,10 +15,11 @@ local Stats = {}
 local ctx
 local store = nil
 local board = nil -- OrderedDataStore: nights survived, for the lobby leaderboard
+local fastBoard = nil -- OrderedDataStore: fastest win in seconds (lowest first), for the second sign
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Settings = { Music = 1, Sfx = 1, Shake = true } }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
 end
 
 --[[
@@ -83,6 +84,7 @@ local function mirror(player: Player)
 		d.Beam = "Classic"
 	end
 	player:SetAttribute("StatBeam", d.Beam)
+	player:SetAttribute("StatBest", d.Best > 0 and d.Best or nil)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
@@ -108,6 +110,7 @@ local function load(player: Player)
 			d.Referrals = tonumber(data.Referrals) or 0
 			d.Referred = data.Referred == true
 			d.Beam = type(data.Beam) == "string" and data.Beam or "Classic"
+			d.Best = math.max(0, math.floor(tonumber(data.Best) or 0))
 			local set = type(data.Settings) == "table" and data.Settings or {}
 			d.Settings = {
 				Music = math.clamp(tonumber(set.Music) or 1, 0, 1),
@@ -148,6 +151,13 @@ local function save(userId: number)
 					Referrals = math.max(tonumber(old.Referrals) or 0, d.Referrals),
 					Referred = old.Referred == true or d.Referred,
 					Beam = d.Beam,
+					Best = (function()
+						local a, b = tonumber(old.Best) or 0, d.Best
+						if a > 0 and b > 0 then
+							return math.min(a, b)
+						end
+						return math.max(a, b)
+					end)(),
 					Settings = d.Settings,
 				}
 			end)
@@ -279,6 +289,37 @@ function Stats.beamColor(player: Player): Color3
 	return Stats.Beams[1].Color
 end
 
+-- A win (escaped, or still standing at a good ending) took this many seconds. Keeps the
+-- player's best and puts it on the fastest-wins board. Returns true for a new personal best.
+function Stats.recordWin(player: Player, seconds: number): boolean
+	local d = cache[player.UserId]
+	seconds = math.floor(seconds)
+	if not d or seconds <= 0 or (ctx.Config and ctx.Config.Debug) then
+		return false
+	end
+	if d.Best > 0 and seconds >= d.Best then
+		return false
+	end
+	d.Best = seconds
+	mirror(player)
+	save(player.UserId)
+	if fastBoard then
+		local userId = player.UserId
+		task.spawn(function()
+			pcall(function()
+				fastBoard:UpdateAsync("u" .. userId, function(old)
+					old = tonumber(old)
+					if old and old > 0 and old <= seconds then
+						return nil -- (keep the faster time already there)
+					end
+					return seconds
+				end)
+			end)
+		end)
+	end
+	return true
+end
+
 -- A night ended for these players. Returns { [userId] = true } for everyone who saw this ending
 -- for the first time.
 function Stats.recordNight(players: { Player }, kind: string)
@@ -320,28 +361,38 @@ function Stats.init(c)
 		return DataStoreService:GetOrderedDataStore("NightsSurvived_v1")
 	end)
 	board = ok2 and ods or nil
+	local ok3, fds = pcall(function()
+		return DataStoreService:GetOrderedDataStore("FastestWin_v1")
+	end)
+	fastBoard = ok3 and fds or nil
 end
 
--- the top survivors, for the lobby sign: { { Name, Value } }
-function Stats.top(n: number)
+-- the top survivors (or, with "Fastest", the fastest wins), for the lobby signs: { { Name, Value } }
+local names: { [number]: string } = {}
+function Stats.top(n: number, which: string?)
 	local out = {}
-	if not board then
+	local fastest = which == "Fastest"
+	local store_ = if fastest then fastBoard else board
+	if not store_ then
 		return out
 	end
 	local ok, pages = pcall(function()
-		return board:GetSortedAsync(false, n)
+		return store_:GetSortedAsync(fastest, n, if fastest then 1 else nil)
 	end)
 	if not ok or not pages then
 		return out
 	end
 	for _, entry in pages:GetCurrentPage() do
 		local userId = tonumber(string.sub(entry.key, 2))
-		local name = "?"
-		if userId then
+		local name = userId and names[userId] or "?"
+		if userId and not names[userId] then
 			local okName, n2 = pcall(function()
 				return Players:GetNameFromUserIdAsync(userId)
 			end)
-			name = okName and n2 or name
+			if okName and n2 then
+				name = n2
+				names[userId] = n2
+			end
 		end
 		table.insert(out, { Name = name, Value = entry.value })
 	end

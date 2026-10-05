@@ -89,6 +89,10 @@ function Director.clockString(): string
 	return ctx.Util.clockString(Director.clockMinutes())
 end
 
+function Director.elapsedSeconds(): number
+	return elapsed()
+end
+
 function Director.elapsedString(): string
 	return ctx.Util.formatSeconds(elapsed())
 end

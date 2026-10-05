@@ -329,6 +329,7 @@ Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host
 - **Settings** (lobby menu, and the journal in the house): music volume, sound volume, camera shake on/off. Saved with your stats. Every sound is routed into a music or an effects SoundGroup on the client.
 - **Friend tags**: each friend's name and distance over their head, through walls, hidden when they're close. A captured friend's tag turns red: "TIED UP".
 - **Skip** on ending cutscenes.
+- **Fastest wins**: every win is timed (an escape at the moment you get out; everyone still standing at a good ending at the moment it ends). The result card shows YOUR TIME and ★ NEW PERSONAL BEST; your best shows on the lobby record line; the top 10 go on the FASTEST WINS sign beside NIGHTS SURVIVED (`FastestWin_v1` OrderedDataStore, lowest first).
 - Every button clicks; notifications have their own sounds by kind; the police countdown beeps for its last 10 s.
 
 ### Opening shot (client `Intro`)
