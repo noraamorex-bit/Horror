@@ -225,14 +225,14 @@ Config.ChatRange = 50
 -- IDs here. Each ending awards its badge to everyone there; FirstNight goes to anyone who
 -- finishes a night. Leave 0 to skip.
 Config.Badges = {
-	FirstNight = 0,
-	Sirens = 0,
+	FirstNight = 409399923712093,
+	Sirens = 3788492021707417,
 	CaseClosed = 0,
-	NextDoor = 0,
-	Taillights = 0,
+	NextDoor = 3075408998090267,
+	Taillights = 907725296038042,
 	LockedIn = 0,
 	Dawn = 0,
-	GoneQuiet = 0,
+	GoneQuiet = 2732889922402301,
 	GotAway = 0,
 	HardSurvivor = 0, -- survived a night on Hard
 	Rescuer = 0, -- cut a friend free
