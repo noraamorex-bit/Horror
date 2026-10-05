@@ -62,18 +62,6 @@ local ok, err = pcall(function()
 	ctx.PlayerState.assignRoles({ a, b })
 	print("head start flashlight:", b:GetAttribute("Item_Flashlight"), "without:", a:GetAttribute("Item_Flashlight"))
 	assert(b:GetAttribute("Item_Flashlight") == 1 and a:GetAttribute("Item_Flashlight") == nil)
-	-- second chance: caught twice and still only tied up; the third time is the last
-	ctx.Director.startAct("Guest")
-	a:SetAttribute("Pass_SecondChance", true)
-	local function caught(p) local co = coroutine.create(function() ctx.Capture.capture(p) end); H.ours[co] = true; coroutine.resume(co) end
-	caught(a); ctx.Capture.release(a, nil)
-	caught(a)
-	print("second catch with the pass -> dead?", a:GetAttribute("Dead"), "captured", a:GetAttribute("Captured"))
-	assert(not a:GetAttribute("Dead") and a:GetAttribute("Captured"), "second chance spares the second catch")
-	ctx.Capture.release(a, nil)
-	caught(a)
-	print("third catch -> dead?", a:GetAttribute("Dead"))
-	assert(a:GetAttribute("Dead"), "only once a night")
 end)
 print(ok and "PASS OK" or ("PASS FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

@@ -12,6 +12,7 @@ local ctx
 local player = Players.LocalPlayer
 
 local label: TextLabel
+local reviveButton: TextButton? = nil
 local watching: Player? = nil
 local active = false
 
@@ -60,6 +61,15 @@ local function refresh()
 	end
 	active = dead
 	label.Visible = dead
+	if reviveButton then
+		-- dead (not just watching after an escape), the night still going: you can come back
+		local r = ctx.Config.Shop.Revive
+		local offered = (r and r.Id > 0) or (tonumber(player:GetAttribute("ReviveCredits")) or 0) > 0
+		reviveButton.Visible = dead and player:GetAttribute("Dead") == true and offered and ctx.EndingUI ~= nil
+		if reviveButton.Visible and ctx.EndingUI then
+			reviveButton.Text = ctx.EndingUI.reviveLabel()
+		end
+	end
 	if dead then
 		-- third person while watching
 		player.CameraMode = Enum.CameraMode.Classic
@@ -114,6 +124,29 @@ function Spectate.start()
 	}, 640)
 	label:GetPropertyChangedSignal("Visible"):Connect(function()
 		box.Visible = label.Visible
+	end)
+	reviveButton = ctx.UI.new("TextButton", {
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -84),
+		Size = UDim2.fromOffset(240, 50),
+		Text = "REVIVE",
+		Font = ctx.UI.Font.Bold,
+		TextSize = 18,
+		TextColor3 = Color3.fromRGB(12, 12, 14),
+		BackgroundColor3 = Color3.fromRGB(120, 230, 150),
+		Visible = false,
+		Parent = ctx.UI.Root,
+	})
+	ctx.UI.corner(reviveButton :: TextButton, 10)
+	;(reviveButton :: TextButton).Activated:Connect(function()
+		if ctx.EndingUI then
+			ctx.EndingUI.revive()
+		end
+	end)
+	player:GetAttributeChangedSignal("ReviveCredits"):Connect(function()
+		if reviveButton and reviveButton.Visible and ctx.EndingUI then
+			reviveButton.Text = ctx.EndingUI.reviveLabel()
+		end
 	end)
 	player:GetAttributeChangedSignal("Dead"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("EndingActive"):Connect(function()

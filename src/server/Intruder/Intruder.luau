@@ -1579,6 +1579,18 @@ function Intruder.getHead(): BasePart?
 end
 
 -- (tests) his internal state, to simulate walking where there's no physics
+-- a revived player: he can't feel them for a few seconds, and forgets where they were
+function Intruder.grace(player: Player, seconds: number)
+	if not S.Ignore or not S.Trails then
+		return
+	end
+	S.Ignore[player] = now() + seconds
+	S.Trails[player] = {}
+	if S.HuntTarget == player then
+		S.HuntTarget = nil
+	end
+end
+
 function Intruder._tune()
 	return tune()
 end

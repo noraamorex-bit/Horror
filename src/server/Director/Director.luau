@@ -837,7 +837,7 @@ local function lastChanceTick()
 	if state.GoneQuietAt then
 		if #ctx.Util.activePlayers() > 0 then
 			state.GoneQuietAt = nil
-		elseif os.clock() >= state.GoneQuietAt and not ctx.Ending.isOver() then
+		elseif os.clock() >= state.GoneQuietAt and not ctx.Ending.isOver() and not (ctx.Ending.reviveOpen and ctx.Ending.reviveOpen()) then
 			state.GoneQuietAt = nil
 			ctx.Ending.trigger(Director.lostEnding())
 		end

@@ -165,6 +165,19 @@ local function refreshTop()
 end
 
 local function onReceipt(info)
+	-- a revive: the game server brings you back; anywhere else it's saved for your next death
+	local revive = ctx.Config.Shop.Revive
+	if revive and revive.Id > 0 and info.ProductId == revive.Id then
+		if ctx.Revive then
+			return ctx.Revive.onReceipt(info)
+		end
+		local player = Players:GetPlayerByUserId(info.PlayerId)
+		if player and ctx.Stats and ctx.Stats.addReviveCredit(player) then
+			ctx.Remotes.Notify:FireClient(player, "Revive saved. It'll be offered the next time you die.", "info")
+			return Enum.ProductPurchaseDecision.PurchaseGranted
+		end
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
 	local product = donationById(info.ProductId)
 	if not product then
 		-- not ours to grant (nothing else is sold yet): leave it for a server that knows it

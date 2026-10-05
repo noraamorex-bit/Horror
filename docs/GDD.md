@@ -346,14 +346,14 @@ A **SHOP** button sits on the right edge of the lobby screen. A gold "!" pulses 
 | Game pass | Price | What it does |
 |---|---|---|
 | Supporter | 10 R$ | A ★ SUPPORTER tag above you in the lobby, the Gold flashlight, and a star on the donation board |
-| Lobby Scream | 10 R$ | A SCREAM button in the lobby (15 s cooldown) |
 | Flashlight colours | 15 R$ | Every invite colour, plus the Ghost beam |
 | Pick your role | 15 R$ | Choose Jamie, Riley, Morgan or Casey on the vote screen |
 | Marathon | 20 R$ | Stamina drains 40% slower |
 | Long-life battery | 25 R$ | Your flashlight battery lasts twice as long |
 | Head start | 25 R$ | You start every night with a flashlight |
 | Pepper spray | 35 R$ | You start every night with a can of pepper spray (one use) |
-| Second chance | 49 R$ | Once a night, a second capture ties you up instead of killing you |
+
+**Revive** (developer product, 25 R$, `ReviveService`): when you die, your result card (and the spectate view) offers REVIVE. Buying it puts you back on your feet in this night, on the ground floor or upstairs as far from him as possible, and he can't feel you for 10 s. Your slate is clean: the next catch zip-ties you again. In co-op you can revive any time while the night goes on; if you were the last one standing, the night waits 15 s ("The night ends in 15s") before it ends. A revive bought when it can't be used is saved and offered next time as USE REVIVE.
 
 **Support** takes donations of 5, 10, 25, 50, 75, 100, 150, 250, 500 or 1000 R$ (developer products) and shows the top 10 supporters. The **donation board** on the front lawn of the lobby lists them too, and its DONATE prompt opens this tab.
 - Each receipt is counted once: a DataStore key per purchase id, then a total in the `Donations_v1` OrderedDataStore.

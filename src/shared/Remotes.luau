@@ -27,6 +27,7 @@ local NAMES = {
 	"Dialogue", -- (line | nil) a conversation line, maybe with choices; nil closes the box
 	"Intro", -- () the night's opening shot: the house from the street, and him in the window
 	"Result", -- (payload) you're out of the night early (escaped / died) while others still play
+	"Revived", -- () you're back in the night (the revive product)
 	"Vote", -- (state | nil) the difficulty vote before the night: {Ends, Votes, Mine}
 
 	-- client -> server
@@ -49,8 +50,8 @@ local NAMES = {
 	"LeaveGame", -- () from a result card: back to the lobby now
 	"CastVote", -- (choice) "Normal" or "Hard"
 	"PickRole", -- (roleId) the "pick your role" pass, on the vote screen
-	"Scream", -- () lobby: the scream pass
 	"SaveSettings", -- (music, sfx, shake) the settings panel
+	"UseRevive", -- () spend a saved revive (bought when it couldn't be used)
 }
 
 local Remotes = {}

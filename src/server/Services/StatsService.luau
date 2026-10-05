@@ -19,7 +19,7 @@ local fastBoard = nil -- OrderedDataStore: fastest win in seconds (lowest first)
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
 end
 
 --[[
@@ -85,6 +85,7 @@ local function mirror(player: Player)
 	end
 	player:SetAttribute("StatBeam", d.Beam)
 	player:SetAttribute("StatBest", d.Best > 0 and d.Best or nil)
+	player:SetAttribute("ReviveCredits", d.ReviveCredits > 0 and d.ReviveCredits or nil)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
@@ -111,6 +112,7 @@ local function load(player: Player)
 			d.Referred = data.Referred == true
 			d.Beam = type(data.Beam) == "string" and data.Beam or "Classic"
 			d.Best = math.max(0, math.floor(tonumber(data.Best) or 0))
+			d.ReviveCredits = math.max(0, math.floor(tonumber(data.ReviveCredits) or 0))
 			local set = type(data.Settings) == "table" and data.Settings or {}
 			d.Settings = {
 				Music = math.clamp(tonumber(set.Music) or 1, 0, 1),
@@ -159,6 +161,7 @@ local function save(userId: number)
 						return math.max(a, b)
 					end)(),
 					Settings = d.Settings,
+					ReviveCredits = d.ReviveCredits,
 				}
 			end)
 		end)
@@ -317,6 +320,30 @@ function Stats.recordWin(player: Player, seconds: number): boolean
 			end)
 		end)
 	end
+	return true
+end
+
+-- Revives bought when they couldn't be used (the night was already over, or you were in the
+-- lobby): kept, and offered the next time you die.
+function Stats.addReviveCredit(player: Player): boolean
+	local d = cache[player.UserId]
+	if not d then
+		return false
+	end
+	d.ReviveCredits += 1
+	mirror(player)
+	save(player.UserId)
+	return true
+end
+
+function Stats.spendReviveCredit(player: Player): boolean
+	local d = cache[player.UserId]
+	if not d or d.ReviveCredits <= 0 then
+		return false
+	end
+	d.ReviveCredits -= 1
+	mirror(player)
+	save(player.UserId)
 	return true
 end
 

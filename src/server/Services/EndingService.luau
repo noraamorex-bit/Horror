@@ -18,6 +18,9 @@ local Ending = {}
 local ctx
 local over = false
 local ended: { [Player]: string } = {} -- player -> "Escaped" | "Died": already shown their result
+local reviveUntil = 0 -- the last one standing died: the night waits this long for a revive
+local seq = 0 -- bumped on every death / revive, so a stale timer from an earlier death does nothing
+local doneSeq: { [Player]: number } = {}
 
 function Ending.init(c)
 	ctx = c
@@ -26,11 +29,27 @@ end
 function Ending.reset()
 	over = false
 	ended = {}
+	reviveUntil = 0
+	seq += 1
+	doneSeq = {}
 	workspace:SetAttribute("EndingActive", nil)
 end
 
 function Ending.isOver(): boolean
 	return over
+end
+
+-- the night is holding for someone deciding whether to revive
+function Ending.reviveOpen(): boolean
+	return os.clock() < reviveUntil
+end
+
+-- ReviveService brought them back: they're in the night again
+function Ending.revived(player: Player)
+	ended[player] = nil
+	reviveUntil = 0
+	seq += 1
+	doneSeq[player] = nil
 end
 
 ---------------------------------------------------------------------------
@@ -125,14 +144,30 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 		return
 	end
 	ended[player] = outcome
+	seq += 1
+	local mine = seq
+	doneSeq[player] = mine
 	local delay = outcome == "Died" and 2.8 or 1.4
 	task.delay(delay, function()
-		if over then
-			return
+		if over or doneSeq[player] ~= mine then
+			return -- (over, or revived in the meantime)
 		end
+		local canRevive = outcome == "Died" and ctx.Revive ~= nil and ctx.Revive.offered(player) and player.Parent ~= nil
 		if #inPlay() == 0 then
-			Ending.trigger(earlyKind())
-			return
+			if not canRevive then
+				Ending.trigger(earlyKind())
+				return
+			end
+			-- the last one standing: a few seconds to come back before the night ends
+			local window = ctx.Revive.window()
+			reviveUntil = os.clock() + window
+			local windowSeq = seq
+			task.delay(window, function()
+				if not over and seq == windowSeq and #inPlay() == 0 then
+					reviveUntil = 0
+					Ending.trigger(earlyKind())
+				end
+			end)
 		end
 		local R = ctx.Story.Results
 		local res = outcome == "Died" and R.Died or R.Escaped
@@ -144,7 +179,11 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 			Title = res.Title,
 			Good = res.Good,
 			Line = ctx.Story.ResultLines[outcome == "Died" and "Died" or (where or "Car")],
-			CanSpectate = true,
+			CanRevive = canRevive,
+			ReviveIn = (canRevive and reviveUntil > os.clock()) and math.ceil(reviveUntil - os.clock()) or nil,
+			RevivePrice = ctx.Config.Shop.Revive and ctx.Config.Shop.Revive.Price or nil,
+			ReviveProduct = canRevive and ctx.Revive.productId() or nil,
+			CanSpectate = #inPlay() > 0,
 			ReturnToLobby = ctx.Reserved == true,
 		})
 	end)

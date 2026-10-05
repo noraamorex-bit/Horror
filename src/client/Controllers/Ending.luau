@@ -12,6 +12,7 @@
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local Ending = {}
 local ctx
@@ -28,6 +29,7 @@ local GOLD = Color3.fromRGB(255, 205, 90)
 
 function Ending.init(c)
 	ctx = c
+	ctx.EndingUI = Ending
 end
 
 local function stopMusic()
@@ -62,6 +64,34 @@ local function closeCard()
 end
 
 ---------------------------------------------------------------------------
+-- Revive (Config.Shop.Revive): a saved one first, otherwise buy one
+---------------------------------------------------------------------------
+local function reviveCredits(): number
+	return tonumber(player:GetAttribute("ReviveCredits")) or 0
+end
+
+function Ending.reviveLabel(): string
+	if reviveCredits() > 0 then
+		return "USE REVIVE (" .. reviveCredits() .. ")"
+	end
+	local r = ctx.Config.Shop.Revive
+	return "REVIVE  ·  " .. tostring(r and r.Price or "") .. " R$"
+end
+
+function Ending.revive()
+	if reviveCredits() > 0 then
+		ctx.Remotes.UseRevive:FireServer()
+		return
+	end
+	local r = ctx.Config.Shop.Revive
+	if r and r.Id > 0 then
+		pcall(function()
+			MarketplaceService:PromptProductPurchase(player, r.Id)
+		end)
+	end
+end
+
+---------------------------------------------------------------------------
 -- The result card
 ---------------------------------------------------------------------------
 local function button(parent: Instance, text: string, primary: boolean, order: number, onClick: () -> ())
@@ -87,7 +117,7 @@ local function button(parent: Instance, text: string, primary: boolean, order: n
 end
 
 --[[
-	opts: Headline, Good, Line, EndingTitle?, NewEnding?, Duration?, WinTime?, NewBest?, Spectate?, Lobby?, RestartIn?,
+	opts: Headline, Good, Line, EndingTitle?, NewEnding?, Duration?, WinTime?, NewBest?, Revive?, ReviveIn?, Spectate?, Lobby?, RestartIn?,
 	ReturnToLobby?
 ]]
 local function showCard(opts)
@@ -175,8 +205,13 @@ local function showCard(opts)
 	order += 1
 	local row = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 58), BackgroundTransparency = 1, Parent = col })
 	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = row })
+	if opts.Revive then
+		local rb = button(row, Ending.reviveLabel(), true, 0, Ending.revive)
+		rb.BackgroundColor3 = Color3.fromRGB(120, 230, 150)
+		rb.Size = UDim2.fromOffset(250, 54)
+	end
 	if opts.Spectate then
-		button(row, "SPECTATE", true, 1, function()
+		button(row, "SPECTATE", not opts.Revive, 1, function()
 			closeCard()
 			stopMusic()
 			if ctx.Spectate then
@@ -197,6 +232,21 @@ local function showCard(opts)
 	if ctx.Social then
 		ctx.Social.button(social, "invite")
 		ctx.Social.button(social, "favorite")
+	end
+	if opts.ReviveIn then
+		-- the last one standing: the night waits a moment for a revive
+		local countdown = line({ Text = "", Font = UI.Font.Bold, TextSize = 16, TextColor3 = BAD })
+		task.spawn(function()
+			local left = opts.ReviveIn
+			while left > 0 and screen.Parent do
+				countdown.Text = "The night ends in " .. left .. "s"
+				task.wait(1)
+				left -= 1
+			end
+			if screen.Parent then
+				countdown.Text = ""
+			end
+		end)
 	end
 	if opts.RestartIn then
 		local countdown = line({ Text = "", TextSize = 14, TextColor3 = UI.Color.Dim })
@@ -330,6 +380,8 @@ local function onResult(payload)
 		Line = payload.Line,
 		WinTime = payload.Time,
 		NewBest = payload.NewBest,
+		Revive = payload.CanRevive,
+		ReviveIn = payload.ReviveIn,
 		Spectate = payload.CanSpectate,
 		ReturnToLobby = payload.ReturnToLobby,
 	})
@@ -375,6 +427,17 @@ end
 function Ending.start()
 	ctx.Remotes.Result.OnClientEvent:Connect(onResult)
 	ctx.Remotes.Ending.OnClientEvent:Connect(onEnding)
+	-- revived: back in your own body, the night goes on
+	ctx.Remotes.Revived.OnClientEvent:Connect(function()
+		closeCard()
+		stopMusic()
+		if ctx.Spectate then
+			ctx.Spectate.stop()
+		end
+		if ctx.Effects then
+			ctx.Effects.playSound("RisingWhoosh", nil, { Caption = false })
+		end
+	end)
 	-- the next lobby clears it all
 	workspace:GetAttributeChangedSignal("Act"):Connect(function()
 		if workspace:GetAttribute("Act") == "Lobby" then

@@ -247,15 +247,15 @@ Config.Badges = {
 Config.Shop = {
 	Passes = {
 		{ Key = "Supporter", Id = 2008280313, Price = 10, Name = "Supporter", Desc = "A SUPPORTER tag in the lobby, a gold flashlight and a star on the donation board." },
-		{ Key = "Scream", Id = 2006001538, Price = 10, Name = "Lobby Scream", Desc = "A SCREAM button in the lobby. Scare your friends before the night even starts." },
 		{ Key = "Colours", Id = 2005832310, Price = 15, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
 		{ Key = "ChooseRole", Id = 2006193593, Price = 15, Name = "Pick your role", Desc = "Choose who you play each night: Jamie, Riley, Morgan or Casey." },
 		{ Key = "Marathon", Id = 2005053525, Price = 20, Name = "Marathon", Desc = "Sprint for longer: your stamina drains much slower." },
 		{ Key = "Battery", Id = 2005388315, Price = 25, Name = "Long-life battery", Desc = "Your flashlight battery lasts twice as long." },
 		{ Key = "HeadStart", Id = 2006721483, Price = 25, Name = "Head start", Desc = "Start every night with a flashlight in your pocket." },
 		{ Key = "PepperSpray", Id = 2006030307, Price = 35, Name = "Pepper spray", Desc = "Start every night with a can of pepper spray (one use)." },
-		{ Key = "SecondChance", Id = 2005515596, Price = 49, Name = "Second chance", Desc = "Once a night, when he catches you a second time, you're tied up instead of taken for good." },
 	},
+	-- bought on the spot after you die: back into this night, somewhere away from him
+	Revive = { Id = 3716706476, Price = 25, Window = 15, Grace = 10 },
 	Donations = {
 		{ Id = 3716700047, Amount = 5 },
 		{ Id = 3715928524, Amount = 10 },

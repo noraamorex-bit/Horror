@@ -11,7 +11,6 @@ local ctx
 local slots = {} -- index -> player
 local captives = {} -- player -> {Slot, Prompt, Progress, Presses}
 local everCaptured = {} -- player -> true
-local secondUsed = {} -- player -> true: their Second Chance is spent tonight
 
 function Capture.init(c)
 	ctx = c
@@ -28,7 +27,6 @@ function Capture.reset()
 	slots = {}
 	captives = {}
 	everCaptured = {}
-	secondUsed = {}
 end
 
 local function freeSlot(): number?
@@ -147,7 +145,7 @@ function Capture.kill(player: Player): boolean
 	task.delay(1.6 + scareTime, function()
 		-- the body is gone from the house; you watch your friends from here on
 		local char = player.Character
-		if char then
+		if char and player:GetAttribute("Dead") then -- (unless they've been revived already)
 			ctx.PlayerState.setFrozen(player, true)
 			char:PivotTo(CFrame.new(220, -60, 220))
 		end
@@ -169,22 +167,21 @@ function Capture.kill(player: Player): boolean
 	return true
 end
 
+-- back from the dead (ReviveService): a clean slate for the rest of the night
+function Capture.revived(player: Player)
+	player:SetAttribute("Dead", nil)
+	player:SetAttribute("Captured", nil)
+	player:SetAttribute("StruggleProgress", nil)
+	everCaptured[player] = nil
+end
+
 function Capture.capture(player: Player)
 	if captives[player] or player:GetAttribute("Escaped") or player:GetAttribute("Dead") then
 		return false
 	end
-	-- you only get away once (the second chance pass: twice, once a night)
+	-- you only get away once
 	if everCaptured[player] then
-		if player:GetAttribute("Pass_SecondChance") and not secondUsed[player] then
-			secondUsed[player] = true
-			task.delay(2.5, function()
-				if player.Parent then
-					ctx.Remotes.Notify:FireClient(player, "Second Chance: he tied you up instead. Don't let it happen again.", "objective")
-				end
-			end)
-		else
-			return Capture.kill(player)
-		end
+		return Capture.kill(player)
 	end
 	local slotIndex = freeSlot()
 	if not slotIndex then
@@ -297,7 +294,6 @@ function Capture.start()
 			end
 		end
 		everCaptured[p] = nil
-		secondUsed[p] = nil
 	end)
 	ctx.Remotes.Struggle.OnServerEvent:Connect(function(player)
 		local data = captives[player]
