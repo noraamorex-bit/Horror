@@ -699,36 +699,44 @@ Story.Thoughts = {
 ---------------------------------------------------------------------------
 Story.Endings = {
 	CaseClosed = {
+		Short = "The police arrived, and you'd already worked out who he was.",
 		Title = "CASE CLOSED",
 		Body = "The police find four soaked, shaking teenagers who have already solved it.\n\nThe coffee in the sink. The invoice from VANE HOME SERVICES. The lanyard with the eyes scratched out. The photos from the top of the stairs. Nineteen days of it, laid out on the kitchen table.\n\nCurtis Vane is picked up at the van before he can start the engine. Detective Ruiz reads your notes twice.\n\n'You kids did half my job,' she says. 'Go home. Well. Stay home.'",
 	},
 	Sirens = {
+		Short = "The police arrived in time. Curtis Vane was arrested.",
 		Title = "SIRENS",
 		Body = "Blue and red light floods the rain. Two cruisers, then a third.\n\nCurtis Vane is arrested forty minutes later, sitting in a gray van two streets away, soaked through, with nowhere left to go.\n\nOn Monday, Jamie's dad resets the garage code. It had been 4-1-9-7 since April.",
 	},
 	LockedIn = {
+		Short = "You locked him in the basement until the police came.",
 		Title = "LOCKED IN",
 		Body = "When the officers open the basement door, Curtis Vane is sitting on the bottom step with his hands already raised.\n\n'It's my house too,' he tells them. 'I take care of it.'\n\nNineteen days. Nobody ever changed the code.",
 	},
 	Taillights = {
+		Short = "You drove away in Mom's car and brought the police back.",
 		Title = "TAILLIGHTS",
 		Body = "The Honda fishtails down the flooded hill, headlights full of rain, and doesn't stop until the gas station on Route 9.\n\nThe police go up to 14 Alder Lane without you. They find an attic full of photographs of a family who never knew they had a guest.",
 	},
 	NextDoor = {
+		Short = "Mrs. Okafor let you in and called the police.",
 		Title = "NEXT DOOR",
 		Body = "Mrs. Okafor opens the door in her robe, takes one look at your face and pulls you in out of the rain.\n\n'I KNEW that wasn't your father's friend,' she says, already dialing.\n\nBiscuit doesn't stop barking at the Whitaker house until the police arrive.",
 	},
 	GoneQuiet = {
+		Short = "Nobody came. He took everyone.",
 		Title = "GONE QUIET",
 		Body = "Nobody calls. Nobody comes.\n\nJamie's parents come home on Sunday night to a dark house and a basement door locked from the outside. Everyone inside is alive: cold, terrified, zip-tied to the pipes.\n\nCurtis Vane's van is found abandoned at a rest stop in Indiana. He is still out there. Somewhere with an attic.",
 		Bad = true,
 	},
 	GotAway = {
+		Short = "Help came too late. He got away.",
 		Title = "HE GOT AWAY",
 		Body = "By the time the police kick in the front door, the house is silent.\n\nThe back door is open. Rain on the kitchen floor. Muddy prints going out, none coming back.\n\nThey search the house room by room. The attic is empty, except for the photographs. Hundreds of them. Every one of you.\n\nCurtis Vane was never found.",
 		Bad = true,
 	},
 	Dawn = {
+		Short = "You lasted the whole night.",
 		Title = "DAWN",
 		Body = "The rain stops a little after five. Gray light, a dripping gutter, and then - finally - sirens.\n\nA neighbor on Birch Street had called about a gray van that hadn't moved in three weeks. The officer who ran the plate made the connection to the break-ins.\n\nYou lasted the whole night.",
 	},
@@ -771,6 +779,20 @@ Story.EndingHints = {
 	Dawn = "Just... last until morning.",
 	GoneQuiet = "What happens if he takes everyone?",
 	GotAway = "Help is on the way. Don't let him take everyone before it arrives.",
+}
+
+-- the headline on your own result card, by how your night ended
+Story.Results = {
+	Survived = { Title = "YOU SURVIVED", Good = true },
+	Escaped = { Title = "YOU ESCAPED", Good = true },
+	Died = { Title = "YOU DIED", Good = false },
+	Taken = { Title = "YOU WERE TAKEN", Good = false },
+}
+-- the one line under it when you're out before the night is over (co-op)
+Story.ResultLines = {
+	Car = "You drove away in Mom's car. Your friends are still inside.",
+	Neighbor = "Mrs. Okafor pulled you inside. Your friends are still in the house.",
+	Died = "He caught you a second time. Your friends are still in the house.",
 }
 
 Story.Fates = {

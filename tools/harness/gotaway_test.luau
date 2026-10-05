@@ -45,7 +45,7 @@ local ok, err = pcall(function()
 	local t = 1000
 	H.clock = function() return t end
 	local payload
-	ctx.Remotes.Ending.FireAllClients = function(_, pl) payload = pl end
+	ctx.Remotes.Ending.FireClient = function(_, _, pl) payload = pl end
 	ctx.Escape.callForHelp("Landline", p)
 	print("help called", ctx.Escape.helpCalled())
 	local function run(f) local co = coroutine.create(f) H.ours[co] = true local okc, e = coroutine.resume(co) if not okc then print("ERR", e) end end
@@ -59,7 +59,7 @@ local ok, err = pcall(function()
 	ctx.Director.checkAllCaptured()
 	t += 5
 	ctx.Director._lastChanceTick()
-	print("dead -> ending", ctx.Ending.isOver(), payload and payload.Title, payload and payload.Fates[1].Fate)
+	print("dead -> ending", ctx.Ending.isOver(), payload and payload.Title, payload and payload.Headline)
 	assert(payload and payload.Kind == "GotAway", "expected GotAway")
 end)
 print(ok and "GOTAWAY OK" or ("GOTAWAY FAIL: " .. tostring(err)))

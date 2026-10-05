@@ -113,6 +113,56 @@ Sounds.Library = {
 	Matches = { Id = "rbxassetid://9120930385", Volume = 0.7, Range = 25 },
 	LogDrop = { Id = "rbxassetid://9120871246", Volume = 0.7, Range = 30 },
 	ObjectiveDone = { Id = "rbxassetid://9126073001", Volume = 0.35 },
+
+	-- Handling: drawers, cupboards, hiding, items (ProSoundEffects)
+	DrawerOpen = { Id = "rbxassetid://9125756882", Volume = 0.6, Range = 25 },
+	ClosetOpen = { Id = "rbxassetid://9113817128", Volume = 0.5, Range = 25 },
+	ClosetClose = { Id = "rbxassetid://9113817295", Volume = 0.5, Range = 25 },
+	BedCreak = { Id = "rbxassetid://9113383926", Volume = 0.6, Range = 22 },
+	KeysJingle = { Id = "rbxassetid://9116178785", Volume = 0.7, Range = 20 },
+	ScissorsSnip = { Id = "rbxassetid://9118831072", Volume = 0.8, Range = 25, Caption = "[Snip]" },
+	TapeRip = { Id = "rbxassetid://9114200028", Volume = 0.7, Range = 25 },
+	FlashlightOn = { Id = "rbxassetid://9114480271", Volume = 0.6, Range = 15 },
+	FlashlightOff = { Id = "rbxassetid://9114479857", Volume = 0.6, Range = 15 },
+	SwitchClick = { Id = "rbxassetid://9119717523", Volume = 0.6, Range = 15 },
+	BreakerClick = { Id = "rbxassetid://9119716652", Volume = 0.9, Range = 40 },
+	StairCreak = { Id = "rbxassetid://9114493757", Volume = 0.6, Range = 40 },
+	WalkieChirp = { Id = "rbxassetid://9120456889", Volume = 0.7, Range = 20 },
+	ToolDrop = { Id = "rbxassetid://9114007026", Volume = 0.8, Range = 50, Caption = "[Metal clatters to the floor]" },
+
+	-- Being caught, and everyone else hearing it
+	BodyFall = { Id = "rbxassetid://9113481839", Volume = 1, Range = 70, Caption = "[A heavy thud]" },
+	MuffledScream = { Id = "rbxassetid://9125652443", Volume = 0.55, Pitch = 0.82, Range = 160, Caption = "[A muffled scream somewhere in the house]" },
+	Gasp = { Id = "rbxassetid://9125572450", Volume = 0.8 },
+	GaspDeep = { Id = "rbxassetid://9114554949", Volume = 0.7 },
+	-- APM "Horror Hits 11" / "Horror Kit Hits 19": layered under the jumpscare scream
+	HorrorHit = { Id = "rbxassetid://1840927273", Volume = 0.9 },
+	HorrorHitLow = { Id = "rbxassetid://1841093403", Volume = 0.8 },
+	-- APM "Modern Horror sting": a danger notification
+	DangerSting = { Id = "rbxassetid://1841714843", Volume = 0.45 },
+
+	-- The way out
+	CarDoor = { Id = "rbxassetid://9113204879", Volume = 0.9, Range = 60, Caption = "[A car door slams]" },
+	CarDriveAway = { Id = "rbxassetid://9112945344", Volume = 1, Range = 260, Caption = "[A car tearing away down the street]" },
+	SirenApproach = { Id = "rbxassetid://9112871822", Volume = 1, Range = 900, Caption = "[Sirens, getting closer]" },
+	PoliceRadio = { Id = "rbxassetid://9125774594", Volume = 0.8, Range = 60, Caption = "[Police radio chatter]" },
+
+	-- Music for the end of the night (APM)
+	VictorySting = { Id = "rbxassetid://1837953552", Volume = 0.6 },
+	DeathSting = { Id = "rbxassetid://1839909461", Volume = 0.7 },
+	SadPiano = { Id = "rbxassetid://1844613809", Volume = 0.35, Looped = true },
+	Riser = { Id = "rbxassetid://1843492737", Volume = 0.5 },
+	RisingWhoosh = { Id = "rbxassetid://9125805579", Volume = 0.6 },
+	-- APM "Deciding Vote 30 A": under the difficulty vote
+	VoteMusic = { Id = "rbxassetid://9045139214", Volume = 0.3, Looped = true },
+
+	-- Interface (Roblox)
+	UIClick = { Id = "rbxassetid://15675032796", Volume = 0.5 },
+	UISelect = { Id = "rbxassetid://15675059323", Volume = 0.5 },
+	UIWhoosh = { Id = "rbxassetid://15674975792", Volume = 0.4 },
+	NotifyLow = { Id = "rbxassetid://17208372272", Volume = 0.35 },
+	NotifyHigh = { Id = "rbxassetid://17208361335", Volume = 0.35 },
+	CountBeep = { Id = "rbxassetid://9113399926", Volume = 0.4 },
 }
 
 function Sounds.get(name: string)

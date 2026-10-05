@@ -106,6 +106,7 @@ function HUD.caption(text: string, _position: Vector3?)
 end
 
 local KIND_COLOR = {}
+local lastEtaSecond = -1
 
 -- Toasts don't land on top of a thought line or a conversation: they wait until the screen
 -- has been clear for a moment, then come in one by one ("done" ticks are instant feedback).
@@ -156,8 +157,10 @@ function HUD.notify(text: string, kind: string?)
 end
 
 showNote = function(text: string, kind: string?)
-	if kind == "done" and ctx.Effects then
-		ctx.Effects.playSound("ObjectiveDone", nil, { Caption = false })
+	if ctx.Effects then
+		-- each kind of note has its own sound: a tick for progress, a sting for danger
+		local snd = ({ done = "ObjectiveDone", danger = "DangerSting", objective = "NotifyHigh" })[kind or ""] or "NotifyLow"
+		ctx.Effects.playSound(snd, nil, { Caption = false })
 	end
 	local color = KIND_COLOR[kind or "info"] or UI.Color.Text
 	local frame = UI.new("Frame", {
@@ -593,7 +596,18 @@ local function update()
 	-- police ETA
 	local eta = workspace:GetAttribute("PoliceETA")
 	if eta then
-		etaLabel.Text = "Police: " .. ctx.Util.formatSeconds(eta - workspace:GetServerTimeNow())
+		local left = eta - workspace:GetServerTimeNow()
+		etaLabel.Text = "Police: " .. ctx.Util.formatSeconds(left)
+		-- the last stretch: a riser, then a tick every second
+		local whole = math.ceil(left)
+		if whole ~= lastEtaSecond and ctx.Effects and player:GetAttribute("InGame") then
+			if whole == 15 then
+				ctx.Effects.playSound("Riser", nil, { Caption = false })
+			elseif whole <= 10 and whole >= 1 then
+				ctx.Effects.playSound("CountBeep", nil, { Caption = false })
+			end
+		end
+		lastEtaSecond = whole
 	else
 		etaLabel.Text = ""
 	end

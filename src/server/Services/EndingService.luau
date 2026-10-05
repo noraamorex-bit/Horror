@@ -1,11 +1,23 @@
 --[[
-	EndingService — resolves the night, shows every player the ending, their fates and the
-	"What Really Happened" timeline, then restarts the house.
+	EndingService — how the night ends.
+
+	• When someone is out early (escaped in the car or next door, or caught a second time) while
+	  friends are still in the house, they get their own result card at once (Remotes.Result) and
+	  can watch the others.
+	• When nobody is left in the house, the night ends right away; otherwise it ends when help
+	  arrives or everyone still inside is taken.
+	• Ending.trigger plays every player a short cutscene for the ending (the shots are built
+	  here, from the map), then their result card: YOU SURVIVED / ESCAPED / DIED / WERE TAKEN, the
+	  ending's name and one line of what happened. Then the house restarts.
 ]]
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
 
 local Ending = {}
 local ctx
 local over = false
+local ended: { [Player]: string } = {} -- player -> "Escaped" | "Died": already shown their result
 
 function Ending.init(c)
 	ctx = c
@@ -13,11 +25,141 @@ end
 
 function Ending.reset()
 	over = false
+	ended = {}
 	workspace:SetAttribute("EndingActive", nil)
 end
 
 function Ending.isOver(): boolean
 	return over
+end
+
+---------------------------------------------------------------------------
+-- Cutscenes: a few slow camera moves around the house, built from the map
+---------------------------------------------------------------------------
+local V = Vector3.new
+local function look(from: Vector3, at: Vector3): CFrame
+	return CFrame.lookAt(from, at)
+end
+
+local function shotsFor(kind: string)
+	local L = ctx.Layout
+	local O = L.Outside
+	local houseFront = V(2, 14, -30)
+	local attic = V(-6, 24, -24)
+	local police = O.PoliceStop
+	local street = {
+		{ From = look(V(-46, 9, -96), houseFront), To = look(V(-16, 8, -84), houseFront), Time = 4.5 },
+	}
+	local policeShots = {
+		{ From = look(V(-46, 9, -96), houseFront), To = look(V(-22, 8, -86), houseFront), Time = 4 },
+		{ From = look(police + V(22, 6, -16), police + V(0, 2, 0)), To = look(police + V(14, 4, -12), police + V(0, 2, 0)), Time = 3.5 },
+	}
+	local S = {
+		Sirens = policeShots,
+		CaseClosed = policeShots,
+		LockedIn = policeShots,
+		Taillights = {
+			-- from the end of the driveway, watching the car go
+			{ From = look(V(30, 7, -62), V(40, 4, -40)), To = look(V(26, 6, -64), V(40, 4, -40)), Time = 4.5, Track = "Car" },
+			{ From = look(V(-46, 9, -96), houseFront), To = look(V(-20, 8, -86), houseFront), Time = 3 },
+		},
+		NextDoor = {
+			-- from Mrs. Okafor's porch, back at the dark house
+			{ From = look(O.NeighborPorch + V(-2, 6, 4), houseFront), To = look(O.NeighborPorch + V(-6, 5, 2), houseFront), Time = 4.5 },
+			{ From = look(police + V(22, 6, -16), police + V(0, 2, 0)), To = look(police + V(14, 4, -12), police + V(0, 2, 0)), Time = 3 },
+		},
+		Dawn = {
+			{ From = look(V(-46, 7, -100), houseFront), To = look(V(-20, 9, -86), houseFront), Time = 6, Dawn = true },
+		},
+		GoneQuiet = {
+			{ From = look(V(-30, 8, -96), houseFront), To = look(V(-8, 12, -70), attic), Time = 6 },
+		},
+		GotAway = {
+			-- down the empty street, the van gone
+			{ From = look(V(-10, 7, -80), O.Van + V(-60, 3, 0)), To = look(V(-20, 6, -78), O.Van + V(-90, 3, 0)), Time = 4 },
+			{ From = look(V(-30, 8, -96), houseFront), To = look(V(-10, 11, -74), attic), Time = 3.5 },
+		},
+	}
+	return S[kind] or street
+end
+
+---------------------------------------------------------------------------
+-- Out early: escaped or dead while the night goes on for the others
+---------------------------------------------------------------------------
+local function inPlay(): { Player }
+	local list = {}
+	for _, p in ctx.Util.sessionPlayers() do
+		if not p:GetAttribute("Escaped") and not p:GetAttribute("Dead") then
+			table.insert(list, p)
+		end
+	end
+	return list
+end
+
+-- nobody left in the house: which ending is it?
+local function earlyKind(): string
+	local car, door = false, false
+	for _, p in ctx.Util.sessionPlayers() do
+		local where = p:GetAttribute("Escaped")
+		if where == "Car" then
+			car = true
+		elseif where then
+			door = true
+		end
+	end
+	if car then
+		return "Taillights"
+	elseif door then
+		return "NextDoor"
+	end
+	return ctx.Director.lostEnding()
+end
+
+--[[
+	A player is out of the house for good (outcome "Escaped" with where = "Car"/"Neighbor", or
+	"Died"). If that leaves nobody inside, the night ends now (after the escape fade or the
+	jumpscare); otherwise they get their own result card and can watch the others.
+]]
+function Ending.playerDone(player: Player, outcome: string, where: string?)
+	if over or ended[player] then
+		return
+	end
+	ended[player] = outcome
+	local delay = outcome == "Died" and 2.8 or 1.4
+	task.delay(delay, function()
+		if over then
+			return
+		end
+		if #inPlay() == 0 then
+			Ending.trigger(earlyKind())
+			return
+		end
+		local R = ctx.Story.Results
+		local res = outcome == "Died" and R.Died or R.Escaped
+		ctx.Remotes.Result:FireClient(player, {
+			Outcome = outcome,
+			Title = res.Title,
+			Good = res.Good,
+			Line = ctx.Story.ResultLines[outcome == "Died" and "Died" or (where or "Car")],
+			CanSpectate = true,
+			ReturnToLobby = ctx.Reserved == true,
+		})
+	end)
+end
+
+---------------------------------------------------------------------------
+-- The end of the night, for everyone
+---------------------------------------------------------------------------
+local function resultFor(p: Player, kind: string, bad: boolean)
+	local R = ctx.Story.Results
+	if p:GetAttribute("Escaped") then
+		return R.Escaped
+	elseif p:GetAttribute("Dead") then
+		return R.Died
+	elseif p:GetAttribute("Captured") and bad then
+		return R.Taken
+	end
+	return bad and R.Taken or R.Survived
 end
 
 function Ending.trigger(kind: string)
@@ -34,9 +176,9 @@ function Ending.trigger(kind: string)
 	if ctx.Intruder then
 		ctx.Intruder.stop()
 	end
+	local bad = story.Bad == true
 
-	-- fates
-	local fates = {}
+	-- fates (kept as attributes: stats and badges read them)
 	for _, p in ctx.Util.sessionPlayers() do
 		local fate
 		if p:GetAttribute("Escaped") then
@@ -44,42 +186,27 @@ function Ending.trigger(kind: string)
 		elseif p:GetAttribute("Dead") then
 			fate = ctx.Story.Fates.Dead
 		elseif p:GetAttribute("Captured") then
-			fate = (kind == "GoneQuiet" or kind == "GotAway") and ctx.Story.Fates.Captured or ctx.Story.Fates.Rescued
+			fate = bad and ctx.Story.Fates.Captured or ctx.Story.Fates.Rescued
 		else
 			fate = ctx.Story.Fates.Safe
 		end
-		-- a one-line recap of their night
-		local bits = {}
-		local function add(attr, one, many)
-			local n = tonumber(p:GetAttribute(attr)) or 0
-			if n > 0 then
-				table.insert(bits, n == 1 and one or string.format(many, n))
-			end
-		end
-		add("NightHides", "hid once", "hid %d times")
-		add("NightSpotted", "was spotted once", "was spotted %d times")
-		add("NightCaught", "got caught", "got caught %d times")
-		add("NightRescues", "freed a friend", "freed %d friends")
-		table.insert(fates, {
-			Recap = #bits > 0 and table.concat(bits, " · ") or "never saw him coming",
-			Name = p.DisplayName,
-			Role = p:GetAttribute("RoleName") or "",
-			Fate = fate,
-			WasCaptured = ctx.Capture.wasEverCaptured(p),
-		})
 		p:SetAttribute("Fate", fate)
 	end
 
-	-- badges (IDs in Config.Badges; 0 = not set up yet)
-	local badges = ctx.Config.Badges or {}
-	for _, p in ctx.Util.sessionPlayers() do
-		for _, id in { badges.FirstNight, badges[kind] } do
-			if type(id) == "number" and id > 0 then
-				task.spawn(function()
-					pcall(function()
-						game:GetService("BadgeService"):AwardBadge(p.UserId, id)
+	-- badges (Config.Badges; 0 = not set up yet)
+	if ctx.Badges then
+		ctx.Badges.onEnding(kind)
+	else
+		local badges = ctx.Config.Badges or {}
+		for _, p in ctx.Util.sessionPlayers() do
+			for _, id in { badges.FirstNight, badges[kind] } do
+				if type(id) == "number" and id > 0 then
+					task.spawn(function()
+						pcall(function()
+							game:GetService("BadgeService"):AwardBadge(p.UserId, id)
+						end)
 					end)
-				end)
+				end
 			end
 		end
 	end
@@ -95,22 +222,46 @@ function Ending.trigger(kind: string)
 		end
 	end
 
-	local payload = {
-		Kind = kind,
-		FirstFor = firstFor,
-		Title = story.Title,
-		Body = story.Body,
-		Bad = story.Bad == true,
-		Fates = fates,
-		Truths = ctx.Director.getTruthLog(),
-		Duration = ctx.Director.elapsedString(),
-		RestartIn = ctx.Reserved and ctx.Config.Lobby.ReturnDelay or 60,
-		ReturnToLobby = ctx.Reserved == true,
-	}
-	ctx.Remotes.Ending:FireAllClients(payload)
+	-- the car leaving is part of the shot when the night ends on it
+	local car = ctx.Escape.carModel and ctx.Escape.carModel() or nil
+	local shots = shotsFor(kind)
+	local restartIn = ctx.Reserved and ctx.Config.Lobby.ReturnDelay or 60
+	for _, p in Players:GetPlayers() do
+		local res = resultFor(p, kind, bad)
+		ctx.Remotes.Ending:FireClient(p, {
+			Kind = kind,
+			FirstFor = firstFor,
+			Headline = res.Title,
+			Good = res.Good,
+			Title = story.Title,
+			Short = story.Short,
+			Bad = bad,
+			Shots = shots,
+			Car = car,
+			Duration = ctx.Director.elapsedString(),
+			RestartIn = restartIn,
+			ReturnToLobby = ctx.Reserved == true,
+			InGame = p:GetAttribute("InGame") == true,
+		})
+	end
 
-	task.delay(payload.RestartIn, function()
+	task.delay(restartIn, function()
 		ctx.restart()
+	end)
+end
+
+function Ending.start()
+	-- "Back to the lobby" from a result card
+	ctx.Remotes.LeaveGame.OnServerEvent:Connect(function(player)
+		if not ctx.Reserved then
+			return
+		end
+		if not (over or player:GetAttribute("Escaped") or player:GetAttribute("Dead")) then
+			return
+		end
+		pcall(function()
+			TeleportService:TeleportAsync(ctx.Mode.lobbyPlaceId(), { player })
+		end)
 	end)
 end
 

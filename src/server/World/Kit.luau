@@ -528,17 +528,26 @@ function Kit.wardrobe(parent, cf: CFrame, w: number, d: number, color: Color3)
 	Kit.box(m, "Plinth", cf * CF(0, 0.25, -0.05), V(w + 0.1, 0.5, d + 0.05), dark, M.Wood)
 	Kit.box(m, "Crown", cf * CF(0, h + 0.12, -0.05), V(w + 0.45, 0.25, d + 0.3), dark, M.Wood)
 	Kit.soft(m, "CrownLip", cf * CF(0, h + 0.3, -0.08), V(w + 0.6, 0.14, d + 0.4), 0.06, color, M.Wood)
+	-- the doors: an invisible slab that blocks and carries the hide prompt, and two visible
+	-- leaves (each tagged with its side, hinge and closed CFrame) that swing open (World/Anim)
 	local doors = Kit.solid(m, "WardrobeDoors", cf * CF(0, h / 2 + 0.2, -d / 2 + 0.12), V(w - 0.2, h - 0.8, 0.24), lighter(color, 0.05), M.Wood)
-	Kit.box(m, "DoorSeam", cf * CF(0, h / 2 + 0.2, -d / 2 - 0.01), V(0.06, h - 1, 0.04), darker(color, 0.4), M.Wood)
+	doors.Transparency = 1
+	local dw = w - 0.2
+	local function leaf(part: BasePart, s: number)
+		part:SetAttribute("Leaf", s)
+		part:SetAttribute("Closed", part.CFrame)
+		part:SetAttribute("Hinge", cf * CF(s * dw / 2, h / 2 + 0.2, -d / 2 + 0.12))
+	end
 	for _, s in { -1, 1 } do
 		local dx = s * (w / 4 - 0.02)
+		leaf(Kit.box(m, "WardrobeLeaf", cf * CF(s * (dw / 4 + 0.01), h / 2 + 0.2, -d / 2 + 0.12), V(dw / 2 - 0.02, h - 0.8, 0.24), lighter(color, 0.05), M.Wood), s)
 		for k = 0, 1 do
 			local ph = k == 0 and 3.2 or 2.6
 			local py = k == 0 and 2.4 or 6.0
-			Kit.box(m, "DoorPanel", cf * CF(dx, py, -d / 2 - 0.02), V(w / 2 - 0.9, ph, 0.05), darker(color, 0.07), M.Wood)
-			Kit.box(m, "PanelInset", cf * CF(dx, py, -d / 2 - 0.035), V(w / 2 - 1.2, ph - 0.3, 0.04), lighter(color, 0.04), M.Wood)
+			leaf(Kit.box(m, "DoorPanel", cf * CF(dx, py, -d / 2 - 0.02), V(w / 2 - 0.9, ph, 0.05), darker(color, 0.07), M.Wood), s)
+			leaf(Kit.box(m, "PanelInset", cf * CF(dx, py, -d / 2 - 0.035), V(w / 2 - 1.2, ph - 0.3, 0.04), lighter(color, 0.04), M.Wood), s)
 		end
-		Kit.box(m, "Handle", cf * CF(s * 0.3, h / 2 + 0.3, -d / 2 - 0.08), V(0.1, 0.9, 0.1), C.Brass, M.Metal)
+		leaf(Kit.box(m, "Handle", cf * CF(s * 0.3, h / 2 + 0.3, -d / 2 - 0.08), V(0.1, 0.9, 0.1), C.Brass, M.Metal), s)
 	end
 	return m, doors, h
 end

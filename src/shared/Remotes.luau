@@ -26,6 +26,8 @@ local NAMES = {
 	"Thought", -- (text, hintKey?) your character thinking out loud
 	"Dialogue", -- (line | nil) a conversation line, maybe with choices; nil closes the box
 	"Intro", -- () the night's opening shot: the house from the street, and him in the window
+	"Result", -- (payload) you're out of the night early (escaped / died) while others still play
+	"Vote", -- (state | nil) the difficulty vote before the night: {Ends, Votes, Mine}
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})
@@ -44,6 +46,8 @@ local NAMES = {
 	"SetBeam", -- (beamId) pick an unlocked flashlight colour
 	"Unstuck", -- () wedged in the scenery: move me to the nearest open spot
 	"PhoneReply", -- (index) the text you picked to send back
+	"LeaveGame", -- () from a result card: back to the lobby now
+	"CastVote", -- (choice) "Normal" or "Hard"
 }
 
 local Remotes = {}

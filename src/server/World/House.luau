@@ -371,9 +371,19 @@ function House.build(ctx, root: Instance)
 		TweenService:Create(panel, TweenInfo.new(1.2, Enum.EasingStyle.Bounce), { CFrame = panelOpen }):Play()
 		cord.Transparency = 1
 		handle.Transparency = 1
+		-- the folding ladder slides down out of the dark after the panel drops
+		local ladderCF = ladder.CFrame
+		ladder.CFrame = ladderCF + Vector3.new(0, 14, 0)
 		ladder.Transparency = 0
-		ladder.CanCollide = true
-		ladder.CanQuery = true
+		task.delay(0.5, function()
+			TweenService:Create(ladder, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = ladderCF }):Play()
+			ctx.Audio.playAt("StairCreak", Vector3.new(hx, 24, hz), { Caption = false })
+		end)
+		task.delay(1.45, function()
+			ladder.CFrame = ladderCF
+			ladder.CanCollide = true
+			ladder.CanQuery = true
+		end)
 		ctx.Audio.playAt("HatchCreak", Vector3.new(hx, 26, hz))
 		if hatch.Prompt then
 			hatch.Prompt.Enabled = false
@@ -414,6 +424,15 @@ function House.build(ctx, root: Instance)
 		else
 			ctx.Audio.caption("It won't budge. Like something's holding it shut from above.", nil, nil, { player })
 			ctx.Audio.playAt("HatchCreak", Vector3.new(hx, 28, hz), { Caption = false })
+			-- it gives a fraction, then snaps back up
+			if not hatch.Open then
+				TweenService:Create(panel, TweenInfo.new(0.12), { CFrame = panelClosed * CFrame.new(0, -0.18, 0) }):Play()
+				task.delay(0.16, function()
+					if not hatch.Open then
+						TweenService:Create(panel, TweenInfo.new(0.1), { CFrame = panelClosed }):Play()
+					end
+				end)
+			end
 			ctx.Director.logTruth("HatchStuck")
 		end
 	end)

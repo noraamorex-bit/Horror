@@ -215,6 +215,20 @@ function UI.init(ctx)
 	if workspace.CurrentCamera then
 		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
 	end
+	-- every button in every screen clicks when pressed
+	local function hook(inst: Instance)
+		if inst:IsA("GuiButton") and not inst:GetAttribute("Silent") then
+			inst.Activated:Connect(function()
+				if ctx.Effects then
+					ctx.Effects.playSound("UIClick", nil, { Caption = false })
+				end
+			end)
+		end
+	end
+	for _, d in playerGui:GetDescendants() do
+		hook(d)
+	end
+	playerGui.DescendantAdded:Connect(hook)
 	ctx.UI = UI
 end
 

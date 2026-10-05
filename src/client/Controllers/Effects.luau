@@ -78,10 +78,13 @@ function Effects.jumpscare(head: BasePart?)
 	local oldType, oldFov = cam.CameraType, cam.FieldOfView
 	cam.CameraType = Enum.CameraType.Scriptable
 	cam.FieldOfView = 48
-	local s = localSound("Jumpscare")
-	if s then
-		s:Play()
-		game:GetService("Debris"):AddItem(s, 7)
+	-- the scream, a low hit under it, and your own gasp
+	for _, name in { "Jumpscare", "HorrorHitLow", "Gasp" } do
+		local s = localSound(name)
+		if s then
+			s:Play()
+			game:GetService("Debris"):AddItem(s, 14)
+		end
 	end
 	local flash = Instance.new("ColorCorrectionEffect")
 	flash.TintColor = Color3.fromRGB(255, 120, 110)

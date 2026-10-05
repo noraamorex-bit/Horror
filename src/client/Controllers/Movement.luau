@@ -97,7 +97,7 @@ function Movement.start()
 	player:GetAttributeChangedSignal("StatBeamColor"):Connect(tint)
 	player:GetAttributeChangedSignal("FlashlightOn"):Connect(function()
 		if ctx.Effects then
-			ctx.Effects.playSound("FlashlightClick")
+			ctx.Effects.playSound(player:GetAttribute("FlashlightOn") and "FlashlightOn" or "FlashlightOff", nil, { Caption = false })
 		end
 	end)
 	ctx.Input.on("Sprint", function(began)

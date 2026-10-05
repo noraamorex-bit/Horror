@@ -30,6 +30,8 @@ local ANIMS = {
 }
 
 local S: any = {}
+local tune: () -> any
+local unstick: (string) -> ()
 local STATES: { [string]: (number, { Player }) -> () } = {}
 
 local function fresh()
@@ -72,6 +74,21 @@ function Intruder.init(c)
 	ctx = c
 	Perception.init(c)
 	S = fresh()
+end
+
+-- Config.Intruder, with the night's difficulty laid over it (Config.Difficulty.<name>.Intruder)
+local tuned, tunedFor = nil, nil
+tune = function(): any
+	local d = workspace:GetAttribute("Difficulty") or "Normal"
+	if tunedFor ~= d or not tuned then
+		tunedFor = d
+		tuned = table.clone(ctx.Config.Intruder)
+		local diff = ctx.Config.Difficulty and ctx.Config.Difficulty[d]
+		for k, v in (diff and diff.Intruder) or {} do
+			tuned[k] = v
+		end
+	end
+	return tuned
 end
 
 ---------------------------------------------------------------------------
@@ -121,7 +138,7 @@ local function buildRig(): Model
 	hum.BreakJointsOnDeath = false
 	hum.MaxHealth = 1e9
 	hum.Health = 1e9
-	hum.WalkSpeed = ctx.Config.Intruder.WalkSpeed
+	hum.WalkSpeed = tune().WalkSpeed
 	hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
 	return model
@@ -359,14 +376,14 @@ end
 
 local function tryGrab(target: Player): boolean
 	local r = rootOf(target)
-	if not r or (r.Position - pos()).Magnitude > ctx.Config.Intruder.GrabRange then
+	if not r or (r.Position - pos()).Magnitude > tune().GrabRange then
 		return false
 	end
 	if ctx.Capture.capture(target) then
 		S.Memory[target] = nil
 		S.HuntTarget = nil
 		local boiler = ctx.Rooms.ByName.Boiler
-		retreat(nil, ctx.Config.Intruder.RetreatAfterCapture, boiler and V(boiler.Center.X, -10, boiler.Center.Z) or nil)
+		retreat(nil, tune().RetreatAfterCapture, boiler and V(boiler.Center.X, -10, boiler.Center.Z) or nil)
 		return true
 	end
 	return false
@@ -421,7 +438,7 @@ local function sensed(p: Player): Vector3?
 	if r and table.find(S.Visible, p) then
 		return r.Position
 	end
-	local I = ctx.Config.Intruder
+	local I = tune()
 	if now() - (S.UnhidAt[p] or -1e9) < I.HideGrace or now() < (S.Ignore[p] or 0) then
 		return nil
 	end
@@ -466,6 +483,7 @@ local function startChase(target: Player)
 	if now() - (S.StungAt[target] or -1e9) > 18 then
 		S.StungAt[target] = now()
 		ctx.Audio.playFor(target, "Stinger")
+		ctx.Audio.playFor(target, "GaspDeep")
 		ctx.Remotes.Shake:FireClient(target, 0.6, 0.6)
 		if ctx.Director.thinkOnce then
 			ctx.Director.thinkOnce(target, "HuntSeen", ctx.Story.Hunt.Seen)
@@ -488,7 +506,7 @@ end
 
 local function checkSpot(spot, returnState: string, returnData: any?)
 	setState("CheckSpot", { Spot = spot, Return = returnState, ReturnData = returnData, Phase = "Approach" })
-	S.Nav:goTo(spot.Exit.Position, { Speed = ctx.Config.Intruder.ProwlSpeed, Tolerance = 2.5, Hurry = true })
+	S.Nav:goTo(spot.Exit.Position, { Speed = tune().ProwlSpeed, Tolerance = 2.5, Hurry = true })
 end
 
 -- the next hiding spot to tear open around `at`: one he saw someone use first, then (a little
@@ -501,7 +519,7 @@ local function searchSpot(at: Vector3, target: Player?, checked: { [any]: boolea
 			if S.SawHide[s] then
 				w = 20
 			elseif target and ctx.Hiding.occupant(s) == target then
-				w = ctx.Config.Intruder.TrueSpotWeight
+				w = tune().TrueSpotWeight
 			end
 			table.insert(entries, { s, w })
 		end
@@ -513,6 +531,11 @@ end
 local function startHunt()
 	setState("Prowl", {})
 	S.HuntTarget = nil
+	if S.LastHuntAt and now() - S.LastHuntAt < 30 then
+		-- (he never really stopped: no door slam, no new wave)
+		return
+	end
+	S.LastHuntAt = now()
 	S.Waves += 1
 	ctx.Audio.playAt("DoorSlam", pos(), { CaptionText = "[A door SLAMS somewhere in the house]", CaptionRange = 200 })
 	local H = ctx.Story.Hunt
@@ -526,9 +549,140 @@ local function startHunt()
 	end
 end
 
+-- which floors have players on them (hidden ones too, by where he last felt them)
+local function playerFloors(): { [string]: boolean }
+	local floors = {}
+	for _, p in ctx.Util.activePlayers() do
+		local r = rootOf(p)
+		if r then
+			floors[ctx.Rooms.floorOf(r.Position)] = true
+		end
+	end
+	for p, at in S.LastFelt do
+		if valid(p) then
+			floors[ctx.Rooms.floorOf(at)] = true
+		end
+	end
+	return floors
+end
+
+-- somewhere dark to wait: near the players' floor but not on top of them, and not the basement
+-- (the old "farthest dark corner" was always the basement, and he'd sit down there all night)
+local function restNode(): Vector3
+	local floors = playerFloors()
+	local best, bestScore = nil, -math.huge
+	for _, n in ctx.Layout.Nodes do
+		if n.Shadow then
+			local d = minPlayerDistance(n.Pos)
+			local score = -math.abs(math.min(d, 200) - 40) + math.random() * 8
+			if floors[ctx.Rooms.floorOf(n.Pos)] then
+				score += 25
+			end
+			if n.Room == "Basement" or n.Room == "Boiler" then
+				score -= 30
+			end
+			if d < 18 then
+				score -= 100
+			end
+			if score > bestScore then
+				best, bestScore = n, score
+			end
+		end
+	end
+	return best and best.Pos or farNode()
+end
+
+-- a few rooms to sweep: where players were last felt, where the last noises came from, and
+-- the rest of their floor (past the boiler room now and then if someone's tied up down there)
+local function patrolRoute(): { Vector3 }
+	local I = tune()
+	local clues = {}
+	for p, at in S.LastFelt do
+		if valid(p) then
+			table.insert(clues, at)
+		end
+	end
+	for i = #S.Noises, math.max(1, #S.Noises - 4), -1 do
+		local ev = S.Noises[i]
+		if ev and now() - ev.Time < 60 then
+			table.insert(clues, ev.Position)
+		end
+	end
+	local floors = playerFloors()
+	local checkCaptives = ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.PatrolCaptiveCheck
+	local candidates = {}
+	for _, n in ctx.Layout.Nodes do
+		local w = floors[ctx.Rooms.floorOf(n.Pos)] and 3 or 0.4
+		if n.Room == "Boiler" then
+			w = checkCaptives and 8 or 0.1
+		elseif n.Room == "Basement" then
+			w = floors.Basement and 3 or 0.15
+		end
+		for _, c in clues do
+			if (c - n.Pos).Magnitude < 25 then
+				w += 4
+			end
+		end
+		if (n.Pos - pos()).Magnitude < 8 then
+			w *= 0.2
+		end
+		table.insert(candidates, { n, w })
+	end
+	local route = {}
+	for _ = 1, 4 do
+		local n = ctx.Util.weighted(candidates)
+		if not n then
+			break
+		end
+		table.insert(route, n.Pos)
+		for i, e in candidates do
+			if e[1] == n then
+				table.remove(candidates, i)
+				break
+			end
+		end
+	end
+	return route
+end
+
+local function patrol()
+	setState("Patrol", { Route = patrolRoute(), Index = 0 })
+	S.HuntTarget = nil
+end
+
+-- he moves through the walls and the crawlspaces: gone from somewhere nobody's looking, out of
+-- a dark corner on the players' floor that nobody's looking at either
+local function relocate(): boolean
+	if Perception.anyoneSees(pos() + V(0, 3, 0), S.Model) then
+		return false
+	end
+	local floors = playerFloors()
+	local best, bestScore = nil, -math.huge
+	for _, n in ctx.Layout.Nodes do
+		local d = minPlayerDistance(n.Pos)
+		if n.Shadow and d > 22 and floors[ctx.Rooms.floorOf(n.Pos)] and not Perception.anyoneSees(n.Pos + V(0, 3, 0), S.Model) then
+			local score = -math.abs(math.min(d, 200) - 35) + math.random() * 5
+			if score > bestScore then
+				best, bestScore = n, score
+			end
+		end
+	end
+	if not best then
+		return false
+	end
+	S.Nav:stop()
+	placeAt(best.Pos, best.Pos + V(0, 0, -1))
+	S.Progress = { Pos = pos(), T = now() }
+	if ctx.Director.logTruthRaw and not S.LoggedWalls then
+		S.LoggedWalls = true
+		ctx.Director.logTruthRaw("He knew the crawlspaces and the gaps behind the walls. That's how he always seemed to be everywhere at once.")
+	end
+	return true
+end
+
 -- he lets the house go quiet: walks off somewhere dark and waits, listening
 local function withdraw()
-	local I = ctx.Config.Intruder
+	local I = tune()
 	local dur = I.WithdrawMin + math.random() * (I.WithdrawMax - I.WithdrawMin)
 	if S.Frenzy then
 		dur *= 0.5
@@ -537,7 +691,7 @@ local function withdraw()
 	if #ctx.Util.sessionPlayers() <= 1 then
 		dur *= 1.3
 	end
-	local goal = farNode()
+	local goal = restNode()
 	local boiler = ctx.Rooms.ByName.Boiler
 	if ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.CaptiveCheckInterval and boiler then
 		S.LastCaptiveCheck = now()
@@ -551,7 +705,7 @@ end
 -- he doesn't really leave: creeps (silently) to somewhere close but out of the way, and waits
 -- for whoever's hiding to think it's over
 local function ambush(at: Vector3, target: Player?, checked: { [any]: boolean }?)
-	local I = ctx.Config.Intruder
+	local I = tune()
 	local best, bestScore = nil, -math.huge
 	for _, n in ctx.Layout.Nodes do
 		local d = (n.Pos - at).Magnitude
@@ -683,7 +837,7 @@ end
 
 STATES.Lurk = function(dt, visible)
 	local d = S.Data
-	local I = ctx.Config.Intruder
+	local I = tune()
 	if d.Phase == nil or d.Phase == "Pick" then
 		hideAway(d)
 	end
@@ -790,7 +944,7 @@ STATES.Prowl = function(_, visible)
 		return
 	end
 	local d = S.Data
-	local I = ctx.Config.Intruder
+	local I = tune()
 	-- the one he was after just vanished into a hiding spot: search where he last felt them
 	local was = S.HuntTarget
 	if was and valid(was) and was:GetAttribute("Hiding") and S.LastFelt[was] then
@@ -800,9 +954,9 @@ STATES.Prowl = function(_, visible)
 	end
 	local target, at = huntTarget()
 	if not target or not at then
-		-- nobody to feel (all hidden, or just out of hiding): he gives up for now
+		-- nobody to feel (all hidden, or just out of hiding): he starts going room to room
 		if now() - S.StateStart > 2 then
-			withdraw()
+			patrol()
 		end
 		return
 	end
@@ -818,11 +972,11 @@ STATES.Prowl = function(_, visible)
 	local tr = rootOf(target)
 	if S.Nav.Arrived and tr and (tr.Position - pos()).Magnitude > 10 then
 		d.WaitSince = d.WaitSince or now()
-		if now() - d.WaitSince > 12 then
-			S.Ignore[target] = now() + 25
+		if now() - d.WaitSince > 8 then
+			S.Ignore[target] = now() + 15
 			d.WaitSince = nil
 			S.HuntTarget = nil
-			withdraw()
+			patrol()
 			return
 		end
 	else
@@ -849,7 +1003,7 @@ end
 STATES.Chase = function(_, visible)
 	local d = S.Data
 	local t = d.Target
-	local I = ctx.Config.Intruder
+	local I = tune()
 	if not valid(t) then
 		startHunt()
 		return
@@ -899,7 +1053,7 @@ STATES.Search = function(_, visible)
 		return
 	end
 	local d = S.Data
-	local I = ctx.Config.Intruder
+	local I = tune()
 	d.Checked = d.Checked or {}
 	if not d.Started then
 		d.Started = true
@@ -948,7 +1102,7 @@ STATES.Ambush = function(_, visible)
 		return
 	end
 	local d = S.Data
-	local I = ctx.Config.Intruder
+	local I = tune()
 	if S.Nav.Arrived and not d.Waiting then
 		d.Waiting = true
 		S.Nav:stop()
@@ -966,7 +1120,7 @@ end
 ]]
 STATES.Withdraw = function(_, visible)
 	local d = S.Data
-	local I = ctx.Config.Intruder
+	local I = tune()
 	for _, p in visible do
 		local r = rootOf(p)
 		if r and (r.Position - pos()).Magnitude < I.WithdrawNotice then
@@ -979,11 +1133,63 @@ STATES.Withdraw = function(_, visible)
 		S.Nav:stop()
 	end
 	if now() >= d.Until then
-		-- nobody out to hunt: keep waiting, quietly
+		-- nobody out in the open: he goes looking, room by room
 		if huntTarget() then
 			startHunt()
 		else
-			d.Until = now() + 4 + math.random() * 4
+			patrol()
+		end
+	end
+end
+
+--[[
+	Patrol: nobody he can feel (everyone hiding, or the house just went quiet). He walks the
+	rooms where you were last, stops and listens, and now and then tears open a hiding spot.
+	Anyone out in the open and he's back on the hunt.
+]]
+STATES.Patrol = function(_, visible)
+	if engage(visible) then
+		return
+	end
+	local d = S.Data
+	local I = tune()
+	if huntTarget() then
+		startHunt()
+		return
+	end
+	if not d.Moving then
+		d.Index += 1
+		local goal = d.Route and d.Route[d.Index]
+		if not goal then
+			patrol()
+			return
+		end
+		d.Moving = true
+		d.PauseUntil = nil
+		S.Nav:goTo(goal, { Speed = I.PatrolSpeed, Tolerance = 3 })
+		return
+	end
+	if S.Nav.Arrived or S.Nav:isStuck() or now() - S.StateStart > 90 then
+		if not d.PauseUntil then
+			S.Nav:stop()
+			d.PauseUntil = now() + I.PatrolPause[1] + math.random() * (I.PatrolPause[2] - I.PatrolPause[1])
+			local room = ctx.Rooms.find(pos())
+			if room and room.Name == "Boiler" then
+				S.LastCaptiveCheck = now()
+			end
+			if math.random() < I.PatrolCheckChance then
+				local spots = ctx.Hiding.spotsNear(pos(), 14)
+				if #spots > 0 then
+					d.Moving = false
+					d.PauseUntil = nil
+					checkSpot(spots[math.random(1, #spots)], "Patrol", d)
+				end
+			end
+			return
+		end
+		if now() >= d.PauseUntil then
+			d.Moving = false
+			d.PauseUntil = nil
 		end
 	end
 end
@@ -1024,7 +1230,7 @@ STATES.CheckSpot = function(_, visible)
 		return
 	end
 	local occupant = ctx.Hiding.occupant(spot)
-	local I = ctx.Config.Intruder
+	local I = tune()
 	local found = false
 	if occupant then
 		-- he saw you get in: he opens it and you're his. Otherwise he usually still finds you
@@ -1053,6 +1259,8 @@ STATES.CheckSpot = function(_, visible)
 		S.State = "Search"
 		S.Data = d.ReturnData
 		S.Nav.Arrived = true
+	elseif d.Return == "Patrol" and d.ReturnData then
+		setState("Patrol", d.ReturnData)
 	else
 		startHunt()
 	end
@@ -1068,15 +1276,15 @@ end
 
 STATES.Stunned = function()
 	local d = S.Data
-	if now() - S.StateStart >= ctx.Config.Intruder.StunTime then
-		S.Humanoid.WalkSpeed = ctx.Config.Intruder.WalkSpeed
-		retreat(d.From, ctx.Config.Intruder.RetreatAfterStun)
+	if now() - S.StateStart >= tune().StunTime then
+		S.Humanoid.WalkSpeed = tune().WalkSpeed
+		retreat(d.From, tune().RetreatAfterStun)
 	end
 end
 
 STATES.Trapped = function()
 	local d = S.Data
-	local I = ctx.Config.Intruder
+	local I = tune()
 	local door = ctx.Doors.get("Basement")
 	if not door then
 		startHunt()
@@ -1112,7 +1320,7 @@ STATES.Trapped = function()
 		end)
 		local n = ctx.Util.choice(list)
 		if n then
-			S.Nav:goTo(n.Pos, { Speed = ctx.Config.Intruder.WalkSpeed })
+			S.Nav:goTo(n.Pos, { Speed = tune().WalkSpeed })
 		end
 	end
 end
@@ -1135,6 +1343,9 @@ local function gaitFor(speed: number): string
 		return "Reach"
 	elseif speed > 0.6 then
 		return "Walk"
+	elseif st == "Patrol" then
+		-- stopped mid-sweep: head turning, listening
+		return "Search"
 	elseif st == "Lurk" or st == "Withdraw" or st == "Ambush" then
 		return "Stare"
 	end
@@ -1161,7 +1372,7 @@ local function animate(dt: number)
 	S.StepClock += dt
 	local running = speed > 12
 	local interval = running and math.max(3.75 / speed, 0.18) or math.max(2.6 / math.max(speed, 1), 0.3)
-	if speed > ctx.Config.Intruder.SneakSpeed + 0.5 and S.StepClock >= interval then
+	if speed > tune().SneakSpeed + 0.5 and S.StepClock >= interval then
 		S.StepClock = 0
 		S.CaptionClock -= interval
 		local caption = S.CaptionClock <= 0
@@ -1176,6 +1387,41 @@ local function animate(dt: number)
 			CaptionText = running and "[Heavy footsteps, running]" or "[Heavy footsteps]",
 			CaptionRange = running and 70 or 28,
 		})
+	end
+end
+
+-- no real progress for a while (wedged, or a path that won't resolve), or idling in the
+-- basement with nobody down there: he slips through the walls to the players' floor
+unstick = function(state: string)
+	local I = tune()
+	local moving = state == "Prowl" or state == "Patrol" or state == "Search" or state == "Retreat"
+	local pr = S.Progress
+	if not pr or (pos() - pr.Pos).Magnitude > 6 then
+		S.Progress = { Pos = pos(), T = now() }
+	elseif moving and now() - pr.T > I.StuckRelocate then
+		S.Progress = { Pos = pos(), T = now() }
+		if relocate() and state ~= "Prowl" and state ~= "Retreat" then
+			patrol()
+		end
+		return
+	end
+	local room = ctx.Rooms.find(pos())
+	local below = room ~= nil and room.Floor == "Basement"
+	if below and state ~= "Trapped" and state ~= "Retreat" and state ~= "Chase" and state ~= "CheckSpot" and state ~= "Stunned" then
+		local floors = playerFloors()
+		if floors.Basement then
+			S.BasementSince = nil
+		else
+			S.BasementSince = S.BasementSince or now()
+			if now() - S.BasementSince > I.BasementIdle then
+				S.BasementSince = nil
+				if relocate() then
+					patrol()
+				end
+			end
+		end
+	else
+		S.BasementSince = nil
 	end
 end
 
@@ -1195,6 +1441,8 @@ local function think(dt: number)
 	animate(dt)
 	if S.Mode == "Hunt" then
 		recordTrails()
+		unstick(state)
+		state = S.State
 	end
 	local visible = {}
 	local head = S.Head.CFrame
@@ -1425,9 +1673,29 @@ function Intruder.onExitAttempt(position: Vector3, player: Player)
 		-- the noise gives the place away right now, not a few seconds late
 		local tr = S.Trails[player]
 		if tr then
-			table.insert(tr, { T = now() - ctx.Config.Intruder.SenseDelay, Pos = position })
+			table.insert(tr, { T = now() - tune().SenseDelay, Pos = position })
 		end
 	end
+end
+
+-- someone's cutting a friend free in the boiler room: zip ties, whispering, a struggle. He hears it.
+function Intruder.onRescueAttempt(position: Vector3, rescuer: Player)
+	if S.Mode ~= "Hunt" or not S.InHouse or not S.Root then
+		return
+	end
+	local st = S.State
+	if st == "Chase" or st == "CheckSpot" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" then
+		return
+	end
+	local reach = tune().RescueNoise
+	if ctx.Rooms.floorOf(position) ~= ctx.Rooms.floorOf(pos()) then
+		reach *= ctx.Config.Noise.FloorDropMultiplier
+	end
+	if (position - pos()).Magnitude > reach then
+		return
+	end
+	setState("Search", { Pos = position, Target = rescuer, Checked = {} })
+	ctx.Audio.caption("[Heavy footsteps, coming this way]", position, 40)
 end
 
 -- he saw you get in (or heard it right next to him): he's coming to that exact spot
@@ -1513,14 +1781,14 @@ function Intruder.start()
 		local who = ev.Source
 		if who and valid(who) and S.Trails[who] and (S.State == "Prowl" or S.State == "Withdraw") then
 			S.UnhidAt[who] = nil
-			table.insert(S.Trails[who], { T = now() - ctx.Config.Intruder.SenseDelay, Pos = ev.Position })
+			table.insert(S.Trails[who], { T = now() - tune().SenseDelay, Pos = ev.Position })
 		end
 	end)
 
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)
 		acc += dt
-		if acc < ctx.Config.Intruder.ThinkRate then
+		if acc < tune().ThinkRate then
 			return
 		end
 		local step = acc

@@ -32,12 +32,12 @@ local function follow(p: Player?)
 	if hum then
 		cam.CameraType = Enum.CameraType.Custom
 		cam.CameraSubject = hum
-		label.Text = "You didn't make it   ·   watching " .. (p :: Player).DisplayName .. "   ·   tap to switch"
+		label.Text = (player:GetAttribute("Escaped") and "You got out" or "You didn't make it") .. "   ·   watching " .. (p :: Player).DisplayName .. "   ·   tap to switch"
 	else
 		-- nobody left inside: the house from across the street
 		cam.CameraType = Enum.CameraType.Scriptable
 		cam.CFrame = CFrame.lookAt(Vector3.new(2, 9, -78), Vector3.new(2, 15, -30))
-		label.Text = "You didn't make it"
+		label.Text = player:GetAttribute("Escaped") and "You got out" or "You didn't make it"
 	end
 end
 
@@ -51,8 +51,10 @@ local function nextTarget()
 	follow(list[(i % #list) + 1])
 end
 
+local manual = false -- watching by choice (escaped, or from a result card)
+
 local function refresh()
-	local dead = player:GetAttribute("Dead") == true
+	local dead = (player:GetAttribute("Dead") == true or manual) and workspace:GetAttribute("EndingActive") == nil
 	if dead == active then
 		return
 	end
@@ -83,6 +85,21 @@ function Spectate.init(c)
 	ctx = c
 end
 
+-- watch the friends still in the house (from a result card)
+function Spectate.begin()
+	manual = true
+	refresh()
+	if active then
+		nextTarget()
+	end
+end
+
+-- the night is over (an ending is playing): stop watching
+function Spectate.stop()
+	manual = false
+	refresh()
+end
+
 function Spectate.start()
 	local box = ctx.UI.box({
 		AnchorPoint = Vector2.new(0.5, 1),
@@ -99,6 +116,12 @@ function Spectate.start()
 		box.Visible = label.Visible
 	end)
 	player:GetAttributeChangedSignal("Dead"):Connect(refresh)
+	workspace:GetAttributeChangedSignal("EndingActive"):Connect(function()
+		if workspace:GetAttribute("EndingActive") then
+			manual = false
+		end
+		refresh()
+	end)
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not active or processed then
 			return

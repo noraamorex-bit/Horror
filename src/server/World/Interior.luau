@@ -12,6 +12,7 @@ local CollectionService = game:GetService("CollectionService")
 local Kit = require(script.Parent.Kit)
 local Textures = require(script.Parent.Textures)
 local TVScreens = require(script.Parent.TVScreens)
+local Anim = require(script.Parent.Anim)
 
 local Interior = {}
 
@@ -1500,9 +1501,11 @@ function Interior.build(ctx, root: Instance, refs)
 				target(targetName, s.Part.Position)
 			end
 			local look = visual(s, itemId)
-			ctx.Interaction.pickup(s.Part, itemId, { Action = look and "Take" or "Search", Object = look and ITEM_LOOK[itemId] or (s.Label .. " (" .. ITEM_LOOK[itemId]:lower() .. ")"), Keep = true }, function()
+			ctx.Interaction.pickup(s.Part, itemId, { Action = look and "Take" or "Search", Object = look and ITEM_LOOK[itemId] or (s.Label .. " (" .. ITEM_LOOK[itemId]:lower() .. ")"), Keep = true, Sound = (not look) and "DrawerOpen" or nil }, function()
 				if look then
-					look:Destroy()
+					Anim.vanish(look)
+				else
+					Anim.drawer(s.Part)
 				end
 			end)
 		end
@@ -1530,7 +1533,10 @@ function Interior.build(ctx, root: Instance, refs)
 		for _, s in pool do
 			local p
 			p = ctx.Interaction.prompt(s.Part, { Action = "Search", Object = s.Label, Distance = 7 }, function(player)
-				ctx.Audio.playAt("Pickup", s.Part.Position, { Caption = false, Volume = 0.3 })
+				ctx.Audio.playAt(s.Visible and "Pickup" or "DrawerOpen", s.Part.Position, { Caption = false, Volume = s.Visible and 0.3 or 0.6 })
+				if not s.Visible then
+					Anim.drawer(s.Part)
+				end
 				ctx.Audio.caption("Nothing useful in here.", nil, nil, { player })
 				p:Destroy()
 			end)

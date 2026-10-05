@@ -6,6 +6,8 @@
 	peek camera at View (published via the "HideView" attribute).
 ]]
 
+local Anim = require(script.Parent.Parent.World.Anim)
+
 local Hiding = {}
 local ctx
 
@@ -86,6 +88,17 @@ function Hiding.register(part: BasePart, opts)
 	return spot
 end
 
+-- what getting in (or out) sounds like: bed springs, a closet door, a shower curtain
+function Hiding.sound(spot, entering: boolean): string
+	local n = string.lower(spot.Name or "")
+	if n:find("bed") or n:find("stairs") then
+		return "BedCreak"
+	elseif n:find("curtain") then
+		return "ClosetClose"
+	end
+	return entering and "ClosetOpen" or "ClosetClose"
+end
+
 function Hiding.enter(player: Player, spot)
 	local char = player.Character
 	local root = ctx.Util.getRoot(player)
@@ -106,6 +119,8 @@ function Hiding.enter(player: Player, spot)
 	player:SetAttribute("HideView", spot.View)
 	player:SetAttribute("Hiding", spot.Name)
 	spot.Prompt.Enabled = false
+	ctx.Audio.playAt(Hiding.sound(spot, true), spot.Position, { Caption = false, Volume = 0.45 })
+	Anim.leaves(spot.Part.Parent, 0.25)
 	ctx.Noise.emit(spot.Position, 8, "Hide", player)
 	if ctx.Intruder then
 		ctx.Intruder.onPlayerHid(player, spot)
@@ -129,6 +144,8 @@ function Hiding.exit(player: Player, forced: boolean?)
 	setHidden(player, false)
 	local char = player.Character
 	if char and not forced then
+		ctx.Audio.playAt(Hiding.sound(spot, false), spot.Position, { Caption = false, Volume = 0.45 })
+		Anim.leaves(spot.Part.Parent, 0.45)
 		ctx.PlayerState.placeStanding(player, spot.Exit)
 		ctx.PlayerState.setFrozen(player, false)
 	end

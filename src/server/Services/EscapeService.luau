@@ -129,6 +129,7 @@ function Escape.policeArrive()
 	blue.Face = Enum.NormalId.Back
 	blue.Parent = body
 	local siren = ctx.Audio.loopOn("Siren", body)
+	ctx.Audio.playAt("SirenApproach", ctx.Layout.Outside.PoliceStop + Vector3.new(-60, 6, 0), { Duration = 60 })
 	task.spawn(function()
 		local on = true
 		while model.Parent do
@@ -150,7 +151,14 @@ function Escape.policeArrive()
 	if siren then
 		siren.RollOffMaxDistance = 600
 	end
-	task.wait(8)
+	task.wait(7)
+	-- doors, a radio, flashlights up the driveway
+	ctx.Audio.playAt("CarDoor", target)
+	task.delay(0.4, function()
+		ctx.Audio.playAt("CarDoor", target, { Caption = false, Pitch = 0.95 })
+	end)
+	ctx.Audio.playAt("PoliceRadio", target)
+	task.wait(1)
 
 	local kind
 	local anyFree = false
@@ -212,6 +220,15 @@ function Escape.markEscaped(player: Player, where: string)
 	if ctx.Director then
 		ctx.Director.checkAllCaptured()
 	end
+	if ctx.Ending.playerDone then
+		ctx.Ending.playerDone(player, "Escaped", where)
+	end
+end
+
+-- the family car (the Taillights cutscene follows it down the street)
+function Escape.carModel(): Model?
+	local car = (state :: any).Car
+	return car and car.Model or nil
 end
 
 ---------------------------------------------------------------------------
@@ -361,6 +378,7 @@ function Escape.setupJunctionBox(model: Model, door: BasePart, openCF: CFrame, w
 			return
 		end
 		state.LineRepaired = true
+		ctx.Audio.playAt("TapeRip", door.Position, { Caption = false })
 		wire.Transparency = 0
 		cutWire.Transparency = 1
 		Escape.refreshLandline()
@@ -394,6 +412,7 @@ function Escape.setupBreaker(panel: BasePart, lever: BasePart, onCF: CFrame, off
 		local on = not ctx.Power.isOn()
 		ctx.Power.setMain(on, "Player")
 		ctx.Audio.playAt("Breaker", lever.Position)
+		ctx.Audio.playAt("BreakerClick", lever.Position, { Caption = false })
 		ctx.Noise.emit(lever.Position, 30, "Breaker", player)
 		if on then
 			ctx.Objectives.complete("Power")
@@ -538,7 +557,14 @@ function Escape.driveAway(driver: Player)
 		return
 	end
 	car.Gone = true
-	ctx.Audio.playAt("CarEngine", car.Model:GetPivot().Position)
+	local carAt = car.Model:GetPivot().Position
+	ctx.Audio.playAt("CarDoor", carAt)
+	task.delay(0.35, function()
+		ctx.Audio.playAt("CarDoor", carAt, { Caption = false, Pitch = 1.08 })
+	end)
+	task.delay(0.6, function()
+		ctx.Audio.playAt("CarEngine", carAt)
+	end)
 	ctx.Noise.emit(car.Model:GetPivot().Position, 120, "Car", driver)
 
 	-- everyone in a seat, plus the driver, plus anyone standing right by the car
@@ -578,6 +604,7 @@ function Escape.driveAway(driver: Player)
 	local mid = startCF * CFrame.new(0, 0, 50)
 	local tw = TweenService:Create(value, TweenInfo.new(4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = mid })
 	tw:Play()
+	ctx.Audio.playAt("CarDriveAway", startCF.Position, { Duration = 12 })
 	tw.Completed:Wait()
 	local far = CFrame.new(mid.Position + Vector3.new(260, 0, 0)) * CFrame.Angles(0, math.rad(90), 0)
 	TweenService:Create(value, TweenInfo.new(5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = far }):Play()

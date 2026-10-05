@@ -6,6 +6,8 @@
 	opts: Action, Object, Hold, Distance, Key, LOS, AllowCaptured, AllowHiding, Name
 ]]
 
+local Anim = require(script.Parent.Parent.World.Anim)
+
 local Interaction = {}
 local ctx
 
@@ -97,6 +99,26 @@ function Interaction.document(part: BasePart, docId: string, opts, onRead)
 end
 
 -- A pickup: gives item(s), destroys the world part (or a whole model).
+-- what picking something up sounds like (keys jingle, a drawer slides, tape tears...)
+local PICKUP_SOUND = {
+	CarKeys = "KeysJingle",
+	HouseKeys = "KeysJingle",
+	BasementKey = "KeysJingle",
+	Scissors = "ScissorsSnip",
+	ElectricalTape = "TapeRip",
+	Batteries = "SwitchClick",
+	Walkie = "WalkieChirp",
+}
+function Interaction.pickupSound(item: string, action: string?): string
+	if PICKUP_SOUND[item] then
+		return PICKUP_SOUND[item]
+	end
+	if action == "Search" then
+		return "DrawerOpen"
+	end
+	return "Pickup"
+end
+
 function Interaction.pickup(part: BasePart, item: string, opts, onTaken)
 	opts = opts or {}
 	local prompt
@@ -107,7 +129,7 @@ function Interaction.pickup(part: BasePart, item: string, opts, onTaken)
 		Distance = opts.Distance or 7,
 		Offset = opts.Offset,
 	}, function(player)
-		ctx.Audio.playAt("Pickup", part.Position, { Caption = false })
+		ctx.Audio.playAt(opts.Sound or Interaction.pickupSound(item, opts.Action), part.Position, { Caption = false })
 		ctx.Inventory.give(player, item, opts.Count or 1)
 		ctx.Audio.caption("Picked up: " .. (opts.Object or item), nil, nil, { player })
 		if onTaken then
@@ -117,8 +139,9 @@ function Interaction.pickup(part: BasePart, item: string, opts, onTaken)
 			-- a drawer or cupboard stays put; only the prompt goes
 			prompt:Destroy()
 		else
-			local target = opts.Destroy or part
-			target:Destroy()
+			-- it lifts a little and fades away rather than blinking out
+			prompt:Destroy()
+			Anim.vanish(opts.Destroy or part)
 		end
 	end)
 	return prompt

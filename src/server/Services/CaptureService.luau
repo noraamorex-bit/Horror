@@ -78,7 +78,7 @@ function Capture.release(player: Player, by: Player?)
 	player:SetAttribute("Captured", nil)
 	player:SetAttribute("StruggleProgress", nil)
 	ctx.PlayerState.setFrozen(player, false)
-	ctx.Audio.playAt("ZipTie", ctx.Layout.RestraintSlots[data.Slot].Pos, { CaptionText = "[Snip]" })
+	ctx.Audio.playAt(by and "ScissorsSnip" or "ZipTie", ctx.Layout.RestraintSlots[data.Slot].Pos, { CaptionText = "[Snip]" })
 	if by then
 		ctx.Audio.caption((by:GetAttribute("RoleName") or by.Name) .. " cut you free. Don't get caught again.", nil, nil, { player })
 		ctx.PlayerState.addNerve(player, 25)
@@ -88,6 +88,25 @@ function Capture.release(player: Player, by: Player?)
 	if ctx.Director then
 		ctx.Director.onRescue(player, by)
 	end
+end
+
+-- what the others hear when he takes someone: a heavy thud, a scream cut short
+function Capture.takenSounds(player: Player)
+	local root = ctx.Util.getRoot(player)
+	if not root then
+		return
+	end
+	local at = root.Position
+	local others = {}
+	for _, p in ctx.Util.sessionPlayers() do
+		if p ~= player then
+			table.insert(others, p)
+		end
+	end
+	task.delay(0.5, function()
+		ctx.Audio.playAt("MuffledScream", at, { Only = others })
+		ctx.Audio.playAt("BodyFall", at, { Caption = false })
+	end)
 end
 
 -- Caught a second time: no zip ties. He doesn't make the same mistake twice.
@@ -114,6 +133,7 @@ function Capture.kill(player: Player): boolean
 		ctx.Remotes.Jumpscare:FireClient(player, head)
 		scareTime = 0.9
 	end
+	Capture.takenSounds(player)
 	task.delay(scareTime, function()
 		ctx.Remotes.Fade:FireClient(player, true, 0.3)
 		ctx.Remotes.Shake:FireClient(player, 1.2, 0.6)
@@ -137,6 +157,9 @@ function Capture.kill(player: Player): boolean
 	if ctx.Director then
 		ctx.Director.logTruthRaw(tostring(player:GetAttribute("RoleName") or player.Name) .. " was caught a second time. Curtis didn't take any chances.")
 		ctx.Director.checkAllCaptured()
+	end
+	if ctx.Ending.playerDone then
+		ctx.Ending.playerDone(player, "Died")
 	end
 	return true
 end
@@ -180,6 +203,7 @@ function Capture.capture(player: Player)
 		ctx.Remotes.Jumpscare:FireClient(player, head)
 		scareTime = 0.9
 	end
+	Capture.takenSounds(player)
 	task.delay(scareTime, function()
 		ctx.Remotes.Fade:FireClient(player, true, 0.4)
 		ctx.Remotes.Shake:FireClient(player, 1, 0.5)
@@ -221,6 +245,12 @@ function Capture.capture(player: Player)
 			captives[player].Prompt = prompt
 			-- Tinkerer / tools make it faster: adjust per trigger attempt
 			prompt.PromptButtonHoldBegan:Connect(function(rescuer)
+				-- cutting zip ties isn't quiet: he hears it from a fair way off
+				local at = ctx.Layout.RestraintSlots[slotIndex].Pos
+				ctx.Noise.emit(at, 25, "Rescue", rescuer)
+				if ctx.Intruder and ctx.Intruder.onRescueAttempt then
+					ctx.Intruder.onRescueAttempt(at, rescuer)
+				end
 				local fast = rescuer:GetAttribute("Role") == "Tinkerer"
 					or ctx.Inventory.has(rescuer, "Multitool")
 					or ctx.Inventory.has(rescuer, "Scissors")

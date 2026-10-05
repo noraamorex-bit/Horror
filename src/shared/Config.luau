@@ -126,17 +126,52 @@ Config.Intruder = {
 	BreathHoldSave = 0.6, -- holding your breath cuts that by this much
 	AmbushChance = 0.4, -- after a search: pretend to leave, wait round the corner
 	AmbushTime = 9, -- (+0-5 s)
-	-- between hunts
-	WithdrawMin = 22,
-	WithdrawMax = 34,
+	-- between hunts: a short breather near the players' floor, then he patrols
+	WithdrawMin = 14,
+	WithdrawMax = 22,
 	WithdrawNotice = 30, -- seen this close while he's lying low, and he comes anyway
 	StunTime = 7,
 	RetreatAfterStun = 30,
-	RetreatAfterCapture = 35,
+	RetreatAfterCapture = 14, -- dropping someone in the boiler room, then straight back up
+	-- patrolling (nobody to sense): he sweeps the rooms you were last in, listening
+	PatrolSpeed = 10,
+	PatrolPause = { 1.5, 3 },
+	PatrolCheckChance = 0.25, -- at each stop: tear open a hiding spot nearby
+	PatrolCaptiveCheck = 90, -- with someone tied up: back past the boiler room this often
+	RescueNoise = 45, -- cutting a friend free: he hears it this far away
+	StuckRelocate = 20, -- no real progress this long (nobody watching): he moves through the walls
+	BasementIdle = 40, -- in the basement with nobody (and no captive) there: he comes back up
 	CaptiveCheckInterval = 150,
 	ForceLockTime = 5,
 	TrappedEscapeTime = 90,
 	ThinkRate = 0.1,
+}
+
+-- Difficulty (voted before the night): Hard overrides these. Intruder keys override Config.Intruder.
+Config.Difficulty = {
+	VoteTime = 12,
+	Hard = {
+		Intruder = {
+			WalkSpeed = 10.5,
+			PatrolSpeed = 12,
+			ProwlSpeed = 16,
+			ChaseSpeed = 19,
+			LungeSpeed = 23,
+			SenseDelay = 2,
+			HideGrace = 6,
+			OpenFindChance = 0.85,
+			SearchChecks = 3,
+			AmbushChance = 0.55,
+			WithdrawMin = 8,
+			WithdrawMax = 14,
+			RetreatAfterCapture = 8,
+			PatrolCheckChance = 0.4,
+			SoloChaseSlowdown = 0.5,
+		},
+		BatteryMultiplier = 0.7, -- flashlights die faster
+		PoliceMultiplier = 1.25, -- help takes longer to arrive
+		LastChance = 30,
+	},
 }
 
 Config.Hiding = {
