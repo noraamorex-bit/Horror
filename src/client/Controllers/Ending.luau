@@ -239,12 +239,35 @@ local function playCutscene(payload)
 	end
 	task.wait(0.7)
 	local top, bottom, sub = letterbox()
+	-- seen it before? tap to go straight to the result
+	local skipped = false
+	local skip = UI.new("TextButton", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -24, 0.5, 0),
+		Size = UDim2.fromOffset(110, 40),
+		Text = "SKIP  ▸",
+		Font = UI.Font.Bold,
+		TextSize = 17,
+		TextColor3 = Color3.fromRGB(235, 232, 226),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 34),
+		BackgroundTransparency = 0.3,
+		ZIndex = 3,
+		Parent = bottom,
+	})
+	UI.corner(skip, 8)
+	UI.stroke(skip, Color3.new(1, 1, 1), 1, 0.7)
+	skip.Activated:Connect(function()
+		skipped = true
+	end)
 	if ctx.Effects then
 		ctx.Effects.fade(false, 1.2)
 		ctx.Effects.playSound("RisingWhoosh", nil, { Caption = false })
 	end
 	-- dawn: the sky lightens through the cutscene
 	for i, shot in shots do
+		if skipped then
+			break
+		end
 		if shot.Dawn then
 			savedClock = savedClock or { Lighting.ClockTime, Lighting.Brightness }
 			local tw = game:GetService("TweenService"):Create(Lighting, TweenInfo.new(shot.Time + 1.5), { ClockTime = 6.6, Brightness = 1.2 })
@@ -252,7 +275,7 @@ local function playCutscene(payload)
 		end
 		local t0 = os.clock()
 		local car = payload.Car
-		while os.clock() - t0 < shot.Time do
+		while os.clock() - t0 < shot.Time and not skipped do
 			local k = (os.clock() - t0) / shot.Time
 			local e = k * k * (3 - 2 * k)
 			local cf = shot.From:Lerp(shot.To, e)
@@ -271,7 +294,8 @@ local function playCutscene(payload)
 			UI.tween(sub, 0.8, { TextTransparency = 0 })
 		end
 	end
-	task.wait(0.3)
+	skip:Destroy()
+	task.wait(skipped and 0 or 0.3)
 	UI.tween(top, 0.5, { Size = UDim2.new(1, 0, 0, 0) })
 	UI.tween(bottom, 0.5, { Size = UDim2.new(1, 0, 0, 0) })
 	UI.tween(sub, 0.4, { TextTransparency = 1 })

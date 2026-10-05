@@ -137,8 +137,48 @@ function PlayerState.assignRoles(players: { Player })
 	local roles = ctx.Story.Roles
 	local shuffled = table.clone(players)
 	ctx.Util.shuffle(shuffled)
-	for i, p in shuffled do
-		local role = roles[((i - 1) % #roles) + 1]
+	local chosen: { [Player]: any } = {}
+	local taken: { [string]: boolean } = {}
+	-- (a late arrival: the roles the others already have are taken)
+	for _, other in ctx.Util.sessionPlayers() do
+		local held = other:GetAttribute("Role")
+		if held and not table.find(players, other) then
+			taken[held] = true
+		end
+	end
+	-- the "pick your role" pass: whoever picked one (on the vote screen) gets it, if it's free
+	for _, p in shuffled do
+		local want = p:GetAttribute("Pass_ChooseRole") and p:GetAttribute("WantRole")
+		if want then
+			for _, role in roles do
+				if role.Id == want and not taken[role.Id] then
+					chosen[p] = role
+					taken[role.Id] = true
+					break
+				end
+			end
+		end
+	end
+	-- everyone else, in turn, from what's left
+	local i = 0
+	for _, p in shuffled do
+		if not chosen[p] then
+			local role
+			for _ = 1, #roles do
+				i += 1
+				local r = roles[((i - 1) % #roles) + 1]
+				if not taken[r.Id] then
+					role = r
+					break
+				end
+			end
+			role = role or roles[((i - 1) % #roles) + 1]
+			chosen[p] = role
+			taken[role.Id] = true
+		end
+	end
+	for _, p in shuffled do
+		local role = chosen[p]
 		p:SetAttribute("Role", role.Id)
 		p:SetAttribute("RoleName", role.Name)
 		for item, n in role.Items do
@@ -147,6 +187,10 @@ function PlayerState.assignRoles(players: { Player })
 		-- the pepper spray pass: a can of your own, one spray
 		if p:GetAttribute("Pass_PepperSpray") then
 			ctx.Inventory.give(p, "PepperSpray", 1)
+		end
+		-- the head start pass: a flashlight in your pocket from the first minute
+		if p:GetAttribute("Pass_HeadStart") then
+			ctx.Inventory.give(p, "Flashlight", 1)
 		end
 	end
 end
@@ -265,6 +309,10 @@ local function tick(dt: number)
 
 		if sprint then
 			local drain = M.StaminaDrain * (role == "Runner" and M.RunnerDrainMultiplier or 1)
+			-- (the marathon pass: much slower)
+			if player:GetAttribute("Pass_Marathon") then
+				drain *= 0.6
+			end
 			if nerve < ctx.Config.Nerve.Panic then
 				drain *= 1.4
 			end
@@ -303,6 +351,10 @@ local function slowTick(dt: number)
 		if player:GetAttribute("FlashlightOn") then
 			-- (the long-life battery pass: twice as long)
 			local life = ctx.Config.Flashlight.BatterySeconds * (player:GetAttribute("Pass_Battery") and 2 or 1)
+			-- (hard nights: the batteries are older)
+			if workspace:GetAttribute("Difficulty") == "Hard" then
+				life *= ctx.Config.Difficulty.Hard.BatteryMultiplier
+			end
 			local b = (player:GetAttribute("Battery") or 0) - dt * (100 / life)
 			player:SetAttribute("Battery", math.max(0, b))
 			if b <= 0 then

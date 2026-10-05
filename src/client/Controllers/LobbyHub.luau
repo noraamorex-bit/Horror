@@ -122,6 +122,32 @@ function LobbyHub.start()
 	local beamBtn = menuButton(menu, "Flashlight", 4)
 	ctx.Social.button(menu, "invite", { LayoutOrder = 5, Size = UDim2.fromOffset(150, 30) })
 	ctx.Social.button(menu, "favorite", { LayoutOrder = 6, Size = UDim2.fromOffset(150, 30) })
+	-- the scream pass (locked: tapping it opens the shop)
+	local screamBtn = menuButton(menu, "Scream", 7)
+	local function screamLabel()
+		screamBtn.Text = lp:GetAttribute("Pass_Scream") and "SCREAM!" or "Scream  (pass)"
+	end
+	screamLabel()
+	lp:GetAttributeChangedSignal("Pass_Scream"):Connect(screamLabel)
+	local lastScream = 0
+	screamBtn.Activated:Connect(function()
+		if not lp:GetAttribute("Pass_Scream") then
+			if ctx.ShopUI then
+				ctx.ShopUI.open("Passes")
+			end
+			return
+		end
+		if os.clock() - lastScream < 15 then
+			return
+		end
+		lastScream = os.clock()
+		ctx.Remotes.Scream:FireServer()
+	end)
+	menuButton(menu, "Settings", 8).Activated:Connect(function()
+		if ctx.Settings then
+			ctx.Settings.open()
+		end
+	end)
 	lobbyMenu = menu
 
 	-- flashlight colours, unlocked by bringing friends (StatsService.Beams)

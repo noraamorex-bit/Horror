@@ -11,6 +11,7 @@ local ctx
 local slots = {} -- index -> player
 local captives = {} -- player -> {Slot, Prompt, Progress, Presses}
 local everCaptured = {} -- player -> true
+local secondUsed = {} -- player -> true: their Second Chance is spent tonight
 
 function Capture.init(c)
 	ctx = c
@@ -27,6 +28,7 @@ function Capture.reset()
 	slots = {}
 	captives = {}
 	everCaptured = {}
+	secondUsed = {}
 end
 
 local function freeSlot(): number?
@@ -65,6 +67,9 @@ end
 function Capture.release(player: Player, by: Player?)
 	if by and by ~= player then
 		by:SetAttribute("NightRescues", (tonumber(by:GetAttribute("NightRescues")) or 0) + 1)
+		if ctx.Badges then
+			ctx.Badges.award(by, "Rescuer")
+		end
 	end
 	local data = captives[player]
 	if not data then
@@ -168,9 +173,18 @@ function Capture.capture(player: Player)
 	if captives[player] or player:GetAttribute("Escaped") or player:GetAttribute("Dead") then
 		return false
 	end
-	-- you only get away once
+	-- you only get away once (the second chance pass: twice, once a night)
 	if everCaptured[player] then
-		return Capture.kill(player)
+		if player:GetAttribute("Pass_SecondChance") and not secondUsed[player] then
+			secondUsed[player] = true
+			task.delay(2.5, function()
+				if player.Parent then
+					ctx.Remotes.Notify:FireClient(player, "Second Chance: he tied you up instead. Don't let it happen again.", "objective")
+				end
+			end)
+		else
+			return Capture.kill(player)
+		end
 	end
 	local slotIndex = freeSlot()
 	if not slotIndex then
@@ -283,6 +297,7 @@ function Capture.start()
 			end
 		end
 		everCaptured[p] = nil
+		secondUsed[p] = nil
 	end)
 	ctx.Remotes.Struggle.OnServerEvent:Connect(function(player)
 		local data = captives[player]

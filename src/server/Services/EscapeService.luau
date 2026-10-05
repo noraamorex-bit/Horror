@@ -7,6 +7,8 @@
 
 local TweenService = game:GetService("TweenService")
 
+local Items = require(script.Parent.Parent.World.Items)
+
 local Escape = {}
 local ctx
 
@@ -73,6 +75,10 @@ function Escape.callForHelp(method: string, player: Player?)
 	state.HelpCaller = player
 	local H = ctx.Config.Help
 	local eta = (method == "Car" and H.CarResponse) or (method == "Neighbor" and H.NeighborResponse) or H.PhoneResponse
+	local hard = ctx.Config.Difficulty and ctx.Config.Difficulty.Hard
+	if workspace:GetAttribute("Difficulty") == "Hard" and hard and hard.PoliceMultiplier then
+		eta = math.floor(eta * hard.PoliceMultiplier + 0.5)
+	end
 	state.PoliceETA = os.clock() + eta
 	workspace:SetAttribute("PoliceETA", workspace:GetServerTimeNow() + eta)
 	workspace:SetAttribute("HelpMethod", method)
@@ -520,6 +526,7 @@ function Escape.returnCarKeysToNest()
 		return
 	end
 	local p = ctx.Builder.block(state.Nest.Folder, "NestCarKeys", state.Nest.KeysPos, Vector3.new(0.8, 0.2, 0.5), Color3.fromRGB(190, 190, 195), Enum.Material.Metal)
+	Items.dress(p, "CarKeysFlat")
 	ctx.Interaction.pickup(p, "CarKeys", { Object = "Car keys (Honda)" })
 end
 

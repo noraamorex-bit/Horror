@@ -13,6 +13,7 @@ local Kit = require(script.Parent.Kit)
 local Textures = require(script.Parent.Textures)
 local TVScreens = require(script.Parent.TVScreens)
 local Anim = require(script.Parent.Anim)
+local Items = require(script.Parent.Items)
 
 local Interior = {}
 
@@ -312,6 +313,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.box(living, "ShovelBlade", toolBase * CF(0.33, 0.45, 0.1), V(0.45, 0.5, 0.05), C.Black, KM.Metal)
 	local poker = item(living, "FirePoker", (toolBase * CF(-0.3, 1.9, 0.1)).Position, V(0.2, 3.6, 0.2), C.Black, "Poker", "Fire poker")
 	poker.CFrame *= ANG(0, 0, rad(8))
+	Items.dress(poker, "Poker")
 
 	local fireSpot = spot(living, "FireSpot", fireCF * CF(0, 2, 0), V(3.2, 1, 1.2))
 	target("Fireplace", (fireCF * CF(0, 3, -1.5)).Position)
@@ -727,6 +729,7 @@ function Interior.build(ctx, root: Instance, refs)
 	end
 	local keys = Kit.box(kitchen, "CarKeysOnHook", CF(-15.85, G + 5.3, 29.18), V(0.35, 0.6, 0.08), Color3.fromRGB(190, 190, 195), KM.Metal)
 	keys.CanQuery = true
+	Items.dress(keys, "CarKeys")
 	ctx.Escape.setupKeyHook(keys, hookBoard)
 	Kit.rug(kitchen, F(-20, G, 27.6, NZ), 5, 3, Color3.fromRGB(80, 70, 60))
 	Kit.plant(kitchen, F(-33.5, G, 28.3, NZ), 1.2, "snake", Color3.fromRGB(236, 236, 232))
@@ -787,7 +790,7 @@ function Interior.build(ctx, root: Instance, refs)
 	-- door on the south wall (from the back hall); vanity north, toilet east, towel west
 	Kit.vanity(bath, F(19.3, G, 2.3, NZ), 4.2, 2, Color3.fromRGB(70, 90, 110), Color3.fromRGB(235, 235, 232), 1)
 	Kit.mirror(bath, F(19.3, G + 6.6, 3.62, NZ), 3.2, 3.4, WOOD_DARK)
-	item(bath, "Scissors", V(17.7, G + 3.45, 2.1), V(0.8, 0.1, 0.35), Color3.fromRGB(210, 60, 60), "Scissors", "Scissors")
+	Items.dress(item(bath, "Scissors", V(17.7, G + 3.45, 2.1), V(0.8, 0.1, 0.35), Color3.fromRGB(210, 60, 60), "Scissors", "Scissors"), "Scissors")
 	Kit.toilet(bath, F(19.8, G, -1.6, NX))
 	Kit.towel(bath, F(12.55, G + 5.6, 1.2, PX), 2.4, Color3.fromRGB(120, 160, 190))
 	Kit.rug(bath, F(16.3, G, 0.2, PX), 3, 2.4, Color3.fromRGB(110, 140, 160))
@@ -820,6 +823,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.box(mud, "KeyBoard", CF(35.5, G + 7.6, -9.55), V(2, 1, 0.14), WOOD_DARK, KM.Wood)
 	local bkey = Kit.box(mud, "BasementKey", CF(35.4, G + 6.9, -9.42), V(0.35, 0.6, 0.08), BRASS, KM.Metal)
 	bkey.CanQuery = true
+	Items.dress(bkey, "BasementKey")
 	ctx.Interaction.pickup(bkey, "BasementKey", { Object = "Key tagged 'BSMT'" })
 	for i = 0, 1 do
 		Kit.shoe(mud, F(26 + i * 0.6, G, -7.1, NZ), C.Black)
@@ -897,8 +901,12 @@ function Interior.build(ctx, root: Instance, refs)
 	for i, kind in { "hammer", "wrench", "saw", "screwdriver", "wrench", "hammer" } do
 		Kit.tool(garage, F(65.3, G + 6.8 + (i % 2) * 0.6, -26 + i * 1.6, NX), kind)
 	end
-	item(garage, "Walkie", V(63.2, G + 3.9, -24.6), V(0.6, 1, 0.35), Color3.fromRGB(40, 40, 45), "Walkie", "Walkie-talkie")
-	item(garage, "Walkie", V(63.2, G + 3.9, -23.4), V(0.6, 1, 0.35), Color3.fromRGB(40, 40, 45), "Walkie", "Walkie-talkie")
+	for _, z in { -24.6, -23.4 } do
+		local w = item(garage, "Walkie", V(63.2, G + 3.9, z), V(0.6, 1, 0.35), Color3.fromRGB(40, 40, 45), "Walkie", "Walkie-talkie")
+		-- (turned to face into the garage)
+		w.CFrame = CF(w.Position) * ANG(0, rad(90), 0)
+		Items.dress(w, "Walkie")
+	end
 	stash("Workbench", spot(garage, "BenchSpot", CF(63.5, G + 3.7, -19.5), V(1.6, 0.6, 1.6)), "Workbench", "Ground", true)
 	Kit.paintCan(garage, F(62.3, G + 3.4, -17.6, NX), Color3.fromRGB(60, 110, 160))
 	Kit.shelving(garage, F(43, G, 4.5, NZ), 4.6, 1.8, 7.5, 4, 6)
@@ -1074,7 +1082,7 @@ function Interior.build(ctx, root: Instance, refs)
 	wardrobe(master, "Master wardrobe", -27.5, -29.15, -20.5, -26.35, U, PZ, "Master", WOOD_DARK)
 	local _, dresserH = Kit.dresser(master, F(-9.6, U, -24.5, NX), 6, WOOD_DARK)
 	Kit.mirror(master, F(-8.45, U + dresserH + 2.3, -24.5, NX), 4, 3.4, WOOD_DARK)
-	item(master, "Purse", V(-9.6, U + dresserH + 0.55, -26.3), V(1.4, 1.1, 0.7), Color3.fromRGB(110, 60, 45), "PepperSpray", "Pepper spray (mom's old purse)", ctx.Config.PepperSpray.Uses)
+	Items.dress(item(master, "Purse", V(-9.6, U + dresserH + 0.55, -26.3), V(1.4, 1.1, 0.7), Color3.fromRGB(110, 60, 45), "PepperSpray", "Pepper spray (mom's old purse)", ctx.Config.PepperSpray.Uses), "Purse")
 	Kit.photoFrame(master, F(-9.8, U + dresserH, -23, NX), 0.9, 0.7, BRASS, 21)
 	Kit.vaseFlowers(master, F(-9.6, U + dresserH, -21.9, NX), 0.9, Color3.fromRGB(240, 240, 236), Color3.fromRGB(230, 140, 170), 9)
 	Kit.armchair(master, F(-36.9, U, -27.2, PZ), Color3.fromRGB(200, 190, 170))
@@ -1492,7 +1500,11 @@ function Interior.build(ctx, root: Instance, refs)
 			elseif itemId == "ElectricalTape" then
 				Kit.vcyl(m, "Tape", at * CF(0, 0.15, 0), 0.3, 0.9, C.Black, KM.Plastic)
 			else
-				Kit.box(m, "BatteryPack", at * CF(0, 0.3, 0), V(0.9, 0.6, 0.25), Color3.fromRGB(220, 160, 40), KM.Plastic)
+				-- a few AA batteries, loose
+				for k = 0, 3 do
+					Kit.cyl(m, "Battery", at * CF(0, 0.09, -0.27 + k * 0.18), 0.5, 0.17, Color3.fromRGB(220, 160, 40), KM.Metal)
+					Kit.cyl(m, "BatteryEnd", at * CF(0.26, 0.09, -0.27 + k * 0.18), 0.04, 0.08, Color3.fromRGB(200, 200, 205), KM.Metal)
+				end
 			end
 			return m
 		end

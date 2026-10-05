@@ -6,8 +6,9 @@ local ok, err = pcall(function()
 	ctx.Story = H.load("RS/Shared/Story")
 	ctx.Builder = H.load("Server/World/Builder")
 	-- passes 101..104, donation products 201..205
-	for i, p in ctx.Config.Shop.Passes do p.Id = 100 + i end
-	for i, d in ctx.Config.Shop.Donations do d.Id = 200 + i end
+	local PID, DID = {}, {}
+	for i, p in ctx.Config.Shop.Passes do p.Id = 100 + i; PID[p.Key] = p.Id end
+	for i, d in ctx.Config.Shop.Donations do d.Id = 200 + i; DID[d.Amount] = d.Id end
 	local notes = {}
 	local setBeam
 	ctx.Remotes = setmetatable({}, { __index = function(_, k)
@@ -19,7 +20,7 @@ local ok, err = pcall(function()
 	end })
 	-- fake marketplace + datastores
 	local finished = H.signal()
-	local MS = { PromptGamePassPurchaseFinished = finished, UserOwnsGamePassAsync = function(_, uid, id) return uid == 1 and id == 103 end }
+	local MS = { PromptGamePassPurchaseFinished = finished, UserOwnsGamePassAsync = function(_, uid, id) return uid == 1 and id == PID.Battery end }
 	H.services.MarketplaceService = MS
 	local serde = require("@lune/serde")
 	H.services.HttpService = { JSONEncode = function(_, v) return serde.encode("json", v) end, JSONDecode = function(_, v) return serde.decode("json", v) end }
@@ -74,7 +75,7 @@ local ok, err = pcall(function()
 	-- Ghost is locked until the colours pass
 	setBeam(b, "Ghost"); print("Bo ghost before pass ->", b:GetAttribute("StatBeam"))
 	assert(b:GetAttribute("StatBeam") ~= "Ghost")
-	finished:Fire(b, 102, true)
+	finished:Fire(b, PID.Colours, true)
 	print("Bo bought colours:", b:GetAttribute("Pass_Colours"))
 	setBeam(b, "Ghost"); print("Bo ghost after pass ->", b:GetAttribute("StatBeam"))
 	assert(b:GetAttribute("StatBeam") == "Ghost")
@@ -82,7 +83,7 @@ local ok, err = pcall(function()
 	assert(b:GetAttribute("StatBeam") == "Blood")
 	setBeam(b, "Gold"); print("Bo gold with only the colours pass (expect Blood) ->", b:GetAttribute("StatBeam"))
 	assert(b:GetAttribute("StatBeam") == "Blood")
-	finished:Fire(b, 101, false)
+	finished:Fire(b, PID.Supporter, false)
 	print("cancelled supporter purchase not granted:", b:GetAttribute("Pass_Supporter"))
 	assert(b:GetAttribute("Pass_Supporter") == nil)
 
@@ -92,9 +93,9 @@ local ok, err = pcall(function()
 	H.task.wait(0.1)
 	-- donations: the same receipt twice counts once; unknown products are left alone
 	local MSr = H.services.MarketplaceService
-	local r1 = MSr.ProcessReceipt({ ProductId = 203, PlayerId = 2, PurchaseId = "p1" })
-	local r2 = MSr.ProcessReceipt({ ProductId = 203, PlayerId = 2, PurchaseId = "p1" })
-	local r3 = MSr.ProcessReceipt({ ProductId = 205, PlayerId = 1, PurchaseId = "p2" })
+	local r1 = MSr.ProcessReceipt({ ProductId = DID[100], PlayerId = 2, PurchaseId = "p1" })
+	local r2 = MSr.ProcessReceipt({ ProductId = DID[100], PlayerId = 2, PurchaseId = "p1" })
+	local r3 = MSr.ProcessReceipt({ ProductId = DID[1000], PlayerId = 1, PurchaseId = "p2" })
 	local r4 = MSr.ProcessReceipt({ ProductId = 999, PlayerId = 1, PurchaseId = "p3" })
 	print("receipts:", r1, r2, r3, r4)
 	local thanks = 0

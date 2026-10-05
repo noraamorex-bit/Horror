@@ -491,6 +491,16 @@ local function build()
 		ctx.Remotes.Unstuck:FireServer()
 		HUD.setJournal(false)
 	end)
+	local settingsBtn = stuck:Clone()
+	settingsBtn.LayoutOrder = 3
+	settingsBtn.Text = "Settings"
+	settingsBtn.Parent = journal
+	settingsBtn.Activated:Connect(function()
+		HUD.setJournal(false)
+		if ctx.Settings then
+			ctx.Settings.open()
+		end
+	end)
 
 	-- inventory (bottom-left)
 	inventoryBottom = UI.box({
@@ -580,6 +590,9 @@ local function update()
 	local mins = workspace:GetAttribute("ClockMinutes")
 	clockLabel.Text = (act ~= "Lobby" and mins) and ctx.Util.clockString(mins) or ""
 	actLabel.Text = ACT_NAMES[act] or ""
+	if actLabel.Text ~= "" and workspace:GetAttribute("Difficulty") == "Hard" then
+		actLabel.Text ..= "  ·  HARD"
+	end
 	if player:GetAttribute("Role") == "Host" and act ~= "Lobby" then
 		local cam = workspace.CurrentCamera
 		local r = cam and ctx.Rooms.find(cam.CFrame.Position)

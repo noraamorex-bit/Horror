@@ -1,0 +1,30 @@
+local H = require("./env")
+local ok, err = pcall(function()
+	local ctx: any = {}
+	ctx.Story = H.load("RS/Shared/Story")
+	local Stats = H.load("Server/Services/StatsService")
+	Stats.init(ctx)
+	local roblox = H.roblox
+	local p = H.wrap(roblox.Instance.new("Player"))
+	rawset(p, "UserId", 42)
+	H.services.Players.GetPlayers = function() return { p } end
+	Stats.start()
+	print("loaded", p:GetAttribute("StatNights"), p:GetAttribute("StatEndingTotal"))
+	local firsts = Stats.recordNight({ p }, "Sirens")
+	print("first Sirens", firsts[42] == true, "nights", p:GetAttribute("StatNights"), "survived", p:GetAttribute("StatEscapes"), "endings", p:GetAttribute("StatEndings"))
+	firsts = Stats.recordNight({ p }, "Sirens")
+	print("second Sirens not first", firsts[42] == nil, "nights", p:GetAttribute("StatNights"), "endings", p:GetAttribute("StatEndings"))
+	p:SetAttribute("Captured", true)
+	firsts = Stats.recordNight({ p }, "GoneQuiet")
+	print("captured night", firsts[42] == true, "survived still", p:GetAttribute("StatEscapes"))
+	-- settings: defaults, a valid change, junk ignored
+	assert(p:GetAttribute("SetMusic") == 1 and p:GetAttribute("SetSfx") == 1 and p:GetAttribute("SetShake") == true, "default settings")
+	Stats.setSettings(p, 0.25, 2, false)
+	assert(p:GetAttribute("SetMusic") == 0.25 and p:GetAttribute("SetSfx") == 1 and p:GetAttribute("SetShake") == false, "settings saved + clamped")
+	Stats.setSettings(p, "loud", 0, true)
+	Stats.setSettings(p, 0/0, 0, true)
+	assert(p:GetAttribute("SetMusic") == 0.25 and p:GetAttribute("SetShake") == false, "junk settings ignored")
+	print("settings ok")
+end)
+print(ok and "STATS OK" or ("STATS FAIL: " .. tostring(err)))
+for _, e in H.errors do print(e) end

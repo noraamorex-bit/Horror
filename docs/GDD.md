@@ -129,8 +129,8 @@ While lurking, patrolling or searching, if he passes through a lit room that nob
 ### Getting caught
 When he grabs you, your camera snaps onto his masked face, inches away and lunging closer, with a scream hit ("Eyes Scream Horror Hit", APM), a red flash and a hard shake. Then the hand over your mouth and the fade to black. He also breathes: a slow, heavy loop on him that you only hear from a few steps away, which is how you know he is right outside your hiding spot.
 
-### Badges
-`Config.Badges` holds one badge ID per ending plus FirstNight. Create the badges in Creator Hub, paste the IDs, and the ending awards them.
+### Badges (`BadgeService`)
+`Config.Badges` holds one badge ID per ending, plus FirstNight (finish any night), HardSurvivor (make it through a Hard night) and Rescuer (cut a friend free). Create the badges in Creator Hub (icons in `marketing/badges/`), paste the IDs, and the game awards them. An ID of 0 is skipped.
 
 ### Solo nights
 Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that the creek road flooded and they had to turn around ("stay dry, don't get murdered lol"). Friends' banter never plays solo.
@@ -147,7 +147,9 @@ Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that 
 ### Act 0 — Lobby
 Players land in the **lobby** (third-person camera): Alder Lane on a rainy, foggy night — the street, lawns and woods run on past the invisible walls and fade into thick fog, so the town never seems to end — in front of the Whitaker house (porch light on, two windows lit), with the neighbors, street lamps and the gray van at the curb. A welcome notice explains the one thing to do, with an OK button. Four **white outline circles** on the front patio queue **1, 2, 3 and 4 players**. Stand in a circle to queue and step off (or tap LEAVE) to cancel. When a circle is full it counts down (10 s, 3 s solo), reserves a private game server and teleports the group there together.
 
-In the game server the group spawns in the living room and the night starts as soon as everyone has arrived (or after 30 s without stragglers). Roles are dealt then. After the ending, everyone is teleported back to the lobby.
+In the game server the group spawns in the living room. Once everyone has arrived (or after 30 s without stragglers) the **CHOOSE MODE** screen opens: NORMAL or HARD, live vote counts, a 12 s countdown (ends early when everyone has voted). More votes for HARD makes it a Hard night; a tie stays Normal. The result shows for 2 s, then the night starts and roles are dealt. Owners of the "Pick your role" pass choose their character on the same screen; everyone else sees a button offering the pass.
+
+**Hard** (`Config.Difficulty.Hard`): he is faster, senses you sooner, checks more hiding spots and rests less; flashlight batteries last 70%; help takes 25% longer; the everyone-captured last chance is 30 s. The HUD shows "· HARD" next to the act. After the ending, everyone is teleported back to the lobby.
 
 How it works: one place serves both. Public servers run the lobby (`server/Lobby/LobbyServer`); reserved servers created by `TeleportService:ReserveServer` run the house (`shared/Mode`). Studio can't teleport, so a Studio test runs the house directly with the old in-house READY screen (`Config.ForceMode = "Lobby"` shows the lobby instead). To split them into two places later, set `Config.Lobby.GamePlaceId` / `LobbyPlaceId`. Because lobby and game share one place, **Server Size also caps the lobby**: set it higher than 4 (e.g. 20) so more people can gather; a game server only ever receives one group, and the game caps a night at 4.
 
@@ -225,7 +227,9 @@ When help has been called, a police timer starts (150 s by phone, 120 s via neig
 
 Paintings are real public-domain artworks: free Creator Store decals (`World/Art`), loaded onto the canvases at runtime by `World/Props`. Wall spans with furniture or fixtures in front are listed in `Layout.NoArt`.
 
-Every ending shows each player's fate (Escaped / Safe / Rescued / Captured) and the **What Really Happened** timeline.
+Every ending plays a short letterboxed cutscene for that ending (the car's taillights going down the road, the police at the van, dawn over the house...) with one line of what happened (`Story.Endings[kind].Short`), skippable with SKIP. Then a simple result card: **YOU SURVIVED / YOU ESCAPED / YOU DIED / YOU WERE TAKEN**, the ending's name, that one line, a NEW ENDING tag when it's your first time, and PLAY AGAIN / BACK TO LOBBY.
+
+Out early: escaping in the car or next door, or dying, while friends are still inside gives you your own card straight away (Remotes.Result) with a SPECTATE button. Solo, an escape or death ends the night on the spot.
 
 ---
 
@@ -321,6 +325,12 @@ Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host
 
 ---
 
+### Quality of life
+- **Settings** (lobby menu, and the journal in the house): music volume, sound volume, camera shake on/off. Saved with your stats. Every sound is routed into a music or an effects SoundGroup on the client.
+- **Friend tags**: each friend's name and distance over their head, through walls, hidden when they're close. A captured friend's tag turns red: "TIED UP".
+- **Skip** on ending cutscenes.
+- Every button clicks; notifications have their own sounds by kind; the police countdown beeps for its last 10 s.
+
 ### Opening shot (client `Intro`)
 At the start of each night, for a player's first 3 nights, the camera holds on the house from across the street for 4.6 seconds:
 - black bars top and bottom, and the caption "14 Alder Lane · Friday, 8:47 PM";
@@ -334,12 +344,17 @@ A **SHOP** button sits on the right edge of the lobby screen. A gold "!" pulses 
 
 | Game pass | Price | What it does |
 |---|---|---|
-| Supporter | 49 R$ | A ★ SUPPORTER tag above you in the lobby, the Gold flashlight, and a star on the donation board |
-| Flashlight colours | 79 R$ | Every invite colour, plus the Ghost beam |
-| Long-life battery | 99 R$ | Your flashlight battery lasts twice as long |
-| Pepper spray | 149 R$ | You start every night with a can of pepper spray (one use) |
+| Supporter | 10 R$ | A ★ SUPPORTER tag above you in the lobby, the Gold flashlight, and a star on the donation board |
+| Lobby Scream | 10 R$ | A SCREAM button in the lobby (15 s cooldown) |
+| Flashlight colours | 15 R$ | Every invite colour, plus the Ghost beam |
+| Pick your role | 15 R$ | Choose Jamie, Riley, Morgan or Casey on the vote screen |
+| Marathon | 20 R$ | Stamina drains 40% slower |
+| Long-life battery | 25 R$ | Your flashlight battery lasts twice as long |
+| Head start | 25 R$ | You start every night with a flashlight |
+| Pepper spray | 35 R$ | You start every night with a can of pepper spray (one use) |
+| Second chance | 49 R$ | Once a night, a second capture ties you up instead of killing you |
 
-**Support** takes donations of 10, 50, 100, 500 or 1000 R$ (developer products) and shows the top 10 supporters. The **donation board** on the front lawn of the lobby lists them too, and its DONATE prompt opens this tab.
+**Support** takes donations of 5, 10, 25, 50, 75, 100, 150, 250, 500 or 1000 R$ (developer products) and shows the top 10 supporters. The **donation board** on the front lawn of the lobby lists them too, and its DONATE prompt opens this tab.
 - Each receipt is counted once: a DataStore key per purchase id, then a total in the `Donations_v1` OrderedDataStore.
 - Everyone in the server sees a thank-you message.
 - Ownership becomes `Pass_<Key>` player attributes, checked on join and set right after a purchase.

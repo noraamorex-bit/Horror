@@ -108,6 +108,9 @@ function Effects.jumpscare(head: BasePart?)
 end
 
 function Effects.shake(mag: number, duration: number)
+	if ctx.Settings and not ctx.Settings.shakeOn() then
+		return
+	end
 	shakeMag = math.max(shakeMag, mag)
 	shakeUntil = math.max(shakeUntil, os.clock() + duration)
 end
@@ -288,7 +291,7 @@ function Effects.start()
 		else
 			shakeMag = 0
 		end
-		if mag > 0.001 then
+		if mag > 0.001 and (not ctx.Settings or ctx.Settings.shakeOn()) then
 			local rx = math.noise(t * 7, 0, 0) * mag * 0.05
 			local ry = math.noise(0, t * 7, 0) * mag * 0.05
 			cam.CFrame = cam.CFrame * CFrame.Angles(rx, ry, 0)

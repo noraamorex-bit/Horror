@@ -708,6 +708,50 @@ function LobbyServer.run(c)
 		lastSent[p] = nil
 	end)
 
+	-- the lobby scream pass: a horror scream from your character (and a big "AAAA" over your head)
+	local lastScream: { [Player]: number } = {}
+	ctx.Remotes.Scream.OnServerEvent:Connect(function(player)
+		if player:GetAttribute("Pass_Scream") ~= true then
+			return
+		end
+		if os.clock() - (lastScream[player] or -1e9) < 15 then
+			return
+		end
+		lastScream[player] = os.clock()
+		local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+		if not head then
+			return
+		end
+		local snd = Instance.new("Sound")
+		snd.SoundId = ctx.Sounds.resolve("Jumpscare") or ""
+		snd.Volume = 0.9
+		snd.RollOffMode = Enum.RollOffMode.InverseTapered
+		snd.RollOffMinDistance = 8
+		snd.RollOffMaxDistance = 90
+		snd.Parent = head
+		snd:Play()
+		game:GetService("Debris"):AddItem(snd, 8)
+		local bb = Instance.new("BillboardGui")
+		bb.Size = UDim2.fromOffset(220, 70)
+		bb.StudsOffset = Vector3.new(0, 3.2, 0)
+		bb.MaxDistance = 90
+		bb.LightInfluence = 0
+		local l = Instance.new("TextLabel")
+		l.Size = UDim2.fromScale(1, 1)
+		l.BackgroundTransparency = 1
+		l.Font = Enum.Font.GothamBlack
+		l.TextScaled = true
+		l.Text = "AAAAAAA!"
+		l.TextColor3 = Color3.fromRGB(255, 60, 60)
+		l.TextStrokeTransparency = 0.2
+		l.Parent = bb
+		bb.Parent = head
+		game:GetService("Debris"):AddItem(bb, 1.6)
+	end)
+	Players.PlayerRemoving:Connect(function(p)
+		lastScream[p] = nil
+	end)
+
 	-- one-tap queueing (phones): put the player in the right circle
 	ctx.Remotes.QuickPlay.OnServerEvent:Connect(function(player, kind)
 		if teleporting[player] or padOf(player) then

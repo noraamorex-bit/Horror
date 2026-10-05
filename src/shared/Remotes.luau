@@ -48,6 +48,9 @@ local NAMES = {
 	"PhoneReply", -- (index) the text you picked to send back
 	"LeaveGame", -- () from a result card: back to the lobby now
 	"CastVote", -- (choice) "Normal" or "Hard"
+	"PickRole", -- (roleId) the "pick your role" pass, on the vote screen
+	"Scream", -- () lobby: the scream pass
+	"SaveSettings", -- (music, sfx, shake) the settings panel
 }
 
 local Remotes = {}

@@ -234,6 +234,8 @@ Config.Badges = {
 	Dawn = 0,
 	GoneQuiet = 0,
 	GotAway = 0,
+	HardSurvivor = 0, -- survived a night on Hard
+	Rescuer = 0, -- cut a friend free
 }
 
 --[[
@@ -244,15 +246,25 @@ Config.Badges = {
 ]]
 Config.Shop = {
 	Passes = {
-		{ Key = "Supporter", Id = 2008280313, Price = 49, Name = "Supporter", Desc = "A SUPPORTER tag in the lobby, a gold flashlight and a star on the donation board." },
-		{ Key = "Colours", Id = 2005832310, Price = 79, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
-		{ Key = "Battery", Id = 2005388315, Price = 99, Name = "Long-life battery", Desc = "Your flashlight battery lasts twice as long." },
-		{ Key = "PepperSpray", Id = 2006030307, Price = 149, Name = "Pepper spray", Desc = "Start every night with a can of pepper spray (one use)." },
+		{ Key = "Supporter", Id = 2008280313, Price = 10, Name = "Supporter", Desc = "A SUPPORTER tag in the lobby, a gold flashlight and a star on the donation board." },
+		{ Key = "Scream", Id = 2006001538, Price = 10, Name = "Lobby Scream", Desc = "A SCREAM button in the lobby. Scare your friends before the night even starts." },
+		{ Key = "Colours", Id = 2005832310, Price = 15, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
+		{ Key = "ChooseRole", Id = 2006193593, Price = 15, Name = "Pick your role", Desc = "Choose who you play each night: Jamie, Riley, Morgan or Casey." },
+		{ Key = "Marathon", Id = 2005053525, Price = 20, Name = "Marathon", Desc = "Sprint for longer: your stamina drains much slower." },
+		{ Key = "Battery", Id = 2005388315, Price = 25, Name = "Long-life battery", Desc = "Your flashlight battery lasts twice as long." },
+		{ Key = "HeadStart", Id = 2006721483, Price = 25, Name = "Head start", Desc = "Start every night with a flashlight in your pocket." },
+		{ Key = "PepperSpray", Id = 2006030307, Price = 35, Name = "Pepper spray", Desc = "Start every night with a can of pepper spray (one use)." },
+		{ Key = "SecondChance", Id = 2005515596, Price = 49, Name = "Second chance", Desc = "Once a night, when he catches you a second time, you're tied up instead of taken for good." },
 	},
 	Donations = {
+		{ Id = 3716700047, Amount = 5 },
 		{ Id = 3715928524, Amount = 10 },
+		{ Id = 3716700049, Amount = 25 },
 		{ Id = 3715928529, Amount = 50 },
+		{ Id = 3716700052, Amount = 75 },
 		{ Id = 3715928536, Amount = 100 },
+		{ Id = 3716700054, Amount = 150 },
+		{ Id = 3716700057, Amount = 250 },
 		{ Id = 3715928539, Amount = 500 },
 		{ Id = 3715928542, Amount = 1000 },
 	},

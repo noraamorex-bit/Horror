@@ -1579,6 +1579,10 @@ function Intruder.getHead(): BasePart?
 end
 
 -- (tests) his internal state, to simulate walking where there's no physics
+function Intruder._tune()
+	return tune()
+end
+
 function Intruder._state()
 	return S
 end

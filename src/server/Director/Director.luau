@@ -267,7 +267,7 @@ local function lobbyPayload()
 		end
 	end
 	return {
-		Phase = state.Act ~= "Lobby" and "InGame" or (ctx.Reserved and "Arriving") or (state.Countdown and "Countdown" or "Waiting"),
+		Phase = state.Act ~= "Lobby" and "InGame" or (state.Vote and "Vote") or (ctx.Reserved and "Arriving") or (state.Countdown and "Countdown" or "Waiting"),
 		Expected = state.Expected,
 		Ready = ready,
 		ReadyCount = count,
@@ -293,6 +293,7 @@ end
 
 function Director.enterLobby()
 	state = fresh()
+	workspace:SetAttribute("Difficulty", nil)
 	workspace:SetAttribute("Act", "Lobby")
 	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)
 	broadcastLobby()
@@ -334,6 +335,84 @@ local function startGame()
 	Director.startAct("Evening")
 end
 
+---------------------------------------------------------------------------
+-- The difficulty vote: NORMAL or HARD, before the night starts (Config.Difficulty)
+---------------------------------------------------------------------------
+local function tally(): (number, number, number)
+	local normal, hard = 0, 0
+	local v = state.Vote
+	for p, choice in (v and v.Votes) or {} do
+		if p.Parent then
+			if choice == "Hard" then
+				hard += 1
+			else
+				normal += 1
+			end
+		end
+	end
+	return normal, hard, #Players:GetPlayers()
+end
+
+local function sendVote(target: Player?)
+	local v = state.Vote
+	if not v then
+		return
+	end
+	local normal, hard, total = tally()
+	local left = math.max(0, v.Ends - os.clock())
+	for _, p in target and { target } or Players:GetPlayers() do
+		ctx.Remotes.Vote:FireClient(p, {
+			Ends = workspace:GetServerTimeNow() + left,
+			Normal = normal,
+			Hard = hard,
+			Total = total,
+			Mine = v.Votes[p],
+		})
+	end
+end
+
+local function beginVote()
+	state.Countdown = nil
+	state.Vote = { Ends = os.clock() + ((ctx.Config.Difficulty and ctx.Config.Difficulty.VoteTime) or 12), Votes = {} }
+	broadcastLobby()
+	sendVote()
+end
+
+local function voteTick(): boolean
+	local v = state.Vote
+	if not v then
+		return false
+	end
+	if v.Result then
+		-- (the result shows for a moment, then the night starts)
+		if os.clock() >= v.StartAt then
+			state.Vote = nil
+			startGame()
+		end
+		return true
+	end
+	local normal, hard, total = tally()
+	if total == 0 then
+		state.Vote = nil -- everyone left: back to waiting
+		return false
+	end
+	if os.clock() < v.Ends and normal + hard < total then
+		sendVote()
+		return true
+	end
+	-- more votes for HARD than NORMAL makes it a hard night (a tie stays normal)
+	local diff = hard > normal and "Hard" or "Normal"
+	workspace:SetAttribute("Difficulty", diff)
+	v.Result = diff
+	v.StartAt = os.clock() + 2
+	for _, p in Players:GetPlayers() do
+		ctx.Remotes.Vote:FireClient(p, { Result = diff, Normal = normal, Hard = hard, Total = total })
+	end
+	return true
+end
+Director._voteTick = voteTick -- (tests)
+Director._beginVote = beginVote
+
 -- a group's own server: start as soon as the whole group has arrived (or after a timeout)
 local function arrivalTick()
 	local players = Players:GetPlayers()
@@ -351,11 +430,14 @@ local function arrivalTick()
 	end
 	broadcastLobby()
 	if state.Countdown and state.Countdown <= 0 then
-		startGame()
+		beginVote()
 	end
 end
 
 local function lobbyTick()
+	if voteTick() then
+		return
+	end
 	if ctx.Reserved then
 		arrivalTick()
 		return
@@ -376,7 +458,7 @@ local function lobbyTick()
 		end
 		broadcastLobby()
 		if state.Countdown <= 0 then
-			startGame()
+			beginVote()
 		end
 	elseif state.Countdown then
 		state.Countdown = nil
@@ -726,7 +808,9 @@ function Director.checkAllCaptured()
 			return
 		end
 		if not state.GoneQuietAt then
-			state.GoneQuietAt = os.clock() + (ctx.Config.Capture.LastChance or 45)
+			local hard = ctx.Config.Difficulty and ctx.Config.Difficulty.Hard
+			local lastChance = (workspace:GetAttribute("Difficulty") == "Hard" and hard and hard.LastChance) or ctx.Config.Capture.LastChance or 45
+			state.GoneQuietAt = os.clock() + lastChance
 			local line = ctx.Escape.helpCalled() and "He's getting away. Struggle free before he's gone!"
 				or "Nobody's coming. Struggle free before he comes back!"
 			for _, p in session do
@@ -1114,6 +1198,26 @@ function Director.start()
 	workspace:SetAttribute("Act", "Lobby")
 	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)
 
+	ctx.Remotes.CastVote.OnServerEvent:Connect(function(player, choice)
+		local v = state.Vote
+		if not v or v.Result or (choice ~= "Normal" and choice ~= "Hard") then
+			return
+		end
+		v.Votes[player] = choice
+		sendVote()
+	end)
+	-- the "pick your role" pass: which friend you want to be tonight
+	ctx.Remotes.PickRole.OnServerEvent:Connect(function(player, roleId)
+		if player:GetAttribute("Pass_ChooseRole") ~= true or type(roleId) ~= "string" then
+			return
+		end
+		for _, r in ctx.Story.Roles do
+			if r.Id == roleId then
+				player:SetAttribute("WantRole", roleId)
+				return
+			end
+		end
+	end)
 	ctx.Remotes.Ready.OnServerEvent:Connect(function(player, ready)
 		if state.Act ~= "Lobby" then
 			return

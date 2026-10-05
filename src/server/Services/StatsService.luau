@@ -18,7 +18,7 @@ local board = nil -- OrderedDataStore: nights survived, for the lobby leaderboar
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic" }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Settings = { Music = 1, Sfx = 1, Shake = true } }
 end
 
 --[[
@@ -83,6 +83,9 @@ local function mirror(player: Player)
 		d.Beam = "Classic"
 	end
 	player:SetAttribute("StatBeam", d.Beam)
+	player:SetAttribute("SetMusic", d.Settings.Music)
+	player:SetAttribute("SetSfx", d.Settings.Sfx)
+	player:SetAttribute("SetShake", d.Settings.Shake)
 	for _, b in Stats.Beams do
 		if b.Id == d.Beam then
 			player:SetAttribute("StatBeamColor", b.Color)
@@ -105,6 +108,12 @@ local function load(player: Player)
 			d.Referrals = tonumber(data.Referrals) or 0
 			d.Referred = data.Referred == true
 			d.Beam = type(data.Beam) == "string" and data.Beam or "Classic"
+			local set = type(data.Settings) == "table" and data.Settings or {}
+			d.Settings = {
+				Music = math.clamp(tonumber(set.Music) or 1, 0, 1),
+				Sfx = math.clamp(tonumber(set.Sfx) or 1, 0, 1),
+				Shake = set.Shake ~= false,
+			}
 			for k, v in (type(data.Endings) == "table" and data.Endings or {}) do
 				if v then
 					d.Endings[k] = true
@@ -139,6 +148,7 @@ local function save(userId: number)
 					Referrals = math.max(tonumber(old.Referrals) or 0, d.Referrals),
 					Referred = old.Referred == true or d.Referred,
 					Beam = d.Beam,
+					Settings = d.Settings,
 				}
 			end)
 		end)
@@ -231,6 +241,29 @@ function Stats.setBeam(player: Player, id: string)
 	save(player.UserId)
 end
 
+-- the settings panel: music and sound volume (0-1), camera shake. Saved a few seconds after the
+-- last change, so dragging through the options doesn't spam the DataStore.
+local settingsSave: { [number]: boolean } = {}
+function Stats.setSettings(player: Player, music: any, sfx: any, shake: any)
+	local d = cache[player.UserId]
+	if not d or type(music) ~= "number" or type(sfx) ~= "number" or type(shake) ~= "boolean" then
+		return
+	end
+	if music ~= music or sfx ~= sfx then -- NaN
+		return
+	end
+	d.Settings = { Music = math.clamp(music, 0, 1), Sfx = math.clamp(sfx, 0, 1), Shake = shake }
+	mirror(player)
+	local userId = player.UserId
+	if not settingsSave[userId] then
+		settingsSave[userId] = true
+		task.delay(4, function()
+			settingsSave[userId] = nil
+			save(userId)
+		end)
+	end
+end
+
 -- passes changed (ShopService): re-check what's unlocked and update the attributes
 function Stats.refresh(player: Player)
 	mirror(player)
@@ -320,12 +353,19 @@ function Stats.start()
 		ctx.Remotes.SetBeam.OnServerEvent:Connect(function(player, id)
 			Stats.setBeam(player, id)
 		end)
+		ctx.Remotes.SaveSettings.OnServerEvent:Connect(function(player, music, sfx, shake)
+			Stats.setSettings(player, music, sfx, shake)
+		end)
 	end
 	for _, p in Players:GetPlayers() do
 		task.spawn(load, p)
 	end
 	Players.PlayerAdded:Connect(load)
 	Players.PlayerRemoving:Connect(function(p)
+		if settingsSave[p.UserId] then
+			settingsSave[p.UserId] = nil
+			save(p.UserId) -- (a settings change still waiting to be saved)
+		end
 		cache[p.UserId] = nil
 	end)
 end

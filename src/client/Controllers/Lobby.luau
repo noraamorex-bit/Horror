@@ -22,7 +22,7 @@ local function render(state)
 		return
 	end
 	local inGame = player:GetAttribute("InGame") == true
-	card.Visible = state.Phase ~= "InGame" and not inGame
+	card.Visible = state.Phase ~= "InGame" and state.Phase ~= "Vote" and not inGame
 	if state.Phase == "Arriving" then
 		status.Text = state.Countdown and ("The night begins in " .. tostring(state.Countdown) .. "...")
 			or string.format("Waiting for your friends...  %d / %d", state.Players or 0, state.Expected or state.Players or 1)
