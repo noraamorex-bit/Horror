@@ -282,7 +282,9 @@ function Interior.build(ctx, root: Instance, refs)
 	-- the real picture: a broadcast per channel (TVScreens)
 	local tvScreens = TVScreens.build(gui, function()
 		return ctx.Director and ctx.Director.clockString and ctx.Director.clockString() or ""
-	end)
+	end, ctx.Story.TVVoice and ctx.Story.TVVoice.Movie)
+	-- the client's TV voices (TVVoice) find the screen by this tag and read "TVChannel"
+	CollectionService:AddTag(screen, "TVScreen")
 	local tvGlow = Instance.new("SurfaceLight")
 	tvGlow.Face = Enum.NormalId.Front
 	tvGlow.Range = 18
@@ -409,9 +411,11 @@ function Interior.build(ctx, root: Instance, refs)
 		if text == "" then
 			tvScreens.off()
 			tvGlow.Enabled = false
+			screen:SetAttribute("TVChannel", nil)
 			return
 		end
 		tvScreens.show(text)
+		screen:SetAttribute("TVChannel", text)
 		tvGlow.Enabled = true
 		tvGlow.Color = bg:Lerp(Color3.new(1, 1, 1), 0.5)
 		if sound then

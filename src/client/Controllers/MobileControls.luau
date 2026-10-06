@@ -42,8 +42,11 @@ local function currentSet(): { string }
 	if not player:GetAttribute("InGame") or player:GetAttribute("Escaped") or workspace:GetAttribute("EndingActive") then
 		return {}
 	end
-	-- a conversation owns the bottom of the screen
+	-- a conversation owns the bottom of the screen; a cutscene, all of it
 	if ctx.Dialogue and ctx.Dialogue.blocksControls() then
+		return {}
+	end
+	if ctx.Cutscene and ctx.Cutscene.isPlaying() then
 		return {}
 	end
 	if player:GetAttribute("Dead") then

@@ -543,8 +543,9 @@ function Director.startAct(name: string, cause: Player?)
 	elseif name == "SomeoneElse" then
 		ctx.Objectives.set({ "Phone", "Attic", "Power" }, { Power = true })
 		checkHeldItems()
-		task.delay(7, function()
-			if state.Act ~= "SomeoneElse" then
+		local myNight = state
+		local function lightsOut()
+			if state ~= myNight or state.Act ~= "SomeoneElse" then
 				return
 			end
 			-- the breaker: all at once, no flicker
@@ -582,6 +583,17 @@ function Director.startAct(name: string, cause: Player?)
 				ctx.Intruder.setMode("Hunt")
 				Director.addTension(30)
 			end
+		end
+		-- (from across the street: the house, lit, then all of it gone at once; after the chapter card)
+		task.delay(8, function()
+			if state ~= myNight or state.Act ~= "SomeoneElse" then
+				return
+			end
+			if ctx.Cutscene and ctx.Cutscene.lightsOut then
+				ctx.Cutscene.lightsOut(lightsOut)
+			else
+				lightsOut()
+			end
 		end)
 	elseif name == "Guest" then
 		ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Trap" }, { Neighbor = true, Car = true, Trap = true })
@@ -602,6 +614,25 @@ local function nextAct()
 		Director.startAct(ACT_ORDER[i + 1])
 	end
 end
+
+-- owner admin panel (AdminService) ------------------------------------------
+Director.ActOrder = ACT_ORDER
+
+function Director.adminNextAct()
+	nextAct()
+end
+
+-- start the night right now (skips waiting and the vote)
+function Director.adminStart(difficulty: string?): boolean
+	if state.Act ~= "Lobby" then
+		return false
+	end
+	state.Vote = nil
+	workspace:SetAttribute("Difficulty", difficulty == "Hard" and "Hard" or "Normal")
+	startGame()
+	return true
+end
+
 
 -- a clue read by anyone in the group counts toward the secret ending
 function Director.onDocument(player: Player, docId: string)
@@ -673,6 +704,21 @@ function Director.onDoorOpened(door, player: Player)
 	if door.Id == "BackDoor" and (state.Act == "Evening" or state.Act == "SmallThings") then
 		Director.logTruth("BackDoorUnlocked")
 	end
+	-- someone was yanking this door a moment ago (Events.DoorRattle). You open it to check:
+	-- a sudden loud hit, and nothing there. That's all.
+	if door.YankedAt and not door.YankScared and os.clock() - door.YankedAt < 90 then
+		door.YankScared = true
+		task.delay(0.12, function()
+			if not player.Parent then
+				return
+			end
+			ctx.Remotes.PlaySound:FireClient(player, "HorrorHit", nil, { Volume = 1, Caption = false })
+			ctx.Remotes.PlaySound:FireClient(player, "Stinger", nil, { Volume = 1, Caption = false })
+			ctx.Remotes.Shake:FireClient(player, 0.9, 0.5)
+			ctx.PlayerState.addNerve(player, -12)
+		end)
+		return
+	end
 	-- he's right on the other side, holding the handle: the door is torn back out of your hand
 	-- (rare: once every few minutes at most, and only if he really is there, unseen)
 	local ip = ctx.Intruder.position()
@@ -707,7 +753,8 @@ function Director.startMomNews()
 	local myState = state
 	task.spawn(function()
 		for _, line in M.Texts do
-			if state ~= myState then
+			-- (Mom's texts belong to the quiet act: once the power's cut, nobody's reading them)
+			if state ~= myState or state.Act ~= "SmallThings" then
 				return
 			end
 			for _, p in ctx.Util.sessionPlayers() do
@@ -715,7 +762,7 @@ function Director.startMomNews()
 			end
 			task.wait(5.5)
 		end
-		if state ~= myState then
+		if state ~= myState or state.Act ~= "SmallThings" then
 			return
 		end
 		ctx.Objectives.add("News")
@@ -727,10 +774,12 @@ function Director.startMomNews()
 		for _, p in ctx.Util.sessionPlayers() do
 			ctx.Phone.ask(p, "Mom", M.Ask, function(i)
 				task.wait(2.5)
-				if state == myState then
+				if state == myState and state.Act == "SmallThings" then
 					ctx.Phone.deliver(p, "Mom", M.Answers[i] or M.Answers[1])
 					task.wait(3)
-					ctx.Phone.deliver(p, "Mom", M.After)
+					if state == myState and state.Act == "SmallThings" then
+						ctx.Phone.deliver(p, "Mom", M.After)
+					end
 				end
 			end)
 		end
@@ -915,6 +964,35 @@ local function tryEvent(e, force: boolean?): boolean
 		return true
 	end
 	return false
+end
+
+-- fire a scripted event now (Events.List id), even if its usual conditions aren't met
+function Director.adminEvent(id: string): boolean
+	local e = eventById(id)
+	if not e or state.Act == "Lobby" then
+		return false
+	end
+	if tryEvent(e, true) then
+		return true
+	end
+	-- (no fitting place right now: run it anyway where it can)
+	local ok, data = pcall(e.Cond, ctx, D)
+	if (not ok or data == nil) and e.Force then
+		ok, data = pcall(e.Force, ctx, D)
+	end
+	if ok and data ~= nil then
+		fire(e, data)
+		return true
+	end
+	return false
+end
+
+function Director.adminEventIds(): { string }
+	local ids = {}
+	for _, e in Events.List do
+		table.insert(ids, e.Id)
+	end
+	return ids
 end
 
 local function beatsDone(): boolean

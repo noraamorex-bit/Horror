@@ -23,6 +23,9 @@ Config.Lobby = {
 	ReturnDelay = 45, -- game server: seconds on the ending screen before going back to the lobby
 }
 
+-- The owner's test panel (AdminService): these UserIds (plus the experience owner, plus Studio).
+Config.Admins = { 915496194 }
+
 Config.MinPlayers = 1 -- 2-4 recommended; 1 is allowed so the game can be tested solo
 Config.MaxPlayers = 4
 Config.LobbyCountdown = 10

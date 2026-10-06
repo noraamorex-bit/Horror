@@ -249,6 +249,11 @@ end
 
 function Vote.init(c)
 	ctx = c
+	ctx.VoteUI = Vote
+end
+
+function Vote.isOpen(): boolean
+	return open
 end
 
 function Vote.start()

@@ -74,7 +74,7 @@ function HidingCam.start()
 	end)
 
 	RunService:BindToRenderStep("HomeAloneHideCam", Enum.RenderPriority.Camera.Value, function()
-		if not active then
+		if not active or (ctx.Cutscene and ctx.Cutscene.isPlaying()) then
 			return
 		end
 		local view = player:GetAttribute("HideView")

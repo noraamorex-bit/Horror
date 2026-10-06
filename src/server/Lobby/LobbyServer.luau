@@ -29,6 +29,10 @@ local spawnCF: CFrame
 ---------------------------------------------------------------------------
 local TRIM = Color3.fromRGB(236, 233, 226)
 
+-- the Whitaker house's dark upstairs window, where someone stands now and then (buildHouse
+-- opts.Haunt = window index; the loop is in LobbyServer.run)
+local haunt: { Glass: BasePart, Figure: { BasePart }, Lit: Color3 }? = nil
+
 -- A two-storey colonial. Front wall at z = frontZ (faces +Z), centered on cx.
 -- opts: Width, Depth, Siding, Shutter, Door, Lit = { [windowIndex] = true }, Garage, Porch, Detail
 local function buildHouse(parent: Instance, cx: number, frontZ: number, opts)
@@ -104,6 +108,19 @@ local function buildHouse(parent: Instance, cx: number, frontZ: number, opts)
 			l.Parent = glass
 			-- a curtain drawn half across
 			box("Curtain", V(x - w / 2, sill, wz + 0.06), V(x - w / 2 + w * 0.3, sill + h, wz + 0.1), Color3.fromRGB(170, 110, 80), M.Fabric, DECOR)
+		end
+		if opts.Haunt == i and not lit then
+			-- a silhouette flat against the glass, unseen until the light behind it comes on
+			local figure = {}
+			local shoulders = box("Figure", V(x - 1.35, sill, wz + 0.06), V(x + 1.35, sill + h * 0.5, wz + 0.12), Color3.fromRGB(8, 8, 10), M.SmoothPlastic, DECOR)
+			local neck = box("Figure", V(x - 0.35, sill + h * 0.5, wz + 0.06), V(x + 0.35, sill + h * 0.58, wz + 0.12), Color3.fromRGB(8, 8, 10), M.SmoothPlastic, DECOR)
+			local headPart = box("Figure", V(x - 0.62, sill + h * 0.58, wz + 0.06), V(x + 0.62, sill + h * 0.82, wz + 0.12), Color3.fromRGB(8, 8, 10), M.SmoothPlastic, DECOR)
+			for _, f in { shoulders, neck, headPart } do
+				f.Transparency = 1
+				f.CastShadow = false
+				table.insert(figure, f)
+			end
+			haunt = { Glass = glass, Figure = figure, Lit = Color3.fromRGB(200, 120, 70) }
 		end
 		local t = 0.35
 		box("Frame", V(x - w / 2 - t, sill + h, wz), V(x + w / 2 + t, sill + h + t, wz + 0.35), TRIM, M.Wood, DECOR)
@@ -295,6 +312,7 @@ local function build(root: Folder)
 		Detail = true,
 		Garage = true,
 		Lit = { [2] = true, [7] = true },
+		Haunt = 6,
 	})
 	buildHouse(root, -96, -34, {
 		Name = "NeighborLeft",
@@ -688,6 +706,46 @@ function LobbyServer.run(c)
 	root.Parent = workspace
 	build(root)
 
+	-- now and then a light comes on in the dark upstairs window, and someone is standing in it
+	if haunt then
+		local h = haunt
+		local dark = { Color = h.Glass.Color, Material = h.Glass.Material }
+		local light = Instance.new("PointLight")
+		light.Range = 9
+		light.Brightness = 0
+		light.Color = h.Lit
+		light.Parent = h.Glass
+		local function show(on: boolean)
+			h.Glass.Material = on and Enum.Material.Neon or dark.Material
+			h.Glass.Color = on and h.Lit or dark.Color
+			light.Brightness = on and 0.8 or 0
+		end
+		task.spawn(function()
+			while root.Parent do
+				task.wait(35 + math.random() * 40)
+				-- the light flickers on...
+				for _ = 1, 2 do
+					show(true)
+					task.wait(0.07)
+					show(false)
+					task.wait(0.12)
+				end
+				show(true)
+				task.wait(0.4)
+				-- ...and he's there
+				for _, f in h.Figure do
+					f.Transparency = 0
+				end
+				task.wait(1.8 + math.random())
+				for _, f in h.Figure do
+					f.Transparency = 1
+				end
+				task.wait(0.25)
+				show(false)
+			end
+		end)
+	end
+
 	local function setup(player: Player)
 		-- third person here; the house itself is first person
 		player.CameraMode = Enum.CameraMode.Classic
@@ -697,6 +755,36 @@ function LobbyServer.run(c)
 		player.CharacterAdded:Connect(function(char)
 			local hum = char:WaitForChild("Humanoid") :: Humanoid
 			hum.WalkSpeed = 16
+			-- everyone carries their flashlight out here, in the colour they've picked (so you can
+			-- see it, and show it off)
+			task.spawn(function()
+				local head = char:WaitForChild("Head", 10) :: BasePart?
+				if not head then
+					return
+				end
+				local mount = Instance.new("Attachment")
+				mount.Name = "FlashlightMount"
+				mount.Position = Vector3.new(0.4, -0.3, -0.6)
+				mount.Orientation = Vector3.new(-12, 0, 0)
+				mount.Parent = head
+				local light = Instance.new("SpotLight")
+				light.Name = "Flashlight"
+				light.Face = Enum.NormalId.Front
+				light.Range = 40
+				light.Angle = 45
+				light.Brightness = 2.6
+				light.Shadows = false
+				light.Parent = mount
+				local function tint()
+					local c = player:GetAttribute("StatBeamColor")
+					light.Color = typeof(c) == "Color3" and c or Color3.fromRGB(255, 244, 222)
+				end
+				tint()
+				local conn = player:GetAttributeChangedSignal("StatBeamColor"):Connect(tint)
+				char.Destroying:Connect(function()
+					conn:Disconnect()
+				end)
+			end)
 			task.defer(function()
 				char:PivotTo(spawnCF * CFrame.new(math.random(-4, 4), 0, math.random(-2, 2)))
 			end)

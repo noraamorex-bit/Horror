@@ -29,12 +29,12 @@ end
 ]]
 Stats.Beams = {
 	{ Id = "Classic", Name = "Classic", Need = 0, Color = Color3.fromRGB(255, 244, 222) },
-	{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 176, 96) },
-	{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(190, 214, 255) },
-	{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 96, 80) },
+	{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 140, 50) },
+	{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(130, 175, 255) },
+	{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 45, 40) },
 	-- game passes (ShopService): Supporter's gold, and Ghost with the colours pass
-	{ Id = "Gold", Name = "Gold", Pass = "Supporter", Color = Color3.fromRGB(255, 212, 120) },
-	{ Id = "Ghost", Name = "Ghost", Pass = "Colours", Color = Color3.fromRGB(196, 255, 222) },
+	{ Id = "Gold", Name = "Gold", Pass = "Supporter", Color = Color3.fromRGB(255, 196, 60) },
+	{ Id = "Ghost", Name = "Ghost", Pass = "Colours", Color = Color3.fromRGB(120, 255, 185) },
 }
 
 local function beamUnlocked(d, id: string, player: Player?): boolean
@@ -80,17 +80,17 @@ local function mirror(player: Player)
 	player:SetAttribute("StatEndingList", table.concat(list, ","))
 	player:SetAttribute("StatReferrals", d.Referrals)
 	player:SetAttribute("StatReferred", d.Referred)
-	if not beamUnlocked(d, d.Beam, player) then
-		d.Beam = "Classic"
-	end
-	player:SetAttribute("StatBeam", d.Beam)
+	-- (the saved pick is kept even while it's locked: passes are checked a moment after joining,
+	-- and a pass colour must not be wiped just because that check hasn't finished yet)
+	local beam = beamUnlocked(d, d.Beam, player) and d.Beam or "Classic"
+	player:SetAttribute("StatBeam", beam)
 	player:SetAttribute("StatBest", d.Best > 0 and d.Best or nil)
 	player:SetAttribute("ReviveCredits", d.ReviveCredits > 0 and d.ReviveCredits or nil)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
 	for _, b in Stats.Beams do
-		if b.Id == d.Beam then
+		if b.Id == beam then
 			player:SetAttribute("StatBeamColor", b.Color)
 		end
 	end

@@ -68,31 +68,94 @@ local function px(x: number, y: number): UDim2
 	return UDim2.fromOffset(x, y)
 end
 
+--[[
+	A presenter, in a ViewportFrame on the screen: a blocky person (like everyone in Hollis Creek)
+	from the chest up, behind a desk or standing. The parts the client animates while the voice
+	speaks (client TVVoice): "Mouth" (opens and closes), "Head" (a slight nod), "Lids" (blinks).
+]]
+local function presenter(parent: Instance, pos: UDim2, size: UDim2, look)
+	local vp = new("ViewportFrame", {
+		Name = "Presenter",
+		Position = pos,
+		Size = size,
+		BackgroundTransparency = 1,
+		Ambient = Color3.fromRGB(170, 170, 180),
+		LightColor = Color3.fromRGB(255, 248, 235),
+		LightDirection = Vector3.new(-0.4, -0.6, -1),
+	}, parent)
+	local world = new("WorldModel", {}, vp)
+	local model = new("Model", { Name = "Anchor" }, world)
+	local function part(name: string, size_: Vector3, cf: CFrame, color: Color3, mat: Enum.Material?)
+		return new("Part", { Name = name, Size = size_, CFrame = cf, Color = color, Material = mat or Enum.Material.SmoothPlastic, Anchored = true, CanCollide = false, TopSurface = Enum.SurfaceType.Smooth, BottomSurface = Enum.SurfaceType.Smooth }, model)
+	end
+	local C = CFrame.new
+	part("Torso", Vector3.new(2.1, 2, 1.05), C(0, 0, 0), look.Suit)
+	part("ArmL", Vector3.new(0.95, 2, 1), C(-1.55, 0, 0), look.Suit)
+	part("ArmR", Vector3.new(0.95, 2, 1), C(1.55, 0, 0), look.Suit)
+	part("Shirt", Vector3.new(0.7, 1.2, 0.06), C(0, 0.35, -0.53), look.Shirt)
+	if look.Tie then
+		part("Tie", Vector3.new(0.22, 1.1, 0.07), C(0, 0.3, -0.57), look.Tie)
+	end
+	local head = part("Head", Vector3.new(1.25, 1.25, 1.25), C(0, 1.65, 0), look.Skin)
+	new("SpecialMesh", { MeshType = Enum.MeshType.Head, Scale = Vector3.new(1, 1, 1) }, head)
+	part("Neck", Vector3.new(0.6, 0.3, 0.6), C(0, 1.05, 0), look.Skin)
+	part("Hair", Vector3.new(1.32, 0.42, 1.32), C(0, 2.2, 0.04), look.Hair)
+	if look.LongHair then
+		part("HairBack", Vector3.new(1.34, 1.5, 0.35), C(0, 1.55, 0.5), look.Hair)
+		for _, x in { -0.66, 0.66 } do
+			part("HairSide", Vector3.new(0.16, 1.35, 1.1), C(x, 1.6, 0.06), look.Hair)
+		end
+	end
+	local eyeY = 1.8
+	for _, x in { -0.24, 0.24 } do
+		part("Eye", Vector3.new(0.16, 0.2, 0.05), C(x, eyeY, -0.63), Color3.fromRGB(20, 20, 22))
+	end
+	local lids = part("Lids", Vector3.new(0.7, 0.22, 0.05), C(0, eyeY, -0.64), look.Skin)
+	lids.Transparency = 1
+	part("Brow", Vector3.new(0.7, 0.06, 0.05), C(0, eyeY + 0.2, -0.635), look.Hair)
+	local mouth = part("Mouth", Vector3.new(0.38, 0.06, 0.05), C(0, 1.42, -0.635), Color3.fromRGB(70, 30, 30))
+	mouth:SetAttribute("Base", 1.42)
+	if look.Desk then
+		part("Desk", Vector3.new(7, 1.2, 1.6), C(0, -0.7, -1.2), look.Desk, Enum.Material.SmoothPlastic)
+		part("DeskTrim", Vector3.new(7, 0.12, 1.62), C(0, -0.08, -1.2), look.Trim, Enum.Material.Neon)
+	end
+	model.PrimaryPart = head
+	local cam = new("Camera", { FieldOfView = 26, CFrame = CFrame.lookAt(Vector3.new(look.CamX or 0, 1.0, -9.5), Vector3.new(look.CamX or 0, 0.9, 0)) }, vp)
+	vp.CurrentCamera = cam
+	return vp
+end
+
+local ANCHOR = { Suit = Color3.fromRGB(32, 38, 58), Shirt = Color3.fromRGB(236, 236, 240), Tie = Color3.fromRGB(170, 24, 30), Skin = Color3.fromRGB(226, 186, 150), Hair = Color3.fromRGB(70, 52, 40), Desk = Color3.fromRGB(18, 26, 52), Trim = Color3.fromRGB(196, 22, 28), CamX = 0 }
+local WEATHER_LADY = { Suit = Color3.fromRGB(140, 30, 40), Shirt = Color3.fromRGB(30, 30, 34), Skin = Color3.fromRGB(150, 104, 76), Hair = Color3.fromRGB(28, 20, 18), LongHair = true, CamX = 0 }
+
 -- Channel 7: the report about him
 local function buildNews(root: Frame, clock: () -> string)
 	local f = box(root, px(0, 0), UDim2.fromScale(1, 1), BLACK)
 	new("ImageLabel", { Size = UDim2.fromScale(1, 1), Image = IMG.News, BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Crop }, f)
+	box(f, px(0, 0), UDim2.fromScale(1, 1), Color3.fromRGB(8, 14, 40), 0.35)
+	-- the anchor at the desk
+	presenter(f, px(0, 34), px(340, 214), ANCHOR)
 	-- channel bug and LIVE
 	local bug = box(f, px(14, 12), px(92, 30), RED)
 	text(bug, { Size = UDim2.fromScale(1, 1), Text = "7 NEWS", Font = Enum.Font.GothamBlack, Max = 22 })
 	local live = box(f, px(474, 12), px(72, 28), RED)
 	text(live, { Size = UDim2.fromScale(1, 1), Text = "LIVE", Font = Enum.Font.GothamBlack, Max = 20 })
-	-- the suspect: a silhouette in a box
-	local panel = box(f, px(22, 56), px(150, 178), Color3.fromRGB(16, 22, 40), 0.1)
+	-- over his shoulder: the suspect, a silhouette in a box
+	local panel = box(f, px(356, 54), px(184, 182), Color3.fromRGB(16, 22, 40), 0.1)
 	new("UIStroke", { Color = WHITE, Thickness = 2, Transparency = 0.3 }, panel)
 	text(panel, { Position = px(0, 4), Size = UDim2.new(1, 0, 0, 22), Text = "SUSPECT", Font = Enum.Font.GothamBlack, Max = 18 })
-	local headShape = box(panel, px(48, 34), px(54, 64), Color3.fromRGB(40, 44, 54))
+	local headShape = box(panel, px(65, 34), px(54, 64), Color3.fromRGB(40, 44, 54))
 	new("UICorner", { CornerRadius = UDim.new(0.5, 0) }, headShape)
-	local shoulders = box(panel, px(18, 94), px(114, 52), Color3.fromRGB(40, 44, 54))
+	local shoulders = box(panel, px(35, 94), px(114, 52), Color3.fromRGB(40, 44, 54))
 	new("UICorner", { CornerRadius = UDim.new(0.35, 0) }, shoulders)
 	text(headShape, { Size = UDim2.fromScale(1, 1), Text = "?", TextColor3 = Color3.fromRGB(120, 126, 140), Max = 34 })
-	text(panel, { Position = px(4, 150), Size = UDim2.new(1, -8, 0, 24), Text = "MALE · 40s · 6'4\"", Font = Enum.Font.GothamMedium, Max = 16 })
-	-- the headline
-	text(f, { Position = px(190, 60), Size = px(352, 112), Text = "MAN SOUGHT IN HOLLIS CREEK BREAK-INS", Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Left, Max = 40, TextStrokeTransparency = 0.5 })
-	text(f, { Position = px(190, 176), Size = px(352, 56), Text = "Police say he may have been living inside homes while the families were out.", Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, Max = 20, TextStrokeTransparency = 0.6 })
+	text(panel, { Position = px(4, 152), Size = UDim2.new(1, -8, 0, 24), Text = "MALE · 40s · 6'4\"", Font = Enum.Font.GothamMedium, Max = 16 })
+	-- the name strap
+	local strap = box(f, px(14, 212), px(330, 30), WHITE, 0.05)
+	text(strap, { Position = px(10, 0), Size = px(310, 30), Text = "DAN WHITLOCK  ·  7 NEWS", Font = Enum.Font.GothamBold, TextColor3 = BLACK, TextXAlignment = Enum.TextXAlignment.Left, Max = 18 })
 	-- BREAKING NEWS bar and the ticker under it
 	local breaking = box(f, px(0, 246), px(560, 40), RED)
-	text(breaking, { Position = px(14, 0), Size = px(300, 40), Text = "BREAKING NEWS", Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Left, Max = 30 })
+	text(breaking, { Position = px(14, 0), Size = px(420, 40), Text = "BREAKING: MAN SOUGHT IN BREAK-INS", Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Left, Max = 28 })
 	local clockLabel = text(breaking, { Position = px(440, 0), Size = px(106, 40), Text = clock(), Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Right, Max = 24 })
 	local tickerBar = box(f, px(0, 286), px(560, 54), WHITE)
 	tickerBar.ClipsDescendants = true
@@ -139,6 +202,8 @@ local function buildWeather(root: Frame)
 	new("ImageLabel", { Size = UDim2.fromScale(1, 1), Image = IMG.Radar, BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Crop }, f)
 	local bug = box(f, px(14, 12), px(132, 30), Color3.fromRGB(20, 60, 140))
 	text(bug, { Size = UDim2.fromScale(1, 1), Text = "11 WEATHER", Font = Enum.Font.GothamBlack, Max = 20 })
+	-- the weather presenter, standing at the left of the map
+	presenter(f, px(-40, 40), px(260, 200), WEATHER_LADY)
 	local warn = box(f, px(0, 236), px(560, 46), RED)
 	text(warn, { Position = px(14, 0), Size = px(532, 46), Text = "FLASH FLOOD WARNING", Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Left, Max = 34 })
 	local sub = box(f, px(0, 282), px(560, 58), BLACK, 0.15)
@@ -146,15 +211,13 @@ local function buildWeather(root: Frame)
 	return f
 end
 
--- Channel 4: an old black-and-white film, a little too close to home
-local SUBTITLES = {
-	"\"Did you hear that, Margaret?\"",
-	"\"It's the house settling. Old houses settle.\"",
-	"\"Houses don't breathe.\"",
-	"\"Then who's been eating the bread?\"",
-	"\"Go back to sleep. Nobody's up there.\"",
-}
-local function buildMovie(root: Frame)
+-- Channel 4: an old black-and-white film, a little too close to home. Its lines (Story.TVVoice.Movie)
+-- are subtitled here and spoken by the client (TVVoice); the line on screen is the gui's "MovieLine".
+local function buildMovie(root: Frame, lines: { { Text: string } })
+	local SUBTITLES = {}
+	for _, l in lines do
+		table.insert(SUBTITLES, "\"" .. l.Text .. "\"")
+	end
 	local f = box(root, px(0, 0), UDim2.fromScale(1, 1), BLACK)
 	local film = box(f, px(0, 38), px(560, 264), Color3.fromRGB(46, 46, 48))
 	-- a doorway at the end of a hall, and something in it
@@ -169,10 +232,16 @@ local function buildMovie(root: Frame)
 	return f, function(alive: () -> boolean)
 		task.spawn(function()
 			local i = 1
+			sub.Text = SUBTITLES[1]
+			f:SetAttribute("MovieLine", 1)
 			while alive() do
-				task.wait(4)
+				task.wait(5.5)
+				if not alive() then
+					break
+				end
 				i = i % #SUBTITLES + 1
 				sub.Text = SUBTITLES[i]
+				f:SetAttribute("MovieLine", i)
 			end
 		end)
 	end
@@ -196,7 +265,7 @@ local function buildAlert(root: Frame)
 	return f
 end
 
-function TVScreens.build(gui: SurfaceGui, clock: (() -> string)?)
+function TVScreens.build(gui: SurfaceGui, clock: (() -> string)?, movieLines: { { Text: string } }?)
 	clock = clock or function()
 		return ""
 	end
@@ -207,7 +276,8 @@ function TVScreens.build(gui: SurfaceGui, clock: (() -> string)?)
 	local animators = {}
 	frames.News, animators.News = buildNews(root, clock :: () -> string)
 	frames.Weather = buildWeather(root)
-	frames.Movie, animators.Movie = buildMovie(root)
+	frames.Movie, animators.Movie = buildMovie(root, movieLines or { { Text = "..." } })
+	frames.Movie.Name = "Movie"
 	frames.Static = buildStatic(root)
 	frames.Alert = buildAlert(root)
 	for _, fr in frames do

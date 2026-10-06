@@ -107,6 +107,22 @@ function Escape.callForHelp(method: string, player: Player?)
 	end)
 end
 
+-- owner admin panel: the police are nearly here
+function Escape.adminPoliceSoon(seconds: number)
+	if not state.HelpCalled then
+		return false
+	end
+	state.PoliceETA = os.clock() + seconds
+	workspace:SetAttribute("PoliceETA", workspace:GetServerTimeNow() + seconds)
+	local night = state
+	task.delay(seconds, function()
+		if state == night then
+			Escape.policeArrive()
+		end
+	end)
+	return true
+end
+
 function Escape.policeArrive()
 	if state.PoliceArrived or ctx.Ending.isOver() then
 		return

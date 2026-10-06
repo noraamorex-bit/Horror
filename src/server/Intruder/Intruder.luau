@@ -49,6 +49,9 @@ local function fresh()
 		Entering = false,
 		Memory = {},
 		SawHide = {},
+		HeardHide = {}, -- spot -> time he heard someone in it (a door, a gasp, breathing)
+		SpotCooldown = {}, -- spot -> don't go back to it before this time
+		NearWarned = {}, -- player -> time we last told them he's right outside
 		Noises = {},
 		Visible = {},
 		LastCaptiveCheck = os.clock(),
@@ -268,7 +271,7 @@ end
 
 local function valid(p: Player?): boolean
 	return p ~= nil and p.Parent ~= nil and p:GetAttribute("InGame") == true and not p:GetAttribute("Captured")
-		and not p:GetAttribute("Escaped") and ctx.Util.isAlive(p)
+		and not p:GetAttribute("Escaped") and not p:GetAttribute("AdminGhost") and ctx.Util.isAlive(p)
 end
 
 local function faceToward(target: Vector3)
@@ -467,6 +470,24 @@ local function huntTarget(): (Player?, Vector3?)
 			if p == S.HuntTarget then
 				d *= 0.7
 			end
+			-- he goes for the one on their own, and the one waving a light around
+			local mine = rootOf(p)
+			local alone = mine ~= nil
+			if mine then
+				for _, q in ctx.Util.activePlayers() do
+					local qr = q ~= p and rootOf(q)
+					if qr and (qr.Position - mine.Position).Magnitude < 20 then
+						alone = false
+						break
+					end
+				end
+			end
+			if alone and #ctx.Util.activePlayers() > 1 then
+				d *= 0.8
+			end
+			if p:GetAttribute("FlashlightOn") then
+				d *= 0.85
+			end
 			if d < bestD then
 				best, bestPos, bestD = p, at, d
 			end
@@ -518,6 +539,8 @@ local function searchSpot(at: Vector3, target: Player?, checked: { [any]: boolea
 			local w = 1
 			if S.SawHide[s] then
 				w = 20
+			elseif S.HeardHide[s] and now() - S.HeardHide[s] < 40 then
+				w = 8
 			elseif target and ctx.Hiding.occupant(s) == target then
 				w = tune().TrueSpotWeight
 			end
@@ -537,12 +560,16 @@ local function startHunt()
 	end
 	S.LastHuntAt = now()
 	S.Waves += 1
+	local justEntered = S.JustEntered
+	S.JustEntered = nil
 	ctx.Audio.playAt("DoorSlam", pos(), { CaptionText = "[A door SLAMS somewhere in the house]", CaptionRange = 200 })
 	local H = ctx.Story.Hunt
 	if S.Waves == 1 then
-		for _, line in H.First do
-			ctx.Director.think(nil, line)
+		-- the first time: the cutscene of him under the garage hatch, just down from the attic
+		if ctx.Cutscene and S.InHouse and justEntered and now() - (S.EnteredAt or -1e9) < 5 then
+			ctx.Cutscene.heComesDown(justEntered)
 		end
+		-- (one clear warning, not a thought and a note saying the same thing at once)
 		ctx.Remotes.Notify:FireAllClients(H.FirstNotice, "danger")
 	elseif math.random() < 0.5 then
 		ctx.Director.think(nil, ctx.Util.choice(H.Wave))
@@ -1266,6 +1293,138 @@ STATES.CheckSpot = function(_, visible)
 	end
 end
 
+--[[
+	Investigate: he heard something (a door, footsteps, the microwave, a friend being cut free)
+	and nobody's out in the open to blame. He goes to look, stands and listens, and may tear
+	open a hiding spot near it. Noise can also pull him away from somewhere: a way to lure him.
+]]
+STATES.Investigate = function(_, visible)
+	if engage(visible) then
+		return
+	end
+	local d = S.Data
+	local I = tune()
+	if huntTarget() then
+		startHunt()
+		return
+	end
+	if not d.Started then
+		d.Started = true
+		S.Nav:goTo(reachable(d.Pos), { Speed = I.ProwlSpeed - 2, Tolerance = 3 })
+	end
+	if now() - S.StateStart > 22 then
+		patrol()
+		return
+	end
+	if S.Nav.Arrived or S.Nav:isStuck() then
+		if not d.LookUntil then
+			d.LookUntil = now() + 1.6 + math.random() * 1.4
+			d.LookFrom = now()
+			S.Nav:stop()
+			return
+		end
+		if now() < d.LookUntil then
+			-- turns his head, slowly, one way then the other
+			local k = (now() - d.LookFrom) / (d.LookUntil - d.LookFrom)
+			local yaw = math.sin(k * math.pi * 2) * 1.2
+			faceToward(pos() + (CFrame.Angles(0, yaw, 0) * (d.Pos - pos() + V(0.01, 0, 0.01))).Unit * 5)
+			return
+		end
+		if not d.Checked then
+			d.Checked = true
+			local spot = searchSpot(d.Pos, d.Source, {})
+			if spot and math.random() < 0.6 and now() >= (S.SpotCooldown[spot] or 0) then
+				S.SpotCooldown[spot] = now() + 20
+				checkSpot(spot, "Patrol", { Route = patrolRoute(), Index = 0 })
+				return
+			end
+		end
+		patrol()
+	end
+end
+
+local function investigate(at: Vector3, source: Player?)
+	if S.State == "Investigate" and S.Data.Pos and (S.Data.Pos - at).Magnitude < 8 then
+		return -- (already on his way there)
+	end
+	setState("Investigate", { Pos = at, Source = source })
+	S.HuntTarget = nil
+end
+
+-- what he does about a noise he heard, depending on what he's doing
+local function onNoise(ev)
+	if ev.Kind == "Intruder" or ev.Kind == "Car" then
+		return
+	end
+	local st = S.State
+	local who = ev.Source
+	-- a hiding spot giving itself away: its door closing, a gasp, breathing inside it
+	local spot = who and ctx.Hiding.spotOf(who)
+	if spot and (ev.Kind == "Hide" or ev.Kind == "Gasp" or ev.Kind == "Breathing") then
+		S.HeardHide[spot] = now()
+		if (st == "Patrol" or st == "Investigate" or st == "Prowl" or st == "Search")
+			and (spot.Position - pos()).Magnitude < 22 and now() >= (S.SpotCooldown[spot] or 0) then
+			S.SpotCooldown[spot] = now() + 20
+			if st == "Search" then
+				checkSpot(spot, "Search", S.Data)
+			else
+				checkSpot(spot, "Patrol", { Route = patrolRoute(), Index = 0 })
+			end
+		end
+		return
+	end
+	if st == "Patrol" then
+		investigate(ev.Position, who)
+	elseif st == "Search" and (ev.Radius or 0) >= 20 and S.Data.Pos and (ev.Position - S.Data.Pos).Magnitude > 14 then
+		-- something louder somewhere else: he leaves the cupboards for it
+		investigate(ev.Position, who)
+	elseif st == "Withdraw" and ev.Kind ~= "Footsteps" and ev.Kind ~= "Breathing" and (ev.Radius or 0) >= 14
+		and (ev.Position - pos()).Magnitude < 22 and (S.Data.Until or 0) - now() > 3 then
+		-- (his rest is the players' window: walking about doesn't end it, but a door slammed or
+		-- the microwave right next to him does. Anything really loud already started a hunt.)
+		investigate(ev.Position, who)
+	end
+end
+
+--[[
+	Breathing: walk right past someone's hiding spot and, unless they're holding their breath,
+	he may hear them (the more scared they are, the louder). They're warned the moment he's
+	right outside.
+]]
+local function listenForBreath(dt: number): boolean
+	local here = pos()
+	for _, p in ctx.Util.sessionPlayers() do
+		local spot = p:GetAttribute("Hiding") and ctx.Hiding.spotOf(p)
+		if spot and not p:GetAttribute("AdminGhost") then
+			local off = spot.Position - here
+			local dist = V(off.X, 0, off.Z).Magnitude
+			if dist < 11 and math.abs(off.Y) < 6 then
+				-- "he's right outside": once per close pass
+				if now() - (S.NearWarned[p] or -1e9) > 25 then
+					S.NearWarned[p] = now()
+					ctx.Director.think(p, "He's right outside. Hold your breath.|breath")
+					ctx.PlayerState.addNerve(p, -6)
+				end
+			end
+			if dist < 6 and math.abs(off.Y) < 6 and not p:GetAttribute("HoldingBreath") and now() >= (S.SpotCooldown[spot] or 0) then
+				local nerve = tonumber(p:GetAttribute("Nerve")) or 100
+				local perSecond = 0.1 + 0.35 * (1 - math.clamp(nerve / 100, 0, 1))
+				if math.random() < perSecond * dt then
+					S.SpotCooldown[spot] = now() + 25
+					S.HeardHide[spot] = now()
+					if S.State == "Search" then
+						checkSpot(spot, "Search", S.Data)
+					else
+						checkSpot(spot, "Patrol", { Route = patrolRoute(), Index = 0 })
+					end
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
 STATES.Retreat = function()
 	local d = S.Data
 	local t = now() - S.StateStart
@@ -1343,7 +1502,7 @@ local function gaitFor(speed: number): string
 		return "Reach"
 	elseif speed > 0.6 then
 		return "Walk"
-	elseif st == "Patrol" then
+	elseif st == "Patrol" or st == "Investigate" then
 		-- stopped mid-sweep: head turning, listening
 		return "Search"
 	elseif st == "Lurk" or st == "Withdraw" or st == "Ambush" then
@@ -1394,7 +1553,7 @@ end
 -- basement with nobody down there: he slips through the walls to the players' floor
 unstick = function(state: string)
 	local I = tune()
-	local moving = state == "Prowl" or state == "Patrol" or state == "Search" or state == "Retreat"
+	local moving = state == "Prowl" or state == "Patrol" or state == "Search" or state == "Retreat" or state == "Investigate"
 	local pr = S.Progress
 	if not pr or (pos() - pr.Pos).Magnitude > 6 then
 		S.Progress = { Pos = pos(), T = now() }
@@ -1482,6 +1641,12 @@ local function think(dt: number)
 			end
 		end
 	end
+	-- passing right by someone's hiding spot: does he hear them breathing?
+	if S.Mode == "Hunt" and (state == "Patrol" or state == "Search" or state == "Investigate" or state == "Prowl") then
+		if listenForBreath(dt) then
+			return
+		end
+	end
 	local handler = STATES[state]
 	if handler then
 		handler(dt, visible)
@@ -1523,6 +1688,8 @@ local function enterHouse(onReady: (() -> ())?)
 		placeAt(spot, spot + V(0, 0, -8))
 		ctx.Audio.playAt("HatchCreak", spot + V(0, 8, -3), { CaptionText = "[Something creaks in the garage ceiling]", CaptionRange = 45 })
 		S.Entering = false
+		S.JustEntered = spot -- (the first hunt shows him here: Cutscene.heComesDown)
+		S.EnteredAt = now()
 		local cb = S.OnEntered
 		S.OnEntered = nil
 		if cb then
@@ -1588,6 +1755,54 @@ function Intruder.grace(player: Player, seconds: number)
 	S.Trails[player] = {}
 	if S.HuntTarget == player then
 		S.HuntTarget = nil
+	end
+end
+
+-- a cutscene is playing: he stays exactly where he is for a while
+function Intruder.hold(seconds: number)
+	S.HoldUntil = math.max(S.HoldUntil or 0, now() + seconds)
+	if S.Nav then
+		S.Nav:stop()
+	end
+end
+
+-- owner admin panel (AdminService) ------------------------------------------
+function Intruder.adminFreeze(on: boolean)
+	S.AdminFrozen = on or nil
+	if on and S.Nav then
+		S.Nav:stop()
+	end
+end
+
+function Intruder.adminIsFrozen(): boolean
+	return S.AdminFrozen == true
+end
+
+-- put him a few steps behind this player (in the house, hunting)
+function Intruder.adminBring(player: Player): boolean
+	local root = ctx.Util.getRoot(player)
+	if not root or not S.Root then
+		return false
+	end
+	if not S.InHouse then
+		Intruder.setMode("Hunt")
+		return true
+	end
+	local behind = root.CFrame * CFrame.new(0, 0, 12)
+	if S.Nav then
+		S.Nav:stop()
+	end
+	placeAt(behind.Position, root.Position)
+	S.Progress = { Pos = pos(), T = now() }
+	return true
+end
+
+function Intruder.adminHunt(player: Player?)
+	Intruder.setMode("Hunt", player)
+	if player and valid(player) then
+		S.HuntTarget = player
+		S.UnhidAt[player] = nil
+		S.Ignore[player] = nil
 	end
 end
 
@@ -1799,6 +2014,8 @@ function Intruder.start()
 			S.UnhidAt[who] = nil
 			table.insert(S.Trails[who], { T = now() - tune().SenseDelay, Pos = ev.Position })
 		end
+		-- and what he does about it
+		onNoise(ev)
 	end)
 
 	local acc = 0
@@ -1809,6 +2026,9 @@ function Intruder.start()
 		end
 		local step = acc
 		acc = 0
+		if S.AdminFrozen or now() < (S.HoldUntil or 0) then
+			return -- (frozen by the owner's admin panel, or held still for a cutscene)
+		end
 		local ok, err = pcall(think, step)
 		if not ok then
 			warn("[Intruder] " .. tostring(err))

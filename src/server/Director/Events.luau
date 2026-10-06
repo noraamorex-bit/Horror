@@ -612,6 +612,8 @@ Events.List = {
 			return nil
 		end,
 		Run = function(ctx, D, door)
+			-- (Director.onDoorOpened: whoever dares to open it in the next while gets a jolt)
+			door.YankedAt = os.clock()
 			for i = 1, 4 do
 				ctx.Audio.playAt("DoorYank", door.Position, { Volume = 1, Caption = i == 1 })
 				if i == 1 then

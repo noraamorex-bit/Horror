@@ -58,8 +58,22 @@ function HUD.caption(text: string, _position: Vector3?)
 	end
 	local isSound = text:sub(1, 1) == "["
 	-- sound captions are extras: skip them while something else is being said (spoken lines
-	-- and answers to what you just did always show)
+	-- and answers to what you just did always show, once the screen is clear of cards)
 	if isSound and ctx.Pace and not ctx.Pace.tryTake(1.6) then
+		return
+	end
+	if not isSound and ctx.Pace and ctx.Pace.blocked() then
+		local act = workspace:GetAttribute("Act")
+		task.spawn(function()
+			local t0 = os.clock()
+			while ctx.Pace.blocked() do
+				if os.clock() - t0 > 8 or ctx.Pace.stale(act) then
+					return
+				end
+				task.wait(0.2)
+			end
+			HUD.caption(text, _position)
+		end)
 		return
 	end
 	recentCaptions[text] = os.clock()
@@ -136,7 +150,7 @@ local function pumpNotes()
 		local n = table.remove(pendingNotes, 1)
 		-- stale notes are dropped (an objective or a danger note keeps a little longer)
 		local keep = (n[2] == "objective" or n[2] == "danger" or n[2] == "done" or n[2] == "text") and 20 or 10
-		if os.clock() - (n[3] or 0) <= keep then
+		if os.clock() - (n[3] or 0) <= keep and not (ctx.Pace and ctx.Pace.stale(n[4])) then
 			showNote(n[1], n[2])
 		else
 			ctx.Pace.FreeAt = 0
@@ -152,7 +166,16 @@ function HUD.notify(text: string, kind: string?)
 			return
 		end
 	end
-	table.insert(pendingNotes, { text, kind, os.clock() })
+	-- done before it was even announced: just the tick
+	if kind == "done" and text:sub(1, 6) == "Done: " then
+		local announced = "New objective: " .. text:sub(7)
+		for i = #pendingNotes, 1, -1 do
+			if pendingNotes[i][1] == announced then
+				table.remove(pendingNotes, i)
+			end
+		end
+	end
+	table.insert(pendingNotes, { text, kind, os.clock(), workspace:GetAttribute("Act") })
 	task.spawn(pumpNotes)
 end
 
@@ -228,6 +251,10 @@ function HUD.chapter(title: string, sub: string)
 			HUD.chapter(title, sub)
 		end)
 		return
+	end
+	-- (the act's own lines come after it, not over it)
+	if ctx.Pace then
+		ctx.Pace.FreeAt = math.max(ctx.Pace.FreeAt, os.clock() + 6.5)
 	end
 	chapterTitle.Text = title
 	chapterSub.Text = sub
@@ -421,13 +448,19 @@ local function build()
 	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = notifyList })
 
 	-- captions (bottom center)
+	-- (in the bottom stack, above your thought line: Thoughts builds the stack)
 	captionList = UI.new("Frame", {
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -110),
-		Size = UDim2.fromOffset(620, 160),
+		Name = "Captions",
+		Size = UDim2.fromOffset(620, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
-		Parent = root,
+		LayoutOrder = 1,
+		Parent = UI.Subtitles or root,
 	})
+	if not UI.Subtitles then
+		captionList.AnchorPoint = Vector2.new(0.5, 1)
+		captionList.Position = UDim2.new(0.5, 0, 1, -110)
+	end
 	UI.new("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Bottom, HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = captionList })
 
 	-- chapter card

@@ -83,45 +83,64 @@ function LobbyHub.start()
 		Parent = UI.Root,
 	})
 	UI.label({ Size = UDim2.new(1, 0, 0, 50), Text = ctx.Story.Title, Font = UI.Font.Title, TextSize = 34, TextStrokeTransparency = 0.6, Parent = title })
-	-- a small menu down the left side: play first, then the extras
-	local function menuButton(parent, text: string, order: number): TextButton
+	-- a menu down the left side: the two ways to play first (big, bright), then the extras.
+	-- Sized for thumbs: the whole UI is scaled down on phones (UIScale), so these stay tappable.
+	local MENU_W = 200
+	local function menuButton(parent, text: string, order: number, primary: boolean?): TextButton
 		local b = UI.new("TextButton", {
 			LayoutOrder = order,
-			Size = UDim2.fromOffset(150, 30),
+			Size = UDim2.fromOffset(MENU_W, primary and 54 or 42),
 			Text = text,
-			Font = Enum.Font.GothamMedium,
-			TextSize = 15,
-			TextColor3 = Color3.fromRGB(235, 232, 226),
-			BackgroundColor3 = Color3.fromRGB(12, 12, 14),
-			BackgroundTransparency = 0.4,
+			Font = primary and UI.Font.Bold or Enum.Font.GothamMedium,
+			TextSize = primary and 21 or 17,
+			TextColor3 = primary and Color3.fromRGB(12, 12, 14) or Color3.fromRGB(235, 232, 226),
+			BackgroundColor3 = primary and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(12, 12, 14),
+			BackgroundTransparency = primary and 0 or 0.35,
 			Parent = parent,
 		})
-		UI.corner(b, 6)
-		UI.stroke(b, Color3.new(1, 1, 1), 1, 0.8)
+		UI.corner(b, primary and 10 or 8)
+		UI.stroke(b, Color3.new(1, 1, 1), 1, primary and 0.5 or 0.8)
 		return b
 	end
 	local menu = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0, 0),
 		Position = UDim2.new(0, math.max(16, inset.X + 16), 0, inset.Y + 10),
-		Size = UDim2.fromOffset(150, 0),
+		Size = UDim2.fromOffset(MENU_W, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		Parent = UI.Root,
 	})
-	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = menu })
+	UI.new("UIListLayout", { Padding = UDim.new(0, 7), SortOrder = Enum.SortOrder.LayoutOrder, Parent = menu })
 	-- one-tap play (hidden while you're in a queue)
-	quick = UI.new("Frame", { LayoutOrder = 1, Size = UDim2.fromOffset(150, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = menu })
-	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = quick })
-	for i, spec in { { "Play solo", "Solo" }, { "Find players", "Group" } } do
-		menuButton(quick, spec[1], i).Activated:Connect(function()
+	quick = UI.new("Frame", { LayoutOrder = 1, Size = UDim2.fromOffset(MENU_W, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = menu })
+	UI.new("UIListLayout", { Padding = UDim.new(0, 7), SortOrder = Enum.SortOrder.LayoutOrder, Parent = quick })
+	for i, spec in { { "▶  PLAY SOLO", "Solo" }, { "FIND PLAYERS", "Group" } } do
+		local b = menuButton(quick, spec[1], i, true)
+		b.Activated:Connect(function()
 			ctx.Remotes.QuickPlay:FireServer(spec[2])
+			if ctx.Effects then
+				ctx.Effects.playSound("UISelect", nil, { Caption = false })
+			end
 		end)
 	end
-	UI.new("Frame", { LayoutOrder = 2, Size = UDim2.fromOffset(150, 4), BackgroundTransparency = 1, Parent = menu })
+	UI.new("Frame", { LayoutOrder = 2, Size = UDim2.fromOffset(MENU_W, 6), BackgroundTransparency = 1, Parent = menu })
 	local endingsBtn = menuButton(menu, "Endings", 3)
 	local beamBtn = menuButton(menu, "Flashlight", 4)
-	ctx.Social.button(menu, "invite", { LayoutOrder = 5, Size = UDim2.fromOffset(150, 30) })
-	ctx.Social.button(menu, "favorite", { LayoutOrder = 6, Size = UDim2.fromOffset(150, 30) })
+	ctx.Social.button(menu, "invite", { LayoutOrder = 5, Size = UDim2.fromOffset(MENU_W, 42), TextSize = 17 })
+	ctx.Social.button(menu, "favorite", { LayoutOrder = 6, Size = UDim2.fromOffset(MENU_W, 42), TextSize = 17 })
+	menuButton(menu, "How to play", 8).Activated:Connect(function()
+		ctx.Notice.show({
+			Title = "HOW TO PLAY",
+			Body = "It's a normal Friday night at the Whitaker house: pizza, chores, the storm. Then the power goes out, and you find out someone has been living in your attic.\n\n"
+				.. "• Do your tasks (the ! markers and the panel at the top right show what's next).\n"
+				.. "• When he's hunting, HIDE: closets, wardrobes, under beds. Don't let him see you get in.\n"
+				.. "• When he's right outside, HOLD YOUR BREATH.\n"
+				.. "• Get help: fix the phone line and call 911, reach the neighbor, or take the car.\n"
+				.. "• Caught once, you're tied up in the boiler room: struggle free, or a friend can cut you loose. Caught twice and you're out.\n\n"
+				.. "8 endings to find. One of them is secret.",
+			Button = "GOT IT",
+		})
+	end)
 	menuButton(menu, "Settings", 7).Activated:Connect(function()
 		if ctx.Settings then
 			ctx.Settings.open()
@@ -132,16 +151,16 @@ function LobbyHub.start()
 	-- flashlight colours, unlocked by bringing friends (StatsService.Beams)
 	local BEAMS = {
 		{ Id = "Classic", Name = "Classic", Need = 0, Color = Color3.fromRGB(255, 244, 222) },
-		{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 176, 96) },
-		{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(190, 214, 255) },
-		{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 96, 80) },
-		{ Id = "Gold", Name = "Gold", Pass = "Supporter", PassName = "Supporter pass", Color = Color3.fromRGB(255, 212, 120) },
-		{ Id = "Ghost", Name = "Ghost", Pass = "Colours", PassName = "Colours pass", Color = Color3.fromRGB(196, 255, 222) },
+		{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 140, 50) },
+		{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(130, 175, 255) },
+		{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 45, 40) },
+		{ Id = "Gold", Name = "Gold", Pass = "Supporter", PassName = "Supporter pass", Color = Color3.fromRGB(255, 196, 60) },
+		{ Id = "Ghost", Name = "Ghost", Pass = "Colours", PassName = "Colours pass", Color = Color3.fromRGB(120, 255, 185) },
 	}
 	local me = game:GetService("Players").LocalPlayer
 	local beams = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0, 0),
-		Position = UDim2.new(0, math.max(16, inset.X + 16) + 162, 0, inset.Y + 10),
+		Position = UDim2.new(0, math.max(16, inset.X + 16) + MENU_W + 12, 0, inset.Y + 10),
 		Size = UDim2.fromOffset(240, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = UI.Color.Panel,
@@ -173,14 +192,24 @@ function LobbyHub.start()
 		local stroke = UI.stroke(row, Color3.new(1, 1, 1), 1, 1)
 		rows[b.Id] = { Row = row, Label = label, Stroke = stroke, Def = b }
 		row.Activated:Connect(function()
-			-- a pass colour you don't have yet: show it in the shop
-			if b.Pass and not me:GetAttribute("Pass_" .. b.Pass) then
+			-- a colour you don't have yet: the shop (the Colours pass unlocks every invite colour)
+			local n = tonumber(me:GetAttribute("StatReferrals")) or 0
+			local unlocked
+			if b.Pass then
+				unlocked = me:GetAttribute("Pass_" .. b.Pass) == true
+			else
+				unlocked = me:GetAttribute("Pass_Colours") == true or n >= b.Need or (b.Need == 1 and me:GetAttribute("StatReferred") == true)
+			end
+			if not unlocked then
 				if ctx.ShopUI then
 					ctx.ShopUI.open("Passes")
 				end
 				return
 			end
 			ctx.Remotes.SetBeam:FireServer(b.Id)
+			if ctx.Effects then
+				ctx.Effects.playSound("FlashlightOn", nil, { Caption = false })
+			end
 		end)
 	end
 	local function showBeams()
@@ -327,20 +356,20 @@ function LobbyHub.start()
 	-- your queue: at the top of the left-hand menu, in place of the play buttons
 	panel = UI.new("Frame", {
 		LayoutOrder = 0,
-		Size = UDim2.fromOffset(280, 70),
+		Size = UDim2.fromOffset(MENU_W, 112),
 		BackgroundColor3 = Color3.fromRGB(12, 12, 14),
-		BackgroundTransparency = 0.4,
+		BackgroundTransparency = 0.3,
 		Visible = false,
 		Parent = lobbyMenu,
 	})
 	UI.corner(panel, 8)
 	UI.stroke(panel, Color3.new(1, 1, 1), 1, 0.8)
-	queueTitle = UI.label({ Position = UDim2.fromOffset(12, 8), Size = UDim2.new(1, -96, 0, 20), Text = "", Font = Enum.Font.GothamMedium, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
-	queueStatus = UI.label({ Position = UDim2.fromOffset(12, 30), Size = UDim2.new(1, -96, 0, 34), Text = "", TextSize = 13, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
+	queueTitle = UI.label({ Position = UDim2.fromOffset(12, 8), Size = UDim2.new(1, -24, 0, 20), Text = "", Font = UI.Font.Bold, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
+	queueStatus = UI.label({ Position = UDim2.fromOffset(12, 30), Size = UDim2.new(1, -24, 0, 34), Text = "", TextSize = 13, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
 	local leave = UI.new("TextButton", {
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -10, 0.5, 0),
-		Size = UDim2.fromOffset(72, 34),
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, -8, 1, -8),
+		Size = UDim2.fromOffset(96, 36),
 		Text = "Leave",
 		Font = Enum.Font.GothamMedium,
 		TextSize = 14,

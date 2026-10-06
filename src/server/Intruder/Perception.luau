@@ -79,7 +79,7 @@ function Perception.intruderSightRange(player: Player): number
 end
 
 function Perception.intruderSees(head: CFrame, player: Player, model: Instance): boolean
-	if not player:GetAttribute("InGame") or player:GetAttribute("Captured") or player:GetAttribute("Escaped") or player:GetAttribute("Hiding") then
+	if not player:GetAttribute("InGame") or player:GetAttribute("Captured") or player:GetAttribute("Escaped") or player:GetAttribute("Hiding") or player:GetAttribute("AdminGhost") then
 		return false
 	end
 	local char = player.Character

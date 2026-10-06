@@ -32,6 +32,11 @@ function Ending.init(c)
 	ctx.EndingUI = Ending
 end
 
+-- a result card or the ending cutscene is on screen (Pace holds other messages)
+function Ending.isShowing(): boolean
+	return card ~= nil or inCutscene
+end
+
 local function stopMusic()
 	if music then
 		music:Destroy()

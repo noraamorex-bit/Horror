@@ -428,10 +428,35 @@ Story.Calls = {
 -- TV channels
 ---------------------------------------------------------------------------
 Story.TV = {
-	{ Name = "Ch 4 - Movie", Screen = "Movie", Line = "An old black-and-white movie. A couple hear noises upstairs.", Sound = "TVShow" },
-	{ Name = "Ch 7 - News", Screen = "News", Line = "'...a man police believe has been living inside homes in Hollis Creek, sometimes for weeks, while families were out. Food taken. Nothing valuable. Do not approach him...'", Sound = "TVShow" },
-	{ Name = "Ch 11 - Weather", Screen = "Weather", Line = "'...four more inches tonight. Creek Road is closed. If you don't have to go out, don't.'", Sound = "TVShow" },
+	{ Name = "Ch 4 - Movie", Screen = "Movie", Line = "An old black-and-white movie. A couple hear noises upstairs." },
+	{ Name = "Ch 7 - News", Screen = "News", Line = "Channel 7. A news anchor, and a photo box that just says SUSPECT." },
+	{ Name = "Ch 11 - Weather", Screen = "Weather", Line = "Channel 11. The weather, and a lot of red on the map." },
 	{ Name = "Ch 12 - Static", Screen = "Static", Line = "No signal. The cable box can't find anything.", Sound = "TVStatic" },
+}
+
+--[[
+	What the people on TV say (client TVVoice: Roblox text-to-speech, max 300 characters a line).
+	Voices: "3" US male, "4" US female, "1" British male, "2" British female. Each line is also
+	captioned when spoken.
+]]
+Story.TVVoice = {
+	News = {
+		{ Voice = "3", Text = "Good evening. Our top story tonight: police in Hollis Creek are searching for a man they believe has been living inside people's homes, sometimes for weeks, while the families were out." },
+		{ Voice = "3", Text = "Residents describe food going missing, doors found unlocked, and noises in the walls and the ceiling at night. In every case, nothing of value was taken." },
+		{ Voice = "3", Text = "Police describe him as a tall man in his forties, last seen driving a gray panel van. If you see him, do not approach him. Lock your doors, and call nine one one." },
+		{ Voice = "3", Text = "And with Creek Road closed by flooding, officers say response times tonight may be longer than usual. Stay inside. Stay safe. Back after this." },
+	},
+	Weather = {
+		{ Voice = "4", Text = "Here's your storm update. Heavy rain continues across Hollis County tonight, with another four inches expected before morning." },
+		{ Voice = "4", Text = "A flash flood warning is in effect until six A M. Creek Road is closed in both directions. If you don't have to go out tonight, please don't." },
+	},
+	Movie = {
+		{ Voice = "1", Text = "Did you hear that, Margaret?" },
+		{ Voice = "2", Text = "It's the house settling. Old houses settle." },
+		{ Voice = "1", Text = "Houses don't breathe." },
+		{ Voice = "2", Text = "Then who's been eating the bread?" },
+		{ Voice = "1", Text = "Go back to sleep. Nobody's up there." },
+	},
 }
 
 ---------------------------------------------------------------------------

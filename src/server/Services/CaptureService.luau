@@ -236,8 +236,14 @@ function Capture.capture(player: Player)
 		ctx.Audio.playAt("ZipTie", slot.Pos)
 		ctx.Remotes.Fade:FireClient(player, false, 2.5)
 		local alone = #ctx.Util.sessionPlayers() <= 1
-		ctx.Audio.caption(alone and "Your wrists are zip-tied to a pipe. Keep pressing STRUGGLE to break free."
-			or "Your wrists are zip-tied to a pipe. Keep pressing STRUGGLE, or wait for your friends.", nil, nil, { player })
+		local line = alone and "Your wrists are zip-tied to a pipe. Keep pressing STRUGGLE to break free."
+			or "Your wrists are zip-tied to a pipe. Keep pressing STRUGGLE, or wait for your friends."
+		-- a look at yourself, tied to the pipes (Cutscene); the line is its subtitle
+		if ctx.Cutscene and ctx.Cutscene.tiedUp then
+			ctx.Cutscene.tiedUp(player, slot, line)
+		else
+			ctx.Audio.caption(line, nil, nil, { player })
+		end
 
 		local root = ctx.Util.getRoot(player)
 		if root then

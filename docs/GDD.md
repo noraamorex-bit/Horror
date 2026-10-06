@@ -268,6 +268,8 @@ If Curtis grabs you, the screen fades and you wake zip-tied in the boiler room. 
 - **One second chance only.** Getting caught a second time is fatal: a jumpscare, then you're out of the night and **spectate** your friends (tap to switch; with nobody left, the camera watches the house from the street). Your fate on the recap reads *Didn't make it*.
 
 ### The intruder AI (`src/server/Intruder`)
+Newest behaviour: he **investigates noises** when nobody is out in the open (a door, the microwave, someone running, a friend being cut free): goes there, stands and listens, may tear open a nearby hiding spot; a loud noise elsewhere pulls him off a search (players can lure him). His rest is the players' window: footsteps don't end it, but a door slammed or the microwave right next to him does. He **hears breathing**: walk past a hiding spot and, unless its occupant is holding their breath, he may hear them (more likely the more scared they are); they get a "He's right outside. Hold your breath." warning first. Holding your breath runs out after 8 s, with a gasp he can hear. He **prefers the one on their own** and the one waving a flashlight.
+
 A state machine with perception:
 - **Vision**: a 100° cone, raycast line of sight. Range depends on light: 80 studs lit, 22 dark, 110 if the target's flashlight is on. Crouching shortens it. Hidden players are invisible. Up close he doesn't need to face you: within 7 studs always, 11 if you're walking upright, 12 with your flashlight on, 16 if you're sprinting. Only a player who is crouched and still can stay right behind him (4 studs). If he's opening a cupboard and someone in the open is within 10 studs and in his senses, he drops the cupboard and goes for them.
 - **He always knows roughly where you are** (the hunt): every half second he feels where each player who isn't hiding is, and acts on where they were **3 s ago** (a bloodhound on your trail). Hiding makes the trail go cold; after you leave a hiding spot he can't feel you for **8 s**. Loud noises (sprinting, slammed doors, trying the exits) are felt immediately.
@@ -325,10 +327,22 @@ Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host
 
 ---
 
+### Cutscenes (`CutsceneService`, client `Cutscene`)
+Short letterboxed moments in the middle of the night, like the endings': **Lights out** (Act III: from across the street, the lit house goes dark all at once as the breaker drops), **He comes down** (the first hunt: him standing under the garage hatch, a slow push-in on his face), and **Tied up** (your first capture: a look at yourself zip-tied to the boiler-room pipes, just for you). Shared cutscenes hold the players and him still, so nobody can be caught while the camera is away. The HUD and touch buttons step aside while one plays. The admin panel can replay each one.
+
+### The TV (World `TVScreens`, client `TVVoice`)
+No laugh track. Channel 7 is a real broadcast: an anchor (Dan Whitlock) at the desk, the SUSPECT box over his shoulder, a BREAKING bar and ticker. Channel 11 has a weather presenter beside the radar. Both read their bulletin aloud with Roblox text-to-speech (`Story.TVVoice`), their mouths move while they talk, and they blink. Channel 4's old film speaks each subtitle as it appears. Louder the closer you are; each line is generated once per player and replayed.
+
+### Owner admin panel (`AdminService`, client `Admin`)
+Only for `Config.Admins` (the owner's UserId), the experience owner, and Studio; every command is checked on the server. An ADMIN pill at the top (or F2) opens: start the night now (Normal/Hard), jump to any act, next act, restart the act or the house, call any kind of help, police in 5 s, preview the cutscenes; hunt / hunt me / lurk / offstage / show himself / freeze / bring him behind me / trap / X-ray; invisible to him, all items, battery, nerve, free me, revive me, teleport to any room; fire any scripted event; trigger any ending. A debug line shows the act, his state, the difficulty and the police timer.
+
 ### Quality of life
 - **Settings** (lobby menu, and the journal in the house): music volume, sound volume, camera shake on/off. Saved with your stats. Every sound is routed into a music or an effects SoundGroup on the client.
 - **Friend tags**: each friend's name and distance over their head, through walls, hidden when they're close. A captured friend's tag turns red: "TIED UP".
 - **Skip** on ending cutscenes.
+- **Messages never overlap**: everything said at the bottom of the screen (sound captions, spoken lines, your thoughts) is one stack; chapter cards hold the queue; nothing talks over a notice, a conversation, a cutscene, the vote or a result card; a line from an earlier act is dropped instead of arriving late; "New objective" is skipped when "Done" beats it to the screen.
+- **The yanked door**: after something yanks at an outside door, the first person to open it gets a loud hit. Nothing is there.
+- **Lobby**: big PLAY SOLO / FIND PLAYERS buttons, a How to play card, everyone carries their flashlight in the colour they picked, and now and then a light comes on in the dark upstairs window of the house with someone standing in it.
 - **Fastest wins**: every win is timed (an escape at the moment you get out; everyone still standing at a good ending at the moment it ends). The result card shows YOUR TIME and ★ NEW PERSONAL BEST; your best shows on the lobby record line; the top 10 go on the FASTEST WINS sign beside NIGHTS SURVIVED (`FastestWin_v1` OrderedDataStore, lowest first).
 - Every button clicks; notifications have their own sounds by kind; the police countdown beeps for its last 10 s.
 

@@ -14,8 +14,20 @@ local ctx
 ]]
 local Pace = { FreeAt = 0 }
 
+-- full-screen moments nothing should talk over: a notice card, a conversation, a cutscene or
+-- the ending, a result card, the difficulty vote
 function Pace.blocked(): boolean
-	return (ctx.Notice ~= nil and ctx.Notice.isOpen()) or (ctx.Dialogue ~= nil and ctx.Dialogue.isOpen())
+	return (ctx.Notice ~= nil and ctx.Notice.isOpen())
+		or (ctx.Dialogue ~= nil and ctx.Dialogue.isOpen())
+		or workspace:GetAttribute("EndingActive") ~= nil
+		or (ctx.Cutscene ~= nil and ctx.Cutscene.isPlaying())
+		or (ctx.EndingUI ~= nil and ctx.EndingUI.isShowing())
+		or (ctx.VoteUI ~= nil and ctx.VoteUI.isOpen())
+end
+
+-- a message from an earlier act no longer fits the moment
+function Pace.stale(act: string?): boolean
+	return act ~= nil and workspace:GetAttribute("Act") ~= act
 end
 
 function Pace.isFree(): boolean
@@ -79,7 +91,7 @@ local function run()
 		Pace.take(ctx.Config.Thoughts.Duration + 0.8)
 		-- a thought that waited too long no longer fits the moment: let it go
 		local item = table.remove(queue, 1)
-		while item and os.clock() - item.Time > (item.Hint and 20 or 9) do
+		while item and (os.clock() - item.Time > (item.Hint and 20 or 9) or Pace.stale(item.Act)) do
 			item = table.remove(queue, 1)
 		end
 		if not item then
@@ -125,7 +137,13 @@ function Thoughts.say(text: string, hint: string?)
 	if last and last.Text == text then
 		return
 	end
-	table.insert(queue, { Text = text, Hint = hint, Time = os.clock() })
+	local item = { Text = text, Hint = hint, Time = os.clock(), Act = workspace:GetAttribute("Act") }
+	if hint == "breath" then
+		-- (urgent: he's right outside. It goes next, not after whatever was queued)
+		table.insert(queue, 1, item)
+	else
+		table.insert(queue, item)
+	end
 	task.spawn(run)
 end
 
@@ -137,13 +155,25 @@ end
 
 function Thoughts.start()
 	local UI = ctx.UI
+	-- everything said at the bottom of the screen shares one stack, so it can never overlap:
+	-- sound captions and spoken lines above (HUD), your own thought at the bottom
+	local stack = UI.new("Frame", {
+		Name = "Subtitles",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -104),
+		Size = UDim2.fromOffset(720, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1,
+		Parent = UI.Root,
+	})
+	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Bottom, HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = stack })
+	UI.Subtitles = stack
 	frame = UI.box({
 		Name = "Thought",
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -150),
 		BackgroundTransparency = 0.3,
 		Visible = false,
-		Parent = UI.Root,
+		LayoutOrder = 1000,
+		Parent = stack,
 	}, { 8, 16 })
 	UI.new("UIListLayout", { Padding = UDim.new(0, 4), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = frame })
 	line = UI.fitLabel({

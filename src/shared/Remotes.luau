@@ -28,6 +28,7 @@ local NAMES = {
 	"Intro", -- () the night's opening shot: the house from the street, and him in the window
 	"Result", -- (payload) you're out of the night early (escaped / died) while others still play
 	"Revived", -- () you're back in the night (the revive product)
+	"Cutscene", -- ({Name, Shots, Subtitle}) a short cinematic in the middle of the night
 	"Vote", -- (state | nil) the difficulty vote before the night: {Ends, Votes, Mine}
 
 	-- client -> server
@@ -52,6 +53,8 @@ local NAMES = {
 	"PickRole", -- (roleId) the "pick your role" pass, on the vote screen
 	"SaveSettings", -- (music, sfx, shake) the settings panel
 	"UseRevive", -- () spend a saved revive (bought when it couldn't be used)
+	"Admin", -- (cmd, arg) owner test panel (AdminService checks the UserId)
+	"AdminReply", -- (text) result of an admin command
 }
 
 local Remotes = {}
