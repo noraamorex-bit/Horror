@@ -331,12 +331,11 @@ Layout.NoArt = {
 	{ "Ground", 23, 33, -10.6, -8.5 }, -- mudroom coat hooks
 	{ "Ground", -8.4, -5, -29, -23 }, -- hall mirror
 	{ "Ground", -8.4, -5, -12, 12 }, -- stair photo gallery and sconce
-	{ "Ground", 8, 12.6, 5, 13 }, -- coat closet
+	{ "Ground", 9, 12.6, -17.3, -11.5 }, -- coat closet
 	{ "Ground", 36, 40.6, 6.5, 13.5 }, -- den bookcase
 	{ "Ground", 36, 40.6, -29.5, -12.5 }, -- office bookcases
 	{ "Upstairs", -28.5, -19.5, -30.6, -25 }, -- master wardrobe
 	{ "Upstairs", -8.4, -5, -7, 17 }, -- the gallery continues up the stairwell
-	{ "Ground", 10, 12.4, -16.5, -12.3 }, -- hall sconce
 	{ "Upstairs", 10, 12.4, -22, -18 }, -- upstairs hall sconce
 	{ "Upstairs", 10, 12.4, 8, 12 }, -- upstairs hall sconce
 	{ "Upstairs", -10, -7.6, -27, -21 }, -- master dresser mirror

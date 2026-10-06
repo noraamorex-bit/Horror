@@ -748,7 +748,6 @@ function Interior.build(ctx, root: Instance, refs)
 		Kit.shoe(hall, F(8.8, G, -28.6 + i * 1.3, NX), col)
 		Kit.shoe(hall, F(8.8, G, -28.1 + i * 1.3, NX), col)
 	end
-	Kit.coatRack(hall, F(10.8, G, -12.6, NX), { Color3.fromRGB(60, 70, 90), Color3.fromRGB(140, 110, 70) })
 	local _, conH = Kit.consoleTable(hall, F(-6.55, G, -26, PX), 5.4, 1.5, WOOD_DARK)
 	Kit.mirror(hall, F(-7.62, G + 7.2, -26, PX), 3.4, 4.2, BRASS)
 	Kit.bowl(hall, F(-6.5, G + conH, -24.6, PX), 1.1, Color3.fromRGB(70, 110, 140))
@@ -756,7 +755,6 @@ function Interior.build(ctx, root: Instance, refs)
 	stash("HallConsole", spot(hall, "ConsoleDrawer", CF(-5.9, G + conH - 0.45, -26), V(0.2, 0.5, 2.6)), "Hall table drawer", "Ground")
 	Kit.umbrellaStand(hall, F(8, G, -28.5, NZ))
 	Kit.plant(hall, F(-6.6, G, -11.4, PX), 1.4, "snake")
-	sconce(hall, F(11.62, G + 7.8, -14.4, NX))
 	sconce(hall, F(-7.62, G + 7.8, -9.4, PX))
 	-- family photos climbing the stairs with the treads
 	for i, z in { -3, 1.5, 6, 10.5 } do
@@ -1016,7 +1014,8 @@ function Interior.build(ctx, root: Instance, refs)
 	-- More places to hide downstairs: he hunts on every floor, and the ground floor is
 	-- where most of the night's work is
 	---------------------------------------------------------------------------
-	wardrobe(hall, "Coat closet", 8.6, 6, 11.4, 12, G, NX, "Hallway", WHITE_WOOD)
+	-- (in the front hall against the office wall: not over the basement stairs)
+	wardrobe(hall, "Coat closet", 9.2, -17.1, 11.35, -11.7, G, NX, "Hallway", WHITE_WOOD)
 	wardrobe(mud, "Utility closet", 34.6, 0.6, 39.4, 3.4, G, NZ, "Mudroom", WHITE_WOOD)
 	wardrobe(garage, "Storage cabinet", 41, -21.5, 43.8, -16, G, PX, "Garage", Color3.fromRGB(96, 100, 104))
 	-- crouched under a table or a desk, peeking out at floor level

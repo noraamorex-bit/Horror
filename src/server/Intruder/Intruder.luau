@@ -16,6 +16,7 @@ local RunService = game:GetService("RunService")
 
 local Perception = require(script.Parent.Perception)
 local Navigator = require(script.Parent.Navigator)
+local NavGrid = require(script.Parent.NavGrid)
 local Rig = require(script.Parent.Rig)
 
 local Intruder = {}
@@ -370,16 +371,24 @@ end
 local function follow(target: Vector3, speed: number)
 	local d = S.Data
 	local p = pos()
-	local sameFloor = math.abs(target.Y - p.Y) < 5
-	if sameFloor and (target - p).Magnitude < 30 and Perception.clear(S.Head.Position, target + V(0, 1, 0), { S.Model }, nil) then
+	target = reachable(target)
+	-- a straight run he can actually walk (no wall, no furniture, no ledge in the way): straight there
+	local direct
+	if NavGrid.ready() then
+		direct = (target - p).Magnitude < 40 and NavGrid.straight(p, target)
+	else
+		direct = math.abs(target.Y - p.Y) < 5 and (target - p).Magnitude < 30
+			and Perception.clear(S.Head.Position, target + V(0, 1, 0), { S.Model }, nil)
+	end
+	if direct then
 		S.Nav:moveDirect(target, speed)
 		d.PathGoal = nil
 		return
 	end
-	if not d.PathGoal or now() - (d.LastPath or 0) > 1.5 or (d.PathGoal - target).Magnitude > 8 then
+	if not d.PathGoal or S.Nav.Arrived or now() - (d.LastPath or 0) > 1 or (d.PathGoal - target).Magnitude > 4 then
 		d.PathGoal = target
 		d.LastPath = now()
-		S.Nav:goTo(reachable(target), { Speed = speed, Tolerance = 2, Hurry = speed > 12 })
+		S.Nav:goTo(target, { Speed = speed, Tolerance = 2, Hurry = speed > 12 })
 	else
 		S.Humanoid.WalkSpeed = speed
 	end
@@ -1241,10 +1250,11 @@ STATES.Patrol = function(_, visible)
 		end
 		d.Moving = true
 		d.PauseUntil = nil
+		d.LegStart = now()
 		S.Nav:goTo(goal, { Speed = I.PatrolSpeed, Tolerance = 3 })
 		return
 	end
-	if S.Nav.Arrived or S.Nav:isStuck() or now() - S.StateStart > 90 then
+	if S.Nav.Arrived or S.Nav:isStuck() or now() - (d.LegStart or S.StateStart) > 40 then
 		if not d.PauseUntil then
 			S.Nav:stop()
 			d.PauseUntil = now() + I.PatrolPause[1] + math.random() * (I.PatrolPause[2] - I.PatrolPause[1])
@@ -1384,10 +1394,14 @@ local function erratic(d, center: Vector3, speed: number)
 	if now() < (d.NextPoint or 0) and not S.Nav.Arrived then
 		return
 	end
-	local a = math.random() * math.pi * 2
-	local r = 2 + math.random() * 6
-	local goal = reachable(center + V(math.cos(a) * r, 0, math.sin(a) * r))
-	S.Nav:goTo(goal, { Speed = speed, Tolerance = 2 })
+	-- (somewhere around it he can walk to: never a point inside a wall or a wardrobe)
+	local goal = NavGrid.randomNear(reachable(center), 2.5, 8)
+	if not goal then
+		local a = math.random() * math.pi * 2
+		local r = 2 + math.random() * 6
+		goal = reachable(center + V(math.cos(a) * r, 0, math.sin(a) * r))
+	end
+	S.Nav:goTo(goal :: Vector3, { Speed = speed, Tolerance = 1.5 })
 	d.NextPoint = now() + 1 + math.random() * 1.2
 end
 
@@ -1925,7 +1939,6 @@ local function think(dt: number)
 	if state == "Offstage" or state == "Gone" or state == "Stopped" then
 		return
 	end
-	S.Nav:update()
 	animate(dt)
 	if S.Mode == "Hunt" then
 		recordTrails()
@@ -2370,7 +2383,31 @@ function Intruder.onPepperSpray(player: Player)
 	ctx.Remotes.Notify:FireClient(player, "Direct hit. RUN.", "objective")
 end
 
+-- survey the house for his routes (NavGrid), a little each frame, once the house is built
+local function surveyHouse()
+	task.spawn(function()
+		task.wait(2)
+		if NavGrid.ready() then
+			return
+		end
+		local skip = {}
+		for _, d in workspace:GetDescendants() do
+			if d:IsA("Humanoid") and d.Parent then
+				table.insert(skip, d.Parent)
+			end
+		end
+		local t0 = os.clock()
+		local ok, err = pcall(NavGrid.build, skip, 0.004)
+		if not ok then
+			warn("[Intruder] house survey failed, using PathfindingService: " .. tostring(err))
+		elseif ctx.Config.Debug then
+			print(("[Intruder] house surveyed in %.1fs"):format(os.clock() - t0), NavGrid.stats())
+		end
+	end)
+end
+
 function Intruder.start()
+	surveyHouse()
 	ctx.Noise.listen(function(ev)
 		if not S.InHouse or not S.Root or S.Mode ~= "Hunt" then
 			return
@@ -2405,6 +2442,13 @@ function Intruder.start()
 
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)
+		-- (his feet every frame: he turns corners the moment he reaches them)
+		if S.Nav and S.InHouse and not S.AdminFrozen and now() >= (S.HoldUntil or 0) and S.State ~= "Offstage" then
+			local ok, err = pcall(S.Nav.update, S.Nav)
+			if not ok then
+				warn("[Intruder] nav: " .. tostring(err))
+			end
+		end
 		acc += dt
 		if acc < tune().ThinkRate then
 			return

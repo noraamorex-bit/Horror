@@ -74,7 +74,7 @@ local function wrapAll(...)
 end
 
 local EXTRA = {}
-function EXTRA.PivotTo(self, cf) end
+function EXTRA.PivotTo(self, cf) if M.onPivotTo then M.onPivotTo(self, cf) end end
 function EXTRA.GetPivot(self) return roblox.CFrame.new() end
 function EXTRA.SetNetworkOwner() end
 function EXTRA.GetPropertyChangedSignal() return signal() end
@@ -88,12 +88,16 @@ function EXTRA.WaitForChild(self, name) return self:FindFirstChild(name) end
 function EXTRA.Destroy() end
 function EXTRA.SetStateEnabled() end
 function EXTRA.SetTeleportData() end
-function EXTRA.MoveTo() end
+function EXTRA.MoveTo(self, pos) if M.onMoveTo then M.onMoveTo(self, pos) end end
 function EXTRA.LoadAnimation() return { Play = function() end, Stop = function() end, AdjustSpeed = function() end, Looped = true } end
 
 local meta = {}
 meta.__index = function(p, k)
 	local real = realOf[p]
+	if k == "AssemblyLinearVelocity" and M.velocityOf then
+		local v = M.velocityOf(p)
+		if v then return v end
+	end
 	local ok, v = pcall(function() return real[k] end)
 	if ok then
 		if type(v) == "function" then
@@ -243,7 +247,8 @@ local ws = setmetatable({ Terrain = terrain }, { __index = function(_, k)
 	if k == "GetAttribute" then return function(_, a) return root:GetAttribute(a) end end
 	if k == "GetServerTimeNow" then return function() return os.clock() end end
 	if k == "CurrentCamera" then return M.camera end
-	if k == "Raycast" then return function() return nil end end
+	if k == "Raycast" then return function(_, o, d, params) if M.raycast then return M.raycast(o, d, params) end return nil end end
+	if k == "GetPartBoundsInBox" then return function(_, cf, size, params) if M.boundsInBox then return M.boundsInBox(cf, size, params) end return {} end end
 	if SIGNALS[k] then return signal() end
 	return root[k]
 end })
