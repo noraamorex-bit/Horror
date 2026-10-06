@@ -268,6 +268,15 @@ If Curtis grabs you, the screen fades and you wake zip-tied in the boiler room. 
 - **One second chance only.** Getting caught a second time is fatal: a jumpscare, then you're out of the night and **spectate** your friends (tap to switch; with nobody left, the camera watches the house from the street). Your fate on the recap reads *Didn't make it*.
 
 ### The intruder AI (`src/server/Intruder`)
+**The Figure brain** (`Config.Intruder.Brain = "Figure"`, the default; modelled on the Figure in DOORS). He hunts by **sound**, not by a sixth sense:
+- **Patrol**: room to room between nav nodes (weighted to the floors players are on), stopping to listen; now and then he stops at a hiding spot and listens.
+- **Investigate**: a quiet noise (a door, a lock, the microwave, a tied-up friend struggling, at most once a minute) makes him growl and walk over, then pace around where it came from before going back to his patrol.
+- **Charge**: a loud one (anyone walking within 16 studs or running within 38, glass, a slam, a phone call, someone being cut free) makes him roar and run at it (16.5, 18 on Hard), re-aiming at every new footstep; then he thrashes about where it was. Anyone he runs into, he grabs. Louder (its reach minus its distance) beats quieter. **Crouching is silent** (4 studs).
+- **Inspect + heartbeat minigame**: hide near him (or let him walk right past you without holding your breath) and he stops at your hiding spot, swaying, listening, for 6 to 9 s, ignoring everything else. Half-hearts fly in from the left and right; press that side as each reaches the heart (Q/E, arrows, LB/RB, or the big LEFT/RIGHT buttons on touch). Three misses (two on Hard, beats faster) and he rips the door open. Step out while he's there and he has you. The server deals the beats and counts misses; unanswered beats are misses.
+- **Sight** is short (32 studs in a lit room, 10 in the dark, 45 with your flashlight on): close up he sees you and chases as before; he saw you get in a hiding spot = found.
+- His footsteps shake your screen, harder the closer he is. The first hunt starts with him charging the nearest player (he heard the whole house).
+- `Brain = "Classic"` keeps the older brain (he always feels roughly where you are, a few seconds late).
+
 Newest behaviour: he **investigates noises** when nobody is out in the open (a door, the microwave, someone running, a friend being cut free): goes there, stands and listens, may tear open a nearby hiding spot; a loud noise elsewhere pulls him off a search (players can lure him). His rest is the players' window: footsteps don't end it, but a door slammed or the microwave right next to him does. He **hears breathing**: walk past a hiding spot and, unless its occupant is holding their breath, he may hear them (more likely the more scared they are); they get a "He's right outside. Hold your breath." warning first. Holding your breath runs out after 8 s, with a gasp he can hear. He **prefers the one on their own** and the one waving a flashlight.
 
 A state machine with perception:

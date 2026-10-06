@@ -567,11 +567,16 @@ function Director.startAct(name: string, cause: Player?)
 			end
 			task.wait(4)
 			ctx.Intruder.setMode("Lurk")
-			-- first night ever: how to survive, once
+			-- how to survive him: once (and once more whenever the tips change)
+			local version = ctx.Story.SurvivalTipsVersion or 1
 			for _, p in ctx.Util.sessionPlayers() do
-				if (tonumber(p:GetAttribute("StatNights")) or 0) == 0 and not p:GetAttribute("SawSurvivalTips") then
+				local seen = tonumber(p:GetAttribute("StatTips")) or 0
+				if seen < version and not p:GetAttribute("SawSurvivalTips") then
 					p:SetAttribute("SawSurvivalTips", true)
 					ctx.Remotes.Notice:FireClient(p, ctx.Story.SurvivalTips)
+					if ctx.Stats and ctx.Stats.markTips then
+						ctx.Stats.markTips(p, version)
+					end
 				end
 			end
 			task.wait(6)

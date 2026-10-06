@@ -49,6 +49,10 @@ local function currentSet(): { string }
 	if ctx.Cutscene and ctx.Cutscene.isPlaying() then
 		return {}
 	end
+	-- the heartbeat minigame owns the screen (its own LEFT / RIGHT buttons)
+	if ctx.HeartbeatUI and ctx.HeartbeatUI.isActive() then
+		return {}
+	end
 	if player:GetAttribute("Dead") then
 		return {}
 	end

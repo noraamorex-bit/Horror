@@ -768,9 +768,10 @@ Story.Endings = {
 }
 
 -- shown once, the first night someone plays, when he starts moving around the house
+Story.SurvivalTipsVersion = 2 -- (bump when the tips change: everyone sees them once more)
 Story.SurvivalTips = {
 	Title = "HE'S IN THE HOUSE",
-	Body = "• He always knows roughly where you are. When you hear him running, HIDE: closets, wardrobes, under beds, the shower.\n• Don't let him see you get in. Run, break his line of sight, then hide.\n• When he opens the doors around you, hold your BREATH.\n• Once he sees you, you can't outrun him for long.\n• When it goes quiet, he's resting. That's when you move: fix the phone line, find a signal, reach the neighbor, or take the car.",
+	Body = "• He hunts by SOUND. Walk near him and he'll hear you; run and he'll hear you from across the house. CROUCH and he can't.\n• A quiet noise (a door, a lock) makes him growl and come to look. A loud one makes him ROAR and charge. Anything he runs into, he grabs.\n• Feel the floor shake? He's close. Stop, crouch, or hide: closets, wardrobes, under beds, the shower.\n• If he stops outside your hiding spot to listen, keep your heartbeat steady: press the side each half-heart comes from. Don't come out while he's there.\n• His eyes are bad in the dark. Your flashlight isn't.",
 	Button = "GOT IT",
 }
 
@@ -779,7 +780,7 @@ Story.Hunt = {
 	First = {
 		"Footsteps. Running. He knows where we are.",
 	},
-	FirstNotice = "He's hunting you. Hide before he sees you.",
+	FirstNotice = "He's hunting. He follows sound: crouch, and never run near him.",
 	Wave = {
 		"A door slammed. He's moving again.",
 		"He's coming. Find somewhere to hide. Now.",

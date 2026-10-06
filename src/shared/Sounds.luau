@@ -97,6 +97,11 @@ Sounds.Library = {
 	Breathing = { Id = "rbxassetid://9116457539", Volume = 0.25, Looped = true, Range = 12 },
 	-- APM "HEARTBEAT 01 96BPM": looped, sped up and louder as your nerve goes
 	Heartbeat = { Id = "rbxassetid://9043365727", Volume = 0.6, Looped = true },
+	-- him, hunting by sound (ProSoundEffects creature vocals, pitched down)
+	Growl = { Id = "rbxassetid://9125476001", Volume = 0.9, Pitch = 0.62, Range = 60, Caption = "[A low growl]" },
+	Roar = { Id = "rbxassetid://9113980319", Volume = 1, Pitch = 0.75, Range = 140, Caption = "[A ROAR, and running]" },
+	-- the heartbeat minigame: a beat you hit, and the one he hears
+	HeartHit = { Id = "rbxassetid://9120316945", Volume = 0.8, Pitch = 0.7 },
 	Cough = { Id = "rbxassetid://9113948412", Fallback = ENGINE_THUD, Volume = 1, Range = 60, Caption = "[A man coughing and choking]" },
 	Spray = { Id = "rbxassetid://9113044265", Fallback = ENGINE_SPLASH, Volume = 0.8, Range = 30, Caption = "[Pssshhht]" },
 	ZipTie = { Id = "rbxassetid://9118047781", Fallback = ENGINE_THUD, Volume = 0.6, Range = 25, Caption = "[Zip ties ratchet]" },

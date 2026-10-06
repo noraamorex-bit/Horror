@@ -240,6 +240,45 @@ function Effects.start()
 		end)
 	end)
 
+	-- his footsteps through the floor: each step jolts the screen, harder the closer he is (and
+	-- harder still when he's running). You can feel where he is before you see him.
+	local curtis: Model? = nil
+	local stepClock = 0
+	local findClock = 0
+	RunService.Heartbeat:Connect(function(dt)
+		if not player:GetAttribute("InGame") then
+			return
+		end
+		findClock -= dt
+		if (not curtis or not curtis.Parent) and findClock <= 0 then
+			findClock = 2
+			curtis = workspace:FindFirstChild("Curtis", true) :: Model?
+		end
+		local root = curtis and curtis:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local cam = workspace.CurrentCamera
+		if not root or not cam then
+			return
+		end
+		local v = root.AssemblyLinearVelocity
+		local speed = Vector3.new(v.X, 0, v.Z).Magnitude
+		if speed < 2 then
+			stepClock = 0
+			return
+		end
+		local running = speed > 12
+		stepClock += dt
+		local interval = running and math.max(3.75 / speed, 0.18) or math.max(2.6 / speed, 0.3)
+		if stepClock < interval then
+			return
+		end
+		stepClock = 0
+		local d = (root.Position - cam.CFrame.Position).Magnitude
+		local k = math.clamp(1 - d / 45, 0, 1)
+		if k > 0 then
+			Effects.shake((running and 0.5 or 0.28) * k * k, 0.14)
+		end
+	end)
+
 	RunService:BindToRenderStep("HomeAloneEffects", Enum.RenderPriority.Camera.Value + 1, function(dt)
 		local nerve = player:GetAttribute("Nerve") or 100
 		local fear = 1 - nerve / 100

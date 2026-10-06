@@ -29,6 +29,7 @@ local NAMES = {
 	"Result", -- (payload) you're out of the night early (escaped / died) while others still play
 	"Revived", -- () you're back in the night (the revive product)
 	"Cutscene", -- ({Name, Shots, Subtitle}) a short cinematic in the middle of the night
+	"Heartbeat", -- ({Id, Start, Beats, Travel, Window, Misses} | {Id, Result}) the heartbeat minigame
 	"Vote", -- (state | nil) the difficulty vote before the night: {Ends, Votes, Mine}
 
 	-- client -> server
@@ -54,6 +55,7 @@ local NAMES = {
 	"SaveSettings", -- (music, sfx, shake) the settings panel
 	"UseRevive", -- () spend a saved revive (bought when it couldn't be used)
 	"Admin", -- (cmd, arg) owner test panel (AdminService checks the UserId)
+	"HeartbeatInput", -- (sessionId, beatIndex, hit) one beat of the heartbeat minigame
 	"AdminReply", -- (text) result of an admin command
 }
 

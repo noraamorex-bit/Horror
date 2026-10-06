@@ -101,16 +101,34 @@ Config.Flashlight = {
 }
 
 Config.Intruder = {
+	--[[
+		Brain = "Figure": the hunt works like the Figure in DOORS. He hunts by SOUND. He walks a
+		patrol between rooms; a quiet noise (a door, a lock, the microwave) makes him growl and come
+		to look; a loud one (anyone walking or running near him, glass, a slam) makes him roar and
+		CHARGE at it, re-aiming at every new footstep, then thrash around where it came from,
+		grabbing whatever he runs into. Crouch and you're silent. Hide near him and he stops at your
+		hiding spot to listen: keep your heartbeat steady (the heartbeat minigame) or he rips the
+		door open. His sight is short (a dark house, a mask): close up, or your flashlight.
+		"Classic" is the older brain (he always feels roughly where you are).
+	]]
+	Brain = "Figure",
+	ChargeSpeed = 16.5, -- running at a sound he's sure of (you sprint at 17, for a while)
+	InvestigateSpeed = 11,
+	ChargeSearchTime = 5, -- thrashing about where the noise was, after a charge
+	InvestigateSearchTime = 6,
+	InspectTime = { 6, 9 }, -- standing at your hiding spot, listening
+	InspectNearChance = 0.35, -- walking right past an occupied spot (not holding breath): he stops
 	WalkSpeed = 9, -- lying low between hunts
 	SneakSpeed = 6.5,
 	ProwlSpeed = 15, -- running to where he feels you are (you sprint at 17, briefly)
 	ChaseSpeed = 18, -- he can see you: faster than you, and he doesn't tire
 	LungeSpeed = 22, -- the last few steps
 	GrabRange = 5,
-	FOV = 100, -- degrees
-	SightLit = 80,
-	SightDark = 22,
-	SightFlashlight = 110, -- a flashlight in the dark gives you away from across the house
+	FOV = 90, -- degrees
+	-- (short sight: he hunts by sound. Lit rooms and your beam still give you away)
+	SightLit = 32,
+	SightDark = 10,
+	SightFlashlight = 45, -- a flashlight in the dark gives you away
 	CrouchSightMultiplier = 0.6,
 	PeripheralRange = 7, -- sensed regardless of facing
 	HearWalk = 11, -- walking (not crouched) this close: he notices you behind him
@@ -170,11 +188,26 @@ Config.Difficulty = {
 			RetreatAfterCapture = 8,
 			PatrolCheckChance = 0.4,
 			SoloChaseSlowdown = 0.5,
+			ChargeSpeed = 18,
+			InvestigateSpeed = 12.5,
+			InspectNearChance = 0.5,
 		},
+		Heartbeat = { Interval = 0.8, Misses = 2 },
 		BatteryMultiplier = 0.7, -- flashlights die faster
 		PoliceMultiplier = 1.25, -- help takes longer to arrive
 		LastChance = 30,
 	},
+}
+
+-- The heartbeat minigame (DOORS-style): he's listening at your hiding spot. Half-hearts fly in
+-- from the left and the right; press that side as each one reaches the heart. Miss too many and
+-- he hears you. (Hard: Config.Difficulty.Hard.Heartbeat overrides.)
+Config.Heartbeat = {
+	Interval = 1.0, -- seconds between beats
+	Travel = 0.9, -- how long a half-heart takes to fly in
+	Window = 0.22, -- seconds either side of arrival that count
+	Lead = 1.2, -- the heart shows this long before the first beat
+	Misses = 3, -- this many misses and he hears you
 }
 
 Config.Hiding = {

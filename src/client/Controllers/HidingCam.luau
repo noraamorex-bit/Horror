@@ -47,6 +47,11 @@ function HidingCam.start()
 		end
 	end)
 	ctx.Input.on("ExitHide", function(began)
+		-- (not while he's listening at the door: E is a heartbeat key then, and stepping out
+		-- right in front of him would be the end)
+		if ctx.HeartbeatUI and ctx.HeartbeatUI.isActive() then
+			return
+		end
 		if began and player:GetAttribute("Hiding") then
 			ctx.Remotes.HoldBreath:FireServer(false)
 			ctx.Remotes.Hide:FireServer("Exit")

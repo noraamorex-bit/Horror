@@ -2,6 +2,7 @@ local H = require("./env")
 local ok, err = pcall(function()
 	local ctx: any = {}
 	ctx.Config = H.load("RS/Shared/Config")
+	ctx.Config.Intruder.Brain = "Classic" -- (this test covers the classic brain; figure_test covers the Figure one)
 	ctx.Rooms = H.load("RS/Shared/Rooms")
 	ctx.Sounds = H.load("RS/Shared/Sounds")
 	ctx.Story = H.load("RS/Shared/Story")

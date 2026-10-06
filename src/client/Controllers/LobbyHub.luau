@@ -133,8 +133,8 @@ function LobbyHub.start()
 			Title = "HOW TO PLAY",
 			Body = "It's a normal Friday night at the Whitaker house: pizza, chores, the storm. Then the power goes out, and you find out someone has been living in your attic.\n\n"
 				.. "• Do your tasks (the ! markers and the panel at the top right show what's next).\n"
-				.. "• When he's hunting, HIDE: closets, wardrobes, under beds. Don't let him see you get in.\n"
-				.. "• When he's right outside, HOLD YOUR BREATH.\n"
+				.. "• When he's hunting, he hunts by SOUND: crouch and he can't hear you, run and he will. Or HIDE: closets, wardrobes, under beds.\n"
+				.. "• If he stops at your hiding spot to listen, keep your heartbeat steady (press the side each half-heart flies in from).\n"
 				.. "• Get help: fix the phone line and call 911, reach the neighbor, or take the car.\n"
 				.. "• Caught once, you're tied up in the boiler room: struggle free, or a friend can cut you loose. Caught twice and you're out.\n\n"
 				.. "8 endings to find. One of them is secret.",

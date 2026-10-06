@@ -98,7 +98,7 @@ local ok, err = pcall(function()
 		local st = I.getState()
 		if st ~= last then
 			table.insert(states, st)
-			if st == "CheckSpot" then checks += 1 end
+			if st == "CheckSpot" or st == "Inspect" then checks += 1 end
 			last = st
 		end
 		local fl = ctx.Rooms.floorOf(I.position())

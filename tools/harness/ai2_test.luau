@@ -13,6 +13,7 @@ function H.flush(sec) for _ = 1, math.ceil(sec / 0.1) do T += 0.1; H.runDue() en
 local function setup()
 	local ctx: any = {}
 	ctx.Config = H.load("RS/Shared/Config")
+	ctx.Config.Intruder.Brain = "Classic" -- (this test covers the classic brain; figure_test covers the Figure one)
 	ctx.Rooms = H.load("RS/Shared/Rooms")
 	ctx.Sounds = H.load("RS/Shared/Sounds")
 	ctx.Story = H.load("RS/Shared/Story")

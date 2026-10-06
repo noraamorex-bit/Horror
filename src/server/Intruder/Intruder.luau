@@ -31,6 +31,10 @@ local ANIMS = {
 
 local S: any = {}
 local tune: () -> any
+local charge: (Vector3, Player?) -> ()
+local inspect: (any) -> ()
+local grabAnyone: () -> boolean
+local patrolRoute: () -> { Vector3 }
 local unstick: (string) -> ()
 local STATES: { [string]: (number, { Player }) -> () } = {}
 
@@ -77,6 +81,11 @@ function Intruder.init(c)
 	ctx = c
 	Perception.init(c)
 	S = fresh()
+end
+
+-- the DOORS-Figure brain (hunts by sound) or the classic one (always feels where you are)
+local function figure(): boolean
+	return ctx.Config.Intruder.Brain == "Figure"
 end
 
 -- Config.Intruder, with the night's difficulty laid over it (Config.Difficulty.<name>.Intruder)
@@ -212,6 +221,10 @@ local function ensureModel()
 end
 
 local function setState(name: string, data: any?)
+	-- (walking away from a hiding spot he was listening at: the heartbeat minigame is over)
+	if S.State == "Inspect" and S.Data and S.Data.Occupant and ctx.Heartbeat then
+		ctx.Heartbeat.stop(S.Data.Occupant)
+	end
 	S.State = name
 	S.Data = data or {}
 	S.StateStart = os.clock()
@@ -437,6 +450,10 @@ local function sensed(p: Player): Vector3?
 	if not valid(p) or p:GetAttribute("Hiding") then
 		return nil
 	end
+	-- (the Figure brain has no sixth sense: only what he hears, and what he sees close up)
+	if figure() then
+		return nil
+	end
 	local r = rootOf(p)
 	if r and table.find(S.Visible, p) then
 		return r.Position
@@ -552,7 +569,11 @@ end
 
 -- a new hunt: a door slams somewhere, and he starts running
 local function startHunt()
-	setState("Prowl", {})
+	if figure() then
+		setState("Patrol", { Route = patrolRoute(), Index = 0 })
+	else
+		setState("Prowl", {})
+	end
 	S.HuntTarget = nil
 	if S.LastHuntAt and now() - S.LastHuntAt < 30 then
 		-- (he never really stopped: no door slam, no new wave)
@@ -571,6 +592,20 @@ local function startHunt()
 		end
 		-- (one clear warning, not a thought and a note saying the same thing at once)
 		ctx.Remotes.Notify:FireAllClients(H.FirstNotice, "danger")
+		-- Figure brain: the first time, he heard the whole house. He goes for the nearest of you
+		if figure() then
+			local best, bestD = nil, math.huge
+			for _, p in ctx.Util.activePlayers() do
+				local r = valid(p) and not p:GetAttribute("Hiding") and rootOf(p)
+				if r and (r.Position - pos()).Magnitude < bestD then
+					best, bestD = p, (r.Position - pos()).Magnitude
+				end
+			end
+			local r = best and rootOf(best)
+			if best and r then
+				charge(r.Position, best)
+			end
+		end
 	elseif math.random() < 0.5 then
 		ctx.Director.think(nil, ctx.Util.choice(H.Wave))
 	end
@@ -621,7 +656,7 @@ end
 
 -- a few rooms to sweep: where players were last felt, where the last noises came from, and
 -- the rest of their floor (past the boiler room now and then if someone's tied up down there)
-local function patrolRoute(): { Vector3 }
+patrolRoute = function(): { Vector3 }
 	local I = tune()
 	local clues = {}
 	for p, at in S.LastFelt do
@@ -1037,7 +1072,11 @@ STATES.Chase = function(_, visible)
 	end
 	if t:GetAttribute("Hiding") then
 		-- hid out of his sight (in sight, onPlayerHid already sent him to that spot)
-		setState("Search", { Pos = d.LastPos or pos(), Target = t, Checked = {} })
+		if figure() then
+			charge(d.LastPos or pos(), t)
+		else
+			setState("Search", { Pos = d.LastPos or pos(), Target = t, Checked = {} })
+		end
 		return
 	end
 	local r = rootOf(t) :: BasePart
@@ -1048,9 +1087,13 @@ STATES.Chase = function(_, visible)
 		local v = r.AssemblyLinearVelocity
 		d.LastVel = V(v.X, 0, v.Z)
 	elseif now() - d.LastSeen > I.ChaseLoseSightTime then
-		-- lost sight: back on the trail
+		-- lost sight: back on the trail (Figure brain: he runs to where you were and listens)
 		S.HuntTarget = t
-		setState("Prowl", {})
+		if figure() then
+			charge(d.LastPos or r.Position, t)
+		else
+			setState("Prowl", {})
+		end
 		return
 	end
 	-- out of sight for a moment: he runs to where they were heading
@@ -1180,7 +1223,12 @@ STATES.Patrol = function(_, visible)
 	end
 	local d = S.Data
 	local I = tune()
-	if huntTarget() then
+	if figure() then
+		-- (he walks into anyone standing in his way)
+		if grabAnyone() then
+			return
+		end
+	elseif huntTarget() then
 		startHunt()
 		return
 	end
@@ -1204,12 +1252,18 @@ STATES.Patrol = function(_, visible)
 			if room and room.Name == "Boiler" then
 				S.LastCaptiveCheck = now()
 			end
-			if math.random() < I.PatrolCheckChance then
+			if math.random() < I.PatrolCheckChance * (figure() and 0.6 or 1) then
 				local spots = ctx.Hiding.spotsNear(pos(), 14)
 				if #spots > 0 then
 					d.Moving = false
 					d.PauseUntil = nil
-					checkSpot(spots[math.random(1, #spots)], "Patrol", d)
+					local pick = spots[math.random(1, #spots)]
+					if figure() then
+						-- stops at one and listens (for nothing, most of the time)
+						inspect(pick)
+					else
+						checkSpot(pick, "Patrol", d)
+					end
 				end
 			end
 			return
@@ -1294,16 +1348,147 @@ STATES.CheckSpot = function(_, visible)
 end
 
 --[[
-	Investigate: he heard something (a door, footsteps, the microwave, a friend being cut free)
-	and nobody's out in the open to blame. He goes to look, stands and listens, and may tear
-	open a hiding spot near it. Noise can also pull him away from somewhere: a way to lure him.
+	The DOORS-Figure brain (Config.Intruder.Brain = "Figure"): he hunts by SOUND.
+		Patrol       room to room along a route, stopping to listen
+		Investigate  a quiet noise (a door, a lock, the microwave): a growl, he walks over, then
+		             paces round where it came from, and goes back to his patrol
+		Charge       a loud one (anyone walking near him, running, glass, a slam): a roar and a
+		             run straight at it, re-aimed at every new footstep he hears; then he thrashes
+		             about where it was. Anyone he runs into, he grabs
+		Inspect      someone hid near him (or he walks right past them breathing): he stops at that
+		             hiding spot, sways, listens. The one inside plays the heartbeat minigame
+		             (HeartbeatService). Fail it, or come out while he's there, and he has you.
+	Louder (for him: the noise's reach minus its distance) beats quieter; he ignores everything
+	while he's listening at a hiding spot.
 ]]
+
+-- anyone in the open he walks right into
+grabAnyone = function(): boolean
+	local here = pos()
+	local I = tune()
+	for _, p in ctx.Util.activePlayers() do
+		if valid(p) and not p:GetAttribute("Hiding") then
+			local r = rootOf(p)
+			if r and (r.Position - here).Magnitude <= I.GrabRange and math.abs(r.Position.Y - here.Y) < 5 then
+				if tryGrab(p) then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+-- pacing about where the noise came from: short dashes to points around it, turning, listening
+local function erratic(d, center: Vector3, speed: number)
+	if now() < (d.NextPoint or 0) and not S.Nav.Arrived then
+		return
+	end
+	local a = math.random() * math.pi * 2
+	local r = 2 + math.random() * 6
+	local goal = reachable(center + V(math.cos(a) * r, 0, math.sin(a) * r))
+	S.Nav:goTo(goal, { Speed = speed, Tolerance = 2 })
+	d.NextPoint = now() + 1 + math.random() * 1.2
+end
+
+local function growl()
+	if now() - (S.LastGrowl or -1e9) > 4 and S.Head then
+		S.LastGrowl = now()
+		ctx.Audio.playAt("Growl", S.Head.Position, { Caption = true })
+	end
+end
+
+charge = function(at: Vector3, who: Player?)
+	if S.State == "Charge" then
+		-- another footstep: re-aim, and if he'd started thrashing about, he runs again
+		S.Data.Pos = at
+		S.Data.Source = who or S.Data.Source
+		S.Data.Searching = false
+		return
+	end
+	setState("Charge", { Pos = at, Source = who })
+	S.HuntTarget = who
+	if who then
+		S.LastFelt[who] = at
+	end
+	if now() - (S.LastRoar or -1e9) > 6 and S.Head then
+		S.LastRoar = now()
+		ctx.Audio.playAt("Roar", S.Head.Position, { Caption = true })
+		if who and valid(who) then
+			ctx.Remotes.Shake:FireClient(who, 0.5, 0.5)
+			ctx.PlayerState.addNerve(who, -8)
+		end
+	end
+	ctx.Director.addTension(12)
+end
+
+STATES.Charge = function(_, visible)
+	local d = S.Data
+	local I = tune()
+	if engage(visible) then
+		return
+	end
+	if grabAnyone() then
+		return
+	end
+	local speed = I.ChargeSpeed + (S.Frenzy and 1 or 0)
+	if not d.Searching then
+		follow(d.Pos, speed)
+		local off = d.Pos - pos()
+		local arrived = V(off.X, 0, off.Z).Magnitude < 3.5 and math.abs(off.Y) < 6
+		if arrived or (S.Nav.Arrived and off.Magnitude < 9) or S.Nav:isStuck() or now() - S.StateStart > 25 then
+			-- whoever made it is hiding right here: he heard them get in
+			local src = d.Source
+			local spot = src and ctx.Hiding.spotOf(src)
+			if spot and (spot.Position - pos()).Magnitude < 12 then
+				inspect(spot)
+				return
+			end
+			d.Searching = true
+			d.SearchUntil = now() + I.ChargeSearchTime
+			d.NextPoint = 0
+			growl()
+		end
+		return
+	end
+	if now() >= d.SearchUntil then
+		patrol()
+		return
+	end
+	erratic(d, d.Pos, speed * 0.7)
+end
+
 STATES.Investigate = function(_, visible)
 	if engage(visible) then
 		return
 	end
 	local d = S.Data
 	local I = tune()
+	if figure() then
+		if grabAnyone() then
+			return
+		end
+		if not d.Started then
+			d.Started = true
+			S.Nav:goTo(reachable(d.Pos), { Speed = I.InvestigateSpeed, Tolerance = 3 })
+		end
+		if not d.Searching then
+			if S.Nav.Arrived or S.Nav:isStuck() or now() - S.StateStart > 18 then
+				d.Searching = true
+				d.SearchUntil = now() + I.InvestigateSearchTime
+				d.NextPoint = now() + 1.2 -- (a moment's stillness first: listening)
+				S.Nav:stop()
+			end
+			return
+		end
+		if now() >= d.SearchUntil then
+			patrol()
+			return
+		end
+		erratic(d, d.Pos, I.PatrolSpeed)
+		return
+	end
+	-- (classic brain)
 	if huntTarget() then
 		startHunt()
 		return
@@ -1324,7 +1509,6 @@ STATES.Investigate = function(_, visible)
 			return
 		end
 		if now() < d.LookUntil then
-			-- turns his head, slowly, one way then the other
 			local k = (now() - d.LookFrom) / (d.LookUntil - d.LookFrom)
 			local yaw = math.sin(k * math.pi * 2) * 1.2
 			faceToward(pos() + (CFrame.Angles(0, yaw, 0) * (d.Pos - pos() + V(0.01, 0, 0.01))).Unit * 5)
@@ -1349,6 +1533,97 @@ local function investigate(at: Vector3, source: Player?)
 	end
 	setState("Investigate", { Pos = at, Source = source })
 	S.HuntTarget = nil
+	if figure() then
+		growl()
+	end
+end
+
+-- stop at a hiding spot and listen (the heartbeat minigame for whoever's inside)
+inspect = function(spot)
+	if not spot or S.State == "Inspect" or now() < (S.SpotCooldown[spot] or 0) then
+		return
+	end
+	S.SpotCooldown[spot] = now() + 30
+	setState("Inspect", { Spot = spot, Phase = "Approach" })
+	S.HuntTarget = nil
+	S.Nav:goTo(spot.Exit.Position, { Speed = tune().InvestigateSpeed, Tolerance = 2.5 })
+end
+
+local function ripOut(who: Player, spot)
+	ctx.Audio.playAt("DoorYank", spot.Position, { CaptionText = "[The door is ripped open]", CaptionRange = 50 })
+	ctx.Hiding.exit(who, true)
+	if ctx.Capture.capture(who) then
+		S.Memory[who] = nil
+		local boiler = ctx.Rooms.ByName.Boiler
+		retreat(nil, tune().RetreatAfterCapture, boiler and V(boiler.Center.X, -10, boiler.Center.Z) or nil)
+	else
+		patrol()
+	end
+end
+
+STATES.Inspect = function(_, visible)
+	local d = S.Data
+	local spot = d.Spot
+	local I = tune()
+	if d.Phase == "Approach" then
+		-- (someone right in front of him on the way: that comes first)
+		for _, p in visible do
+			local r = rootOf(p)
+			if r and (r.Position - pos()).Magnitude < 9 and engage({ p }) then
+				return
+			end
+		end
+		if grabAnyone() then
+			return
+		end
+		if S.Nav.Arrived or S.Nav:isStuck() or now() - S.StateStart > 12 then
+			if (pos() - spot.Exit.Position).Magnitude > 7 then
+				patrol() -- (couldn't get there)
+				return
+			end
+			S.Nav:stop()
+			faceToward(spot.Position)
+			local dur = I.InspectTime[1] + math.random() * (I.InspectTime[2] - I.InspectTime[1])
+			d.Phase = "Listen"
+			d.Until = now() + dur
+			ctx.Audio.playAt("ManWhisper", spot.Position, { CaptionText = "[Something right outside. Listening.]", CaptionRange = 18 })
+			local who = ctx.Hiding.occupant(spot)
+			d.Occupant = who
+			if who and ctx.Heartbeat then
+				ctx.Heartbeat.begin(who, dur, function()
+					if S.State == "Inspect" and S.Data == d then
+						d.Heard = true
+					end
+				end)
+			end
+		end
+		return
+	end
+	-- listening at the door (he ignores everything else meanwhile)
+	local who = d.Occupant
+	if who then
+		if ctx.Hiding.spotOf(who) ~= spot then
+			-- they came out while he's standing right here
+			d.Occupant = nil
+			ctx.Heartbeat.stop(who)
+			local r = rootOf(who)
+			if valid(who) and r and (r.Position - pos()).Magnitude < 12 and tryGrab(who) then
+				return
+			end
+			patrol()
+			return
+		end
+		if d.Heard then
+			d.Occupant = nil
+			ripOut(who, spot)
+			return
+		end
+	end
+	if now() >= d.Until then
+		-- nothing. He turns away and goes somewhere else
+		S.SpotCooldown[spot] = now() + 40
+		patrol()
+	end
 end
 
 -- what he does about a noise he heard, depending on what he's doing
@@ -1358,7 +1633,51 @@ local function onNoise(ev)
 	end
 	local st = S.State
 	local who = ev.Source
-	-- a hiding spot giving itself away: its door closing, a gasp, breathing inside it
+	if figure() then
+		-- busy: listening at a hiding spot, carrying someone off, stunned, trapped, or he can see you
+		if st == "Inspect" or st == "Retreat" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" or st == "Chase" or st == "CheckSpot" then
+			return
+		end
+		-- someone tied up in the boiler room: their breathing doesn't carry; struggling does, but it
+		-- only brings him down to look now and then (he isn't going to sit down there)
+		if who and who:GetAttribute("Captured") then
+			if ev.Kind ~= "Struggle" or now() - (S.LastCaptiveNoise or -1e9) < 60 then
+				return
+			end
+			S.LastCaptiveNoise = now()
+			if st ~= "Charge" then
+				investigate(ev.Position, nil)
+			end
+			return
+		end
+		-- a hiding spot giving itself away (its door, a gasp, breathing): he goes and listens there
+		local spot = who and ctx.Hiding.spotOf(who)
+		if spot and (ev.Kind == "Hide" or ev.Kind == "Gasp" or ev.Kind == "Breathing") then
+			S.HeardHide[spot] = now()
+			inspect(spot)
+			return
+		end
+		-- how loud it is where he stands; something quieter than what he's after doesn't distract him
+		local reach = ev.Radius or 0
+		if ctx.Rooms.floorOf(ev.Position) ~= ctx.Rooms.floorOf(pos()) then
+			reach *= ctx.Config.Noise.FloorDropMultiplier
+		end
+		local loud = reach - (ev.Position - pos()).Magnitude
+		local cur = S.Heard
+		if cur and now() - cur.T < 3 and loud < cur.Loud - 3 and not (who ~= nil and who == cur.Source) then
+			return
+		end
+		S.Heard = { Loud = loud, T = now(), Source = who }
+		-- footsteps (walking or running near him) and anything big: he charges. Smaller: he looks
+		local aggressive = ev.Kind == "Footsteps" or (ev.Radius or 0) >= 30 or ev.Kind == "Struggle" or ev.Kind == "Rescue" or ev.Kind == "Voice"
+		if aggressive then
+			charge(ev.Position, who)
+		elseif st ~= "Charge" then
+			investigate(ev.Position, who)
+		end
+		return
+	end
+	-- (classic brain)
 	local spot = who and ctx.Hiding.spotOf(who)
 	if spot and (ev.Kind == "Hide" or ev.Kind == "Gasp" or ev.Kind == "Breathing") then
 		S.HeardHide[spot] = now()
@@ -1376,40 +1695,50 @@ local function onNoise(ev)
 	if st == "Patrol" then
 		investigate(ev.Position, who)
 	elseif st == "Search" and (ev.Radius or 0) >= 20 and S.Data.Pos and (ev.Position - S.Data.Pos).Magnitude > 14 then
-		-- something louder somewhere else: he leaves the cupboards for it
 		investigate(ev.Position, who)
 	elseif st == "Withdraw" and ev.Kind ~= "Footsteps" and ev.Kind ~= "Breathing" and (ev.Radius or 0) >= 14
 		and (ev.Position - pos()).Magnitude < 22 and (S.Data.Until or 0) - now() > 3 then
-		-- (his rest is the players' window: walking about doesn't end it, but a door slammed or
-		-- the microwave right next to him does. Anything really loud already started a hunt.)
 		investigate(ev.Position, who)
 	end
 end
 
 --[[
-	Breathing: walk right past someone's hiding spot and, unless they're holding their breath,
-	he may hear them (the more scared they are, the louder). They're warned the moment he's
-	right outside.
+	Walking right past someone's hiding spot: unless they're holding their breath, he may hear
+	them (the more scared they are, the likelier). They're warned the moment he's close.
+	Figure brain: he stops there and listens (heartbeat minigame). Classic: he opens it.
 ]]
 local function listenForBreath(dt: number): boolean
 	local here = pos()
+	S.PassChecked = S.PassChecked or {}
 	for _, p in ctx.Util.sessionPlayers() do
 		local spot = p:GetAttribute("Hiding") and ctx.Hiding.spotOf(p)
 		if spot and not p:GetAttribute("AdminGhost") then
 			local off = spot.Position - here
 			local dist = V(off.X, 0, off.Z).Magnitude
-			if dist < 11 and math.abs(off.Y) < 6 then
-				-- "he's right outside": once per close pass
+			local sameFloor = math.abs(off.Y) < 6
+			if dist < 11 and sameFloor then
 				if now() - (S.NearWarned[p] or -1e9) > 25 then
 					S.NearWarned[p] = now()
 					ctx.Director.think(p, "He's right outside. Hold your breath.|breath")
 					ctx.PlayerState.addNerve(p, -6)
 				end
 			end
-			if dist < 6 and math.abs(off.Y) < 6 and not p:GetAttribute("HoldingBreath") and now() >= (S.SpotCooldown[spot] or 0) then
-				local nerve = tonumber(p:GetAttribute("Nerve")) or 100
-				local perSecond = 0.1 + 0.35 * (1 - math.clamp(nerve / 100, 0, 1))
-				if math.random() < perSecond * dt then
+			if dist > 10 then
+				S.PassChecked[spot] = nil
+			end
+			if dist < 6 and sameFloor and not p:GetAttribute("HoldingBreath") and now() >= (S.SpotCooldown[spot] or 0) then
+				local nerve = math.clamp((tonumber(p:GetAttribute("Nerve")) or 100) / 100, 0, 1)
+				if figure() then
+					-- once per pass: does he hear them?
+					if not S.PassChecked[spot] then
+						S.PassChecked[spot] = true
+						if math.random() < tune().InspectNearChance * (0.6 + 0.8 * (1 - nerve)) then
+							S.HeardHide[spot] = now()
+							inspect(spot)
+							return true
+						end
+					end
+				elseif math.random() < (0.1 + 0.35 * (1 - nerve)) * dt then
 					S.SpotCooldown[spot] = now() + 25
 					S.HeardHide[spot] = now()
 					if S.State == "Search" then
@@ -1502,8 +1831,8 @@ local function gaitFor(speed: number): string
 		return "Reach"
 	elseif speed > 0.6 then
 		return "Walk"
-	elseif st == "Patrol" or st == "Investigate" then
-		-- stopped mid-sweep: head turning, listening
+	elseif st == "Patrol" or st == "Investigate" or st == "Inspect" or st == "Charge" then
+		-- stopped mid-sweep, or at your hiding spot: head turning, swaying, listening
 		return "Search"
 	elseif st == "Lurk" or st == "Withdraw" or st == "Ambush" then
 		return "Stare"
@@ -1553,7 +1882,7 @@ end
 -- basement with nobody down there: he slips through the walls to the players' floor
 unstick = function(state: string)
 	local I = tune()
-	local moving = state == "Prowl" or state == "Patrol" or state == "Search" or state == "Retreat" or state == "Investigate"
+	local moving = state == "Prowl" or state == "Patrol" or state == "Search" or state == "Retreat" or state == "Investigate" or state == "Charge"
 	local pr = S.Progress
 	if not pr or (pos() - pr.Pos).Magnitude > 6 then
 		S.Progress = { Pos = pos(), T = now() }
@@ -1642,7 +1971,7 @@ local function think(dt: number)
 		end
 	end
 	-- passing right by someone's hiding spot: does he hear them breathing?
-	if S.Mode == "Hunt" and (state == "Patrol" or state == "Search" or state == "Investigate" or state == "Prowl") then
+	if S.Mode == "Hunt" and (state == "Patrol" or state == "Search" or state == "Investigate" or state == "Prowl" or state == "Charge") then
 		if listenForBreath(dt) then
 			return
 		end
@@ -1715,7 +2044,8 @@ function Intruder.setMode(mode: string, cause: Player?)
 				return
 			end
 			-- already hunting: carry on
-			if S.State == "Prowl" or S.State == "Chase" or S.State == "Search" or S.State == "CheckSpot" or S.State == "Withdraw" or S.State == "Ambush" or S.State == "Retreat" or S.State == "Stunned" then
+			if S.State == "Prowl" or S.State == "Chase" or S.State == "Search" or S.State == "CheckSpot" or S.State == "Withdraw" or S.State == "Ambush" or S.State == "Retreat" or S.State == "Stunned"
+				or S.State == "Patrol" or S.State == "Investigate" or S.State == "Charge" or S.State == "Inspect" then
 				return
 			end
 			startHunt()
@@ -1799,6 +2129,13 @@ end
 
 function Intruder.adminHunt(player: Player?)
 	Intruder.setMode("Hunt", player)
+	if figure() and player and valid(player) and S.InHouse then
+		local r = rootOf(player)
+		if r then
+			charge(r.Position, player)
+		end
+		return
+	end
 	if player and valid(player) then
 		S.HuntTarget = player
 		S.UnhidAt[player] = nil
@@ -1880,6 +2217,14 @@ function Intruder.onHelpCalled(caller: Player?)
 		return
 	end
 	ctx.Audio.caption("[A man screaming somewhere in the house]", pos(), 120)
+	if figure() then
+		-- the phone call / the knocking / the engine: he heard exactly where
+		local r = caller and valid(caller) and rootOf(caller)
+		if r and S.State ~= "Inspect" and S.State ~= "Retreat" and S.State ~= "Stunned" and S.State ~= "Trapped" then
+			charge(r.Position, caller)
+		end
+		return
+	end
 	if S.State == "Withdraw" or S.State == "Lurk" or S.State == "Retreat" then
 		startHunt()
 	end
@@ -1892,6 +2237,14 @@ end
 -- someone is trying the doors and windows: he hears it
 function Intruder.onExitAttempt(position: Vector3, player: Player)
 	if S.Mode ~= "Hunt" or not S.InHouse then
+		return
+	end
+	-- (rattling the doors and windows is loud: Figure brain, he charges at it)
+	if figure() then
+		local st = S.State
+		if st ~= "Inspect" and st ~= "Retreat" and st ~= "Stunned" and st ~= "Trapped" and st ~= "Chase" and st ~= "CheckSpot" then
+			charge(position, player)
+		end
 		return
 	end
 	if S.State == "Withdraw" then
@@ -1925,6 +2278,12 @@ function Intruder.onRescueAttempt(position: Vector3, rescuer: Player)
 	if (position - pos()).Magnitude > reach then
 		return
 	end
+	if figure() then
+		if st ~= "Inspect" and st ~= "Retreat" then
+			charge(position, rescuer)
+		end
+		return
+	end
 	setState("Search", { Pos = position, Target = rescuer, Checked = {} })
 	ctx.Audio.caption("[Heavy footsteps, coming this way]", position, 40)
 end
@@ -1932,6 +2291,28 @@ end
 -- he saw you get in (or heard it right next to him): he's coming to that exact spot
 function Intruder.onPlayerHid(player: Player, spot)
 	if not S.InHouse or not S.Root then
+		return
+	end
+	if figure() then
+		if S.Mode ~= "Hunt" then
+			return
+		end
+		local st = S.State
+		local busy = st == "Retreat" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" or st == "Inspect" or st == "CheckSpot"
+		if busy then
+			return
+		end
+		-- he saw you get in: it's over. Close by (he heard the door): he comes and listens
+		if table.find(S.Visible, player) then
+			S.SawHide[spot] = true
+			checkSpot(spot, "Patrol", { Route = patrolRoute(), Index = 0 })
+		else
+			local off = spot.Position - pos()
+			if V(off.X, 0, off.Z).Magnitude < 14 and math.abs(off.Y) < 6 then
+				S.HeardHide[spot] = now()
+				inspect(spot)
+			end
+		end
 		return
 	end
 	local heard = (spot.Position - pos()).Magnitude < 9
@@ -1994,7 +2375,11 @@ function Intruder.start()
 		if not S.InHouse or not S.Root or S.Mode ~= "Hunt" then
 			return
 		end
-		if ev.Kind == "Intruder" or (ev.Position - pos()).Magnitude < 8 then
+		if ev.Kind == "Intruder" then
+			return
+		end
+		-- (right next to him: only a player's own noises count; the rest is him)
+		if (ev.Position - pos()).Magnitude < 8 and not (figure() and ev.Source) then
 			return
 		end
 		if not ctx.Noise.heardAt(ev, pos()) then

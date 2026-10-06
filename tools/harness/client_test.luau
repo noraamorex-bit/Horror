@@ -35,7 +35,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -98,6 +98,15 @@ local ok, err = pcall(function()
 	assert(ctx.EndingUI.reviveLabel():find("25"), "revive priced on the card")
 	R.Revived.OnClientEvent:Fire()
 	print("revive card ok")
+	-- the heartbeat minigame: opens, takes presses, closes on the result
+	player:SetAttribute("Hiding", "Closet")
+	R.Heartbeat.OnClientEvent:Fire({ Id = 7, Start = os.clock(), Beats = { { T = 1.2, Side = "L" }, { T = 2.2, Side = "R" } }, Travel = 0.9, Window = 0.22, Misses = 3 })
+	assert(ctx.HeartbeatUI.isActive(), "heartbeat game open")
+	S.RunService.RenderStepped:Fire(0.1)
+	R.Heartbeat.OnClientEvent:Fire({ Id = 7, Result = "Pass" })
+	assert(not ctx.HeartbeatUI.isActive(), "heartbeat game closed")
+	player:SetAttribute("Hiding", nil)
+	print("heartbeat ui ok")
 	-- a prompt appears
 	local part = H.Instance.new("Part")
 	local prompt = H.Instance.new("ProximityPrompt", part)

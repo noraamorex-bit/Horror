@@ -19,7 +19,7 @@ local fastBoard = nil -- OrderedDataStore: fastest win in seconds (lowest first)
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
 end
 
 --[[
@@ -85,6 +85,7 @@ local function mirror(player: Player)
 	local beam = beamUnlocked(d, d.Beam, player) and d.Beam or "Classic"
 	player:SetAttribute("StatBeam", beam)
 	player:SetAttribute("StatBest", d.Best > 0 and d.Best or nil)
+	player:SetAttribute("StatTips", d.Tips)
 	player:SetAttribute("ReviveCredits", d.ReviveCredits > 0 and d.ReviveCredits or nil)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
@@ -113,6 +114,7 @@ local function load(player: Player)
 			d.Beam = type(data.Beam) == "string" and data.Beam or "Classic"
 			d.Best = math.max(0, math.floor(tonumber(data.Best) or 0))
 			d.ReviveCredits = math.max(0, math.floor(tonumber(data.ReviveCredits) or 0))
+			d.Tips = math.max(0, math.floor(tonumber(data.Tips) or 0))
 			local set = type(data.Settings) == "table" and data.Settings or {}
 			d.Settings = {
 				Music = math.clamp(tonumber(set.Music) or 1, 0, 1),
@@ -162,6 +164,7 @@ local function save(userId: number)
 					end)(),
 					Settings = d.Settings,
 					ReviveCredits = d.ReviveCredits,
+					Tips = math.max(tonumber(old.Tips) or 0, d.Tips),
 				}
 			end)
 		end)
@@ -321,6 +324,17 @@ function Stats.recordWin(player: Player, seconds: number): boolean
 		end)
 	end
 	return true
+end
+
+-- the "how he hunts" tips: shown again whenever they change (Story.SurvivalTipsVersion)
+function Stats.markTips(player: Player, version: number)
+	local d = cache[player.UserId]
+	if not d or d.Tips >= version then
+		return
+	end
+	d.Tips = version
+	mirror(player)
+	save(player.UserId)
 end
 
 -- Revives bought when they couldn't be used (the night was already over, or you were in the
