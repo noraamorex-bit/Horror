@@ -263,15 +263,15 @@ Config.ChatRange = 50
 Config.Badges = {
 	FirstNight = 409399923712093,
 	Sirens = 3788492021707417,
-	CaseClosed = 0,
+	CaseClosed = 1030736154491153,
 	NextDoor = 3075408998090267,
 	Taillights = 907725296038042,
-	LockedIn = 0,
-	Dawn = 0,
+	LockedIn = 846738538364517,
+	Dawn = 4397989281257179,
 	GoneQuiet = 2732889922402301,
-	GotAway = 0,
-	HardSurvivor = 0, -- survived a night on Hard
-	Rescuer = 0, -- cut a friend free
+	GotAway = 1526454404455151,
+	HardSurvivor = 3696145087218819, -- survived a night on Hard
+	Rescuer = 1978303375336712, -- cut a friend free
 }
 
 --[[
