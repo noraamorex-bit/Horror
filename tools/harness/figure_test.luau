@@ -133,6 +133,18 @@ local ok, err = pcall(function()
 	assert(sessions == 1, "heartbeat minigame started")
 	assert(a:GetAttribute("Captured"), "failed heartbeat -> caught")
 	print("heartbeat fail ok")
+	-- 5b) after a capture he walks off away from the boiler room, and leaves the basement alone a while
+	assert(S.State == "Retreat", "after a capture he retreats, got " .. S.State)
+	assert(ctx.Rooms.floorOf(S.Data.Goal) ~= "Basement", "he heads away from the basement, not to it")
+	local boilerRoom = ctx.Rooms.ByName.Boiler
+	local boilerAt = R.Vector3.new(boilerRoom.Center.X, -10, boilerRoom.Center.Z)
+	assert((S.Data.Goal - boilerAt).Magnitude > 30, "somewhere far from the boiler room")
+	patrolling()
+	ctx.Noise.emit(boilerAt, 30, "Struggle", a)
+	assert(S.State == "Patrol", "struggling right after being caught doesn't bring him back, got " .. S.State)
+	ctx.Intruder.onRescueAttempt(boilerAt, b)
+	assert(S.State == "Patrol", "nor does a rescue in the grace window, got " .. S.State)
+	print("capture grace ok")
 	-- 6) pass the heartbeat: he walks away
 	ctx.Capture.release(a, nil)
 	S.SpotCooldown = {}

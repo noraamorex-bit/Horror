@@ -399,6 +399,45 @@ local function retreat(from: Vector3?, duration: number?, goal: Vector3?)
 	S.Nav:goTo(S.Data.Goal, { Speed = 12, Tolerance = 3, Hurry = true })
 end
 
+-- the boiler room, where captives are held
+local function boilerPos(): Vector3?
+	local boiler = ctx.Rooms.ByName.Boiler
+	return boiler and V(boiler.Center.X, -10, boiler.Center.Z) or nil
+end
+
+-- Someone's just been zip-tied (Capture teleports them to the boiler room). He doesn't hang around
+-- down there: he heads off somewhere dark on another floor, far from the boiler room, and for
+-- CaptiveGrace seconds he ignores the basement altogether (their struggling included), so they and
+-- their friends get a real chance to cut them free.
+local function afterCapture(who: Player?)
+	local I = tune()
+	S.CaptiveGraceUntil = now() + (I.CaptiveGrace or 0)
+	S.LastCaptiveCheck = now()
+	local boiler = boilerPos()
+	local best, bestScore = nil, -math.huge
+	for _, n in ctx.Layout.Nodes do
+		if n.Room ~= "Basement" and n.Room ~= "Boiler" then
+			local score = (boiler and (n.Pos - boiler).Magnitude or 0) + (n.Shadow and 15 or 0) + math.random() * 20
+			if score > bestScore then
+				best, bestScore = n, score
+			end
+		end
+	end
+	retreat(nil, I.RetreatAfterCapture, best and best.Pos or nil)
+	-- (tell them: this is the moment)
+	if who then
+		task.delay(6, function()
+			if who.Parent and who:GetAttribute("Captured") and now() < (S.CaptiveGraceUntil or 0) then
+				ctx.Director.think(who, "His footsteps are going back up the stairs. Struggle. NOW.")
+			end
+		end)
+	end
+end
+
+local function inCaptiveGrace(): boolean
+	return now() < (S.CaptiveGraceUntil or 0)
+end
+
 local function tryGrab(target: Player): boolean
 	local r = rootOf(target)
 	if not r or (r.Position - pos()).Magnitude > tune().GrabRange then
@@ -407,8 +446,7 @@ local function tryGrab(target: Player): boolean
 	if ctx.Capture.capture(target) then
 		S.Memory[target] = nil
 		S.HuntTarget = nil
-		local boiler = ctx.Rooms.ByName.Boiler
-		retreat(nil, tune().RetreatAfterCapture, boiler and V(boiler.Center.X, -10, boiler.Center.Z) or nil)
+		afterCapture(target)
 		return true
 	end
 	return false
@@ -680,19 +718,24 @@ patrolRoute = function(): { Vector3 }
 		end
 	end
 	local floors = playerFloors()
-	local checkCaptives = ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.PatrolCaptiveCheck
+	local grace = inCaptiveGrace()
+	local checkCaptives = not grace and ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.PatrolCaptiveCheck
 	local candidates = {}
 	for _, n in ctx.Layout.Nodes do
 		local w = floors[ctx.Rooms.floorOf(n.Pos)] and 3 or 0.4
+		local below = n.Room == "Boiler" or n.Room == "Basement"
 		if n.Room == "Boiler" then
 			w = checkCaptives and 8 or 0.1
 		elseif n.Room == "Basement" then
 			w = floors.Basement and 3 or 0.15
 		end
 		for _, c in clues do
-			if (c - n.Pos).Magnitude < 25 then
+			if (c - n.Pos).Magnitude < 25 and not (grace and below) then
 				w += 4
 			end
+		end
+		if grace and below then
+			w = 0 -- (he's just left someone down there: he leaves them be for a while)
 		end
 		if (n.Pos - pos()).Magnitude < 8 then
 			w *= 0.2
@@ -764,7 +807,7 @@ local function withdraw()
 	end
 	local goal = restNode()
 	local boiler = ctx.Rooms.ByName.Boiler
-	if ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.CaptiveCheckInterval and boiler then
+	if not inCaptiveGrace() and ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.CaptiveCheckInterval and boiler then
 		S.LastCaptiveCheck = now()
 		goal = V(boiler.Center.X + 4, -10, boiler.Center.Z)
 	end
@@ -1336,9 +1379,11 @@ STATES.CheckSpot = function(_, visible)
 	if found and occupant then
 		ctx.Audio.playAt("DoorYank", spot.Position, { CaptionText = "[The door is ripped open]", CaptionRange = 50 })
 		ctx.Hiding.exit(occupant, true)
-		ctx.Capture.capture(occupant)
-		local boiler = ctx.Rooms.ByName.Boiler
-		retreat(nil, I.RetreatAfterCapture, boiler and V(boiler.Center.X, -10, boiler.Center.Z) or nil)
+		if ctx.Capture.capture(occupant) then
+			afterCapture(occupant)
+		else
+			patrol()
+		end
 		return
 	end
 	if occupant then
@@ -1568,8 +1613,7 @@ local function ripOut(who: Player, spot)
 	ctx.Hiding.exit(who, true)
 	if ctx.Capture.capture(who) then
 		S.Memory[who] = nil
-		local boiler = ctx.Rooms.ByName.Boiler
-		retreat(nil, tune().RetreatAfterCapture, boiler and V(boiler.Center.X, -10, boiler.Center.Z) or nil)
+		afterCapture(who)
 	else
 		patrol()
 	end
@@ -1655,13 +1699,17 @@ local function onNoise(ev)
 		-- someone tied up in the boiler room: their breathing doesn't carry; struggling does, but it
 		-- only brings him down to look now and then (he isn't going to sit down there)
 		if who and who:GetAttribute("Captured") then
-			if ev.Kind ~= "Struggle" or now() - (S.LastCaptiveNoise or -1e9) < 60 then
+			if ev.Kind ~= "Struggle" or inCaptiveGrace() or now() - (S.LastCaptiveNoise or -1e9) < 60 then
 				return
 			end
 			S.LastCaptiveNoise = now()
 			if st ~= "Charge" then
 				investigate(ev.Position, nil)
 			end
+			return
+		end
+		-- just after a capture, nothing from the basement brings him back down (the rescue window)
+		if inCaptiveGrace() and ctx.Rooms.floorOf(ev.Position) == "Basement" then
 			return
 		end
 		-- a hiding spot giving itself away (its door, a gasp, breathing): he goes and listens there
@@ -2283,6 +2331,9 @@ function Intruder.onRescueAttempt(position: Vector3, rescuer: Player)
 	local st = S.State
 	if st == "Chase" or st == "CheckSpot" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" then
 		return
+	end
+	if inCaptiveGrace() and ctx.Rooms.floorOf(position) == "Basement" then
+		return -- (he's only just left them down there)
 	end
 	local reach = tune().RescueNoise
 	if ctx.Rooms.floorOf(position) ~= ctx.Rooms.floorOf(pos()) then

@@ -112,26 +112,26 @@ Config.Intruder = {
 		"Classic" is the older brain (he always feels roughly where you are).
 	]]
 	Brain = "Figure",
-	ChargeSpeed = 16.5, -- running at a sound he's sure of (you sprint at 17, for a while)
-	InvestigateSpeed = 11,
+	ChargeSpeed = 15.5, -- running at a sound he's sure of (you sprint at 17, for a while)
+	InvestigateSpeed = 10.5,
 	ChargeSearchTime = 5, -- thrashing about where the noise was, after a charge
 	InvestigateSearchTime = 6,
 	InspectTime = { 6, 9 }, -- standing at your hiding spot, listening
-	InspectNearChance = 0.35, -- walking right past an occupied spot (not holding breath): he stops
+	InspectNearChance = 0.25, -- walking right past an occupied spot (not holding breath): he stops
 	WalkSpeed = 9, -- lying low between hunts
 	SneakSpeed = 6.5,
 	ProwlSpeed = 15, -- running to where he feels you are (you sprint at 17, briefly)
-	ChaseSpeed = 18, -- he can see you: faster than you, and he doesn't tire
-	LungeSpeed = 22, -- the last few steps
-	GrabRange = 5,
+	ChaseSpeed = 17, -- he can see you: as fast as your sprint, and he doesn't tire
+	LungeSpeed = 20, -- the last few steps
+	GrabRange = 4.5,
 	FOV = 90, -- degrees
 	-- (short sight: he hunts by sound. Lit rooms and your beam still give you away)
-	SightLit = 32,
+	SightLit = 28,
 	SightDark = 10,
-	SightFlashlight = 45, -- a flashlight in the dark gives you away
+	SightFlashlight = 40, -- a flashlight in the dark gives you away
 	CrouchSightMultiplier = 0.6,
 	PeripheralRange = 7, -- sensed regardless of facing
-	HearWalk = 11, -- walking (not crouched) this close: he notices you behind him
+	HearWalk = 10, -- walking (not crouched) this close: he notices you behind him
 	HearSprint = 16, -- running
 	HearFlashlight = 12, -- your beam on the walls around him
 	SoloChaseSlowdown = 1, -- studs/s slower when playing alone
@@ -153,7 +153,8 @@ Config.Intruder = {
 	WithdrawNotice = 30, -- seen this close while he's lying low, and he comes anyway
 	StunTime = 7,
 	RetreatAfterStun = 30,
-	RetreatAfterCapture = 14, -- dropping someone in the boiler room, then straight back up
+	RetreatAfterCapture = 14, -- after a capture he walks off somewhere far from the boiler room
+	CaptiveGrace = 45, -- and for this long ignores the basement (struggling, rescues): the rescue window
 	-- patrolling (nobody to sense): he sweeps the rooms you were last in, listening
 	PatrolSpeed = 10,
 	PatrolPause = { 1.5, 3 },
@@ -186,13 +187,19 @@ Config.Difficulty = {
 			WithdrawMin = 8,
 			WithdrawMax = 14,
 			RetreatAfterCapture = 8,
+			CaptiveGrace = 30,
+			-- (Hard keeps the sharper senses Normal had before it was eased)
+			SightLit = 32,
+			SightFlashlight = 45,
+			GrabRange = 5,
+			HearWalk = 11,
 			PatrolCheckChance = 0.4,
 			SoloChaseSlowdown = 0.5,
 			ChargeSpeed = 18,
 			InvestigateSpeed = 12.5,
 			InspectNearChance = 0.5,
 		},
-		Heartbeat = { Interval = 0.8, Misses = 2 },
+		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22 },
 		BatteryMultiplier = 0.7, -- flashlights die faster
 		PoliceMultiplier = 1.25, -- help takes longer to arrive
 		LastChance = 30,
@@ -205,7 +212,7 @@ Config.Difficulty = {
 Config.Heartbeat = {
 	Interval = 1.0, -- seconds between beats
 	Travel = 0.9, -- how long a half-heart takes to fly in
-	Window = 0.22, -- seconds either side of arrival that count
+	Window = 0.26, -- seconds either side of arrival that count (a little forgiving on touch screens)
 	Lead = 1.2, -- the heart shows this long before the first beat
 	Misses = 3, -- this many misses and he hears you
 }
