@@ -115,7 +115,7 @@ end
 -- Caught a second time: no zip ties. He doesn't make the same mistake twice.
 -- The player is out of the night and watches the others (client Spectate).
 function Capture.kill(player: Player): boolean
-	if player:GetAttribute("Dead") or player:GetAttribute("Escaped") then
+	if player:GetAttribute("Dead") or player:GetAttribute("Escaped") or player:GetAttribute("AdminGod") then
 		return false
 	end
 	if ctx.Hiding.spotOf(player) then
@@ -176,7 +176,8 @@ function Capture.revived(player: Player)
 end
 
 function Capture.capture(player: Player)
-	if captives[player] or player:GetAttribute("Escaped") or player:GetAttribute("Dead") then
+	-- (AdminGod: the owner's "can't be caught" switch in the admin panel)
+	if captives[player] or player:GetAttribute("Escaped") or player:GetAttribute("Dead") or player:GetAttribute("AdminGod") then
 		return false
 	end
 	-- you only get away once

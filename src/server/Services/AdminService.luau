@@ -165,6 +165,11 @@ end
 
 -- you ---------------------------------------------------------------------------
 COMMANDS.me = function(player, arg)
+	if arg == "god" then
+		local on = not player:GetAttribute("AdminGod")
+		player:SetAttribute("AdminGod", on or nil)
+		return on and "He can't catch you (he still comes for you)." or "He can catch you again."
+	end
 	if arg == "ghost" then
 		local on = not player:GetAttribute("AdminGhost")
 		player:SetAttribute("AdminGhost", on or nil)

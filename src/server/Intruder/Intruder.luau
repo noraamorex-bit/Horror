@@ -438,9 +438,29 @@ local function inCaptiveGrace(): boolean
 	return now() < (S.CaptiveGraceUntil or 0)
 end
 
+-- the owner's "can't be caught" switch (admin panel): he still comes for them and grabs, and nothing happens
+local function grabFails(target: Player): boolean
+	if not target:GetAttribute("AdminGod") then
+		return false
+	end
+	S.GodGrab = S.GodGrab or {}
+	if now() - (S.GodGrab[target] or -1e9) > 2.5 then
+		S.GodGrab[target] = now()
+		ctx.Remotes.Shake:FireClient(target, 0.6, 0.4)
+		if S.Head then
+			ctx.Audio.playAt("Growl", S.Head.Position, { Caption = false })
+		end
+		ctx.Audio.caption("[He grabs you. Nothing happens. (Admin: can't be caught)]", nil, nil, { target })
+	end
+	return true
+end
+
 local function tryGrab(target: Player): boolean
 	local r = rootOf(target)
 	if not r or (r.Position - pos()).Magnitude > tune().GrabRange then
+		return false
+	end
+	if grabFails(target) then
 		return false
 	end
 	if ctx.Capture.capture(target) then
@@ -1376,6 +1396,10 @@ STATES.CheckSpot = function(_, visible)
 		found = math.random() < chance
 	end
 	S.SawHide[spot] = nil
+	if found and occupant and grabFails(occupant) then
+		patrol()
+		return
+	end
 	if found and occupant then
 		ctx.Audio.playAt("DoorYank", spot.Position, { CaptionText = "[The door is ripped open]", CaptionRange = 50 })
 		ctx.Hiding.exit(occupant, true)
@@ -1609,6 +1633,10 @@ inspect = function(spot)
 end
 
 local function ripOut(who: Player, spot)
+	if grabFails(who) then
+		patrol() -- (the owner can't be caught: they stay hidden, he gives up on the spot)
+		return
+	end
 	ctx.Audio.playAt("DoorYank", spot.Position, { CaptionText = "[The door is ripped open]", CaptionRange = 50 })
 	ctx.Hiding.exit(who, true)
 	if ctx.Capture.capture(who) then

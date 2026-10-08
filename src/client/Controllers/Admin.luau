@@ -146,6 +146,7 @@ RENDER.HIM = function()
 end
 RENDER.ME = function()
 	local r = row(1)
+	btn(r, "Can't be caught", function() send("me", "god") end)
 	btn(r, "Invisible to him", function() send("me", "ghost") end)
 	btn(r, "All items", function() send("me", "items") end)
 	btn(r, "Full battery", function() send("me", "battery") end)
@@ -295,12 +296,13 @@ local function build()
 		acc = 0
 		local eta = workspace:GetAttribute("PoliceETA")
 		local etaText = typeof(eta) == "number" and ("  ·  police " .. math.max(0, math.ceil(eta - workspace:GetServerTimeNow())) .. "s") or ""
-		debugLine.Text = string.format("%s  ·  %s  ·  %s%s%s",
+		debugLine.Text = string.format("%s  ·  %s  ·  %s%s%s%s",
 			tostring(workspace:GetAttribute("Act") or "-"),
 			tostring(workspace:GetAttribute("IntruderState") or "-"),
 			tostring(workspace:GetAttribute("Difficulty") or "Normal"),
 			etaText,
-			player:GetAttribute("AdminGhost") and "  ·  GHOST" or "")
+			player:GetAttribute("AdminGhost") and "  ·  GHOST" or "",
+			player:GetAttribute("AdminGod") and "  ·  CAN'T BE CAUGHT" or "")
 		-- (the X-ray follows him if his model is rebuilt)
 		if xray and not xray.Parent then
 			setXray(true)
