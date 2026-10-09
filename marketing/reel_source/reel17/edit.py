@@ -9,7 +9,7 @@ def raw(f): return f"{S}/reel17/raw/{f:04d}.png"
 
 # per-shot grade: brightness lift for the dark ones
 GRADE = {"ext": 1.2, "living": 1.0, "hatch": 1.35, "attic": 1.1, "garage": 1.45, "stairs": 1.15,
-         "underbed": 1.55, "hall": 1.75, "boiler": 1.35, "chase": 1.25, "hero": 1.1}
+         "underbed": 1.55, "hall": 2.4, "boiler": 1.35, "chase": 1.25, "hero": 1.1}
 EDIT = [
     ("card", ["14 ALDER LANE"], 42, "small"),
     ("shot", "ext", 0, 95),
