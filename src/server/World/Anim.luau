@@ -154,6 +154,47 @@ function Anim.leaves(model: Instance?, openFor: number?, degrees: number?)
 end
 
 ---------------------------------------------------------------------------
+-- Hinged doors that stay where you leave them (the fridge, the oven). groups: { { Parts, Hinge = CFrame,
+-- Sign = 1 | -1, Axis = "Y" (default, a side hinge) | "X" (a bottom hinge) } }; the parts' current
+-- CFrames are the closed ones. Returns a handle:
+-- handle.set(open) swings them (false while a swing is still going), handle.Open
+---------------------------------------------------------------------------
+function Anim.hinged(groups, degrees: number?)
+	for _, g in groups do
+		g.Closed = {}
+		for _, p in g.Parts do
+			g.Closed[p] = p.CFrame
+		end
+	end
+	local handle = { Open = false, Busy = false }
+	local ang = math.rad(degrees or 100)
+	function handle.set(open: boolean, time: number?): boolean
+		if handle.Busy or handle.Open == open then
+			return false
+		end
+		handle.Busy = true
+		handle.Open = open
+		local function apply(k: number)
+			local kk = open and k or 1 - k
+			for _, g in groups do
+				local a = g.Sign * ang * kk
+				local rot = g.Axis == "X" and CFrame.Angles(a, 0, 0) or CFrame.Angles(0, a, 0)
+				for _, p in g.Parts do
+					if p.Parent then
+						p.CFrame = g.Hinge * rot * g.Hinge:Inverse() * g.Closed[p]
+					end
+				end
+			end
+		end
+		drive(time or 0.45, Enum.EasingStyle.Quad, open and Enum.EasingDirection.Out or Enum.EasingDirection.In, apply, function()
+			handle.Busy = false
+		end)
+		return true
+	end
+	return handle
+end
+
+---------------------------------------------------------------------------
 -- Picked up: it lifts a little and fades, then it's gone
 ---------------------------------------------------------------------------
 function Anim.vanish(target: Instance)

@@ -31,6 +31,7 @@ local NAMES = {
 	"Cutscene", -- ({Name, Shots, Subtitle}) a short cinematic in the middle of the night
 	"Heartbeat", -- ({Id, Start, Beats, Travel, Window, Misses} | {Id, Result}) the heartbeat minigame
 	"Vote", -- (state | nil) the difficulty vote before the night: {Ends, Votes, Mine}
+	"Puzzle", -- ({Id, Kind, Data} | {Id, Result}) a puzzle at the electrics (PuzzleService)
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})
@@ -57,6 +58,7 @@ local NAMES = {
 	"Admin", -- (cmd, arg) owner test panel (AdminService checks the UserId)
 	"HeartbeatInput", -- (sessionId, beatIndex, hit) one beat of the heartbeat minigame
 	"AdminReply", -- (text) result of an admin command
+	"PuzzleInput", -- (puzzleId, action, payload) "Slip" | "Click" | "Submit" | "Cancel"
 }
 
 local Remotes = {}

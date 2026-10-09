@@ -388,7 +388,7 @@ local function follow(target: Vector3, speed: number)
 	if not d.PathGoal or S.Nav.Arrived or now() - (d.LastPath or 0) > 1 or (d.PathGoal - target).Magnitude > 4 then
 		d.PathGoal = target
 		d.LastPath = now()
-		S.Nav:goTo(target, { Speed = speed, Tolerance = 2, Hurry = speed > 12 })
+		S.Nav:goTo(target, { Speed = speed, Tolerance = 2, Hurry = speed >= 8.5 })
 	else
 		S.Humanoid.WalkSpeed = speed
 	end
@@ -396,7 +396,7 @@ end
 
 local function retreat(from: Vector3?, duration: number?, goal: Vector3?)
 	setState("Retreat", { Goal = goal or farNode(), Duration = duration or 20, From = from })
-	S.Nav:goTo(S.Data.Goal, { Speed = 12, Tolerance = 3, Hurry = true })
+	S.Nav:goTo(S.Data.Goal, { Speed = tune().ChargeSpeed, Tolerance = 3, Hurry = true })
 end
 
 -- the boiler room, where captives are held
@@ -928,7 +928,7 @@ local function bolt(d)
 	d.Bolting = true
 	d.FleeStart = now()
 	d.UnseenSince = nil
-	S.Nav:goTo(farNode(), { Speed = 15, Tolerance = 3, Hurry = true })
+	S.Nav:goTo(farNode(), { Speed = tune().ChargeSpeed + 1, Tolerance = 3, Hurry = true })
 	-- in his hurry he knocks a chair over (once a night; the one loud thing he does by accident)
 	if not S.KnockedChair and math.random() < 0.6 then
 		S.KnockedChair = true
@@ -1514,7 +1514,7 @@ STATES.Charge = function(_, visible)
 	if grabAnyone() then
 		return
 	end
-	local speed = I.ChargeSpeed + (S.Frenzy and 1 or 0)
+	local speed = I.ChargeSpeed + (S.Frenzy and 0.5 or 0)
 	if not d.Searching then
 		follow(d.Pos, speed)
 		local off = d.Pos - pos()
@@ -1691,7 +1691,9 @@ STATES.Inspect = function(_, visible)
 		if ctx.Hiding.spotOf(who) ~= spot then
 			-- they came out while he's standing right here
 			d.Occupant = nil
-			ctx.Heartbeat.stop(who)
+			if ctx.Heartbeat then
+				ctx.Heartbeat.stop(who)
+			end
 			local r = rootOf(who)
 			if valid(who) and r and (r.Position - pos()).Magnitude < 12 and tryGrab(who) then
 				return
@@ -1887,7 +1889,7 @@ STATES.Trapped = function()
 	if t > I.TrappedEscapeTime - 25 then
 		if now() >= (d.NextBang or 0) then
 			d.NextBang = now() + 3 + math.random() * 2
-			S.Nav:goTo(V(9, -10, 1), { Speed = 10 })
+			S.Nav:goTo(V(9, -10, 1), { Speed = tune().ChargeSpeed })
 			ctx.Audio.playAt("DoorForce", door.Position, { CaptionText = "[Someone slamming into the basement door]", CaptionRange = 90 })
 			ctx.Noise.emit(door.Position, 50, "Force")
 		end
@@ -1907,13 +1909,19 @@ end
 -- Think loop
 ---------------------------------------------------------------------------
 -- which gait the clients should animate (client/Controllers/Creature)
+-- going for someone (or a sound) flat out: the hunched lope and the running footsteps, whatever the speed
+local function hurrying(speed: number): boolean
+	local st = S.State
+	return speed > 4 and (st == "Chase" or st == "Charge" or st == "Prowl" or st == "Retreat" or (st == "Lurk" and speed > 7))
+end
+
 local function gaitFor(speed: number): string
 	local st = S.State
 	if st == "Stunned" then
 		return "Stunned"
 	elseif st == "CheckSpot" and S.Data.Phase == "Open" then
 		return "Reach"
-	elseif speed > 12 then
+	elseif hurrying(speed) then
 		return "Chase"
 	elseif st == "Search" or st == "CheckSpot" then
 		return "Search"
@@ -1934,8 +1942,8 @@ local function animate(dt: number)
 	local v = S.Root.AssemblyLinearVelocity
 	local speed = V(v.X, 0, v.Z).Magnitude
 	if S.Tracks.Run then
-		if speed > 12 then
-			playTrack("Run", speed / 16)
+		if hurrying(speed) then
+			playTrack("Run", math.max(speed / 12, 0.7))
 		elseif speed > 0.6 then
 			playTrack("Walk", math.max(speed / 9, 0.5))
 		else
@@ -1948,8 +1956,8 @@ local function animate(dt: number)
 	end
 	-- his footsteps, in time with his stride: thunder when he runs, slow and heavy otherwise
 	S.StepClock += dt
-	local running = speed > 12
-	local interval = running and math.max(3.75 / speed, 0.18) or math.max(2.6 / math.max(speed, 1), 0.3)
+	local running = hurrying(speed)
+	local interval = running and math.max(3.75 / speed, 0.3) or math.max(2.6 / math.max(speed, 1), 0.3)
 	if speed > tune().SneakSpeed + 0.5 and S.StepClock >= interval then
 		S.StepClock = 0
 		S.CaptionClock -= interval

@@ -154,6 +154,13 @@ function Navigator:_plan()
 	end
 end
 
+-- (never as fast as your walk, whatever asked: Config.Intruder.MaxSpeed)
+function Navigator:_setSpeed(speed: number)
+	local cfg = self.ctx and self.ctx.Config
+	local cap = cfg and cfg.Intruder and cfg.Intruder.MaxSpeed
+	self.Humanoid.WalkSpeed = cap and math.min(speed, cap) or speed
+end
+
 -- opts: Speed, Tolerance, Hurry, Reach (how far from the goal the route may end)
 function Navigator:goTo(goal: Vector3, opts)
 	opts = opts or {}
@@ -162,7 +169,7 @@ function Navigator:goTo(goal: Vector3, opts)
 	self.Hurry = opts.Hurry == true
 	self.Reach = opts.Reach
 	if opts.Speed then
-		self.Humanoid.WalkSpeed = opts.Speed
+		self:_setSpeed(opts.Speed)
 	end
 	self.Arrived = false
 	self.Failed = false
@@ -190,7 +197,7 @@ function Navigator:moveDirect(goal: Vector3, speed: number?)
 	self.Arrived = false
 	self.Failed = false
 	if speed then
-		self.Humanoid.WalkSpeed = speed
+		self:_setSpeed(speed)
 	end
 	self:_step()
 end

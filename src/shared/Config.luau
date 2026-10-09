@@ -112,17 +112,20 @@ Config.Intruder = {
 		"Classic" is the older brain (he always feels roughly where you are).
 	]]
 	Brain = "Figure",
-	ChargeSpeed = 15.5, -- running at a sound he's sure of (you sprint at 17, for a while)
-	InvestigateSpeed = 10.5,
+	-- (his speeds: all of them a little under your walking pace, 10. He gets you by surprise, in a dead
+	-- end, in your hiding spot, or because you froze; not by outrunning you)
+	ChargeSpeed = 9, -- going for a sound he's sure of (you walk at 10, sprint at 17)
+	InvestigateSpeed = 8,
 	ChargeSearchTime = 5, -- thrashing about where the noise was, after a charge
 	InvestigateSearchTime = 6,
 	InspectTime = { 6, 9 }, -- standing at your hiding spot, listening
 	InspectNearChance = 0.25, -- walking right past an occupied spot (not holding breath): he stops
-	WalkSpeed = 9, -- lying low between hunts
-	SneakSpeed = 6.5,
-	ProwlSpeed = 15, -- running to where he feels you are (you sprint at 17, briefly)
-	ChaseSpeed = 17, -- he can see you: as fast as your sprint, and he doesn't tire
-	LungeSpeed = 20, -- the last few steps
+	WalkSpeed = 7, -- lying low between hunts
+	SneakSpeed = 5,
+	ProwlSpeed = 9, -- (Classic brain) going to where he feels you are
+	ChaseSpeed = 9, -- he can see you: just under your walking pace, and he never stops
+	LungeSpeed = 9.5, -- the last few steps
+	MaxSpeed = 9.8, -- a hard cap on all of the above: never as fast as your walk
 	GrabRange = 4.5,
 	FOV = 90, -- degrees
 	-- (short sight: he hunts by sound. Lit rooms and your beam still give you away)
@@ -134,7 +137,7 @@ Config.Intruder = {
 	HearWalk = 10, -- walking (not crouched) this close: he notices you behind him
 	HearSprint = 16, -- running
 	HearFlashlight = 12, -- your beam on the walls around him
-	SoloChaseSlowdown = 1, -- studs/s slower when playing alone
+	SoloChaseSlowdown = 0.5, -- studs/s slower when playing alone
 	ChaseLoseSightTime = 2.5, -- out of sight this long and he's back to following your trail
 	-- what he knows
 	SenseDelay = 3, -- he feels where you were this many seconds ago
@@ -156,7 +159,7 @@ Config.Intruder = {
 	RetreatAfterCapture = 14, -- after a capture he walks off somewhere far from the boiler room
 	CaptiveGrace = 45, -- and for this long ignores the basement (struggling, rescues): the rescue window
 	-- patrolling (nobody to sense): he sweeps the rooms you were last in, listening
-	PatrolSpeed = 10,
+	PatrolSpeed = 7.5,
 	PatrolPause = { 1.5, 3 },
 	PatrolCheckChance = 0.25, -- at each stop: tear open a hiding spot nearby
 	PatrolCaptiveCheck = 90, -- with someone tied up: back past the boiler room this often
@@ -174,11 +177,11 @@ Config.Difficulty = {
 	VoteTime = 12,
 	Hard = {
 		Intruder = {
-			WalkSpeed = 10.5,
-			PatrolSpeed = 12,
-			ProwlSpeed = 16,
-			ChaseSpeed = 19,
-			LungeSpeed = 23,
+			WalkSpeed = 7.5,
+			PatrolSpeed = 8,
+			ProwlSpeed = 9.6,
+			ChaseSpeed = 9.6, -- (Hard: a hair under your walking pace; stop or stumble and he's on you)
+			LungeSpeed = 9.9,
 			SenseDelay = 2,
 			HideGrace = 6,
 			OpenFindChance = 0.85,
@@ -194,9 +197,9 @@ Config.Difficulty = {
 			GrabRange = 5,
 			HearWalk = 11,
 			PatrolCheckChance = 0.4,
-			SoloChaseSlowdown = 0.5,
-			ChargeSpeed = 18,
-			InvestigateSpeed = 12.5,
+			SoloChaseSlowdown = 0.3,
+			ChargeSpeed = 9.6,
+			InvestigateSpeed = 8.5,
 			InspectNearChance = 0.5,
 		},
 		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22 },

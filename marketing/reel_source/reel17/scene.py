@@ -16,7 +16,7 @@ RUN = TAU / 7.5
 
 SHOTS = {
     "ext": dict(rl["shots"]["ext"], radius=150, maxLamps=6),   # (the whole street with 14 lamps renders far too slowly)
-    "living": {"center": [-22, 6, -14], "radius": 46, "lampRadius": 30, "maxLamps": 12,
+    "living": {"center": [-22, 6, -14], "radius": 46, "lampRadius": 30, "maxLamps": 8,
                "lights": [{"p": [-34, 8.5, -35], "col": "#5a6fa0", "b": 1.2, "r": 8, "decay": 1.6}]},
     "hatch": {"center": [6, 22, 8], "radius": 34, "lampRadius": 0, "maxLamps": 0,
               "lights": [{"p": [6, 27.6, 11], "col": "#ffb066", "b": 2.4, "r": 7, "decay": 1.4},   # a glow round the hatch

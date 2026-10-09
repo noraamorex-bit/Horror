@@ -549,7 +549,38 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.dishwasher(kitchen, F(WX, G, 17.2, PX), 2.4, 2.4, 3.5)
 	Kit.box(kitchen, "Countertop", F(WX - 0.1, G + 3.65, 17.2, PX), V(2.4, 0.3, 2.6), COUNTER, KM.Granite)
 	Kit.cabinets(kitchen, F(WX, G, 19.7, PX), 2.6, 2.4, CAB, COUNTER)
-	Kit.range(kitchen, F(WX + 0.1, G, 23, PX), 4, 2.6)
+	-- the oven door drops open on its bottom hinge: racks, the dark inside, nothing cooking
+	do
+		local RANGE_CF = F(WX + 0.1, G, 23, PX)
+		local rangeModel, rangeBody = Kit.range(kitchen, RANGE_CF, 4, 2.6)
+		local fz = -2.6 / 2
+		local parts = {}
+		for _, d in rangeModel:GetDescendants() do
+			if d:IsA("BasePart") and (d.Name == "OvenDoor" or d.Name == "OvenWindow" or d.Name == "OvenHandle" or d.Name == "Standoff") then
+				d.CanCollide = false
+				table.insert(parts, d)
+			end
+		end
+		local door = Anim.hinged({ { Parts = parts, Hinge = RANGE_CF * CF(0, 0.5, fz - 0.1), Sign = -1, Axis = "X" } }, 86)
+		-- (inside the closed door's thickness, so only seen with it open)
+		Kit.box(kitchen, "OvenCavity", RANGE_CF * CF(0, 1.55, fz - 0.03), V(3.5, 1.9, 0.02), Color3.fromRGB(14, 14, 16), KM.Metal)
+		for _, y in { 1.05, 1.85 } do
+			Kit.box(kitchen, "OvenRack", RANGE_CF * CF(0, y, fz - 0.06), V(3.3, 0.05, 0.03), Kit.C.Chrome, KM.Metal)
+		end
+		local ovenPrompt
+		ovenPrompt = ctx.Interaction.prompt(rangeBody, { Action = "Open", Object = "Oven", Distance = 6 }, function(player)
+			local open = not door.Open
+			if not door.set(open, 0.5) then
+				return
+			end
+			ovenPrompt.ActionText = open and "Close" or "Open"
+			ctx.Audio.playAt(open and "DoorOpen" or "DoorClose", rangeBody.Position, { Caption = false, Volume = 0.25, Pitch = 1.5 })
+			if open then
+				ctx.Audio.caption("Empty and cold. Nobody's cooking tonight.", nil, nil, { player })
+			end
+			ctx.Noise.emit(rangeBody.Position, 8, "Oven", player)
+		end)
+	end
 	Kit.hood(kitchen, F(WX - 0.1, G + 8.6, 23, PX), 4.4, 2.2, G + 13)
 	Kit.cabinets(kitchen, F(WX, G, 26.6, PX), 3.2, 2.4, CAB, COUNTER)
 	-- subway tile backsplash behind the counters
@@ -686,7 +717,8 @@ function Interior.build(ctx, root: Instance, refs)
 	end
 
 	-- fridge on the back wall, with Mom's note and the pizza menu under magnets
-	local _, fridge, noteFace = Kit.fridge(kitchen, F(-27.1, G, 27.5, NZ), 5, 3.2, 10.4)
+	local FRIDGE_CF = F(-27.1, G, 27.5, NZ)
+	local fridgeModel, fridge, noteFace = Kit.fridge(kitchen, FRIDGE_CF, 5, 3.2, 10.4)
 	Kit.upperCabinets(kitchen, F(-27.1, G + 10.8, 28.3, NZ), 5.2, 1.6, 1.6, CAB)
 	ctx.Audio.loopOn("FridgeHum", fridge, { Caption = false })
 	local note = paper(kitchen, "FridgeNote", noteFace * CF(-0.2, 5.8, -0.02), V(1.4, 1.8, 0.04))
@@ -704,14 +736,104 @@ function Interior.build(ctx, root: Instance, refs)
 	end)
 	local kitchenRefs = { LasagnaGone = false, FridgePos = fridge.Position }
 	refs.Kitchen = kitchenRefs
-	ctx.Interaction.prompt(fridge, { Action = "Open", Object = "Fridge", Distance = 6 }, function(player)
-		ctx.Audio.playAt("DoorClose", fridge.Position, { Caption = false, Volume = 0.3 })
-		if kitchenRefs.LasagnaGone then
-			ctx.Audio.caption("Soda, eggs, condiments. The lasagna Mom left for you is gone. Dish and all.", nil, nil, { player })
-		else
-			ctx.Audio.caption("Soda, eggs, condiments - and the lasagna Mom left, under foil.", nil, nil, { player })
+	-- the fridge opens: two doors swing out (Mom's note and the menu ride on the right one), the light
+	-- comes on, and there's food inside (the lasagna, until he takes it)
+	do
+		local W, D, Hh, SPLIT = 5, 3.2, 10.4, 3.3
+		local fz = -D / 2 + 0.05
+		local front = -D / 2 + 0.19 -- the cabinet's face behind the doors
+		local left, right = {}, {}
+		local function local_(p: BasePart): Vector3
+			return FRIDGE_CF:PointToObjectSpace(p.Position)
 		end
-	end)
+		for _, d in fridgeModel:GetDescendants() do
+			if d:IsA("BasePart") and (d.Name == "FridgeDoor" or d.Name == "FridgeHandle" or d.Name == "Dispenser" or d.Name == "Standoff") then
+				local lp = local_(d)
+				if lp.Y > SPLIT then
+					table.insert(lp.X < 0 and left or right, d)
+					d.CanCollide = false
+				end
+			end
+		end
+		-- (everything stuck on the right door: the note, the menu, the drawing, the magnets)
+		for _, d in kitchen:GetDescendants() do
+			if d:IsA("BasePart") and not d:IsDescendantOf(fridgeModel) then
+				local lp = local_(d)
+				if lp.X > 0.02 and lp.X < W / 2 + 0.1 and lp.Y > SPLIT and lp.Y < Hh and lp.Z < fz and lp.Z > fz - 0.5 then
+					table.insert(right, d)
+				end
+			end
+		end
+		local doorZ = fz - 0.09
+		local doors = Anim.hinged({
+			{ Parts = left, Hinge = FRIDGE_CF * CF(-W / 2, 0, doorZ), Sign = 1 },
+			{ Parts = right, Hinge = FRIDGE_CF * CF(W / 2, 0, doorZ), Sign = -1 },
+		}, 105)
+		-- inside: a white liner, glass shelves, the food (all hidden while it's shut)
+		local inside = {}
+		local function add(p: BasePart)
+			p.CanCollide = false
+			p.CanQuery = false
+			p:SetAttribute("Shown", p.Transparency)
+			p.Transparency = 1
+			table.insert(inside, p)
+			return p
+		end
+		local LINER = Color3.fromRGB(236, 240, 242)
+		add(Kit.box(kitchen, "FridgeLiner", FRIDGE_CF * CF(0, SPLIT + (Hh - SPLIT) / 2, front - 0.01), V(W - 0.3, Hh - SPLIT - 0.4, 0.02), LINER, KM.Plastic))
+		for _, y in { 1.7, 3.5, 5.2 } do
+			add(Kit.box(kitchen, "FridgeShelf", FRIDGE_CF * CF(0, SPLIT + y, front - 0.45), V(W - 0.4, 0.08, 0.9), Color3.fromRGB(200, 222, 230), KM.Glass))
+		end
+		local SH1, SH2, SH3 = SPLIT + 1.74, SPLIT + 3.54, SPLIT + 5.24
+		for k = 0, 3 do
+			add(Kit.vcyl(kitchen, "SodaCan", FRIDGE_CF * CF(-1.7 + k * 0.42, SH1 + 0.3, front - 0.45), 0.6, 0.34, ({ Color3.fromRGB(200, 30, 30), Color3.fromRGB(40, 90, 200), Color3.fromRGB(200, 30, 30), Color3.fromRGB(240, 200, 40) })[k + 1], KM.Metal))
+		end
+		add(Kit.box(kitchen, "EggCarton", FRIDGE_CF * CF(0.9, SH1 + 0.2, front - 0.45), V(1.5, 0.4, 0.7), Color3.fromRGB(200, 186, 160), KM.Fabric))
+		add(Kit.box(kitchen, "MilkJug", FRIDGE_CF * CF(-1.5, SH2 + 0.6, front - 0.45), V(0.7, 1.2, 0.7), Color3.fromRGB(245, 245, 240), KM.Plastic))
+		add(Kit.vcyl(kitchen, "Ketchup", FRIDGE_CF * CF(-0.6, SH2 + 0.45, front - 0.4), 0.9, 0.36, Color3.fromRGB(190, 30, 25), KM.Plastic))
+		local lasagna = add(Kit.box(kitchen, "FridgeLasagna", FRIDGE_CF * CF(0.9, SH2 + 0.18, front - 0.45), V(1.6, 0.36, 0.8), Color3.fromRGB(210, 214, 218), KM.Metal))
+		add(Kit.box(kitchen, "Leftovers", FRIDGE_CF * CF(-0.8, SH3 + 0.25, front - 0.45), V(1.1, 0.5, 0.7), Color3.fromRGB(120, 170, 120), KM.Plastic))
+		add(Kit.box(kitchen, "JuiceBox", FRIDGE_CF * CF(1.2, SH3 + 0.55, front - 0.45), V(0.6, 1.1, 0.5), Color3.fromRGB(240, 150, 40), KM.Plastic))
+		local glow = Instance.new("PointLight")
+		glow.Color = Color3.fromRGB(220, 235, 255)
+		glow.Brightness = 1.6
+		glow.Range = 12
+		glow.Shadows = false
+		glow.Enabled = false
+		glow.Parent = add(Kit.box(kitchen, "FridgeBulb", FRIDGE_CF * CF(0, Hh - 0.8, front - 0.1), V(0.6, 0.2, 0.2), Color3.fromRGB(250, 250, 255), KM.Neon))
+		local function showInside(on: boolean)
+			for _, p in inside do
+				local hide = not on or (p == lasagna and kitchenRefs.LasagnaGone)
+				p.Transparency = hide and 1 or (p:GetAttribute("Shown") :: number? or 0)
+			end
+			glow.Enabled = on and ctx.Power.isOn()
+		end
+		local fridgePrompt
+		fridgePrompt = ctx.Interaction.prompt(fridge, { Action = "Open", Object = "Fridge", Distance = 6 }, function(player)
+			local open = not doors.Open
+			if not doors.set(open) then
+				return
+			end
+			fridgePrompt.ActionText = open and "Close" or "Open"
+			if open then
+				showInside(true)
+				ctx.Audio.playAt("DoorOpen", fridge.Position, { Caption = false, Volume = 0.25, Pitch = 1.3 })
+				if kitchenRefs.LasagnaGone then
+					ctx.Audio.caption("Soda, eggs, condiments. The lasagna Mom left for you is gone. Dish and all.", nil, nil, { player })
+				else
+					ctx.Audio.caption("Soda, eggs, condiments - and the lasagna Mom left, under foil.", nil, nil, { player })
+				end
+			else
+				ctx.Audio.playAt("DoorClose", fridge.Position, { Caption = false, Volume = 0.3 })
+				task.delay(0.45, function()
+					if not doors.Open then
+						showInside(false)
+					end
+				end)
+			end
+			ctx.Noise.emit(fridge.Position, 8, "Fridge", player)
+		end)
+	end
 	-- step-on trash can by the back door
 	local trashCF = F(-14.2, G, 28.1, NZ)
 	Kit.lathe(kitchen, "TrashCan", trashCF, { { 0, 1.8 }, { 0.15, 1.9 }, { 2.9, 2.0 } }, C.Steel, KM.Metal)

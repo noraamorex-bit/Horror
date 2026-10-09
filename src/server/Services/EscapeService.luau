@@ -390,13 +390,12 @@ function Escape.setupJunctionBox(model: Model, door: BasePart, openCF: CFrame, w
 			ctx.Objectives.step("Phone", "Box")
 		end
 	end)
-	local prompt
-	prompt = ctx.Interaction.prompt(door, {
+	ctx.Interaction.prompt(door, {
 		Name = "Splice",
 		Action = "Splice the wires",
 		Object = "Needs electrical tape",
 		Key = Enum.KeyCode.R,
-		Hold = ctx.Config.Help.JunctionRepair,
+		Hold = 0.4,
 		Distance = 6,
 	}, function(player)
 		if not state.LineCut or state.LineRepaired then
@@ -407,17 +406,25 @@ function Escape.setupJunctionBox(model: Model, door: BasePart, openCF: CFrame, w
 			ctx.Audio.caption("You need something to join the wires. Electrical tape?", nil, nil, { player })
 			return
 		end
-		state.LineRepaired = true
-		ctx.Audio.playAt("TapeRip", door.Position, { Caption = false })
-		wire.Transparency = 0
-		cutWire.Transparency = 1
-		Escape.refreshLandline()
-		ctx.Objectives.step("Phone", "Splice")
-		ctx.Audio.caption("You twist the copper together and wrap it tight. The landline should work now.", nil, nil, { player })
-		ctx.Remotes.Notify:FireAllClients("The phone line is spliced. Use the kitchen phone!", "objective")
-	end)
-	prompt.PromptButtonHoldBegan:Connect(function(player)
-		prompt.HoldDuration = player:GetAttribute("Role") == "Tinkerer" and ctx.Config.Help.JunctionRepair / 2 or ctx.Config.Help.JunctionRepair
+		local function spliced()
+			if state.LineRepaired then
+				return
+			end
+			state.LineRepaired = true
+			ctx.Audio.playAt("TapeRip", door.Position, { Caption = false })
+			wire.Transparency = 0
+			cutWire.Transparency = 1
+			Escape.refreshLandline()
+			ctx.Objectives.step("Phone", "Splice")
+			ctx.Audio.caption("You twist the copper together and wrap it tight. The landline should work now.", nil, nil, { player })
+			ctx.Remotes.Notify:FireAllClients("The phone line is spliced. Use the kitchen phone!", "objective")
+		end
+		-- join each cut wire to its colour (the Tinkerer only has three to do)
+		if ctx.Puzzle then
+			ctx.Puzzle.open(player, "Wires", door, ctx.Puzzle.wires(player:GetAttribute("Role") == "Tinkerer" and 3 or 4), spliced)
+		else
+			spliced()
+		end
 	end)
 end
 
@@ -439,14 +446,28 @@ function Escape.setupBreaker(panel: BasePart, lever: BasePart, onCF: CFrame, off
 		Hold = 0.8,
 		Distance = 6,
 	}, function(player)
-		local on = not ctx.Power.isOn()
-		ctx.Power.setMain(on, "Player")
-		ctx.Audio.playAt("Breaker", lever.Position)
-		ctx.Audio.playAt("BreakerClick", lever.Position, { Caption = false })
-		ctx.Noise.emit(lever.Position, 30, "Breaker", player)
-		if on then
-			ctx.Objectives.complete("Power")
-			ctx.Audio.playAt("PowerUp", lever.Position)
+		local function throw(on: boolean)
+			if ctx.Power.isOn() == on then
+				return
+			end
+			ctx.Power.setMain(on, "Player")
+			ctx.Audio.playAt("Breaker", lever.Position)
+			ctx.Audio.playAt("BreakerClick", lever.Position, { Caption = false })
+			ctx.Noise.emit(lever.Position, 30, "Breaker", player)
+			if on then
+				ctx.Objectives.complete("Power")
+				ctx.Audio.playAt("PowerUp", lever.Position)
+			end
+		end
+		if ctx.Power.isOn() then
+			throw(false)
+		elseif ctx.Puzzle then
+			-- the power's out: reset the tripped circuits, then the MAIN
+			ctx.Puzzle.open(player, "Breakers", lever, ctx.Puzzle.breakers(), function()
+				throw(true)
+			end)
+		else
+			throw(true)
 		end
 	end)
 	ctx.Power.onChanged(function(on)

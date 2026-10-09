@@ -147,7 +147,7 @@ Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that 
 ### Act 0 — Lobby
 Players land in the **lobby** (third-person camera): Alder Lane on a rainy, foggy night — the street, lawns and woods run on past the invisible walls and fade into thick fog, so the town never seems to end — in front of the Whitaker house (porch light on, two windows lit), with the neighbors, street lamps and the gray van at the curb. A welcome notice explains the one thing to do, with an OK button. Four **white outline circles** on the front patio queue **1, 2, 3 and 4 players**. Stand in a circle to queue and step off (or tap LEAVE) to cancel. When a circle is full it counts down (10 s, 3 s solo), reserves a private game server and teleports the group there together.
 
-In the game server the group spawns in the living room. Once everyone has arrived (or after 30 s without stragglers) the **CHOOSE MODE** screen opens: NORMAL or HARD, live vote counts, a 12 s countdown (ends early when everyone has voted). More votes for HARD makes it a Hard night; a tie stays Normal. The result shows for 2 s, then the night starts and roles are dealt. Owners of the "Pick your role" pass choose their character on the same screen; everyone else sees a button offering the pass.
+In the game server the group spawns in the living room. Once everyone has arrived (or after 30 s without stragglers) the **CHOOSE MODE** screen opens: NORMAL or HARD, live vote counts, a 12 s countdown (ends early when everyone has voted). More votes for HARD makes it a Hard night; a tie stays Normal. The result shows for 2 s, then the night starts and roles are dealt. (No music on this screen, and none on the result card at the end of the night: they used to blare a track and a sting.) Owners of the "Pick your role" pass choose their character on the same screen; everyone else sees a button offering the pass.
 
 **Hard** (`Config.Difficulty.Hard`): he is faster, senses you sooner, checks more hiding spots and rests less; flashlight batteries last 70%; help takes 25% longer; the everyone-captured last chance is 30 s. The HUD shows "· HARD" next to the act. After the ending, everyone is teleported back to the lobby.
 
@@ -197,14 +197,14 @@ The Director plays low-intensity events. Each one needs conditions to be met, fo
 - **The power dies**, and it's the main breaker, not the storm. Wi-Fi goes with it, so no more texts.
 - **The landline is dead.** The car keys are gone. The attic hatch now opens.
 - Curtis is now physically in the house. He **lurks**: he moves only while unobserved, watches from doorways, and walks away when someone spots him. Players get glimpses at the end of a hall or in a doorway. He does not attack yet.
-- Objectives: call for help (phone box outside → tape → splice → call), find out what's in the attic, and (optional) get the power back on (flashlight → flip the main breaker).
+- Objectives: call for help (phone box outside → tape → splice → call), find out what's in the attic, and (optional) get the power back on (flashlight → the **breaker puzzle** at the panel).
 - Environmental story: an open hatch in the garage ceiling with a stepladder under it, muddy size-12 prints, the contractor invoice in the office (Host key), Lily's drawing of "the ceiling man".
 - **Discovery.** When someone reads Curtis's notebook in the attic nest, Act IV starts at once. Otherwise it starts when the act times out.
 
 ### Act IV — "The Guest" (until an ending, ~15–20 min)
 *He knows you know.*
 The intruder **hunts**. Objectives change to escape and survival:
-- **Call 911.** Either splice the cut line at the junction box outside (electrical tape, 10 s) and use the landline, or find the one flickering bar of cell signal at the upstairs bathroom window and hold a 15-second call. Talking makes noise.
+- **Call 911.** Either splice the cut line at the junction box outside (electrical tape, then the **wires puzzle**) and use the landline, or find the one flickering bar of cell signal at the upstairs bathroom window and hold a 15-second call. Talking makes noise.
 - **Reach Mrs. Okafor's house.** Knock, then survive 15 seconds on her porch in the rain until she opens the door.
 - **Escape in the car.** The car keys are in the attic nest (or the spare set is in dad's locked office). The garage door needs power, or the loud manual release.
 - **Lock him in the basement.** Lure him down and lock the basement door (house keys or the basement key from the mudroom). This buys time and changes the ending.
@@ -267,14 +267,21 @@ If Curtis grabs you, the screen fades and you wake zip-tied in the boiler room. 
 - Curtis comes back regularly to check on his captives.
 - **One second chance only.** Getting caught a second time is fatal: a jumpscare, then you're out of the night and **spectate** your friends (tap to switch; with nobody left, the camera watches the house from the street). Your fate on the recap reads *Didn't make it*.
 
+### The electrics puzzles (`PuzzleService`, client `Puzzle`)
+Two small hands-on puzzles, in a panel in the middle of the screen (big targets for thumbs). You stay at the box while you do them, and he can still find you there.
+- **Splice the phone line** (junction box, with tape): four cut wires (three for the Tinkerer) on the left, their ends in a different order on the right. Tap a wire, then the end of the same colour; each one you join is drawn across. A wrong end **sparks** (a 22-stud noise he can hear) and you try again.
+- **Reset the breakers** (the MAIN, with the power off): three of eight circuits (KITCHEN, LIVING RM, HALL, BEDROOMS, BATHS, GARAGE, BASEMENT, PORCH) have tripped. Tap them back ON (tap a good one by mistake and it goes off too), then throw the MAIN. The MAIN with anything still off just **clunks** (30-stud noise). Turning the power *off* is still one flip.
+- The server deals each puzzle and checks the answer (the breaker taps are replayed in order). Walking more than 10 studs away, hiding, or being caught closes it; slips are limited to one noise every 0.6 s.
+
 ### The intruder AI (`src/server/Intruder`)
 **The Figure brain** (`Config.Intruder.Brain = "Figure"`, the default; modelled on the Figure in DOORS). He hunts by **sound**, not by a sixth sense:
 - **Patrol**: room to room between nav nodes (weighted to the floors players are on), stopping to listen; now and then he stops at a hiding spot and listens.
 - **Investigate**: a quiet noise (a door, a lock, the microwave, a tied-up friend struggling, at most once a minute) makes him growl and walk over, then pace around where it came from before going back to his patrol.
-- **Charge**: a loud one (anyone walking within 16 studs or running within 38, glass, a slam, a phone call, someone being cut free) makes him roar and run at it (15.5, 18 on Hard), re-aiming at every new footstep; then he thrashes about where it was. Anyone he runs into, he grabs. Louder (its reach minus its distance) beats quieter. **Crouching is silent** (4 studs).
+- **Charge**: a loud one (anyone walking within 16 studs or running within 38, glass, a slam, a phone call, someone being cut free) makes him roar and go for it (9 studs/s, 9.6 on Hard), re-aiming at every new footstep; then he thrashes about where it was. Anyone he runs into, he grabs. Louder (its reach minus its distance) beats quieter. **Crouching is silent** (4 studs).
 - **Inspect + heartbeat minigame**: hide near him (or let him walk right past you without holding your breath) and he stops at your hiding spot, swaying, listening, for 6 to 9 s, ignoring everything else. Half-hearts fly in from the left and right; press that side as each reaches the heart (Q/E, arrows, LB/RB, or the big LEFT/RIGHT buttons on touch). Three misses (two on Hard, beats faster and a tighter window) and he rips the door open. Each beat counts if pressed within 0.26 s (0.22 on Hard). Step out while he's there and he has you. The server deals the beats and counts misses; unanswered beats are misses.
-- **Sight** is short (28 studs in a lit room, 10 in the dark, 40 with your flashlight on; Hard: 32 / 10 / 45): close up he sees you and chases (17 studs/s, your sprint speed; 19 on Hard); he saw you get in a hiding spot = found. Grab range 4.5 (5 on Hard).
+- **Sight** is short (28 studs in a lit room, 10 in the dark, 40 with your flashlight on; Hard: 32 / 10 / 45): close up he sees you and follows you (9 studs/s, 9.6 on Hard); he saw you get in a hiding spot = found. Grab range 4.5 (5 on Hard).
 - **After a capture** (the captive is already zip-tied in the boiler room) he doesn't go down there: he walks off to a dark spot on another floor, far from the boiler room, and for **45 s** (30 on Hard) nothing from the basement brings him back (struggling, a friend cutting them free) and his patrols skip it. The captive hears him go: "His footsteps are going back up the stairs. Struggle. NOW." (Before, he walked the captive's way to the boiler room and was standing right there while they struggled.)
+- **He is never as fast as you walk.** Every speed he has (patrol 7.5, chase 9, the last lunge 9.5; Hard 8 / 9.6 / 9.9) sits under your walking pace (10), with a hard cap of 9.8 (`Config.Intruder.MaxSpeed`) on top. He catches you by surprise, in a dead end, at your hiding spot, while you're busy at the breaker panel, or because you froze, never by outrunning you. He lopes (and his footsteps run) only above 4 studs/s while chasing, charging or bolting.
 - His footsteps shake your screen, harder the closer he is. The first hunt starts with him charging the nearest player (he heard the whole house).
 - `Brain = "Classic"` keeps the older brain (he always feels roughly where you are, a few seconds late).
 
@@ -357,7 +364,9 @@ Only for `Config.Admins` (the owner's UserId), the experience owner, and Studio;
 - **Messages never overlap**: everything said at the bottom of the screen (sound captions, spoken lines, your thoughts) is one stack; chapter cards hold the queue; nothing talks over a notice, a conversation, a cutscene, the vote or a result card; a line from an earlier act is dropped instead of arriving late; "New objective" is skipped when "Done" beats it to the screen.
 - **The yanked door**: after something yanks at an outside door, the first person to open it gets a loud hit. Nothing is there.
 - **Lobby**: big PLAY SOLO / FIND PLAYERS buttons, a How to play card, everyone carries their flashlight in the colour they picked, and now and then a light comes on in the dark upstairs window of the house with someone standing in it.
-- **Fastest wins**: every win is timed (an escape at the moment you get out; everyone still standing at a good ending at the moment it ends). The result card shows YOUR TIME and ★ NEW PERSONAL BEST; your best shows on the lobby record line; the top 10 go on the FASTEST WINS sign beside NIGHTS SURVIVED (`FastestWin_v1` OrderedDataStore, lowest first).
+- **Fastest wins**: every win is timed (an escape at the moment you get out; everyone still standing at a good ending at the moment it ends). The result card shows YOUR TIME and ★ NEW PERSONAL BEST; your best shows on the lobby record line; the top 10 go on the FASTEST WINS sign beside NIGHTS SURVIVED (`FastestWin_v1` OrderedDataStore, lowest first). The game's owner (and `Config.Admins`) never go on either board: their nights aren't written, the signs skip them, and on start the server removes any old entries of theirs.
+- **Things open**: the kitchen fridge swings open on both doors (the light comes on with the power; soda, eggs, milk, ketchup, leftovers, juice, and Mom's lasagna until he takes it; Mom's note and the menu ride on the door), and the oven door drops open on its bottom hinge. Each makes a small noise.
+- **Props sit on their surfaces**: the Creator Store models (plates, mugs, bowls...) are fitted to their placeholders, then measured with rays (the model's real underside, the real tabletop) and set down exactly on it, so nothing sinks into a table.
 - Every button clicks; notifications have their own sounds by kind; the police countdown beeps for its last 10 s.
 
 ### Opening shot (client `Intro`)

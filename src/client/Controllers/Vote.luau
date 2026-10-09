@@ -22,7 +22,6 @@ local boxes: { [string]: { Frame: TextButton, Stroke: UIStroke, Count: TextLabel
 local roleRow: Frame
 local roleButtons: { [string]: TextButton } = {}
 local roleOffer: TextButton
-local music: Sound?
 local ends = 0
 local mine: string? = nil
 local open = false
@@ -94,13 +93,7 @@ local function show()
 	screen.BackgroundTransparency = 1
 	ctx.UI.tween(screen, 0.35, { BackgroundTransparency = 0.25 })
 	ctx.Effects.playSound("UIWhoosh", nil, { Caption = false })
-	if not music then
-		music = ctx.Effects.localSound("VoteMusic")
-	end
-	if music then
-		music.Volume = 0.3
-		music:Play()
-	end
+	-- (no music here: it blared over the start of every night)
 end
 
 local function close(result: string?)
@@ -124,16 +117,10 @@ local function close(result: string?)
 	closing = task.delay(result and 1.6 or 0, function()
 		closing = nil
 		open = false
-		if music then
-			ctx.UI.tween(music, 1, { Volume = 0 })
-		end
 		ctx.UI.tween(screen, 0.4, { BackgroundTransparency = 1 })
 		task.wait(0.4)
 		if not open then
 			screen.Visible = false
-			if music then
-				music:Stop()
-			end
 		end
 	end)
 end

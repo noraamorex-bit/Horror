@@ -4,6 +4,10 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
   reach from the floor, and headroom along every stair ramp for a 6.1-stud player.
 - `intruder_test.luau`: Curtis in Lurk mode shoves a player who walks right up to him, bolts
   when spooked, and pushes half-open doors wide instead of getting pinned behind them.
+- `puzzle_test.luau`: the electrics puzzles. `Puzzle.check` takes only right answers (each wire
+  to its colour; breaker taps replayed, MAIN last with everything on); the splice prompt opens the
+  wires puzzle and only a right answer repairs the line; the MAIN opens the breaker puzzle and only
+  solving it brings the power back; walking off closes it.
 - `navsim.luau`: a wall-aware world for the harness (the built house's parts answer
   `workspace:Raycast` / `GetPartBoundsInBox`; `Humanoid:MoveTo` walks a body that collides,
   floats over the floor and gives up after 8 s; `Model:PivotTo` moves models).

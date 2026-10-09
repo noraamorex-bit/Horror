@@ -44,21 +44,10 @@ local function stopMusic()
 	end
 end
 
-local function playMusic(good: boolean)
+-- (the endings used to slam in a victory or death sting and a looping sad piano: too loud, so the
+-- ending scene's own sounds carry it now)
+local function playMusic(_good: boolean)
 	stopMusic()
-	if not ctx.Effects then
-		return
-	end
-	if good then
-		ctx.Effects.playSound("VictorySting", nil, { Caption = false })
-	else
-		ctx.Effects.playSound("DeathSting", nil, { Caption = false })
-		music = ctx.Effects.localSound("SadPiano")
-		if music then
-			music.Looped = true
-			music:Play()
-		end
-	end
 end
 
 local function closeCard()

@@ -117,6 +117,43 @@ local function worldBox(model: Instance): (Vector3?, Vector3?)
 	return mn, mx
 end
 
+-- the lowest point of the prop's actual geometry around the middle of its footprint, and the top of
+-- whatever it stands on; then move it so the one rests on the other
+local function settle(prop: Model, placeholder: Model, centre: Vector3, size: Vector3)
+	local parts = {}
+	for _, d in prop:GetDescendants() do
+		if d:IsA("BasePart") then
+			table.insert(parts, d)
+			d.CanQuery = true -- (just while measuring)
+		end
+	end
+	local up = RaycastParams.new()
+	up.FilterType = Enum.RaycastFilterType.Include
+	up.FilterDescendantsInstances = { prop }
+	local low = math.huge
+	local rx, rz = size.X * 0.25, size.Z * 0.25
+	for _, o in { Vector3.zero, Vector3.new(rx, 0, 0), Vector3.new(-rx, 0, 0), Vector3.new(0, 0, rz), Vector3.new(0, 0, -rz) } do
+		local from = Vector3.new(centre.X + o.X, centre.Y - size.Y - 2, centre.Z + o.Z)
+		local hit = workspace:Raycast(from, Vector3.new(0, size.Y * 3 + 4, 0), up)
+		if hit then
+			low = math.min(low, hit.Position.Y)
+		end
+	end
+	local down = RaycastParams.new()
+	down.FilterType = Enum.RaycastFilterType.Exclude
+	down.FilterDescendantsInstances = { prop, placeholder }
+	local floor = workspace:Raycast(Vector3.new(centre.X, centre.Y + size.Y, centre.Z), Vector3.new(0, -(size.Y * 2 + 3), 0), down)
+	for _, d in parts do
+		d.CanQuery = false
+	end
+	if low < math.huge and floor then
+		local dy = floor.Position.Y + 0.01 - low
+		if math.abs(dy) < 1.5 then
+			prop:PivotTo(prop:GetPivot() + Vector3.new(0, dy, 0))
+		end
+	end
+end
+
 -- Put the loaded model where the placeholder is, as big as it is. Creators build their models
 -- upright in the world, but the model's own pivot is often turned (that's what laid the plates
 -- and the fruit bowl on their sides): so the model keeps its authored world orientation, and
@@ -153,6 +190,9 @@ local function fit(placeholder: Model, assetId: number)
 	local h = (nmn and nmx) and (nmx.Y - nmn.Y) or bsize.Y * s
 	-- stand it on the placeholder's base, turned only about the vertical
 	prop:PivotTo(CFrame.new(centre.X, pmn.Y + h / 2, centre.Z) * CFrame.Angles(0, yaw, 0))
+	-- then sit it exactly on the surface under it: a model's box isn't always where its mesh is (that
+	-- left plates and bowls sunk into the table), so measure its real underside and the real tabletop
+	settle(prop, placeholder, centre, size)
 	for _, d in placeholder:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.Transparency = 1

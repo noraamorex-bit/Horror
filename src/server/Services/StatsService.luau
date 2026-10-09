@@ -297,6 +297,15 @@ end
 
 -- A win (escaped, or still standing at a good ending) took this many seconds. Keeps the
 -- player's best and puts it on the fastest-wins board. Returns true for a new personal best.
+-- the owner (Config.Admins, and the experience's creator) never appears on the public boards
+local function offBoards(userId: number): boolean
+	if ctx and ctx.Config and table.find(ctx.Config.Admins or {}, userId) then
+		return true
+	end
+	return game.CreatorType == Enum.CreatorType.User and game.CreatorId ~= 0 and userId == game.CreatorId
+end
+Stats.offBoards = offBoards
+
 function Stats.recordWin(player: Player, seconds: number): boolean
 	local d = cache[player.UserId]
 	seconds = math.floor(seconds)
@@ -309,7 +318,7 @@ function Stats.recordWin(player: Player, seconds: number): boolean
 	d.Best = seconds
 	mirror(player)
 	save(player.UserId)
-	if fastBoard then
+	if fastBoard and not offBoards(player.UserId) then
 		local userId = player.UserId
 		task.spawn(function()
 			pcall(function()
@@ -378,7 +387,7 @@ function Stats.recordNight(players: { Player }, kind: string)
 			end
 			mirror(p)
 			save(p.UserId)
-			if board then
+			if board and not offBoards(p.UserId) then
 				local userId, value = p.UserId, d.Escapes
 				task.spawn(function()
 					pcall(function()
@@ -406,6 +415,22 @@ function Stats.init(c)
 		return DataStoreService:GetOrderedDataStore("FastestWin_v1")
 	end)
 	fastBoard = ok3 and fds or nil
+	-- (take the owner off the boards if an earlier version put them there)
+	task.spawn(function()
+		local ids = table.clone(ctx.Config and ctx.Config.Admins or {})
+		if game.CreatorType == Enum.CreatorType.User and game.CreatorId ~= 0 then
+			table.insert(ids, game.CreatorId)
+		end
+		for _, id in ids do
+			for _, b in { board, fastBoard } do
+				if b then
+					pcall(function()
+						b:RemoveAsync("u" .. id)
+					end)
+				end
+			end
+		end
+	end)
 end
 
 -- the top survivors (or, with "Fastest", the fastest wins), for the lobby signs: { { Name, Value } }
@@ -418,13 +443,16 @@ function Stats.top(n: number, which: string?)
 		return out
 	end
 	local ok, pages = pcall(function()
-		return store_:GetSortedAsync(fastest, n, if fastest then 1 else nil)
+		return store_:GetSortedAsync(fastest, n + 4, if fastest then 1 else nil)
 	end)
 	if not ok or not pages then
 		return out
 	end
 	for _, entry in pages:GetCurrentPage() do
 		local userId = tonumber(string.sub(entry.key, 2))
+		if #out >= n or (userId and offBoards(userId)) then
+			continue
+		end
 		local name = userId and names[userId] or "?"
 		if userId and not names[userId] then
 			local okName, n2 = pcall(function()
