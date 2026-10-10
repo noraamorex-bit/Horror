@@ -218,6 +218,54 @@ local function openBreakers(data)
 end
 
 ---------------------------------------------------------------------------
+-- a keypad: type the code, ENTER. A wrong code buzzes (and he hears it).
+local function openCode(data)
+	title.Text = "PADLOCK"
+	hint.Text = "The numbers are in his notes. A wrong code buzzes. Loud."
+	local len = math.clamp(tonumber(data.Len) or 4, 1, 8)
+	local typed = ""
+	local W = 520
+	local display = ctx.UI.label({
+		Position = UDim2.fromOffset(W / 2 - 150, 0), Size = UDim2.fromOffset(300, 56), Text = "", Font = ctx.UI.Font.Mono, TextSize = 40,
+		TextColor3 = Color3.fromRGB(255, 90, 70), BackgroundColor3 = Color3.fromRGB(20, 12, 12), BackgroundTransparency = 0, ZIndex = 32, Parent = body,
+	})
+	ctx.UI.corner(display, 8)
+	local function show()
+		local parts = {}
+		for i = 1, len do
+			table.insert(parts, string.sub(typed, i, i) ~= "" and string.sub(typed, i, i) or "_")
+		end
+		display.Text = table.concat(parts, " ")
+	end
+	show()
+	local keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "CLR", "0", "OK" }
+	for i, k in keys do
+		local col = (i - 1) % 3
+		local row = (i - 1) // 3
+		local b = button({
+			Position = UDim2.fromOffset(W / 2 - 150 + col * 104, 70 + row * 70), Size = UDim2.fromOffset(92, 60),
+			Text = k, TextSize = k == "CLR" and 18 or 26, ZIndex = 32,
+			BackgroundColor3 = k == "OK" and Color3.fromRGB(60, 150, 80) or (k == "CLR" and Color3.fromRGB(120, 50, 40) or Color3.fromRGB(46, 46, 52)),
+		})
+		b.Activated:Connect(function()
+			if k == "CLR" then
+				typed = ""
+			elseif k == "OK" then
+				if #typed == len then
+					hint.Text = "..."
+					send("Submit", typed)
+					typed = ""
+				end
+			elseif #typed < len then
+				typed ..= k
+				send("Click")
+			end
+			show()
+		end)
+	end
+end
+
+---------------------------------------------------------------------------
 function Puzzle.init(c)
 	ctx = c
 	ctx.PuzzleUI = Puzzle
@@ -279,6 +327,8 @@ function Puzzle.start()
 			openWires(payload.Data)
 		elseif payload.Kind == "Breakers" then
 			openBreakers(payload.Data)
+		elseif payload.Kind == "Code" then
+			openCode(payload.Data)
 		end
 		root.Visible = true
 		if ctx.Effects then

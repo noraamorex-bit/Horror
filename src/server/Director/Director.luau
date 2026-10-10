@@ -221,6 +221,9 @@ end
 
 function Director.onHide(player: Player)
 	Director.thinkOnce(player, "Hide", ctx.Story.Thoughts.Hide)
+	if ctx.Economy and ctx.Intruder and ctx.Intruder.isHunting() then
+		ctx.Economy.track(player, "Hides", 1)
+	end
 end
 
 function Director.onObjectiveDone()
@@ -307,7 +310,7 @@ local function startGame()
 	state.Countdown = nil
 	local participants = {}
 	for _, p in Players:GetPlayers() do
-		if #participants < ctx.Config.MaxPlayers then
+		if #participants < ctx.Config.MaxPlayers and not p:GetAttribute("Leaving") then
 			table.insert(participants, p)
 		end
 	end
@@ -510,6 +513,9 @@ function Director.startAct(name: string, cause: Player?)
 				p:SetAttribute(a, 0)
 			end
 		end
+		if ctx.Economy then
+			ctx.Economy.resetNight()
+		end
 		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Windows" })
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
@@ -641,7 +647,18 @@ end
 
 -- a clue read by anyone in the group counts toward the secret ending
 function Director.onDocument(player: Player, docId: string)
-	if not table.find(ctx.Story.Evidence, docId) or state.Evidence[docId] then
+	if not table.find(ctx.Story.Evidence, docId) then
+		return
+	end
+	-- (each clue counts once per reader for the quests, once per night for the evidence)
+	if ctx.Economy then
+		local key = "Clue_" .. docId
+		if not player:GetAttribute(key) then
+			player:SetAttribute(key, true)
+			ctx.Economy.track(player, "Clues", 1)
+		end
+	end
+	if state.Evidence[docId] then
 		return
 	end
 	state.Evidence[docId] = true
@@ -834,7 +851,12 @@ function Director.onDoorLockChanged(door, player: Player)
 end
 
 function Director.checkAllCaptured()
-	if state.Act == "Lobby" or ctx.Ending.isOver() then
+	if state.Act == "Lobby" or state.Act == "Below" or ctx.Ending.isOver() then
+		return
+	end
+	-- everyone (2+ players) tied up at once: not the end. The secret ending (FinaleService)
+	if ctx.Finale and ctx.Finale.tryStart() then
+		state.GoneQuietAt = nil
 		return
 	end
 	local session = ctx.Util.sessionPlayers()
@@ -880,6 +902,21 @@ function Director.checkAllCaptured()
 	else
 		state.GoneQuietAt = nil
 	end
+end
+
+-- the secret ending takes over the night: act V, under the house (FinaleService runs it)
+function Director.enterBelow()
+	state.Act = "Below"
+	state.ActStart = os.clock()
+	state.ActEnding = true
+	state.GoneQuietAt = nil
+	workspace:SetAttribute("Act", "Below")
+	local card = ctx.Story.Chapters.Below
+	if card then
+		ctx.Remotes.Chapter:FireAllClients(card.Title, card.Sub)
+	end
+	ctx.Objectives.set({})
+	Director.logTruthRaw("He didn't leave them in the boiler room. He took everyone down to what he'd dug under the house.")
 end
 
 -- everyone taken: with help on the way he slips out before it arrives; without, nobody comes
@@ -1200,6 +1237,11 @@ local function actTick()
 	-- tension decays
 	state.Tension = math.max(0, state.Tension - ctx.Config.Director.TensionDecay)
 	workspace:SetAttribute("Tension", math.floor(state.Tension))
+
+	-- under the house (the secret ending): nothing up there matters now
+	if state.Act == "Below" then
+		return
+	end
 
 	-- storm
 	if os.clock() >= state.NextLightning then

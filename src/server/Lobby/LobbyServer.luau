@@ -462,8 +462,9 @@ local function build(root: Folder)
 
 	-- queue circles on the patio: plain white outlines
 	for i, size in ctx.Config.Lobby.QueueSizes do
-		local x = (i - (#ctx.Config.Lobby.QueueSizes + 1) / 2) * 16
-		local center = ORIGIN + V(x, 0.72, -13)
+		-- (spread out, with room to walk between: the signs over them never overlap)
+		local x = (i - (#ctx.Config.Lobby.QueueSizes + 1) / 2) * 18
+		local center = ORIGIN + V(x, 0.72, -14)
 		local segments = ring(root, center, PAD_RADIUS)
 		local anchor = B.part(root, {
 			Name = "Pad" .. size,
@@ -475,10 +476,10 @@ local function build(root: Folder)
 		})
 		local bb = Instance.new("BillboardGui")
 		bb.Name = "QueueSign"
-		bb.Size = UDim2.fromScale(10, 4.6)
-		bb.StudsOffset = V(0, 6, 0)
+		bb.Size = UDim2.fromScale(7.5, 3.4)
+		bb.StudsOffset = V(0, 4.6, 0)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 160
+		bb.MaxDistance = 110
 		bb.Parent = anchor
 		local function line(name, y, h, font, color3)
 			local l = Instance.new("TextLabel")

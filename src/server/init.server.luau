@@ -64,6 +64,10 @@ setupLighting()
 local Stats = require(Services.StatsService)
 Stats.init(ctx)
 Stats.start()
+-- coins, gear, crates, the daily reward and quests (both places)
+local Economy = require(Services.EconomyService)
+Economy.init(ctx)
+Economy.start()
 
 -- Lobby servers: queue circles that teleport groups into their own game server
 local mode = ctx.Mode.get()
@@ -99,6 +103,7 @@ ctx.Admin = require(Services.AdminService)
 ctx.Cutscene = require(Services.CutsceneService)
 ctx.Heartbeat = require(Services.HeartbeatService)
 ctx.Puzzle = require(Services.PuzzleService)
+ctx.Finale = require(Services.FinaleService)
 ctx.Badges = require(Services.BadgeService)
 ctx.Badges.init(ctx)
 ctx.World = require(script.World.World)
@@ -107,7 +112,7 @@ ctx.Intruder = require(script.Intruder.Intruder)
 
 local ORDER = {
 	"Audio", "Noise", "Interaction", "Inventory", "Power", "Doors", "PlayerState", "Hiding", "Capture",
-	"Objectives", "Dialogue", "Phone", "Escape", "Chat", "Ending", "Revive", "Admin", "Cutscene", "Heartbeat", "Puzzle", "World", "Director", "Intruder",
+	"Objectives", "Dialogue", "Phone", "Escape", "Chat", "Ending", "Revive", "Admin", "Cutscene", "Heartbeat", "Puzzle", "Finale", "World", "Director", "Intruder",
 }
 
 for _, name in ORDER do
@@ -122,13 +127,31 @@ ctx.World.build()
 -- After an ending: a group's own server sends everyone back to the lobby place;
 -- otherwise (Studio, or if that fails) the house is rebuilt and the in-house lobby reopens.
 local restarting = false
-function ctx.restart(stayHere: boolean?)
+function ctx.restart(stayHere: boolean?, stayers: { [Player]: boolean }?)
 	if restarting then
 		return
 	end
 	restarting = true
-	-- a group's own server: everyone goes back to the lobby together
+	-- a group's own server: everyone goes back to the lobby together, except whoever asked for
+	-- another night here (the ending card's ANOTHER NIGHT): they get a fresh house in this server
 	local players = Players:GetPlayers()
+	local leaving = {}
+	for _, p in players do
+		if not (stayers and stayers[p]) then
+			table.insert(leaving, p)
+		end
+	end
+	if ctx.Reserved and #leaving > 0 and #leaving < #players and not stayHere then
+		for _, p in leaving do
+			p:SetAttribute("Leaving", true) -- on their way out: not part of the next night here
+		end
+		pcall(function()
+			TeleportService:TeleportAsync(ctx.Mode.lobbyPlaceId(), leaving)
+		end)
+		stayHere = true
+	elseif ctx.Reserved and #leaving == 0 and #players > 0 then
+		stayHere = true
+	end
 	if ctx.Reserved and #players > 0 and not stayHere then
 		local ok, err = pcall(function()
 			TeleportService:TeleportAsync(ctx.Mode.lobbyPlaceId(), players)
@@ -158,6 +181,9 @@ function ctx.restart(stayHere: boolean?)
 	for _, p in Players:GetPlayers() do
 		ctx.PlayerState.resetPlayer(p)
 		p:SetAttribute("InGame", nil)
+		if p:GetAttribute("Leaving") then
+			continue
+		end
 		task.spawn(function()
 			p:LoadCharacter()
 		end)

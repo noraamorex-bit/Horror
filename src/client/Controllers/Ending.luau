@@ -112,7 +112,7 @@ end
 
 --[[
 	opts: Headline, Good, Line, EndingTitle?, NewEnding?, Duration?, WinTime?, NewBest?, Revive?, ReviveIn?, Spectate?, Lobby?, RestartIn?,
-	ReturnToLobby?
+	ReturnToLobby?, Coins? ({Total, Lines, Balance})
 ]]
 local function showCard(opts)
 	closeCard()
@@ -194,6 +194,32 @@ local function showCard(opts)
 	elseif opts.Duration then
 		line({ Text = "Night lasted " .. tostring(opts.Duration), TextSize = 14, TextColor3 = UI.Color.Dim })
 	end
+	-- the night's coins: the total counts up, the reasons underneath (EconomyService.nightRewards)
+	local coins = opts.Coins
+	if type(coins) == "table" and (tonumber(coins.Total) or 0) > 0 then
+		local total = line({ Text = "", Font = UI.Font.Bold, TextSize = 30, TextColor3 = GOLD })
+		local parts = {}
+		for _, l in (type(coins.Lines) == "table" and coins.Lines or {}) do
+			table.insert(parts, string.format("%s +%d", tostring(l.Text), tonumber(l.Amount) or 0))
+		end
+		local why = line({ Text = table.concat(parts, "   ·   "), TextSize = 13, TextColor3 = UI.Color.Dim, TextTransparency = 1 })
+		task.spawn(function()
+			task.wait(1.2)
+			local n = tonumber(coins.Total) or 0
+			local t0 = os.clock()
+			while total.Parent and os.clock() - t0 < 1 do
+				total.Text = "+" .. math.floor(n * (os.clock() - t0)) .. " COINS"
+				task.wait()
+			end
+			if total.Parent then
+				total.Text = "+" .. n .. " COINS" .. (coins.Balance and ("   <font size=\"15\" color=\"#9a968e\">you have " .. tostring(coins.Balance) .. "</font>") or "")
+				UI.tween(why, 0.5, { TextTransparency = 0 })
+				if ctx.Effects then
+					ctx.Effects.playSound("UISelect", nil, { Caption = false })
+				end
+			end
+		end)
+	end
 
 	-- the buttons
 	order += 1
@@ -213,7 +239,19 @@ local function showCard(opts)
 			end
 		end)
 	end
-	if opts.ReturnToLobby then
+	if opts.ReturnToLobby and opts.RestartIn then
+		-- the night is over: another one with the same group, right here, or the lobby
+		local again
+		again = button(row, "ANOTHER NIGHT", true, 1, function()
+			ctx.Remotes.PlayAgain:FireServer()
+			again.Text = "WAITING FOR FRIENDS..."
+			again.AutoButtonColor = false
+		end)
+		again.Size = UDim2.fromOffset(250, 54)
+		button(row, "LOBBY", false, 2, function()
+			ctx.Remotes.LeaveGame:FireServer()
+		end)
+	elseif opts.ReturnToLobby then
 		button(row, opts.Spectate and "BACK TO LOBBY" or "PLAY AGAIN", not opts.Spectate, 2, function()
 			ctx.Remotes.LeaveGame:FireServer()
 		end)
@@ -247,7 +285,7 @@ local function showCard(opts)
 		task.spawn(function()
 			local left = opts.RestartIn
 			while left > 0 and screen.Parent do
-				countdown.Text = (opts.ReturnToLobby and "Back to the lobby in " or "The house resets in ") .. left .. "s"
+				countdown.Text = (opts.ReturnToLobby and "Back to the lobby in " or "The house resets in ") .. left .. "s" .. (opts.ReturnToLobby and "  (or ANOTHER NIGHT: stay together)" or "")
 				task.wait(1)
 				left -= 1
 			end
@@ -378,6 +416,7 @@ local function onResult(payload)
 		ReviveIn = payload.ReviveIn,
 		Spectate = payload.CanSpectate,
 		ReturnToLobby = payload.ReturnToLobby,
+		Coins = payload.Coins,
 	})
 end
 
@@ -409,6 +448,7 @@ local function onEnding(payload)
 			NewBest = payload.NewBest,
 			ReturnToLobby = payload.ReturnToLobby,
 			RestartIn = payload.RestartIn,
+			Coins = payload.Coins,
 		})
 		task.delay(8, function()
 			if card and ctx.Social then

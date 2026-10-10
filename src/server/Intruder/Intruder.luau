@@ -1912,11 +1912,14 @@ end
 -- going for someone (or a sound) flat out: the hunched lope and the running footsteps, whatever the speed
 local function hurrying(speed: number): boolean
 	local st = S.State
-	return speed > 4 and (st == "Chase" or st == "Charge" or st == "Prowl" or st == "Retreat" or (st == "Lurk" and speed > 7))
+	return speed > 4 and (st == "Chase" or st == "Charge" or st == "Prowl" or st == "Retreat" or (st == "Lurk" and speed > 7) or (st == "Puppet" and S.PuppetRun == true))
 end
 
 local function gaitFor(speed: number): string
 	local st = S.State
+	if st == "Puppet" and S.PuppetGait then
+		return S.PuppetGait
+	end
 	if st == "Stunned" then
 		return "Stunned"
 	elseif st == "CheckSpot" and S.Data.Phase == "Open" then
@@ -2024,6 +2027,10 @@ local function think(dt: number)
 		return
 	end
 	animate(dt)
+	-- (someone else is driving him: FinaleService)
+	if state == "Puppet" then
+		return
+	end
 	if S.Mode == "Hunt" then
 		recordTrails()
 		unstick(state)
@@ -2289,6 +2296,59 @@ function Intruder.stop()
 		S.Nav:stop()
 		S.Root.Anchored = true
 	end
+end
+
+--[[
+	Puppet: the brain is switched off and someone else drives him (the secret ending,
+	FinaleService). He keeps his own walk and run, gait, footsteps and breathing.
+	Returns a handle: place(pos, look?), moveTo(pos, speed, run?), stop(), face(pos), gait(name?),
+	position(), head(), model(), release().
+]]
+function Intruder.puppet()
+	ensureModel()
+	S.Mode = "Puppet"
+	setState("Puppet", {})
+	S.HoldUntil = 0
+	S.AdminFrozen = false
+	S.PuppetRun = false
+	S.PuppetGait = nil
+	local P = {}
+	function P.place(at: Vector3, look: Vector3?)
+		placeAt(at, look)
+		S.Nav:stop()
+	end
+	function P.moveTo(target: Vector3, speed: number?, run: boolean?)
+		S.PuppetRun = run == true
+		S.Root.Anchored = false
+		S.Nav:moveDirect(target, speed or tune().WalkSpeed)
+	end
+	function P.stop()
+		S.PuppetRun = false
+		S.Nav:stop()
+	end
+	function P.face(target: Vector3)
+		faceToward(target)
+	end
+	function P.gait(name: string?)
+		S.PuppetGait = name
+	end
+	function P.position(): Vector3?
+		return S.Root and S.Root.Position or nil
+	end
+	function P.head(): BasePart?
+		return S.Head
+	end
+	function P.model(): Model?
+		return S.Model
+	end
+	function P.release()
+		S.PuppetGait = nil
+		S.PuppetRun = false
+		if S.State == "Puppet" then
+			Intruder.stop()
+		end
+	end
+	return P
 end
 
 -- build him (offstage) ahead of time, so clients can show a copy of him (the opening shot)

@@ -8,6 +8,7 @@ local Interior = require(script.Parent.Interior)
 local Finish = require(script.Parent.Finish)
 local Exterior = require(script.Parent.Exterior)
 local Neighborhood = require(script.Parent.Neighborhood)
+local Burrow = require(script.Parent.Burrow)
 local Depth = require(script.Parent.Depth)
 local Props = require(script.Parent.Props)
 
@@ -31,6 +32,8 @@ function World.build()
 	Interior.build(ctx, f, refs)
 	Exterior.build(ctx, f, refs)
 	Neighborhood.build(ctx, f)
+	-- under it all: what he dug (the secret ending, FinaleService)
+	refs.Burrow = Burrow.build(ctx, f)
 	-- last: pull apart any surfaces that would flicker against each other
 	Depth.resolve(f)
 	-- nicer Creator Store models for the small props, loaded in the background

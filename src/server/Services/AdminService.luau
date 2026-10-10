@@ -125,6 +125,14 @@ COMMANDS.help = function(player, arg)
 	ctx.Escape.callForHelp(arg, player)
 	return "Help called (" .. arg .. ")."
 end
+-- the secret ending, now, with whoever's in the night (FinaleService)
+COMMANDS.finale = function()
+	if not ctx.Finale then
+		return "No finale here."
+	end
+	return ctx.Finale.adminStart() and "Everyone's going down for dinner." or "Can't start it now (already running, or the night is over)."
+end
+
 COMMANDS.police = function()
 	return ctx.Escape.adminPoliceSoon(5) and "Police arrive in 5s." or "Call for help first."
 end

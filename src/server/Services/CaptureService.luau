@@ -68,6 +68,9 @@ function Capture.release(player: Player, by: Player?)
 		if ctx.Badges then
 			ctx.Badges.award(by, "Rescuer")
 		end
+		if ctx.Economy then
+			ctx.Economy.track(by, "Rescues", 1)
+		end
 	end
 	local data = captives[player]
 	if not data then
@@ -91,6 +94,19 @@ function Capture.release(player: Player, by: Player?)
 	if ctx.Director then
 		ctx.Director.onRescue(player, by)
 	end
+end
+
+-- the secret ending takes everyone from the boiler room (FinaleService ties them up again)
+function Capture.clearForFinale()
+	for p, data in captives do
+		if data.Prompt then
+			data.Prompt:Destroy()
+		end
+		p:SetAttribute("Captured", nil)
+		p:SetAttribute("StruggleProgress", nil)
+	end
+	slots = {}
+	captives = {}
 end
 
 -- what the others hear when he takes someone: a heavy thud, a scream cut short

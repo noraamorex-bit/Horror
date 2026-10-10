@@ -21,8 +21,9 @@ function Documents.close()
 	openedAt = nil
 end
 
-function Documents.open(docId: string)
-	local doc = ctx.Story.Documents[docId]
+-- (doc: a document made on the server, e.g. his notes with tonight's lock code)
+function Documents.open(docId: string, override: any?)
+	local doc = (type(override) == "table" and type(override.Body) == "string") and override or ctx.Story.Documents[docId]
 	if not doc then
 		return
 	end

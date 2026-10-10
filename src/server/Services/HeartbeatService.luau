@@ -43,6 +43,9 @@ local function finish(s, result: string)
 	if s.Player.Parent then
 		ctx.Remotes.Heartbeat:FireClient(s.Player, { Id = s.Id, Result = result })
 	end
+	if result == "Pass" and ctx.Economy then
+		ctx.Economy.track(s.Player, "Heartbeats", 1)
+	end
 end
 
 local function record(s, i: number, hit: boolean)

@@ -118,6 +118,10 @@ function Shop.init(c)
 	ctx.ShopUI = Shop
 end
 
+function Shop.toast(text: string)
+	toast(text)
+end
+
 function Shop.start()
 	if ctx.Mode ~= "Lobby" then
 		return
@@ -125,49 +129,16 @@ function Shop.start()
 	local UI = ctx.UI
 	local inset = GuiService:GetGuiInset()
 
-	-- the button: right edge, middle of the screen (clear of the jump button and the menu)
-	local button = UI.new("TextButton", {
-		Name = "ShopButton",
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -math.max(16, inset.X + 16), 0.42, 0),
-		Size = UDim2.fromOffset(84, 84),
-		Text = "",
-		BackgroundColor3 = Color3.fromRGB(12, 12, 14),
-		BackgroundTransparency = 0.25,
-		ZIndex = 30,
-		Parent = UI.Root,
-	})
-	UI.corner(button, 14)
-	UI.stroke(button, Color3.new(1, 1, 1), 1.5, 0.6)
-	UI.label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 12), Size = UDim2.fromOffset(40, 32), Text = "R$", Font = UI.Font.Bold, TextSize = 28, TextColor3 = GOLD, ZIndex = 31, Parent = button })
-	UI.label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -10), Size = UDim2.fromOffset(80, 22), Text = "SHOP", Font = UI.Font.Bold, TextSize = 18, ZIndex = 31, Parent = button })
-	-- the "!": pulses until you've opened the shop
-	badge = UI.new("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0, 4, 0, 4),
-		Size = UDim2.fromOffset(30, 30),
-		BackgroundColor3 = GOLD,
-		ZIndex = 32,
-		Parent = button,
-	})
-	UI.corner(badge, 15)
-	UI.label({ Size = UDim2.fromScale(1, 1), Text = "!", Font = UI.Font.Bold, TextSize = 22, TextColor3 = Color3.fromRGB(14, 14, 16), ZIndex = 33, Parent = badge })
-	local scale = UI.new("UIScale", { Parent = badge })
-	local bscale = UI.new("UIScale", { Parent = button })
-	task.spawn(function()
-		local t = 0
-		while badge.Parent do
-			t += task.wait(1 / 30)
-			if badge.Visible then
-				scale.Scale = 1 + 0.18 * math.abs(math.sin(t * 3))
-				-- every few seconds the whole button gives a little hop
-				local k = (t % 4)
-				bscale.Scale = k < 0.3 and 1 + 0.08 * math.sin(k / 0.3 * math.pi) or 1
-			else
-				bscale.Scale = 1
-			end
+	-- the button: an icon in the lobby dock, with a "!" until you've had a look
+	local _
+	_, badge = ctx.Dock.add({ Order = 4, Glyph = "R$", Label = "SHOP", Color = GOLD, OnClick = function()
+		if panel.Visible then
+			panel.Visible = false
+		else
+			Shop.open()
 		end
-	end)
+	end })
+	badge.Visible = true
 
 	-- the panel
 	panel = UI.new("Frame", {
@@ -314,13 +285,6 @@ function Shop.start()
 	workspace:GetAttributeChangedSignal("TopDonors"):Connect(refreshDonors)
 	select("Passes")
 
-	button.Activated:Connect(function()
-		if panel.Visible then
-			panel.Visible = false
-		else
-			Shop.open()
-		end
-	end)
 	-- the donation board on the lawn
 	ProximityPromptService.PromptTriggered:Connect(function(prompt)
 		if prompt.Name == "DonatePrompt" then

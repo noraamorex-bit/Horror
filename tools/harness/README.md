@@ -18,3 +18,15 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
   Figure brain hunting three players; reports stalls, slips, climbs and time in each state.
   (The survey is cached in the scratchpad as `navgrid_cache.json`: delete it after changing
   the house.)
+- `economy_test.luau`: coins. A fake DataStore another "server" writes to as well: coins and gear
+  are added onto what's saved (never overwritten), a Robux pack receipt pays once, crate odds hold
+  over 5000 rolls and duplicates refund, equip only what you own, the daily streak (once a day,
+  resets after a gap), quests pay once, the night's loadout is handed out and used up, the night
+  pays once.
+- `finale_test.luau escape|bedtime|patrol`: the secret ending in the navsim world. `escape`: two
+  players taken at once wake at the dinner table; a strike for struggling while he watches, one
+  struggles free, gets caught off their chair and tied again, both get free, he leaves; the notes
+  give the code (each note document shows its digit), the keypad never sends the answer and turns
+  down a wrong code, the hatch takes four pushes, one climbs out to the yard; the other walks into
+  him → Not Your Family. `bedtime`: nobody gets out → Forever Family. `patrol`: 120 s of patrol
+  visits the tunnel nodes without a long stall and never finds players crouched in the nooks.

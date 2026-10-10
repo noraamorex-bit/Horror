@@ -165,6 +165,10 @@ local function refreshTop()
 end
 
 local function onReceipt(info)
+	-- coin packs (EconomyService keeps its own receipts with the coins)
+	if ctx.Economy and ctx.Economy.isPack(info.ProductId) then
+		return ctx.Economy.onReceipt(info)
+	end
 	-- a revive: the game server brings you back; anywhere else it's saved for your next death
 	local revive = ctx.Config.Shop.Revive
 	if revive and revive.Id > 0 and info.ProductId == revive.Id then

@@ -6,12 +6,14 @@
 	"Breakers"  the breaker panel after the power's gone: a few circuits have tripped. Reset them,
 	            then throw the MAIN. Flip a good one by mistake and it needs resetting too; throw
 	            the MAIN with anything still off and it just clunks.
+	"Code"      a keypad lock (the secret ending's cellar hatch): type the digits. The answer stays
+	            on the server (the client only gets the length); a wrong code buzzes, loud.
 
 	It isn't safe while you're at it: every slip (a wrong wire, a dead MAIN) sparks or clunks, and
 	he hears it. The server deals each puzzle and checks the answer (the breaker taps are replayed);
 	you have to stay at the box.
 
-		Puzzle.open(player, kind, part, data, onSolved)   -- data: from Puzzle.wires(n) / Puzzle.breakers()
+		Puzzle.open(player, kind, part, data, onSolved, clientData?)   -- data: from Puzzle.wires(n) / Puzzle.breakers() / Puzzle.code(s)
 		Puzzle.close(player)
 		Puzzle.isOpen(player)
 ]]
@@ -74,6 +76,11 @@ function Puzzle.breakers(tripped: number?)
 	return { Labels = Puzzle.Circuits, Tripped = out }
 end
 
+-- a keypad code (the answer never goes to the client: open with clientData = { Len })
+function Puzzle.code(answer: string)
+	return { Answer = answer, Len = #answer }
+end
+
 function Puzzle.isOpen(player: Player): boolean
 	return sessions[player] ~= nil
 end
@@ -89,18 +96,21 @@ function Puzzle.close(player: Player, result: string?)
 	end
 end
 
-function Puzzle.open(player: Player, kind: string, part: BasePart, data, onSolved: (Player) -> ())
+function Puzzle.open(player: Player, kind: string, part: BasePart, data, onSolved: (Player) -> (), clientData: any?)
 	Puzzle.close(player)
 	seq += 1
 	local s = { Id = seq, Kind = kind, Part = part, Data = data, OnSolved = onSolved, LastSlip = 0 }
 	sessions[player] = s
-	ctx.Remotes.Puzzle:FireClient(player, { Id = s.Id, Kind = kind, Data = data })
+	ctx.Remotes.Puzzle:FireClient(player, { Id = s.Id, Kind = kind, Data = clientData or data })
 	return s
 end
 
 -- is this answer right? (Wires: the right-hand index each left wire went to; Breakers: every tap, in
 -- order, 0 = MAIN)
 function Puzzle.check(kind: string, data, answer): boolean
+	if kind == "Code" then
+		return type(answer) == "string" and answer == data.Answer
+	end
 	if type(answer) ~= "table" then
 		return false
 	end
@@ -158,6 +168,10 @@ local function slip(player: Player, s)
 		ctx.Audio.playAt("BreakerClick", at, { Caption = false, Pitch = 1.6 })
 		ctx.Audio.caption("[A crackle of sparks]", at, 30)
 		ctx.Noise.emit(at, 22, "Spark", player)
+	elseif s.Kind == "Code" then
+		ctx.Audio.playAt("Breaker", at, { Volume = 0.8, Pitch = 1.8, Caption = false })
+		ctx.Audio.caption(ctx.Story.Finale and ctx.Story.Finale.WrongCode or "[The lock buzzes]", at, 40)
+		ctx.Noise.emit(at, 45, "Buzz", player)
 	else
 		ctx.Audio.playAt("Breaker", at, { Volume = 0.7 })
 		ctx.Noise.emit(at, 30, "Breaker", player)
@@ -187,6 +201,9 @@ function Puzzle.start()
 			if Puzzle.check(s.Kind, s.Data, payload) then
 				Puzzle.close(player, "Solved")
 				task.spawn(s.OnSolved, player)
+				if ctx.Economy then
+					ctx.Economy.track(player, "Puzzles", 1)
+				end
 			else
 				slip(player, s)
 			end

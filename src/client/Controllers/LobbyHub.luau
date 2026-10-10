@@ -89,10 +89,10 @@ function LobbyHub.start()
 	local function menuButton(parent, text: string, order: number, primary: boolean?): TextButton
 		local b = UI.new("TextButton", {
 			LayoutOrder = order,
-			Size = UDim2.fromOffset(MENU_W, primary and 54 or 42),
+			Size = UDim2.fromOffset(MENU_W, primary and 54 or 38),
 			Text = text,
 			Font = primary and UI.Font.Bold or Enum.Font.GothamMedium,
-			TextSize = primary and 21 or 17,
+			TextSize = primary and 21 or 16,
 			TextColor3 = primary and Color3.fromRGB(12, 12, 14) or Color3.fromRGB(235, 232, 226),
 			BackgroundColor3 = primary and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(12, 12, 14),
 			BackgroundTransparency = primary and 0 or 0.35,
@@ -124,10 +124,8 @@ function LobbyHub.start()
 		end)
 	end
 	UI.new("Frame", { LayoutOrder = 2, Size = UDim2.fromOffset(MENU_W, 6), BackgroundTransparency = 1, Parent = menu })
+	-- (just the three extras; coins, the locker, rewards and the shop are icons on the right: Dock)
 	local endingsBtn = menuButton(menu, "Endings", 3)
-	local beamBtn = menuButton(menu, "Flashlight", 4)
-	ctx.Social.button(menu, "invite", { LayoutOrder = 5, Size = UDim2.fromOffset(MENU_W, 42), TextSize = 17 })
-	ctx.Social.button(menu, "favorite", { LayoutOrder = 6, Size = UDim2.fromOffset(MENU_W, 42), TextSize = 17 })
 	menuButton(menu, "How to play", 8).Activated:Connect(function()
 		ctx.Notice.show({
 			Title = "HOW TO PLAY",
@@ -136,8 +134,9 @@ function LobbyHub.start()
 				.. "• When he's hunting, he hunts by SOUND: crouch and he can't hear you, run and he will. Or HIDE: closets, wardrobes, under beds.\n"
 				.. "• If he stops at your hiding spot to listen, keep your heartbeat steady (press the side each half-heart flies in from).\n"
 				.. "• Get help: fix the phone line and call 911, reach the neighbor, or take the car.\n"
-				.. "• Caught once, you're tied up in the boiler room: struggle free, or a friend can cut you loose. Caught twice and you're out.\n\n"
-				.. "8 endings to find. One of them is secret.",
+				.. "• Caught once, you're tied up in the boiler room: struggle free, or a friend can cut you loose. Caught twice and you're out.\n"
+				.. "• Every night pays COINS. Spend them in the STORE on gear for your next night, or on crates.\n\n"
+				.. #ctx.Story.EndingOrder .. " endings to find. Some of them are secret.",
 			Button = "GOT IT",
 		})
 	end)
@@ -148,100 +147,6 @@ function LobbyHub.start()
 	end)
 	lobbyMenu = menu
 
-	-- flashlight colours, unlocked by bringing friends (StatsService.Beams)
-	local BEAMS = {
-		{ Id = "Classic", Name = "Classic", Need = 0, Color = Color3.fromRGB(255, 244, 222) },
-		{ Id = "Ember", Name = "Ember", Need = 1, Color = Color3.fromRGB(255, 140, 50) },
-		{ Id = "Moonlight", Name = "Moonlight", Need = 3, Color = Color3.fromRGB(130, 175, 255) },
-		{ Id = "Blood", Name = "Blood moon", Need = 5, Color = Color3.fromRGB(255, 45, 40) },
-		{ Id = "Gold", Name = "Gold", Pass = "Supporter", PassName = "Supporter pass", Color = Color3.fromRGB(255, 196, 60) },
-		{ Id = "Ghost", Name = "Ghost", Pass = "Colours", PassName = "Colours pass", Color = Color3.fromRGB(120, 255, 185) },
-	}
-	local me = game:GetService("Players").LocalPlayer
-	local beams = UI.new("Frame", {
-		AnchorPoint = Vector2.new(0, 0),
-		Position = UDim2.new(0, math.max(16, inset.X + 16) + MENU_W + 12, 0, inset.Y + 10),
-		Size = UDim2.fromOffset(240, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundColor3 = UI.Color.Panel,
-		BackgroundTransparency = 0.15,
-		Visible = false,
-		ZIndex = 20,
-		Parent = UI.Root,
-	})
-	UI.corner(beams, 8)
-	UI.stroke(beams, Color3.new(1, 1, 1), 1, 0.8)
-	UI.padding(beams, 10)
-	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = beams })
-	local beamHead = UI.label({ LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 34), Text = "", TextSize = 13, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 21, Parent = beams })
-	local rows = {}
-	for i, b in BEAMS do
-		local row = UI.new("TextButton", {
-			LayoutOrder = i,
-			Size = UDim2.new(1, 0, 0, 30),
-			Text = "",
-			BackgroundColor3 = Color3.fromRGB(24, 24, 26),
-			BackgroundTransparency = 0.2,
-			ZIndex = 21,
-			Parent = beams,
-		})
-		UI.corner(row, 6)
-		local dot = UI.new("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0), Size = UDim2.fromOffset(12, 12), BackgroundColor3 = b.Color, ZIndex = 22, Parent = row })
-		UI.corner(dot, 6)
-		local label = UI.label({ Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -40, 1, 0), Text = b.Name, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 22, Parent = row })
-		local stroke = UI.stroke(row, Color3.new(1, 1, 1), 1, 1)
-		rows[b.Id] = { Row = row, Label = label, Stroke = stroke, Def = b }
-		row.Activated:Connect(function()
-			-- a colour you don't have yet: the shop (the Colours pass unlocks every invite colour)
-			local n = tonumber(me:GetAttribute("StatReferrals")) or 0
-			local unlocked
-			if b.Pass then
-				unlocked = me:GetAttribute("Pass_" .. b.Pass) == true
-			else
-				unlocked = me:GetAttribute("Pass_Colours") == true or n >= b.Need or (b.Need == 1 and me:GetAttribute("StatReferred") == true)
-			end
-			if not unlocked then
-				if ctx.ShopUI then
-					ctx.ShopUI.open("Passes")
-				end
-				return
-			end
-			ctx.Remotes.SetBeam:FireServer(b.Id)
-			if ctx.Effects then
-				ctx.Effects.playSound("FlashlightOn", nil, { Caption = false })
-			end
-		end)
-	end
-	local function showBeams()
-		local n = tonumber(me:GetAttribute("StatReferrals")) or 0
-		local referred = me:GetAttribute("StatReferred") == true
-		beamHead.Text = "Invite friends to unlock colours. Friends brought: " .. n
-		local colours = me:GetAttribute("Pass_Colours") == true
-		for id, r in rows do
-			local unlocked
-			if r.Def.Pass then
-				unlocked = me:GetAttribute("Pass_" .. r.Def.Pass) == true
-			else
-				unlocked = colours or n >= r.Def.Need or (r.Def.Need == 1 and referred)
-			end
-			local chosen = me:GetAttribute("StatBeam") == id or (me:GetAttribute("StatBeam") == nil and id == "Classic")
-			if r.Def.Pass then
-				r.Label.Text = unlocked and r.Def.Name or (r.Def.Name .. "   ·   " .. r.Def.PassName)
-			else
-				r.Label.Text = unlocked and r.Def.Name or (r.Def.Name .. "   ·   bring " .. r.Def.Need .. (r.Def.Need == 1 and " friend" or " friends"))
-			end
-			r.Label.TextTransparency = unlocked and 0 or 0.5
-			r.Row.AutoButtonColor = unlocked
-			r.Stroke.Transparency = chosen and 0.2 or 1
-		end
-	end
-	for _, a in { "StatReferrals", "StatReferred", "StatBeam", "Pass_Colours", "Pass_Supporter" } do
-		me:GetAttributeChangedSignal(a):Connect(showBeams)
-	end
-	showBeams()
-	beamBtn.Activated:Connect(function()
-		beams.Visible = not beams.Visible
-	end)
 	local collection = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.55),
@@ -347,11 +252,24 @@ function LobbyHub.start()
 	end
 	showRecord()
 
-	ctx.Notice.show({
-		Title = "Welcome to Hollis Creek",
-		Body = "Tap PLAY SOLO to start right away, or FIND PLAYERS to team up with others.\n\nYou can also walk into a white circle to queue for 1, 2, 3 or 4 players. Invite friends to play together!",
-		Button = "OK",
-	})
+	-- (only the first time: returning players go straight to playing)
+	task.spawn(function()
+		local nights = player:GetAttribute("StatNights")
+		if nights == nil then
+			local t0 = os.clock()
+			repeat
+				task.wait(0.2)
+				nights = player:GetAttribute("StatNights")
+			until nights ~= nil or os.clock() - t0 > 4
+		end
+		if (tonumber(nights) or 0) == 0 then
+			ctx.Notice.show({
+				Title = "Welcome to Hollis Creek",
+				Body = "Tap PLAY SOLO to start right away, or FIND PLAYERS to team up with others.\n\nYou can also walk into a white circle to queue for 1, 2, 3 or 4 players. Here are 100 coins to start: spend them in the STORE (right side).",
+				Button = "OK",
+			})
+		end
+	end)
 
 	-- your queue: at the top of the left-hand menu, in place of the play buttons
 	panel = UI.new("Frame", {

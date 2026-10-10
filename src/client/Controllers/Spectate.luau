@@ -1,6 +1,8 @@
 --[[
-	Spectate — caught twice, you're out of the night: the camera follows the friends still
+	Spectate — out of the night (caught twice, or escaped): the camera follows the friends still
 	playing (tap / click to switch). With nobody left, it looks at the house from the street.
+	Escaping starts it on its own (you never stand around in a room next door); the result
+	card's SPECTATE button (ctx.Spectate.begin) does the same.
 ]]
 
 local Players = game:GetService("Players")
@@ -19,7 +21,8 @@ local active = false
 local function living(): { Player }
 	local list = {}
 	for _, p in Players:GetPlayers() do
-		if p ~= player and p:GetAttribute("InGame") and not p:GetAttribute("Captured") and not p:GetAttribute("Escaped") then
+		-- (in the secret ending even the ones tied to their chairs are worth watching)
+		if p ~= player and p:GetAttribute("InGame") and (not p:GetAttribute("Captured") or p:GetAttribute("FinaleRole") == "Guest") and not p:GetAttribute("Escaped") then
 			table.insert(list, p)
 		end
 	end
@@ -55,7 +58,8 @@ end
 local manual = false -- watching by choice (escaped, or from a result card)
 
 local function refresh()
-	local dead = (player:GetAttribute("Dead") == true or manual) and workspace:GetAttribute("EndingActive") == nil
+	local out = player:GetAttribute("Dead") == true or player:GetAttribute("Escaped") ~= nil or manual
+	local dead = out and workspace:GetAttribute("EndingActive") == nil
 	if dead == active then
 		return
 	end
@@ -93,6 +97,7 @@ end
 
 function Spectate.init(c)
 	ctx = c
+	ctx.Spectate = Spectate
 end
 
 -- watch the friends still in the house (from a result card)
@@ -149,6 +154,10 @@ function Spectate.start()
 		end
 	end)
 	player:GetAttributeChangedSignal("Dead"):Connect(refresh)
+	-- out of the house: straight to watching your friends (after the escape fade)
+	player:GetAttributeChangedSignal("Escaped"):Connect(function()
+		task.delay(player:GetAttribute("Escaped") and 1.2 or 0, refresh)
+	end)
 	workspace:GetAttributeChangedSignal("EndingActive"):Connect(function()
 		if workspace:GetAttribute("EndingActive") then
 			manual = false
@@ -172,7 +181,7 @@ function Spectate.start()
 			return
 		end
 		acc = 0
-		if watching and (not watching.Parent or watching:GetAttribute("Captured") or watching:GetAttribute("Escaped")) then
+		if watching and (not watching.Parent or (watching:GetAttribute("Captured") and watching:GetAttribute("FinaleRole") ~= "Guest") or watching:GetAttribute("Escaped")) then
 			nextTarget()
 		elseif not watching and #living() > 0 then
 			nextTarget()

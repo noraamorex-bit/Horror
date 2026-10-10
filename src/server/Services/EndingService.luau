@@ -21,6 +21,8 @@ local ended: { [Player]: string } = {} -- player -> "Escaped" | "Died": already 
 local reviveUntil = 0 -- the last one standing died: the night waits this long for a revive
 local seq = 0 -- bumped on every death / revive, so a stale timer from an earlier death does nothing
 local doneSeq: { [Player]: number } = {}
+local stayers: { [Player]: boolean } = {} -- "another night": stay together in this server
+local restartSeq = 0
 
 function Ending.init(c)
 	ctx = c
@@ -32,8 +34,23 @@ function Ending.reset()
 	reviveUntil = 0
 	seq += 1
 	doneSeq = {}
+	stayers = {}
+	restartSeq += 1
 	workspace:SetAttribute("EndingActive", nil)
 end
+
+-- the night's over: back to the lobby (or, for whoever asked for another night, a fresh house here)
+local function finishNight()
+	restartSeq += 1
+	local stay = {}
+	for p in stayers do
+		if p.Parent then
+			stay[p] = true
+		end
+	end
+	ctx.restart(false, stay)
+end
+Ending._finishNight = finishNight
 
 function Ending.isOver(): boolean
 	return over
@@ -99,6 +116,12 @@ local function shotsFor(kind: string)
 			{ From = look(V(-30, 8, -96), houseFront), To = look(V(-10, 11, -74), attic), Time = 3.5 },
 		},
 	}
+	if ctx.Finale and ctx.Finale.shots then
+		local f = ctx.Finale.shots(kind)
+		if f then
+			return f
+		end
+	end
 	return S[kind] or street
 end
 
@@ -172,6 +195,15 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 		local R = ctx.Story.Results
 		local res = outcome == "Died" and R.Died or R.Escaped
 		local winTime = outcome ~= "Died" and player:GetAttribute("WinTime") or nil
+		-- your coins for the night (the bonus for a new ending comes with the ending itself)
+		local coins = nil
+		if ctx.Economy then
+			local ok, c = pcall(ctx.Economy.nightRewards, player, {
+				Seconds = ctx.Director.elapsedSeconds and ctx.Director.elapsedSeconds() or 0,
+				Survived = outcome ~= "Died",
+			})
+			coins = ok and c or nil
+		end
 		ctx.Remotes.Result:FireClient(player, {
 			Outcome = outcome,
 			Time = winTime and ctx.Util.formatSeconds(winTime) or nil,
@@ -185,6 +217,7 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 			ReviveProduct = canRevive and ctx.Revive.productId() or nil,
 			CanSpectate = #inPlay() > 0,
 			ReturnToLobby = ctx.Reserved == true,
+			Coins = coins,
 		})
 	end)
 end
@@ -275,6 +308,36 @@ function Ending.trigger(kind: string)
 		end
 	end
 
+	-- coins and quest progress for the night (EconomyService)
+	local coinsFor: { [Player]: any } = {}
+	if ctx.Economy then
+		local firstSet = {}
+		for _, id in firstFor do
+			firstSet[id] = true
+		end
+		local seconds2 = ctx.Director.elapsedSeconds and ctx.Director.elapsedSeconds() or 0
+		for _, p in ctx.Util.sessionPlayers() do
+			local ok, c = pcall(ctx.Economy.nightRewards, p, {
+				Seconds = seconds2,
+				Survived = p:GetAttribute("Escaped") ~= nil or (not bad and not p:GetAttribute("Dead") and not p:GetAttribute("Captured")),
+				NewEnding = firstSet[p.UserId] == true,
+				Secret = story.Secret == true and not bad and not p:GetAttribute("Dead"),
+			})
+			if ok then
+				coinsFor[p] = c
+			end
+		end
+		pcall(ctx.Economy.nightEnded, ctx.Util.sessionPlayers(), kind, firstSet)
+		-- the secret ending's own title (not in any crate)
+		if kind == "NotYourFamily" then
+			for _, p in ctx.Util.sessionPlayers() do
+				if not p:GetAttribute("Dead") and ctx.Economy.grantCosmetic(p, "Title_Family") then
+					ctx.Remotes.Notify:FireClient(p, "Title unlocked: Not Your Family (equip it in the lobby LOCKER)", "done")
+				end
+			end
+		end
+	end
+
 	-- the car leaving is part of the shot when the night ends on it
 	local car = ctx.Escape.carModel and ctx.Escape.carModel() or nil
 	local shots = shotsFor(kind)
@@ -297,15 +360,44 @@ function Ending.trigger(kind: string)
 			RestartIn = restartIn,
 			ReturnToLobby = ctx.Reserved == true,
 			InGame = p:GetAttribute("InGame") == true,
+			Coins = coinsFor[p],
 		})
 	end
 
+	local mySeq = restartSeq
 	task.delay(restartIn, function()
-		ctx.restart()
+		if restartSeq == mySeq then
+			finishNight()
+		end
 	end)
 end
 
 function Ending.start()
+	-- "Another night" from the ending card: the group stays together (no trip through the lobby).
+	-- Everyone still here asks: it starts right away.
+	ctx.Remotes.PlayAgain.OnServerEvent:Connect(function(player)
+		if not over or stayers[player] then
+			return
+		end
+		stayers[player] = true
+		local want, total = 0, 0
+		for _, p in Players:GetPlayers() do
+			total += 1
+			if stayers[p] then
+				want += 1
+			end
+		end
+		for _, p in Players:GetPlayers() do
+			ctx.Remotes.Notify:FireClient(p, string.format("%s wants another night (%d/%d)", player.DisplayName, want, total), "info")
+		end
+		if want >= total then
+			task.delay(1.5, function()
+				if over then
+					finishNight()
+				end
+			end)
+		end
+	end)
 	-- "Back to the lobby" from a result card
 	ctx.Remotes.LeaveGame.OnServerEvent:Connect(function(player)
 		if not ctx.Reserved then

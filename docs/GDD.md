@@ -137,8 +137,9 @@ Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that 
 
 ### First impression, sharing and records
 - **Loading screen** (`src/first/Loading.client.luau`, ReplicatedFirst): replaces Roblox's default. Rain streaks down a black screen, one warm window glows, and every few seconds a figure is standing in it. Title, a one-line hook, a gameplay tip and a progress bar; it fades out once the game has loaded.
-- **Lobby menu:** a small, plain column in the top-left corner (dark glass, thin outline, white text): Play solo, Find players, Endings, Invite friends, Favorite. While you're queued, your queue status takes the play buttons' place. Play solo / Find players put you straight into a queue circle (FIND PLAYERS picks the group circle with the most people waiting, or the smallest when all are empty); walking into a circle still works.
-- **Invite and favorite** (`client/Controllers/Social`): an INVITE FRIENDS and a FAVORITE button under the lobby title and on the ending screen; the favorite prompt also appears once, 8 s into the first ending of a session.
+- **Lobby menu:** a small, plain column in the top-left corner (dark glass, thin outline, white text): PLAY SOLO and FIND PLAYERS, then three small links: Endings, How to play, Settings. While you're queued, your queue status takes the play buttons' place.
+- **Lobby dock** (`client/Controllers/Dock`): a slim column of icons on the right edge with your coin balance on top: 🎁 REWARDS, 🛒 STORE, 🔦 LOCKER, ⭐ SHOP. Each opens one panel; a dot pulses on REWARDS while today's reward is unclaimed. Play solo / Find players put you straight into a queue circle (FIND PLAYERS picks the group circle with the most people waiting, or the smallest when all are empty); walking into a circle still works.
+- **Invite and favorite** (`client/Controllers/Social`): on the ending screen; the favorite prompt also appears once, 8 s into the first ending of a session. (The lobby no longer has these buttons: inviting lives in the Locker, where a locked invite colour asks you to bring a friend.)
 - **Saved records** (`Services/StatsService`, DataStore `PlayerStats_v1`): nights played, nights survived, and endings found. The lobby shows `NIGHTS · SURVIVED · ENDINGS x / y`; the ending card says NEW ENDING FOUND the first time you see one.
 - **Endings collection:** an ENDINGS button in the lobby lists all six endings; found ones by name, the rest as ??? with a hint.
 - **Survivors' board:** a lit sign beside the queue circles shows the top 10 players by nights survived (OrderedDataStore `NightsSurvived_v1`).
@@ -224,12 +225,42 @@ When help has been called, a police timer starts (150 s by phone, 120 s via neig
 | **Gone Quiet** (bad) | Every player still in the house was captured before help was called. |
 | **He Got Away** (bad) | Help was called, but everyone was taken before it arrived: all dead, or all zip-tied with nobody breaking free in the 45 s last chance. Ends at once; the police timer doesn't run out on an empty house. |
 | **Dawn** | The session hit the 60-minute cap. |
+| **Not Your Family** (secret) | Everyone was zip-tied at the same time (2+ players)... and at least one of you got out of the burrow under the house. See *The secret ending: Down Here*. |
+| **Forever Family** (bad, secret) | Same, but nobody got out before bedtime (or before he had everyone back at the table). |
 
 Paintings are real public-domain artworks: free Creator Store decals (`World/Art`), loaded onto the canvases at runtime by `World/Props`. Wall spans with furniture or fixtures in front are listed in `Layout.NoArt`.
 
-Every ending plays a short letterboxed cutscene for that ending (the car's taillights going down the road, the police at the van, dawn over the house...) with one line of what happened (`Story.Endings[kind].Short`), skippable with SKIP. Then a simple result card: **YOU SURVIVED / YOU ESCAPED / YOU DIED / YOU WERE TAKEN**, the ending's name, that one line, a NEW ENDING tag when it's your first time, and PLAY AGAIN / BACK TO LOBBY.
+Every ending plays a short letterboxed cutscene for that ending (the car's taillights going down the road, the police at the van, dawn over the house...) with one line of what happened (`Story.Endings[kind].Short`), skippable with SKIP. Then a simple result card: **YOU SURVIVED / YOU ESCAPED / YOU DIED / YOU WERE TAKEN**, the ending's name, that one line, a NEW ENDING tag when it's your first time, the **coins** you earned (counting up, with the reasons and your new balance), and **ANOTHER NIGHT** / LOBBY. ANOTHER NIGHT keeps you in this server: everyone who presses it plays the next night together in a fresh house ("Sam wants another night (1/3)"); once everyone has chosen, it starts at once. Whoever doesn't press it goes back to the lobby when the countdown ends.
 
-Out early: escaping in the car or next door, or dying, while friends are still inside gives you your own card straight away (Remotes.Result) with a SPECTATE button. Solo, an escape or death ends the night on the spot.
+Out early: escaping in the car or next door, or dying, while friends are still inside gives you your own card straight away (Remotes.Result) with a SPECTATE button. Solo, an escape or death ends the night on the spot. Escaped players wait at Mrs. Okafor's (frozen, out of sight) and watch their friends from there: the spectate camera follows anyone still in the house, including friends tied up at the dinner table. (They used to be left standing in a bare room inside her house.)
+
+### The secret ending: Down Here (`FinaleService`, `World/Burrow`, client `Finale`)
+If **every** player in a 2+ player night is zip-tied at the same moment (in Act III or IV, nobody escaped), the bad ending doesn't come. The screen goes black and everyone wakes up **under the house**: the burrow Curtis has dug beneath the basement, 30 studs down. It's a 10–15 minute act of its own (the police and dawn wait while it runs).
+
+**1. Dinner (5½ min to bedtime).** Everyone is zip-tied to a chair at a long table set with place cards ("Jamie", "Riley"...), a chalkboard of "family rules" and a wall of stolen photos. He calls himself the dad. Each player's chair: struggle (tap/press) only while **his back is turned** (he's at the stove, 6–9 s). A creak warns that he's **turning around** (1.1 s), then he **watches** the table for 3½–5½ s. Struggling while he watches is a **strike**: 30 s off the clock and a line from him. Sometimes the creak comes and he doesn't turn (a fake-out). Free players must stay by their chair while he watches, or that's a strike too; while his back is turned they can sneak to a friend and cut them loose (2½ s hold). When everyone is free, he goes "to get dessert" and leaves the dining room door open.
+
+**2. The tunnels (11 min to bedtime).** Dirt corridors join the dining room, a nursery, his room, a pantry and the cellar. He patrols them with his own senses (sight cone of 110°, 22 studs, 34 if your flashlight is on; he always sees you within 3½ studs; he hears noises at 80% range and investigates, never twice the same spot). Crouch in one of the four **blanket nooks** to hide. If he catches you, you're back at the table, tied, and only a friend can cut you loose (3 s). Three **notes** (pantry, nursery, his room) each give one digit of the cellar's **4-digit lock code** and a piece of who he is; the last digit is on the burnt photo. The HUD keeps the code found so far. In the last 70 s it's **bedtime**: he stops patrolling and hunts at a run (still slower than you walk).
+
+**3. Out.** Type the code at the cellar keypad (a wrong code buzzes and he hears it). Bar the cellar door behind you (each plank holds him ~18 s while he bangs on it), push the hatch up (4 loud pushes) and climb the ladder out to the lawn grate. Once nobody is left loose below (everyone either out or tied back at the table), or at bedtime: if **anyone** got out, **Not Your Family** (they bring help); if nobody did, **Forever Family**. Bedtime at the dinner table is always Forever Family. Each has its own cameras and badge, the secret one pays +150 coins and gives the title "Not Your Family".
+
+A grate on the lawn has a prompt with a hint, so people who never saw the ending wonder what's under it.
+
+### Coins (`EconomyService`, `shared/Economy`, client `Store`, `Locker`, `Rewards`)
+Every player has a coin balance (DataStore `Economy_v1`; 100 welcome coins). Saves are merges: pending changes are added onto whatever another server saved, owned cosmetics are a union, and Robux receipts are recorded in the same document, so a coin pack pays exactly once.
+
+**Earning, per night** (shown on the result card): 20 for playing, 1 per minute you lasted, 40 for surviving, 15 per friend you freed, 50 for an ending you hadn't seen, 150 for the secret ending. Hard nights ×1.5; the Lucky charm ×1.5.
+
+**Daily reward:** a 7-day streak (25, 40, 60, 80, 100, 130, 200 coins, plus an Attic Crate on day 7). Missing a day starts it over. The panel opens by itself when you join with a reward waiting.
+
+**Quests:** 3 a day out of 12 (survive a night, cut a friend free, hide from him, solve the electrics, read clues, play on Hard, find a new ending...), 40–120 coins each, progress shown in REWARDS.
+
+**Store, Items tab:** one-night gear, bought in the lobby and handed to you when the next night starts (one of each kind per night): Flashlight 60, Walkie-talkie 40, Multitool 70, Pepper spray 90, Energy drink 50 (more stamina), Lucky charm 80, Revive 250 (a saved revive).
+
+**Store, Crates tab:** Attic Crate 150 (62% common, 27% rare, 9% epic, 2% legendary) and Midnight Crate 450 (rare or better). A crate spins a reel and lands on a flashlight colour, a title or a trail. A duplicate pays back coins by rarity. Odds are printed on each crate.
+
+**Store, Coins tab:** Robux coin packs (developer products): 250 coins for 25 R$, 650 for 49, 1,500 for 99, 4,000 for 199.
+
+**Locker:** equip flashlight colours (invite rewards, passes, crate colours incl. the rainbow one), a title shown above your name in the lobby, and a lobby trail.
 
 ---
 

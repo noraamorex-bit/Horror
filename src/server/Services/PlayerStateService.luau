@@ -126,6 +126,13 @@ function PlayerState.resetPlayer(player: Player)
 	for _, attr in { "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead", "WinTime", "NewBest", "Revives" } do
 		player:SetAttribute(attr, nil)
 	end
+	-- (last night's coin boosts, clues read and the secret ending's state)
+	for name in player:GetAttributes() do
+		local pre = string.sub(name, 1, 6)
+		if pre == "Boost_" or pre == "Finale" or string.sub(name, 1, 5) == "Clue_" then
+			player:SetAttribute(name, nil)
+		end
+	end
 	player:SetAttribute("Nerve", ctx.Config.Nerve.Max)
 	player:SetAttribute("Stamina", ctx.Config.Movement.StaminaMax)
 	player:SetAttribute("Battery", 100)
@@ -191,6 +198,10 @@ function PlayerState.assignRoles(players: { Player })
 		-- the head start pass: a flashlight in your pocket from the first minute
 		if p:GetAttribute("Pass_HeadStart") then
 			ctx.Inventory.give(p, "Flashlight", 1)
+		end
+		-- gear bought with coins in the lobby (one of each, used up)
+		if ctx.Economy then
+			ctx.Economy.applyLoadout(p)
 		end
 	end
 end
@@ -310,7 +321,7 @@ local function tick(dt: number)
 		if sprint then
 			local drain = M.StaminaDrain * (role == "Runner" and M.RunnerDrainMultiplier or 1)
 			-- (the marathon pass: much slower)
-			if player:GetAttribute("Pass_Marathon") then
+			if player:GetAttribute("Pass_Marathon") or player:GetAttribute("Boost_Energy") then
 				drain *= 0.6
 			end
 			if nerve < ctx.Config.Nerve.Panic then

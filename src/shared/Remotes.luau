@@ -32,6 +32,8 @@ local NAMES = {
 	"Heartbeat", -- ({Id, Start, Beats, Travel, Window, Misses} | {Id, Result}) the heartbeat minigame
 	"Vote", -- (state | nil) the difficulty vote before the night: {Ends, Votes, Mine}
 	"Puzzle", -- ({Id, Kind, Data} | {Id, Result}) a puzzle at the electrics (PuzzleService)
+	"EconomyResult", -- ({Kind = "Crate"|"Buy"|"Daily"|"Quest"|"Error", ...}) coins: what just happened
+	"Finale", -- ({Phase, ...}) the secret ending's state for the HUD (FinaleService)
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})
@@ -59,6 +61,8 @@ local NAMES = {
 	"HeartbeatInput", -- (sessionId, beatIndex, hit) one beat of the heartbeat minigame
 	"AdminReply", -- (text) result of an admin command
 	"PuzzleInput", -- (puzzleId, action, payload) "Slip" | "Click" | "Submit" | "Cancel"
+	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily"
+	"PlayAgain", -- () from a result card: stay with this group for another night
 }
 
 local Remotes = {}

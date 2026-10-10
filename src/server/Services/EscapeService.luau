@@ -124,7 +124,7 @@ function Escape.adminPoliceSoon(seconds: number)
 end
 
 function Escape.policeArrive()
-	if state.PoliceArrived or ctx.Ending.isOver() then
+	if state.PoliceArrived or ctx.Ending.isOver() or (state :: any).Suspended then
 		return
 	end
 	state.PoliceArrived = true
@@ -208,8 +208,13 @@ function Escape.policeArrive()
 end
 
 -- The hard-cap ending
+-- the secret ending holds the police and the dawn (FinaleService decides how it ends)
+function Escape.suspend(on: boolean)
+	(state :: any).Suspended = on or nil
+end
+
 function Escape.dawn()
-	if state.HelpCalled then
+	if state.HelpCalled or (state :: any).Suspended then
 		return
 	end
 	state.HelpCalled = true
@@ -218,7 +223,7 @@ function Escape.dawn()
 end
 
 ---------------------------------------------------------------------------
--- Escaping players are moved to a safe spot and spectate
+-- Escaping players are moved to a safe spot, held there, and watch the others (client Spectate)
 ---------------------------------------------------------------------------
 function Escape.markEscaped(player: Player, where: string)
 	if player:GetAttribute("Escaped") then
@@ -241,8 +246,11 @@ function Escape.markEscaped(player: Player, where: string)
 	task.delay(1, function()
 		local char = player.Character
 		if char then
+			-- (somewhere out of the way, held still: the camera is with the friends still inside)
 			ctx.PlayerState.setFrozen(player, false)
 			ctx.PlayerState.placeStanding(player, CFrame.new(ctx.Layout.Outside.NeighborSafe + Vector3.new(math.random(-3, 3), 0, math.random(-2, 2))))
+			task.wait()
+			ctx.PlayerState.setFrozen(player, true)
 		end
 		ctx.Remotes.Fade:FireClient(player, false, 1.5)
 		ctx.Audio.caption("You're out. You're safe. The others aren't.", nil, nil, { player })

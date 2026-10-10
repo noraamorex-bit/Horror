@@ -36,11 +36,23 @@ Stats.Beams = {
 	{ Id = "Gold", Name = "Gold", Pass = "Supporter", Color = Color3.fromRGB(255, 196, 60) },
 	{ Id = "Ghost", Name = "Ghost", Pass = "Colours", Color = Color3.fromRGB(120, 255, 185) },
 }
+-- and the colours that come out of crates (EconomyService: you own them)
+do
+	local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
+	for _, c in Cat.Cosmetics do
+		if c.Kind == "Beam" then
+			table.insert(Stats.Beams, { Id = c.Id, Name = c.Name, Crate = true, Rainbow = c.Rainbow, Color = c.Color })
+		end
+	end
+end
 
 local function beamUnlocked(d, id: string, player: Player?): boolean
 	local colours = player ~= nil and player:GetAttribute("Pass_Colours") == true
 	for _, b in Stats.Beams do
 		if b.Id == id then
+			if b.Crate then
+				return player ~= nil and ctx.Economy ~= nil and ctx.Economy.owns(player, id)
+			end
 			if b.Pass then
 				-- (each pass colour is its own: Gold is the supporters')
 				return player ~= nil and player:GetAttribute("Pass_" .. b.Pass) == true
@@ -93,6 +105,7 @@ local function mirror(player: Player)
 	for _, b in Stats.Beams do
 		if b.Id == beam then
 			player:SetAttribute("StatBeamColor", b.Color)
+			player:SetAttribute("StatBeamRainbow", b.Rainbow or nil)
 		end
 	end
 end
@@ -481,6 +494,18 @@ function Stats.start()
 		task.spawn(load, p)
 	end
 	Players.PlayerAdded:Connect(load)
+	-- the rainbow beam cycles through the colours
+	task.spawn(function()
+		local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
+		while true do
+			task.wait(0.25)
+			for _, p in Players:GetPlayers() do
+				if p:GetAttribute("StatBeamRainbow") then
+					p:SetAttribute("StatBeamColor", Cat.rainbow(os.clock()))
+				end
+			end
+		end
+	end)
 	Players.PlayerRemoving:Connect(function(p)
 		if settingsSave[p.UserId] then
 			settingsSave[p.UserId] = nil

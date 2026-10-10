@@ -282,6 +282,8 @@ Config.Badges = {
 	GotAway = 1526454404455151,
 	HardSurvivor = 3696145087218819, -- survived a night on Hard
 	Rescuer = 1978303375336712, -- cut a friend free
+	NotYourFamily = 892775622827536, -- the secret ending, out from under the house
+	ForeverFamily = 2482890253693907, -- the secret ending, nobody left the table
 }
 
 --[[
@@ -314,6 +316,43 @@ Config.Shop = {
 		{ Id = 3715928539, Amount = 500 },
 		{ Id = 3715928542, Amount = 1000 },
 	},
+}
+
+--[[
+	The secret ending (FinaleService): everyone (2+ players) tied up at once, and he takes you all
+	down to the "family" he's made under the house. Times in seconds, distances in studs.
+]]
+Config.Finale = {
+	Enabled = true,
+	MinPlayers = 2,
+	-- the dinner: struggle while his back is turned, freeze while he watches
+	DinnerTime = 330, -- free everyone before bedtime
+	StrikePenalty = 30, -- every time he catches someone moving: this much less time
+	StrugglePerPress = 0.8, -- % of the zip tie per press (Hard: about 0.6): a few back-turned spells each
+	FakeOut = 0.25, -- sometimes the creak comes, and he doesn't turn round
+	BackTurned = { 6, 9 }, -- he faces the stove this long
+	Warning = 1.1, -- the creak before he turns round
+	Watching = { 3.5, 5.5 }, -- then he watches the table this long
+	CutHold = 2.5, -- a free player cutting someone loose
+	MoveTolerance = 3.5, -- a free player this far from their chair while he watches: caught
+	-- the tunnels
+	BurrowTime = 660, -- find the way out before bedtime
+	BedtimeHunt = 70, -- the last stretch: he hunts at a run
+	PatrolSpeed = 6.5,
+	InvestigateSpeed = 8,
+	ChaseSpeed = 9.2, -- still under your walk (10)
+	Sight = 22,
+	SightFlashlight = 34,
+	FOV = 110,
+	CatchRange = 4.2,
+	HearScale = 0.8, -- a noise's radius, times this, down here
+	RescueHold = 3, -- cutting a recaptured friend loose at the table
+	-- the way out
+	HatchPushes = 4, -- each one a loud scrape
+	HatchHold = 1.6,
+	ClimbHold = 1.2,
+	Bars = 2, -- planks to bar the cellar door with
+	BarHolds = 18, -- each bar holds him this long
 }
 
 Config.PepperSpray = {

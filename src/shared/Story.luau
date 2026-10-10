@@ -50,6 +50,7 @@ Story.Chapters = {
 	SmallThings = { Title = "II. Small Things", Sub = "The storm is getting worse." },
 	SomeoneElse = { Title = "III. Someone Else", Sub = "Breakers don't flip themselves." },
 	Guest = { Title = "IV. The Guest", Sub = "He knows you found him." },
+	Below = { Title = "V. Down Here", Sub = "Dinner is served." },
 }
 
 ---------------------------------------------------------------------------
@@ -109,6 +110,17 @@ Story.Tasks = {
 		{ Key = "Look", Text = "Find out what made that noise upstairs", Target = "Hatch" },
 	} },
 	-- Act III
+	-- the secret ending (FinaleService)
+	FinaleDinner = { Title = "Get free", Steps = {
+		{ Key = "Struggle", Text = "Struggle only while his back is turned" },
+		{ Key = "Cut", Text = "Cut the others loose (when he isn't looking)" },
+	} },
+	FinaleBurrow = { Title = "Find the way out", Steps = {
+		{ Key = "Cellar", Text = "Find a way out of the tunnels", Target = "FinaleCellar" },
+		{ Key = "Code", Text = "Find the lock code: three numbers in his notes", Target = { "FinaleNote1", "FinaleNote2", "FinaleNote3" } },
+		{ Key = "Unlock", Text = "Unlock the cellar hatch", Target = "FinaleKeypad" },
+		{ Key = "Climb", Text = "Push the hatch open and climb out", Target = "FinaleLadder" },
+	} },
 	Power = { Title = "Get the power back on", Steps = {
 		{ Key = "Flashlight", Text = "Find a flashlight (search the drawers and shelves)", Target = { "Flashlight1", "Flashlight2" } },
 		{ Key = "Flip", Text = "Flip the MAIN breaker back on", Target = "Breaker" },
@@ -760,6 +772,19 @@ Story.Endings = {
 		Body = "By the time the police kick in the front door, the house is silent.\n\nThe back door is open. Rain on the kitchen floor. Muddy prints going out, none coming back.\n\nThey search the house room by room. The attic is empty, except for the photographs. Hundreds of them. Every one of you.\n\nCurtis Vane was never found.",
 		Bad = true,
 	},
+	NotYourFamily = {
+		Short = "You found the old storm cellar and climbed out of what he dug under the house.",
+		Title = "NOT YOUR FAMILY",
+		Body = "You come up through the grate into the wet grass of the back yard, gasping, filthy, alive.\n\nThe police find the tunnels by noon: a dining room under the boiler, a nursery, a pantry of food stolen a meal at a time, nineteen tally marks on a wall of dirt.\n\nThey find Curtis Vane at the head of the table, in Jamie's dad's sweater, waiting for everyone to come back for dessert.",
+		Secret = true,
+	},
+	ForeverFamily = {
+		Short = "Nobody left the table. Nobody ever left the table again.",
+		Title = "FOREVER FAMILY",
+		Body = "The candles burn down. He tucks you in, one by one, under the house.\n\nOn Sunday night Jamie's parents come home to a quiet house and a note on the fridge in handwriting that isn't theirs: GONE TO GRANDMA'S. DON'T WORRY ABOUT US.\n\nThe police search for a month. The tunnels are found in the spring, when the lawn caves in by the swing set. The table is still set.",
+		Bad = true,
+		Secret = true,
+	},
 	Dawn = {
 		Short = "You lasted the whole night.",
 		Title = "DAWN",
@@ -795,7 +820,7 @@ Story.Evidence = { "WarmMug", "Invoice", "LilyDrawing", "Notebook", "Polaroids",
 Story.EvidenceNeeded = 7
 
 -- The lobby's endings collection: display order and a hint for the ones not found yet
-Story.EndingOrder = { "Sirens", "CaseClosed", "NextDoor", "Taillights", "LockedIn", "Dawn", "GoneQuiet", "GotAway" }
+Story.EndingOrder = { "Sirens", "CaseClosed", "NextDoor", "Taillights", "LockedIn", "Dawn", "GoneQuiet", "GotAway", "NotYourFamily", "ForeverFamily" }
 Story.EndingHints = {
 	Sirens = "Get a call through to 911 and hold out until they come.",
 	CaseClosed = "When the police come, have the whole story ready. Read everything.",
@@ -803,7 +828,9 @@ Story.EndingHints = {
 	Taillights = "Mom's car is in the garage. The keys are not where they should be.",
 	LockedIn = "The basement door locks from the outside.",
 	Dawn = "Just... last until morning.",
-	GoneQuiet = "What happens if he takes everyone?",
+	GoneQuiet = "Tied up, alone, and nobody coming.",
+	NotYourFamily = "What if he takes ALL of you at once? (2+ players) ...and you get out.",
+	ForeverFamily = "What if he takes ALL of you at once? (2+ players) ...and you don't.",
 	GotAway = "Help is on the way. Don't let him take everyone before it arrives.",
 }
 
@@ -816,9 +843,58 @@ Story.Results = {
 }
 -- the one line under it when you're out before the night is over (co-op)
 Story.ResultLines = {
+	Burrow = "You climbed out through the grate in the back yard. Your friends are still down there.",
 	Car = "You drove away in Mom's car. Your friends are still inside.",
 	Neighbor = "Mrs. Okafor pulled you inside. Your friends are still in the house.",
 	Died = "He caught you a second time. Your friends are still in the house.",
+}
+
+--[[
+	The secret ending (FinaleService): everyone tied up at once, and he takes you all down to
+	the family he's made under the house. %d marks are the lock code's digits (a new code every time).
+]]
+Story.Finale = {
+	Intro = {
+		"He doesn't take you to the boiler room. Not this time.",
+		"Behind the boiler there's a hole in the wall. A ladder. Candlelight.",
+	},
+	Seated = "You're zip-tied to a chair at a long table. There's a card with your name on it.",
+	Rules = "FAMILY DINNER. NOBODY LEAVES THE TABLE. FATHER IS WATCHING.",
+	Dinner = {
+		Title = "Get free",
+		Steps = {
+			{ Key = "Struggle", Text = "Struggle only while his back is turned" },
+			{ Key = "Cut", Text = "Free yourself, then cut the others loose (when he isn't looking)" },
+		},
+	},
+	Tips = "STRUGGLE when his back is turned. When he turns around, DON'T MOVE.",
+	Strike = { "He slams his hand down on the table. The plates jump.", "He leans over you and breathes, slow, through his teeth.", "He pulls your chair back in. Tighter this time." },
+	FreeSelf = "The zip tie snaps. Stay in your chair while he's looking. Cut the others loose.",
+	AllFree = "He picks up a candle and walks out through the door. \"Dessert,\" he says. The only word he's said all night.",
+	Burrow = {
+		Title = "Find the way out",
+		Steps = {
+			{ Key = "Cellar", Text = "Find a way out of the tunnels" },
+			{ Key = "Code", Text = "Find the lock code: three numbers in his notes" },
+			{ Key = "Unlock", Text = "Unlock the cellar hatch" },
+			{ Key = "Climb", Text = "Push the hatch open and climb out" },
+		},
+	},
+	Caught = "He carries you back to the table, humming. Somebody cut you loose. Please.",
+	MusicBox = "[A music box starts playing in the nursery]",
+	WrongCode = "[The lock buzzes. Loud.]",
+	Unlocked = "The lock clicks open. The hatch above is stiff with rust: push it open!",
+	DoorBarred = "You drop the bar across the door.",
+	DoorBreaks = "[The door splinters]",
+	Bedtime = "The candles are guttering. It's bedtime.",
+	Out = "Rain on your face. Grass under your hands. You're out.",
+	Notes = {
+		Pantry = { Title = "A shopping list", Body = "DINNER FOR SIX\n\n- pizza (they ordered it themselves! good kids)\n- milk for the little one\n- the lasagna Margaret made (she won't mind)\n- candles. LOTS of candles\n\n\nfor the cellar lock, so I don't forget again:\nthe FIRST number is %d" },
+		Nursery = { Title = "A card in the crib", Body = "For the little one.\n\nI made a doll for each of them, so nobody is ever alone down here. The blue one is Jamie. Jamie doesn't like me yet. Jamie will.\n\nShe has her mother's eyes.\n\n\n(on the back, in pencil)\nlock: the SECOND number is %d" },
+		HisRoom = { Title = "A page torn from a notebook", Body = "Day 19.\n\nMargaret took the kids to Ohio in March. The bank took Birch Street in May. I fixed this family's furnace in April and I never really left.\n\nThey're out all day. The house is so empty. Houses shouldn't be empty.\n\nTonight we eat together. Tonight we are a family again.\n\nNobody leaves the table.\n\n\nthe last two numbers of the lock: %d and %d" },
+	},
+	Photo = { Title = "A burnt photograph", Body = "A family on a porch: a man in a VANE HOME SERVICES cap, a woman, a boy, a girl.\n\nSomeone has burned the woman's face out with a cigarette, very carefully." },
+	Grate = { Title = "An old storm cellar grate", Body = "A rusted grate in the lawn. It doesn't move.\n\nBut somebody has scraped the rust off the hinges. From underneath." },
 }
 
 Story.Fates = {
