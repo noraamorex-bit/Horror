@@ -257,7 +257,7 @@ Every player has a coin balance (DataStore `Economy_v1`; 100 welcome coins). Sav
 
 **Night streak:** start another night within 15 minutes of the last one ending and it pays more: the 2nd night in a row +25%, the 3rd and on +50% (a "Night streak ×N" line on the card). Saved with the coins (merged: the latest night wins). The result card says "Play another night in the next 15 min: +25% coins" under ANOTHER NIGHT, and the lobby shows "NIGHT STREAK +25% coins · 12:31" under the play buttons while it's alive.
 
-**Daily reward:** a 7-day streak (25, 40, 60, 80, 100, 130, 200 coins, plus an Attic Crate on day 7). Missing a day starts it over. The panel opens by itself when you join with a reward waiting.
+**Daily reward:** a 7-day streak (25, 40, 60, 80, 100, 130, 200 coins, plus an Attic Crate on day 7). Missing a day starts it over. The panel opens by itself when you join with a reward waiting (players who have finished a night). **It also comes with the night:** finishing a night (2+ min) claims today's reward if it's still waiting ("Daily reward, day 1" on the card), so everyone who plays a night has a streak to keep; day 7 (the crate) is left for the lobby, where its reel plays. The card then says what tomorrow's is. (Half the players never opened the panel: it doesn't open for brand-new players.)
 
 **Quests:** 3 a day out of 12 (survive a night, cut a friend free, hide from him, solve the electrics, read clues, play on Hard, find a new ending...), 40–120 coins each, progress shown in REWARDS.
 

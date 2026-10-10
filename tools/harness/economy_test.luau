@@ -186,6 +186,32 @@ local ok, err = pcall(function()
 	E._save(77)
 	assert(saved.u77.Chain.N == 4 and E._docs[77].Chain.N == 4, "merge keeps the latest streak")
 	print("streak ok")
+	-- today's daily reward comes with a night (not day 7: that crate opens in the lobby)
+	local z = H.wrap(R.Instance.new("Player"))
+	rawset(z, "UserId", 99)
+	E._load(z)
+	E.resetNight()
+	local cz = E.coins(z)
+	local rz = E.nightRewards(z, { Seconds = 600, Survived = true })
+	local dl = nil
+	for _, l in rz.Lines do if tostring(l.Text):find("Daily reward, day 1") then dl = l end end
+	assert(dl and dl.Amount == Cat.Daily[1], "day 1 claimed with the night")
+	assert(E.coins(z) == cz + rz.Total, "and paid once, in the total")
+	assert(E._docs[99].Daily.Day == Cat.day() and E._docs[99].Daily.Streak == 1, "the streak has begun")
+	E.resetNight()
+	local rz2 = E.nightRewards(z, { Seconds = 600 })
+	for _, l in rz2.Lines do assert(not tostring(l.Text):find("Daily"), "not twice in a day") end
+	-- day 7 waits for the lobby
+	E._docs[99].Daily = { Day = Cat.day() - 1, Streak = Cat.DailyCrateDay - 1 }
+	E.resetNight()
+	local rz3 = E.nightRewards(z, { Seconds = 600 })
+	for _, l in rz3.Lines do assert(not tostring(l.Text):find("Daily"), "the crate day is claimed in the lobby") end
+	-- a short visit doesn't claim it
+	E._docs[99].Daily = { Day = Cat.day() - 1, Streak = 2 }
+	E.resetNight()
+	local rz4 = E.nightRewards(z, { Seconds = 30 })
+	for _, l in rz4.Lines do assert(not tostring(l.Text):find("Daily"), "not for a short visit") end
+	print("daily with the night ok")
 	-- levels: XP is coins earned by playing. A player counted for the first time gets the titles of
 	-- the levels they already have (no coins); after that each new level pays once.
 	local d77 = E._docs[77]

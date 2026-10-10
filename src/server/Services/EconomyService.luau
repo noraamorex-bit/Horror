@@ -695,6 +695,18 @@ function Economy.nightRewards(player: Player, info): any
 	if total > 0 then
 		Economy.addCoins(player, total, true, "Gameplay", "Night")
 	end
+	-- today's daily reward comes with the night (so everyone who plays a night has a streak to keep).
+	-- (day 7 is a crate: that one is opened in the lobby, where the reel is)
+	if d and (info.Seconds or 0) >= N.MinSeconds then
+		local view = dailyView(d)
+		if view.CanClaim and view.Next ~= Cat.DailyCrateDay then
+			local got = Economy.claimDaily(player)
+			if got then
+				table.insert(lines, { Text = "Daily reward, day " .. view.Next, Amount = got })
+				total += got
+			end
+		end
+	end
 	local level, into, need = Cat.levelOf(d and d.Earned or 0)
 	return {
 		Total = total, Lines = lines, Balance = Economy.coins(player), LevelBefore = before, Level = level, XP = into, XPNext = need,

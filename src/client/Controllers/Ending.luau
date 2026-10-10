@@ -260,8 +260,10 @@ local function showCard(opts)
 		local daily = ok and type(eco) == "table" and eco.Daily or nil
 		if type(daily) == "table" and daily.Next then
 			local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
-			local coinsNext = Cat.Daily[daily.Next] or Cat.Daily[1]
-			line({ Text = daily.CanClaim and ("Your daily reward is waiting in the lobby: " .. coinsNext .. " coins") or ("Tomorrow: day " .. daily.Next .. " reward, " .. coinsNext .. " coins" .. (daily.Next == Cat.DailyCrateDay and " + a crate" or "") .. ". Don't break your streak!"), TextSize = 13, TextColor3 = UI.Color.Dim })
+			-- (Next is today's day while it's unclaimed; once claimed, tomorrow is the one after it)
+			local tomorrow = daily.CanClaim and daily.Next or ((tonumber(daily.Next) or 0) % #Cat.Daily + 1)
+			local coinsNext = Cat.Daily[tomorrow] or Cat.Daily[1]
+			line({ Text = daily.CanClaim and ("Your daily reward is waiting in the lobby: " .. coinsNext .. " coins") or ("Tomorrow: day " .. tomorrow .. " reward, " .. coinsNext .. " coins" .. (tomorrow == Cat.DailyCrateDay and " + a crate" or "") .. ". Don't break your streak!"), TextSize = 13, TextColor3 = UI.Color.Dim })
 		end
 	end
 
