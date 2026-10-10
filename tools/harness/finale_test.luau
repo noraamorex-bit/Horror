@@ -16,6 +16,7 @@ local T = 1000
 H.clock = function() return T end
 H.schedule = true
 local SCENARIO = process.args[1] or "escape"
+math.randomseed(({ escape = 11, bedtime = 22, patrol = 33 })[SCENARIO] or 1) -- the dinner and patrol roll dice: the same ones every run
 
 local ctx: any = {}
 ctx.Config = H.load("RS/Shared/Config")
@@ -186,7 +187,7 @@ local ok, err = pcall(function()
 	for _ = 1, 10 do struggle(p2); tick(0.1) end
 	local before = S.Seats[p2].Progress
 	assert(before > 5, "struggling with his back turned works (" .. before .. ")")
-	tickUntil(function() return S.Mode == "Watching" end, 30, "him watching")
+	tickUntil(function() return S.Mode == "Watching" end, 60, "him watching") -- (each fake-out starts a new 6-9 s spell)
 	local strikes = S.Strikes
 	struggle(p2)
 	tick(0.2)
@@ -205,7 +206,7 @@ local ok, err = pcall(function()
 	assert(not p1:GetAttribute("Captured") and not p1:GetAttribute("FinaleTied"), "p1 free")
 	print("p1 struggled free (" .. S.Strikes .. " strikes so far)")
 	-- a free player away from their chair while he watches: a strike, and tied again
-	tickUntil(function() return S.Mode == "Watching" end, 30, "him watching (2)")
+	tickUntil(function() return S.Mode == "Watching" end, 60, "him watching (2)")
 	place1(S.Seats[p1].Spot.Pos + V(6, 3, 0))
 	local st = S.Strikes
 	tick(0.5)
