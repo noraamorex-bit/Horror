@@ -393,7 +393,6 @@ local function build(root: Folder)
 		body.TextXAlignment = Enum.TextXAlignment.Left
 		body.TextYAlignment = Enum.TextYAlignment.Top
 		body.TextColor3 = Color3.fromRGB(230, 224, 212)
-		body.RichText = true
 		body.Text = empty
 		body.Parent = gui
 		local lamp = Kit.box(root, "BoardLamp", boardCF * CFrame.new(0, 4, -0.6), V(3, 0.3, 0.6), Color3.fromRGB(255, 210, 150), Enum.Material.Neon)
@@ -404,18 +403,30 @@ local function build(root: Folder)
 		l.Angle = 80
 		l.Color = Color3.fromRGB(255, 200, 140)
 		l.Parent = lamp
+		-- (the survivors' board: one small line at the bottom about the secret ending)
+		local footer: TextLabel? = nil
+		if which == nil then
+			local f = Instance.new("TextLabel")
+			f.AnchorPoint = Vector2.new(0, 1)
+			f.Position = UDim2.new(0, 24, 1, -8)
+			f.Size = UDim2.new(1, -48, 0, 24)
+			f.BackgroundTransparency = 1
+			f.Font = Enum.Font.GothamMedium
+			f.TextSize = 18
+			f.TextColor3 = Color3.fromRGB(255, 120, 100)
+			f.TextXAlignment = Enum.TextXAlignment.Left
+			f.Text = "Secret ending: found by nobody yet"
+			f.Parent = gui
+			footer = f
+			body.TextSize = 22
+		end
 		task.spawn(function()
-			while sign.Parent and which == "Secret" do
-				-- the secret ending: how many have found it, and a nudge
-				local n = ctx.Stats and ctx.Stats.global and ctx.Stats.global("SecretFound")
-				if n then
-					body.TextXAlignment = Enum.TextXAlignment.Center
-					body.Text = string.format("Found by <b>%d</b> player%s.\n\nWhat happens if everyone\ngets caught at the same time?\n\n(2+ players)", n, n == 1 and "" or "s")
-				end
-				task.wait(60)
-			end
 			while sign.Parent do
-				local top = ctx.Stats and ctx.Stats.top(10, which) or {}
+				local top = ctx.Stats and ctx.Stats.top(footer and 9 or 10, which) or {}
+				local found = footer and ctx.Stats and ctx.Stats.global and ctx.Stats.global("SecretFound")
+				if footer and found then
+					footer.Text = found > 0 and string.format("Secret ending: found by %d player%s", found, found == 1 and "" or "s") or "Secret ending: found by nobody yet"
+				end
 				if #top > 0 then
 					local lines = {}
 					for i, e in top do
@@ -430,7 +441,6 @@ local function build(root: Folder)
 	end
 	leaderboard("SurvivorBoard", V(-39, 7, -13), "NIGHTS SURVIVED", "Survive a night to get on the board.", nil)
 	leaderboard("FastestBoard", V(-39, 7, 1), "FASTEST WINS", "Win a night to set a time.", "Fastest")
-	leaderboard("SecretBoard", V(-39, 7, 15), "THE SECRET ENDING", "Nobody has found it yet.\n\nWhat happens if everyone\ngets caught at the same time?", "Secret")
 	Kit.hydrant(root, CFrame.new(ORIGIN + V(-34, 0.75, 22.5)))
 	for i, t in { { -48, -50 }, { 58, -52 }, { -58, 2 }, { 62, 4 }, { -118, 8 }, { 118, 10 }, { -20, 70 }, { 40, 72 }, { -90, 72 } } do
 		if i % 3 == 0 then
