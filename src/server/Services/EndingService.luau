@@ -167,6 +167,9 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 		return
 	end
 	ended[player] = outcome
+	if ctx.Telemetry then
+		ctx.Telemetry.ended(player, outcome .. (where and ("_" .. where) or ""))
+	end
 	seq += 1
 	local mine = seq
 	doneSeq[player] = mine
@@ -343,6 +346,9 @@ function Ending.trigger(kind: string)
 	local shots = shotsFor(kind)
 	local restartIn = ctx.Reserved and ctx.Config.Lobby.ReturnDelay or 60
 	for _, p in Players:GetPlayers() do
+		if ctx.Telemetry then
+			ctx.Telemetry.ended(p, kind)
+		end
 		local res = resultFor(p, kind, bad)
 		ctx.Remotes.Ending:FireClient(p, {
 			Kind = kind,

@@ -34,3 +34,11 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
   comes back visits the tunnel nodes without a long stall and never finds players crouched in the
   nooks.
 - `client_test.luau` also feeds the finale card every phase (tied and free) and prints what it says.
+- `lobby_test.luau`: queue circles: a full circle teleports, solo, quick play, START NOW takes whoever's
+  on a group circle, a circle that never fills starts on its own after FillWait, and a circle frees up as
+  soon as its group has left.
+- `telemetry_test.luau`: what Creator Hub analytics receives (a stand-in AnalyticsService): onboarding
+  steps once each, the night funnel in order, endings once, a quit mid-night logged with its act (not
+  after the ending), coins in and out.
+- `economy_test.luau` also covers levels: a veteran counted for the first time gets titles but no back
+  pay, crossing levels pays each once, level-up coins aren't XP, the highest paid level wins a merge.

@@ -253,7 +253,7 @@ COMMANDS.coins = function(player, arg)
 	if n < 0 then
 		n = -math.min(-n, E.coins(player))
 	end
-	if n ~= 0 and not E.addCoins(player, n) then
+	if n ~= 0 and not E.addCoins(player, n, nil, "Admin") then
 		return "Couldn't change your coins (still loading?)."
 	end
 	return string.format("%s%d coins. You have %d.", n >= 0 and "+" or "", n, E.coins(player))

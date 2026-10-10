@@ -68,6 +68,10 @@ Stats.start()
 local Economy = require(Services.EconomyService)
 Economy.init(ctx)
 Economy.start()
+-- what Creator Hub's analytics shows: the onboarding and night funnels, quits, coins (both places)
+local Telemetry = require(Services.TelemetryService)
+Telemetry.init(ctx)
+Telemetry.start()
 
 -- Lobby servers: queue circles that teleport groups into their own game server
 local mode = ctx.Mode.get()

@@ -393,6 +393,7 @@ local function build(root: Folder)
 		body.TextXAlignment = Enum.TextXAlignment.Left
 		body.TextYAlignment = Enum.TextYAlignment.Top
 		body.TextColor3 = Color3.fromRGB(230, 224, 212)
+		body.RichText = true
 		body.Text = empty
 		body.Parent = gui
 		local lamp = Kit.box(root, "BoardLamp", boardCF * CFrame.new(0, 4, -0.6), V(3, 0.3, 0.6), Color3.fromRGB(255, 210, 150), Enum.Material.Neon)
@@ -404,6 +405,15 @@ local function build(root: Folder)
 		l.Color = Color3.fromRGB(255, 200, 140)
 		l.Parent = lamp
 		task.spawn(function()
+			while sign.Parent and which == "Secret" do
+				-- the secret ending: how many have found it, and a nudge
+				local n = ctx.Stats and ctx.Stats.global and ctx.Stats.global("SecretFound")
+				if n then
+					body.TextXAlignment = Enum.TextXAlignment.Center
+					body.Text = string.format("Found by <b>%d</b> player%s.\n\nWhat happens if everyone\ngets caught at the same time?\n\n(2+ players)", n, n == 1 and "" or "s")
+				end
+				task.wait(60)
+			end
 			while sign.Parent do
 				local top = ctx.Stats and ctx.Stats.top(10, which) or {}
 				if #top > 0 then
@@ -420,6 +430,7 @@ local function build(root: Folder)
 	end
 	leaderboard("SurvivorBoard", V(-39, 7, -13), "NIGHTS SURVIVED", "Survive a night to get on the board.", nil)
 	leaderboard("FastestBoard", V(-39, 7, 1), "FASTEST WINS", "Win a night to set a time.", "Fastest")
+	leaderboard("SecretBoard", V(-39, 7, 15), "THE SECRET ENDING", "Nobody has found it yet.\n\nWhat happens if everyone\ngets caught at the same time?", "Secret")
 	Kit.hydrant(root, CFrame.new(ORIGIN + V(-34, 0.75, 22.5)))
 	for i, t in { { -48, -50 }, { 58, -52 }, { -58, 2 }, { 62, 4 }, { -118, 8 }, { 118, 10 }, { -20, 70 }, { 40, 72 }, { -90, 72 } } do
 		if i % 3 == 0 then
@@ -509,6 +520,9 @@ local function build(root: Folder)
 			Status = status,
 			Members = {},
 			CountdownEnd = nil,
+			WaitStart = nil, -- since when somebody's been waiting on a circle that isn't full
+			StartNow = false,
+			Short = false, -- (the countdown is for fewer than Size)
 			Teleporting = false,
 			CooldownUntil = 0,
 		})
@@ -551,16 +565,20 @@ local function padOf(player: Player)
 end
 
 local function send(player: Player, payload)
-	local key = payload and string.format("%d|%d|%s|%s", payload.Size, payload.Count, tostring(payload.Countdown), payload.Status) or "none"
+	local key = payload and string.format("%d|%d|%s|%s|%s|%s", payload.Size, payload.Count, tostring(payload.Countdown), payload.Status, tostring(payload.AutoIn), tostring(payload.CanStart)) or "none"
 	if lastSent[player] == key then
 		return
 	end
 	lastSent[player] = key
 	ctx.Remotes.Queue:FireClient(player, payload)
+	if payload and ctx.Telemetry then
+		ctx.Telemetry.onboard(player, 2)
+	end
 end
 
 local function teleportGroup(pad, group: { Player })
 	pad.Teleporting = true
+	pad.Group = group
 	for _, p in group do
 		teleporting[p] = true
 	end
@@ -619,6 +637,19 @@ end
 local function tick()
 	local now = os.clock()
 	for _, pad in pads do
+		-- the group it sent off has left the server: the circle is free again right away
+		if pad.Teleporting and pad.Group then
+			local still = false
+			for _, p in pad.Group do
+				if p.Parent then
+					still = true
+				end
+			end
+			if not still then
+				pad.Teleporting = false
+				pad.Group = nil
+			end
+		end
 		-- who is standing on it
 		local inside = {}
 		for _, p in Players:GetPlayers() do
@@ -646,23 +677,35 @@ local function tick()
 		pad.Members = members
 
 		local counted = math.min(#members, pad.Size)
+		-- nobody else coming? With few people online a group circle could wait forever: after
+		-- FillWait (or START NOW) it starts with whoever's there
+		if counted == 0 or pad.Teleporting then
+			pad.WaitStart, pad.StartNow = nil, false
+		elseif counted < pad.Size and not pad.WaitStart then
+			pad.WaitStart = now
+		end
+		local L = ctx.Config.Lobby
+		local short = counted >= 1 and counted < pad.Size and pad.WaitStart ~= nil and (pad.StartNow or now - pad.WaitStart >= (L.FillWait or 45))
 		if pad.Teleporting then
 			pad.Status.Text = "Heading to 14 Alder Lane..."
-		elseif counted >= pad.Size and now >= pad.CooldownUntil then
+		elseif (counted >= pad.Size or short) and now >= pad.CooldownUntil then
 			if not pad.CountdownEnd then
-				pad.CountdownEnd = now + (pad.Size == 1 and ctx.Config.Lobby.SoloCountdown or ctx.Config.Lobby.Countdown)
+				pad.CountdownEnd = now + (pad.Size == 1 and L.SoloCountdown or (pad.StartNow and 3 or L.Countdown))
 			end
+			pad.Short = counted < pad.Size
 			local left = math.max(0, math.ceil(pad.CountdownEnd - now))
-			pad.Status.Text = "Starting in " .. left .. "..."
+			pad.Status.Text = pad.Short and ("Starting with " .. counted .. " in " .. left .. "...") or ("Starting in " .. left .. "...")
 			if now >= pad.CountdownEnd then
 				local group = {}
-				for i = 1, pad.Size do
+				for i = 1, counted do
 					table.insert(group, members[i])
 				end
 				teleportGroup(pad, group)
+				pad.WaitStart, pad.StartNow = nil, false
 			end
 		else
 			pad.CountdownEnd = nil
+			pad.Short = false
 			pad.Status.Text = counted == 0 and "Step in to queue" or ("Waiting for " .. (pad.Size - counted) .. " more")
 		end
 		pad.Count.Text = counted .. " / " .. pad.Size
@@ -689,6 +732,10 @@ local function tick()
 				Count = counted,
 				Countdown = pad.CountdownEnd and math.max(0, math.ceil(pad.CountdownEnd - now)) or nil,
 				Status = status,
+				-- (not full yet: when it starts anyway, and whether START NOW is offered)
+				AutoIn = (status == "Waiting" and pad.WaitStart) and math.max(0, math.ceil(pad.WaitStart + (L.FillWait or 45) - now)) or nil,
+				CanStart = status == "Waiting" and pad.WaitStart ~= nil and now - pad.WaitStart >= (L.StartNowAfter or 8) or nil,
+				Short = pad.Short or nil,
 			})
 		end
 	end
@@ -748,6 +795,9 @@ function LobbyServer.run(c)
 	end
 
 	local function setup(player: Player)
+		if ctx.Telemetry then
+			ctx.Telemetry.onboard(player, 1)
+		end
 		-- third person here; the house itself is first person
 		player.CameraMode = Enum.CameraMode.Classic
 		-- a minimum zoom forces the camera out behind the character (the game itself is first person)
@@ -847,6 +897,17 @@ function LobbyServer.run(c)
 		local char = player.Character
 		if char and padOf(player) then
 			char:PivotTo(spawnCF * CFrame.new(math.random(-4, 4), 0, 3))
+		end
+	end)
+	-- START NOW: anyone waiting on a group circle that isn't full, once they've waited a little
+	ctx.Remotes.StartNow.OnServerEvent:Connect(function(player)
+		local pad = padOf(player)
+		if not pad or pad.Teleporting or not pad.WaitStart or os.clock() - pad.WaitStart < (ctx.Config.Lobby.StartNowAfter or 8) then
+			return
+		end
+		local i = table.find(pad.Members, player)
+		if i and i <= pad.Size then
+			pad.StartNow = true
 		end
 	end)
 	TeleportService.TeleportInitFailed:Connect(function(player, result, message)

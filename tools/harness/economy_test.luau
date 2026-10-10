@@ -154,6 +154,37 @@ local ok, err = pcall(function()
 	local r3 = E.nightRewards(p, { NewEnding = true })
 	assert(r3.Total >= Cat.Night.NewEnding, "new ending bonus after")
 	print(("night ok: +%d (%d lines, lucky), then +%d for a new ending"):format(r1.Total, #r1.Lines, r3.Total))
+	-- levels: XP is coins earned by playing. A player counted for the first time gets the titles of
+	-- the levels they already have (no coins); after that each new level pays once.
+	local d77 = E._docs[77]
+	assert(p:GetAttribute("Level") ~= nil and p:GetAttribute("XPNext") ~= nil, "level mirrored")
+	local lv = Cat.levelOf(d77.Earned)
+	assert(d77.LevelPaid == lv, "counted on load: level " .. lv .. ", paid " .. tostring(d77.LevelPaid))
+	-- a returning veteran (never counted, level 12 already): titles only
+	local q = H.wrap(R.Instance.new("Player"))
+	rawset(q, "UserId", 88)
+	saved.u88 = { Coins = 5, Earned = Cat.xpFor(12) + 10, Welcomed = true }
+	E._load(q)
+	local d88 = E._docs[88]
+	assert(d88.LevelPaid == 12 and E.coins(q) == 5, "veteran: level 12 counted, no back pay (" .. E.coins(q) .. ")")
+	assert(E.owns(q, "Title_Lv5") and E.owns(q, "Title_Lv10") and not E.owns(q, "Title_Lv20"), "veteran: the level 5 and 10 titles")
+	-- then a night that crosses two levels: coins for each, the crate level opens a crate
+	local c0 = E.coins(q)
+	local before = Cat.levelOf(d88.Earned)
+	local need = Cat.xpFor(14) - d88.Earned + 1
+	E.addCoins(q, need, true, "Gameplay", "Night")
+	assert(Cat.levelOf(d88.Earned) == 14 and d88.LevelPaid == 14, "now level 14")
+	local paid = E.coins(q) - c0 - need
+	assert(paid == 13 * Cat.LevelCoins + 14 * Cat.LevelCoins, "paid levels 13 and 14: " .. paid)
+	-- level-up coins aren't XP (no runaway)
+	assert(Cat.levelOf(d88.Earned) == 14, "level-up coins don't count as XP")
+	E._save(88)
+	assert(saved.u88.LevelPaid == 14, "saved")
+	-- another server paid up to 15 meanwhile: the higher wins
+	saved.u88.LevelPaid = 15
+	E._save(88)
+	assert(saved.u88.LevelPaid == 15, "merge keeps the highest paid level")
+	print(("levels ok: level %d -> %d, %d coins for levelling"):format(before, 14, paid))
 	E._save(77)
 	assert(saved.u77.Coins == E.coins(p), "all saved")
 end)

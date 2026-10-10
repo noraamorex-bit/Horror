@@ -45,6 +45,7 @@ local NAMES = {
 	"Struggle", -- ()
 	"Phone", -- (action)
 	"LeaveQueue", -- () lobby: step off your circle
+	"StartNow", -- () lobby: start your group circle now with whoever's in it
 	"DialogueChoice", -- (index) the line you picked
 	"Jumpscare", -- (head part) he got you: the camera snaps to his face
 	"Notice", -- ({Title, Body, Button}) a one-button card (first-night tips)

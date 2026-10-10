@@ -19,6 +19,8 @@ Config.Lobby = {
 	QueueSizes = { 1, 2, 3, 4 },
 	Countdown = 10, -- seconds a full circle waits before teleporting (lets people step off)
 	SoloCountdown = 3,
+	FillWait = 45, -- a group circle that isn't full starts anyway, with whoever's there, after this long
+	StartNowAfter = 8, -- (and anyone in it can press START NOW after this long)
 	ArrivalTimeout = 30, -- game server: start without stragglers after this long
 	ReturnDelay = 45, -- game server: seconds on the ending screen before going back to the lobby
 }

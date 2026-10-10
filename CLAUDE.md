@@ -93,6 +93,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   better; no z-fighting, floating/sunken props, blocked doorways or 90° flipped props. Taller players.
 - Rain sound and occasional thunder; fog outside.
 
+**Retention (the 250 highly-engaged goal)**
+- Group queue circles start with whoever's there (45 s, or START NOW) — never wait forever at low CCU.
+- Levels (XP = coins earned playing) with rewards at milestones; LV on the lobby tag, XP bar on the
+  result card; tomorrow's daily reward shown at the end of every night.
+- Analytics funnels (TelemetryService): check Creator Hub → Analytics → Funnels to find where new
+  players quit, and fix that step first.
+- Lobby board "THE SECRET ENDING — found by N players" with a hint.
+
 **Economy / monetization**
 - Coins from playing (daily streak, quests, night pay); store with one-night gear (no revive), crates
   with cosmetics (beams, titles, trails), Robux coin packs. Cheap passes starting at 10 R$; donations.

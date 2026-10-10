@@ -320,6 +320,9 @@ local function startGame()
 		p:SetAttribute("InGame", true)
 	end
 	ctx.PlayerState.assignRoles(participants)
+	if ctx.Telemetry then
+		ctx.Telemetry.nightStart(participants)
+	end
 	for _, p in Players:GetPlayers() do
 		if not p:GetAttribute("InGame") then
 			ctx.Remotes.Notify:FireClient(p, "The house is full tonight. You're watching from next door.", "info")
@@ -488,6 +491,9 @@ function Director.startAct(name: string, cause: Player?)
 	state.ActStart = os.clock()
 	state.ActEnding = false
 	workspace:SetAttribute("Act", name)
+	if ctx.Telemetry then
+		ctx.Telemetry.act(name)
+	end
 	local card = ctx.Story.Chapters[name]
 	if card then
 		ctx.Remotes.Chapter:FireAllClients(card.Title, card.Sub)
@@ -1368,6 +1374,9 @@ function Director.start()
 		readPartySize(p)
 	end
 	Players.PlayerAdded:Connect(function(p)
+		if ctx.Telemetry then
+			ctx.Telemetry.onboard(p, 3)
+		end
 		readPartySize(p)
 		task.wait(1.5)
 		ctx.Remotes.Lobby:FireClient(p, lobbyPayload())

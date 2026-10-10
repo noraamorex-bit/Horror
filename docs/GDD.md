@@ -142,11 +142,11 @@ Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that 
 - **Invite and favorite** (`client/Controllers/Social`): on the ending screen; the favorite prompt also appears once, 8 s into the first ending of a session. (The lobby no longer has these buttons: inviting lives in the Locker, where a locked invite colour asks you to bring a friend.)
 - **Saved records** (`Services/StatsService`, DataStore `PlayerStats_v1`): nights played, nights survived, and endings found. The lobby shows `NIGHTS · SURVIVED · ENDINGS x / y`; the ending card says NEW ENDING FOUND the first time you see one.
 - **Endings collection:** an ENDINGS button in the lobby lists all six endings; found ones by name, the rest as ??? with a hint.
-- **Survivors' board:** a lit sign beside the queue circles shows the top 10 players by nights survived (OrderedDataStore `NightsSurvived_v1`).
+- **Survivors' board:** a lit sign beside the queue circles shows the top 10 players by nights survived (OrderedDataStore `NightsSurvived_v1`). Beside it, FASTEST WINS, and **THE SECRET ENDING**: "Found by N players" (each player counted once, the owner never; DataStore `Global_v1` key `SecretFound`) with the hint "What happens if everyone gets caught at the same time? (2+ players)".
 - Store page text: `docs/STORE_PAGE.md`.
 
 ### Act 0 — Lobby
-Players land in the **lobby** (third-person camera): Alder Lane on a rainy, foggy night — the street, lawns and woods run on past the invisible walls and fade into thick fog, so the town never seems to end — in front of the Whitaker house (porch light on, two windows lit), with the neighbors, street lamps and the gray van at the curb. A welcome notice explains the one thing to do, with an OK button. Four **white outline circles** on the front patio queue **1, 2, 3 and 4 players**. Stand in a circle to queue and step off (or tap LEAVE) to cancel. When a circle is full it counts down (10 s, 3 s solo), reserves a private game server and teleports the group there together.
+Players land in the **lobby** (third-person camera): Alder Lane on a rainy, foggy night — the street, lawns and woods run on past the invisible walls and fade into thick fog, so the town never seems to end — in front of the Whitaker house (porch light on, two windows lit), with the neighbors, street lamps and the gray van at the curb. A welcome notice explains the one thing to do, with an OK button. Four **white outline circles** on the front patio queue **1, 2, 3 and 4 players**. Stand in a circle to queue and step off (or tap LEAVE) to cancel. When a circle is full it counts down (10 s, 3 s solo), reserves a private game server and teleports the group there together. **A group circle never waits forever** (with only a handful of people online it could): after 45 s it counts down and starts with whoever is on it, and after 8 s anyone on it can tap **START NOW** (3 s). The panel says "Starts anyway in 32s". A circle frees up the moment its group has left for the house.
 
 In the game server the group spawns in the living room. Once everyone has arrived (or after 30 s without stragglers) the **CHOOSE MODE** screen opens: NORMAL or HARD, live vote counts, a 12 s countdown (ends early when everyone has voted). More votes for HARD makes it a Hard night; a tie stays Normal. The result shows for 2 s, then the night starts and roles are dealt. (No music on this screen, and none on the result card at the end of the night: they used to blare a track and a sting.) Owners of the "Pick your role" pass choose their character on the same screen; everyone else sees a button offering the pass.
 
@@ -262,7 +262,9 @@ Every player has a coin balance (DataStore `Economy_v1`; 100 welcome coins). Sav
 
 **Store, Coins tab:** Robux coin packs (developer products): 250 coins for 25 R$, 650 for 49, 1,500 for 99, 4,000 for 199.
 
-**Locker:** equip flashlight colours (invite rewards, passes, crate colours incl. the rainbow one), a title shown above your name in the lobby, and a lobby trail.
+**Locker:** equip flashlight colours (invite rewards, passes, crate colours incl. the rainbow one), a title shown above your name in the lobby, and a lobby trail. Locked items say how to get them (crates, "Reach level 10", "The secret ending").
+
+**Levels.** XP is every coin earned by playing (nights, quests, daily rewards; never bought coins). Level L takes 50·L·(L−1) XP in all (level 2 at 100, 5 at 1,000, 10 at 4,500). Each level up pays 20 × level coins (level-up coins aren't XP), and some levels give more: 3 an Attic Crate, 5 the title "Night Owl", 8 an Attic Crate, 10 "Survivor" + a Midnight Crate, 15 a Midnight Crate, 20 "Attic Veteran" + Midnight, 25 Midnight, 30 "He Can't Catch Me" + Midnight. Rewards are paid once per level (`LevelPaid`, merged as the highest across servers); a player counted for the first time gets the titles of the levels they already have, no back pay. Shown as "LV 7" before your title over your head in the lobby, with an XP bar under the coin balance, and on the result card: the XP bar fills with the night's coins and LEVEL UP if it goes over. The card also says what tomorrow's daily reward is ("Don't break your streak!").
 
 ---
 
@@ -472,6 +474,9 @@ All coordinates are in studs. The front of the house faces −Z (toward the stre
 - The basement stairs are the single choke point for rescues. That makes "Locked In" possible, and makes rescues risky.
 
 ---
+
+### Analytics (`TelemetryService`)
+Creator Hub → Analytics shows where players drop off. **Onboarding funnel** (first-time players): 1 Joined lobby, 2 Queued, 3 Arrived at the house, 4 Night started, 5 Act II, 6 Act III, 7 The hunt, 8 Saw an ending, 9 Second night. **Night funnel** (every night): Started, Act II, Act III, The hunt, Ending. **Custom events:** Ending (which), SecretEnding, QuitDuringNight (the act they left in), LevelUp. **Economy events:** every coin in and out, with the reason (Gameplay, TimedReward, IAP, Shop, Onboarding; admin coins aren't logged). All calls are wrapped: analytics can never break the game.
 
 ## 6. Technical Architecture
 

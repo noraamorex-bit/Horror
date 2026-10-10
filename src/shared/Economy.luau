@@ -63,8 +63,41 @@ Economy.Cosmetics = {
 
 -- the secret ending's own reward (not in any crate)
 Economy.Special = {
-	{ Id = "Title_Family", Kind = "Title", Name = "Not Your Family", Rarity = "Legendary", Color = Color3.fromRGB(255, 70, 70) },
+	{ Id = "Title_Family", Kind = "Title", Name = "Not Your Family", Rarity = "Legendary", Color = Color3.fromRGB(255, 70, 70), How = "The secret ending" },
+	-- earned by levelling up (Economy.Levels)
+	{ Id = "Title_Lv5", Kind = "Title", Name = "Night Owl", Rarity = "Rare", Color = Color3.fromRGB(150, 190, 255), Level = 5 },
+	{ Id = "Title_Lv10", Kind = "Title", Name = "Survivor", Rarity = "Epic", Color = Color3.fromRGB(120, 230, 150), Level = 10 },
+	{ Id = "Title_Lv20", Kind = "Title", Name = "Attic Veteran", Rarity = "Epic", Color = Color3.fromRGB(255, 190, 90), Level = 20 },
+	{ Id = "Title_Lv30", Kind = "Title", Name = "He Can't Catch Me", Rarity = "Legendary", Color = Color3.fromRGB(255, 120, 220), Level = 30 },
 }
+
+--[[
+	Levels: XP is every coin you've ever earned by playing (nights, quests, daily rewards; not
+	bought coins). Level L takes 50 × L × (L − 1) XP in all: 2 at 100, 3 at 300, 5 at 1,000,
+	10 at 4,500. Every level up pays coins; some levels give a crate or a title too.
+]]
+Economy.LevelCoins = 20 -- per level, times the level (level 6: 120 coins)
+Economy.LevelRewards = {
+	[3] = { Crate = "Basic" },
+	[5] = { Title = "Title_Lv5" },
+	[8] = { Crate = "Basic" },
+	[10] = { Title = "Title_Lv10", Crate = "Midnight" },
+	[15] = { Crate = "Midnight" },
+	[20] = { Title = "Title_Lv20", Crate = "Midnight" },
+	[25] = { Crate = "Midnight" },
+	[30] = { Title = "Title_Lv30", Crate = "Midnight" },
+}
+function Economy.xpFor(level: number): number
+	return 50 * level * (level - 1)
+end
+-- level, XP into it, XP the level takes
+function Economy.levelOf(xp: number): (number, number, number)
+	local l = 1
+	while Economy.xpFor(l + 1) <= xp do
+		l += 1
+	end
+	return l, xp - Economy.xpFor(l), Economy.xpFor(l + 1) - Economy.xpFor(l)
+end
 
 Economy.Crates = {
 	{ Id = "Basic", Name = "Attic Crate", Price = 150, Glyph = "📦", Odds = { Common = 62, Rare = 27, Epic = 9, Legendary = 2 }, Desc = "A random colour, title or trail." },

@@ -112,7 +112,7 @@ end
 
 --[[
 	opts: Headline, Good, Line, EndingTitle?, NewEnding?, Duration?, WinTime?, NewBest?, Revive?, ReviveIn?, Spectate?, Lobby?, RestartIn?,
-	ReturnToLobby?, Coins? ({Total, Lines, Balance})
+	ReturnToLobby?, Coins? ({Total, Lines, Balance, LevelBefore, Level, XP, XPNext})
 ]]
 local function showCard(opts)
 	closeCard()
@@ -219,6 +219,50 @@ local function showCard(opts)
 				end
 			end
 		end)
+	end
+	-- your level: the XP bar fills with the night's coins, LEVEL UP if it went over
+	if type(coins) == "table" and tonumber(coins.Level) then
+		order += 1
+		local lvRow = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 26), BackgroundTransparency = 1, Parent = col })
+		local lv = UI.label({ Size = UDim2.new(0, 96, 1, 0), Text = "LEVEL " .. tostring(coins.LevelBefore or coins.Level), Font = UI.Font.Bold, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Right, Parent = lvRow })
+		local track = UI.new("Frame", { Position = UDim2.new(0, 106, 0.5, -5), Size = UDim2.new(1, -212, 0, 10), BackgroundColor3 = Color3.fromRGB(50, 48, 44), Parent = lvRow })
+		UI.corner(track, 5)
+		local fill = UI.new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = GOLD, Parent = track })
+		UI.corner(fill, 5)
+		local xpText = UI.label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0, 96, 1, 0), Text = "", TextSize = 13, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, Parent = lvRow })
+		local up = (tonumber(coins.LevelBefore) or 0) < (tonumber(coins.Level) or 0)
+		local k = math.clamp((tonumber(coins.XP) or 0) / math.max(1, tonumber(coins.XPNext) or 1), 0, 1)
+		task.spawn(function()
+			task.wait(2.4)
+			if not fill.Parent then
+				return
+			end
+			if up then
+				UI.tween(fill, 0.6, { Size = UDim2.fromScale(1, 1) })
+				task.wait(0.7)
+				lv.Text = "LEVEL " .. tostring(coins.Level)
+				lv.TextColor3 = GOLD
+				fill.Size = UDim2.fromScale(0, 1)
+				if ctx.Effects then
+					ctx.Effects.playSound("ObjectiveDone", nil, { Caption = false })
+				end
+			end
+			UI.tween(fill, 0.6, { Size = UDim2.fromScale(k, 1) })
+			xpText.Text = tostring(coins.XP or 0) .. " / " .. tostring(coins.XPNext or 0) .. " XP" .. (up and "   LEVEL UP!" or "")
+			xpText.TextColor3 = up and GOLD or UI.Color.Dim
+		end)
+	end
+	-- come back tomorrow: the next daily reward
+	do
+		local ok, eco = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(player:GetAttribute("Eco") or "{}")
+		end)
+		local daily = ok and type(eco) == "table" and eco.Daily or nil
+		if type(daily) == "table" and daily.Next then
+			local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
+			local coinsNext = Cat.Daily[daily.Next] or Cat.Daily[1]
+			line({ Text = daily.CanClaim and ("Your daily reward is waiting in the lobby: " .. coinsNext .. " coins") or ("Tomorrow: day " .. daily.Next .. " reward, " .. coinsNext .. " coins" .. (daily.Next == Cat.DailyCrateDay and " + a crate" or "") .. ". Don't break your streak!"), TextSize = 13, TextColor3 = UI.Color.Dim })
+		end
 	end
 
 	-- the buttons

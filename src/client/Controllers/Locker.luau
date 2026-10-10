@@ -65,7 +65,7 @@ local function refresh()
 			unlocked, how = true, ""
 			chosen = equip[r.Kind] == nil
 		else
-			unlocked, how = owned[r.Def.Id] == true, "Found in crates"
+			unlocked, how = owned[r.Def.Id] == true, (r.Def.Level and ("Reach level " .. r.Def.Level)) or r.Def.How or "Found in crates"
 			chosen = equip[r.Kind] == r.Def.Id
 		end
 		r.Label.TextTransparency = unlocked and 0 or 0.55

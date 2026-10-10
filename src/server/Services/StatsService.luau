@@ -400,6 +400,10 @@ function Stats.recordNight(players: { Player }, kind: string)
 			end
 			mirror(p)
 			save(p.UserId)
+			-- the lobby's "secret ending found by N players" (each player counted once, the owner never)
+			if firsts[p.UserId] and kind == "NotYourFamily" and not offBoards(p.UserId) then
+				Stats.bumpGlobal("SecretFound")
+			end
 			if board and not offBoards(p.UserId) then
 				local userId, value = p.UserId, d.Escapes
 				task.spawn(function()
@@ -411,6 +415,37 @@ function Stats.recordNight(players: { Player }, kind: string)
 		end
 	end
 	return firsts
+end
+
+-- game-wide counters (DataStore Global_v1): bump one, or read it (cached for a minute)
+local globalStore: any = nil
+local globalCache: { [string]: { V: number, T: number } } = {}
+function Stats.bumpGlobal(key: string, n: number?)
+	if not globalStore then
+		return
+	end
+	task.spawn(function()
+		pcall(function()
+			globalStore:IncrementAsync(key, n or 1)
+		end)
+	end)
+end
+function Stats.global(key: string): number?
+	local c = globalCache[key]
+	if c and os.clock() - c.T < 60 then
+		return c.V
+	end
+	if not globalStore then
+		return nil
+	end
+	local ok, v = pcall(function()
+		return globalStore:GetAsync(key)
+	end)
+	if ok then
+		globalCache[key] = { V = tonumber(v) or 0, T = os.clock() }
+		return tonumber(v) or 0
+	end
+	return c and c.V or nil
 end
 
 function Stats.init(c)
@@ -428,6 +463,10 @@ function Stats.init(c)
 		return DataStoreService:GetOrderedDataStore("FastestWin_v1")
 	end)
 	fastBoard = ok3 and fds or nil
+	local ok4, gds = pcall(function()
+		return DataStoreService:GetDataStore("Global_v1")
+	end)
+	globalStore = ok4 and gds or nil
 	-- (take the owner off the boards if an earlier version put them there)
 	task.spawn(function()
 		local ids = table.clone(ctx.Config and ctx.Config.Admins or {})

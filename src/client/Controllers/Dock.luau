@@ -294,6 +294,26 @@ function Dock.start()
 			ctx.Effects.playSound("UISelect", nil, { Caption = false })
 		end
 	end)
+	-- your level, under the coins: a thin XP bar and "LV 7"
+	local lvl = UI.new("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -4, 1, 6), Size = UDim2.fromOffset(142, 16), BackgroundTransparency = 1, ZIndex = 30, Parent = pill })
+	local lvText = UI.label({ Size = UDim2.new(0, 46, 1, 0), Text = "", Font = UI.Font.Bold, TextSize = 13, TextColor3 = Dock.Gold, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, ZIndex = 31, Parent = lvl })
+	local track = UI.new("Frame", { Position = UDim2.new(0, 48, 0.5, -3), Size = UDim2.new(1, -52, 0, 6), BackgroundColor3 = Color3.fromRGB(40, 38, 36), BackgroundTransparency = 0.2, ZIndex = 31, Parent = lvl })
+	UI.corner(track, 3)
+	local fill = UI.new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Dock.Gold, ZIndex = 32, Parent = track })
+	UI.corner(fill, 3)
+	local function showLevel()
+		local l = tonumber(player:GetAttribute("Level"))
+		lvl.Visible = l ~= nil
+		if l then
+			lvText.Text = "LV " .. l
+			local k = (tonumber(player:GetAttribute("XP")) or 0) / math.max(1, tonumber(player:GetAttribute("XPNext")) or 1)
+			UI.tween(fill, 0.4, { Size = UDim2.fromScale(math.clamp(k, 0, 1), 1) })
+		end
+	end
+	showLevel()
+	for _, a in { "Level", "XP", "XPNext" } do
+		player:GetAttributeChangedSignal(a):Connect(showLevel)
+	end
 	pill.Activated:Connect(function()
 		if ctx.StoreUI then
 			ctx.StoreUI.open("Items")

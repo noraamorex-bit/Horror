@@ -46,6 +46,7 @@ local function fresh()
 		Earned = 0,
 		Crates = 0,
 		Welcomed = false,
+		LevelPaid = -1, -- the highest level whose rewards were given (-1: never counted yet)
 	}
 end
 
@@ -103,6 +104,7 @@ local function clean(data): any
 	d.Earned = math.max(0, math.floor(tonumber(data.Earned) or 0))
 	d.Crates = math.max(0, math.floor(tonumber(data.Crates) or 0))
 	d.Welcomed = data.Welcomed == true
+	d.LevelPaid = math.floor(tonumber(data.LevelPaid) or -1)
 	return d
 end
 
@@ -138,6 +140,10 @@ local function mirror(player: Player)
 		return
 	end
 	player:SetAttribute("Coins", d.Coins)
+	local level, into, need = Cat.levelOf(d.Earned)
+	player:SetAttribute("Level", level)
+	player:SetAttribute("XP", into)
+	player:SetAttribute("XPNext", need)
 	local owned = {}
 	for k in d.Owned do
 		table.insert(owned, k)
@@ -207,6 +213,7 @@ local function merge(old, d, pend)
 	new.Earned = old.Earned + pend.Earned
 	new.Crates = old.Crates + pend.Crates
 	new.Welcomed = old.Welcomed or d.Welcomed
+	new.LevelPaid = math.max(old.LevelPaid, d.LevelPaid)
 	return new
 end
 
@@ -282,8 +289,9 @@ function Economy.coins(player: Player): number
 	return d and d.Coins or 0
 end
 
--- add (or, negative, take) coins. Taking more than you have fails.
-function Economy.addCoins(player: Player, n: number, earned: boolean?): boolean
+-- add (or, negative, take) coins. Taking more than you have fails. reason/sku: for Creator Hub's
+-- economy analytics ("Gameplay" | "TimedReward" | "IAP" | "Shop" | "Onboarding"; "Admin" isn't logged)
+function Economy.addCoins(player: Player, n: number, earned: boolean?, reason: string?, sku: string?): boolean
 	local d, pend = docs[player.UserId], pending[player.UserId]
 	n = math.floor(n)
 	if not d or not pend or n == 0 then
@@ -300,10 +308,67 @@ function Economy.addCoins(player: Player, n: number, earned: boolean?): boolean
 	end
 	mirror(player)
 	queueSave(player.UserId)
+	if ctx.Telemetry and reason ~= "Admin" then
+		ctx.Telemetry.coins(player, n, d.Coins, reason, sku)
+	end
 	if earned and n > 0 then
 		Economy.track(player, "Earned", n)
+		Economy.checkLevel(player)
 	end
 	return true
+end
+
+-- levelled up? Pay each new level's rewards once (coins, and a crate or a title on some levels).
+-- The first time a player is counted, the levels they already have only bring their titles.
+function Economy.checkLevel(player: Player)
+	local d = docs[player.UserId]
+	if not d or not loaded[player.UserId] then
+		return
+	end
+	local level = Cat.levelOf(d.Earned)
+	if d.LevelPaid < 0 then
+		for l = 2, level do
+			local r = Cat.LevelRewards[l]
+			if r and r.Title then
+				Economy.grantCosmetic(player, r.Title)
+			end
+		end
+		d.LevelPaid = level
+		queueSave(player.UserId)
+		return
+	end
+	while d.LevelPaid < level do
+		d.LevelPaid += 1
+		local l = d.LevelPaid
+		if l >= 2 then
+			local coins = l * Cat.LevelCoins
+			Economy.addCoins(player, coins, false, "Gameplay", "LevelUp")
+			local r = Cat.LevelRewards[l] or {}
+			local extra = {}
+			if r.Title and Economy.grantCosmetic(player, r.Title) then
+				local t = Cat.cosmetic(r.Title)
+				table.insert(extra, "title \"" .. (t and t.Name or r.Title) .. "\"")
+			end
+			ctx.Remotes.EconomyResult:FireClient(player, { Kind = "LevelUp", Level = l, Coins = coins })
+			ctx.Remotes.Notify:FireClient(player, "LEVEL " .. l .. "! +" .. coins .. " coins" .. (#extra > 0 and (", " .. table.concat(extra, ", ")) or ""), "done")
+			if r.Crate then
+				local crate = r.Crate
+				task.delay(2, function()
+					if player.Parent then
+						local got = Economy.openCrate(player, crate, true)
+						if got and got.Name and workspace:GetAttribute("Mode") ~= "Lobby" then
+							ctx.Remotes.Notify:FireClient(player, "Level " .. l .. " crate: " .. got.Name .. (got.Dup and " (a duplicate: coins back)" or ""), "done")
+						end
+					end
+				end)
+			end
+			if ctx.Telemetry then
+				ctx.Telemetry.custom(player, "LevelUp", l)
+			end
+		end
+	end
+	mirror(player)
+	queueSave(player.UserId)
 end
 
 function Economy.itemCount(player: Player, id: string): number
@@ -342,7 +407,7 @@ function Economy.buy(player: Player, itemId: string): boolean
 		result(player, { Kind = "Error", Text = "You're carrying as many as you can (" .. Economy.MaxStack .. ")." })
 		return false
 	end
-	if not Economy.addCoins(player, -item.Price) then
+	if not Economy.addCoins(player, -item.Price, nil, "Shop", item.Id) then
 		result(player, { Kind = "Error", Text = "Not enough coins." })
 		return false
 	end
@@ -384,7 +449,7 @@ function Economy.openCrate(player: Player, crateId: string, free: boolean?): any
 	if not crate or not d or not pend or not loaded[player.UserId] then
 		return nil
 	end
-	if not free and not Economy.addCoins(player, -crate.Price) then
+	if not free and not Economy.addCoins(player, -crate.Price, nil, "Shop", crate.Id) then
 		result(player, { Kind = "Error", Text = "Not enough coins." })
 		return nil
 	end
@@ -393,7 +458,7 @@ function Economy.openCrate(player: Player, crateId: string, free: boolean?): any
 	local refund = 0
 	if dup then
 		refund = Cat.Rarity[got.Rarity].Refund
-		Economy.addCoins(player, refund)
+		Economy.addCoins(player, refund, nil, "Gameplay", "Refund")
 	else
 		d.Owned[got.Id] = true
 	end
@@ -464,7 +529,7 @@ function Economy.claimDaily(player: Player): number?
 	local streak = view.Next
 	d.Daily = { Day = Cat.day(), Streak = streak }
 	local coins = Cat.Daily[streak] or Cat.Daily[1]
-	Economy.addCoins(player, coins, true)
+	Economy.addCoins(player, coins, true, "TimedReward", "Daily")
 	result(player, { Kind = "Daily", Streak = streak, Coins = coins })
 	if streak == Cat.DailyCrateDay then
 		task.delay(1.5, function()
@@ -497,7 +562,7 @@ function Economy.track(player: Player, stat: string, n: number?)
 			if d.Quests.P[q.Id] >= q.Goal then
 				d.Quests.Done[q.Id] = true
 				-- (paid right away; "Earned" quests don't count their own reward)
-				Economy.addCoins(player, q.Coins, q.Stat ~= "Earned")
+				Economy.addCoins(player, q.Coins, q.Stat ~= "Earned", "Gameplay", "Quest")
 				result(player, { Kind = "Quest", Id = q.Id, Text = q.Text, Coins = q.Coins })
 				ctx.Remotes.Notify:FireClient(player, "Quest complete: " .. q.Text .. "  +" .. q.Coins .. " coins", "done")
 			end
@@ -592,10 +657,13 @@ function Economy.nightRewards(player: Player, info): any
 		table.insert(lines, { Text = (player:GetAttribute("Boost_Lucky") and "Lucky charm" or "Hard mode") .. " bonus", Amount = bonus })
 		total += bonus
 	end
+	local d = docs[player.UserId]
+	local before = d and Cat.levelOf(d.Earned) or 1
 	if total > 0 then
-		Economy.addCoins(player, total, true)
+		Economy.addCoins(player, total, true, "Gameplay", "Night")
 	end
-	return { Total = total, Lines = lines, Balance = Economy.coins(player) }
+	local level, into, need = Cat.levelOf(d and d.Earned or 0)
+	return { Total = total, Lines = lines, Balance = Economy.coins(player), LevelBefore = before, Level = level, XP = into, XPNext = need }
 end
 
 -- the night's quest counters, for everyone who played it (EndingService)
@@ -673,6 +741,9 @@ function Economy.onReceipt(info): Enum.ProductPurchaseDecision
 		end
 		if player then
 			result(player, { Kind = "Pack", Coins = pack.Coins })
+			if ctx.Telemetry and docs[userId] then
+				ctx.Telemetry.coins(player, pack.Coins, docs[userId].Coins, "IAP", "Pack" .. pack.Coins)
+			end
 			ctx.Remotes.Notify:FireClient(player, "+" .. pack.Coins .. " coins. Thank you!", "done")
 		end
 	end
@@ -692,10 +763,11 @@ local function dressLobby(player: Player)
 	if not head or not root then
 		return
 	end
-	-- the title
+	-- the level, and the title
 	local tag = head:FindFirstChild("TitleTag")
 	local text = player:GetAttribute("TitleText")
-	if text then
+	local level = tonumber(player:GetAttribute("Level"))
+	if text or level then
 		if not tag then
 			tag = Instance.new("BillboardGui")
 			tag.Name = "TitleTag"
@@ -710,11 +782,13 @@ local function dressLobby(player: Player)
 			l.Font = Enum.Font.GothamBold
 			l.TextScaled = true
 			l.TextStrokeTransparency = 0.35
+			l.RichText = true
 			l.Parent = tag
 			tag.Parent = head
 		end
 		local l = tag:FindFirstChild("Text") :: TextLabel
-		l.Text = "« " .. text .. " »"
+		local lv = level and ("<font color=\"#ffdc8c\">LV " .. level .. "</font>") or ""
+		l.Text = text and (lv .. (lv ~= "" and "  " or "") .. "« " .. text .. " »") or lv
 		local c = player:GetAttribute("TitleColor")
 		l.TextColor3 = typeof(c) == "Color3" and c or Color3.new(1, 1, 1)
 	elseif tag then
@@ -796,8 +870,9 @@ local function load(player: Player)
 	if fresh_ or not d.Welcomed then
 		-- a welcome present for a brand-new player
 		d.Welcomed = true
-		Economy.addCoins(player, Cat.StartCoins)
+		Economy.addCoins(player, Cat.StartCoins, nil, "Onboarding", "Welcome")
 	end
+	Economy.checkLevel(player) -- (catch up: a level reached on another server, or levels new to the game)
 	mirror(player)
 	-- (a crate flashlight colour can only be shown once we know it's yours)
 	if ctx.Stats and ctx.Stats.refresh then
@@ -842,7 +917,7 @@ function Economy.start()
 				task.wait(0.6)
 				dressLobby(player)
 			end)
-			for _, a in { "TitleText", "TitleColor", "TrailId" } do
+			for _, a in { "TitleText", "TitleColor", "TrailId", "Level" } do
 				player:GetAttributeChangedSignal(a):Connect(function()
 					dressLobby(player)
 				end)
