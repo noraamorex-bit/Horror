@@ -242,6 +242,23 @@ COMMANDS.cut = function(player, arg)
 	end
 	return "Cutscene: " .. arg
 end
+-- coins for yourself (saved like any other coins): "coins 1000"; "coins -500" takes some back
+COMMANDS.coins = function(player, arg)
+	local E = ctx.Economy
+	if not E then
+		return "No coins here."
+	end
+	local n = math.floor(tonumber(arg) or 1000)
+	n = math.clamp(n, -1000000, 1000000)
+	if n < 0 then
+		n = -math.min(-n, E.coins(player))
+	end
+	if n ~= 0 and not E.addCoins(player, n) then
+		return "Couldn't change your coins (still loading?)."
+	end
+	return string.format("%s%d coins. You have %d.", n >= 0 and "+" or "", n, E.coins(player))
+end
+
 COMMANDS.events = function()
 	return "Events: " .. table.concat(ctx.Director.adminEventIds(), ", ")
 end
@@ -263,7 +280,11 @@ function Admin.start()
 		if type(cmd) ~= "string" or (arg ~= nil and type(arg) ~= "string") then
 			return
 		end
-		if cmd == "info" then
+		if cmd == "info" and not ctx.Director then
+			-- the lobby: only the coins tab
+			ctx.Remotes.AdminReply:FireClient(player, nil, { Lobby = true })
+			return
+		elseif cmd == "info" then
 			-- what the panel lists: rooms, events, endings, acts
 			local rooms, seen = {}, {}
 			for _, n in ctx.Layout.Nodes do

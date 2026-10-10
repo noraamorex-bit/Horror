@@ -43,9 +43,6 @@ local function refresh()
 	local items = type(e.Items) == "table" and e.Items or {}
 	for _, r in itemRows do
 		local n = tonumber(items[r.Item.Id]) or 0
-		if r.Item.Id == "Revive" then
-			n = tonumber(player:GetAttribute("ReviveCredits")) or 0
-		end
 		r.Have.Text = n > 0 and ("READY ×" .. n) or ""
 		price(r.Buy, r.Item.Price)
 	end
@@ -310,7 +307,7 @@ function Store.start()
 			end
 		end
 	end)
-	for _, a in { "Coins", "Eco", "ReviveCredits" } do
+	for _, a in { "Coins", "Eco" } do
 		player:GetAttributeChangedSignal(a):Connect(function()
 			if P.Frame.Visible then
 				refresh()

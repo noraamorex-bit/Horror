@@ -10,6 +10,7 @@
 		ME        invisible to him, all items, battery, nerve, free, revive, teleport to a room
 		EVENTS    fire any scripted event
 		ENDINGS   trigger any ending
+		COINS     give yourself coins (saved like any others); the only tab in the lobby
 	A line of live debug (act, his state, difficulty, police timer) sits under the pill.
 ]]
 
@@ -168,6 +169,40 @@ RENDER.EVENTS = function()
 		btn(r, id, function() send("event", id) end)
 	end
 end
+local function fmt(n: number): string
+	local out = tostring(math.floor(n)):reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	return (out:gsub("^,", ""))
+end
+RENDER.COINS = function()
+	section("GIVE YOURSELF COINS (saved, only you)", 1)
+	local r = row(2)
+	for _, n in { 100, 1000, 10000, 100000 } do
+		btn(r, "+" .. fmt(n), function() send("coins", tostring(n)) end)
+	end
+	btn(r, "-1,000", function() send("coins", "-1000") end, true)
+	section("AMOUNT", 3)
+	local r2 = row(4)
+	local box = ctx.UI.new("TextBox", {
+		Text = "",
+		PlaceholderText = "e.g. 5000",
+		ClearTextOnFocus = false,
+		Font = ctx.UI.Font.Bold,
+		TextSize = 14,
+		TextColor3 = ctx.UI.Color.Text,
+		BackgroundColor3 = Color3.fromRGB(22, 22, 26),
+		Parent = r2,
+	})
+	ctx.UI.corner(box, 8)
+	btn(r2, "Give", function()
+		local n = tonumber((box.Text:gsub("[,%s]", "")))
+		if n then
+			send("coins", tostring(math.floor(n)))
+		else
+			status.Text = "Type a number."
+		end
+	end)
+	status.Text = "You have " .. fmt(tonumber(player:GetAttribute("Coins")) or 0) .. " coins."
+end
 RENDER.ENDINGS = function()
 	local r = row(1)
 	for _, k in info.Endings do
@@ -243,8 +278,13 @@ local function build()
 	end)
 	local tabRow = UI.new("Frame", { Position = UDim2.fromOffset(0, 38), Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, Parent = panel })
 	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = tabRow })
-	for i, name in { "NIGHT", "HIM", "ME", "EVENTS", "ENDINGS" } do
-		local b = UI.new("TextButton", { Size = UDim2.fromOffset(96, 32), Text = name, Font = UI.Font.Bold, TextSize = 13, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
+	local lobby = ctx.Mode == "Lobby"
+	if lobby then
+		current = "COINS"
+		debugLine.Visible = false
+	end
+	for i, name in (lobby and { "COINS" } or { "NIGHT", "HIM", "ME", "EVENTS", "ENDINGS", "COINS" }) do
+		local b = UI.new("TextButton", { Size = UDim2.fromOffset(80, 32), Text = name, Font = UI.Font.Bold, TextSize = 13, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
 		UI.corner(b, 8)
 		b.Activated:Connect(function()
 			show(name)

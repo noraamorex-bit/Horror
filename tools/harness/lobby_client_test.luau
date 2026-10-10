@@ -16,7 +16,8 @@ local ok, err = pcall(function()
 		GetMouseDelta = function() return roblox.Vector2.new() end,
 	}
 	S.GuiService = { GetGuiInset = function() return roblox.Vector2.new(0, 36), roblox.Vector2.new() end }
-	S.ProximityPromptService = { PromptShown = H.signal(), Enabled = true }
+	S.ProximityPromptService = { PromptShown = H.signal(), PromptTriggered = H.signal(), Enabled = true }
+	S.MarketplaceService = S.MarketplaceService or { PromptGamePassPurchaseFinished = H.signal(), PromptProductPurchaseFinished = H.signal(), PromptGamePassPurchase = function() end, PromptProductPurchase = function() end }
 	S.SoundService = H.wrap(roblox.Instance.new("SoundService"))
 	S.Lighting = H.wrap(roblox.Instance.new("Lighting"))
 	S.StarterGui = { SetCoreGuiEnabled = function() end, SetCore = function() end }
@@ -34,7 +35,10 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "LobbyHub" }
+	-- (the client's lobby list, init.client.luau; the owner's panel too)
+	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "LobbyHub", "Admin" }
+	player:SetAttribute("IsAdmin", true)
+	player:SetAttribute("Coins", 1234)
 	S.TeleportService = { SetTeleportGui = function() end }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
@@ -50,6 +54,11 @@ local ok, err = pcall(function()
 	ctx.Remotes.Queue.OnClientEvent:Fire({ Size = 2, Count = 2, Status = "Starting", Countdown = 4 })
 	ctx.Remotes.Queue.OnClientEvent:Fire(nil)
 	print("remotes sent:", table.concat(sent, ","))
+	-- the owner's panel in the lobby: a COINS tab only, and its buttons ask the server
+	local panel = H.unwrap(pg):FindFirstChild("AdminPanel", true)
+	assert(panel, "admin panel built in the lobby")
+	local pill = H.unwrap(pg):FindFirstChild("AdminPill", true)
+	assert(pill, "admin pill")
 	-- count UI objects
 	local n = 0
 	for _ in H.unwrap(pg):GetDescendants() do n += 1 end

@@ -338,7 +338,7 @@ function Economy.buy(player: Player, itemId: string): boolean
 	if not item or not d or not loaded[player.UserId] then
 		return false
 	end
-	if item.Id ~= "Revive" and (d.Items[item.Id] or 0) >= Economy.MaxStack then
+	if (d.Items[item.Id] or 0) >= Economy.MaxStack then
 		result(player, { Kind = "Error", Text = "You're carrying as many as you can (" .. Economy.MaxStack .. ")." })
 		return false
 	end
@@ -346,16 +346,7 @@ function Economy.buy(player: Player, itemId: string): boolean
 		result(player, { Kind = "Error", Text = "Not enough coins." })
 		return false
 	end
-	if item.Id == "Revive" then
-		-- (revive tokens live with the revives you bought: StatsService)
-		if not (ctx.Stats and ctx.Stats.addReviveCredit(player)) then
-			Economy.addCoins(player, item.Price)
-			result(player, { Kind = "Error", Text = "Couldn't save that right now. Try again." })
-			return false
-		end
-	else
-		addItem(player, item.Id, 1)
-	end
+	addItem(player, item.Id, 1)
 	result(player, { Kind = "Buy", Id = item.Id, Name = item.Name })
 	return true
 end
@@ -529,7 +520,7 @@ function Economy.applyLoadout(player: Player): { string }
 		return given
 	end
 	for _, item in Cat.Items do
-		if item.Id ~= "Revive" and (d.Items[item.Id] or 0) > 0 then
+		if (d.Items[item.Id] or 0) > 0 then
 			addItem(player, item.Id, -1)
 			if item.Id == "Lucky" then
 				player:SetAttribute("Boost_Lucky", true)

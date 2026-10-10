@@ -78,6 +78,10 @@ local Shop = require(Services.ShopService)
 Shop.init(ctx)
 Shop.start()
 if mode == "Lobby" then
+	-- the owner's panel works here too, for the coins tab
+	local LobbyAdmin = require(Services.AdminService)
+	LobbyAdmin.init(ctx)
+	LobbyAdmin.start()
 	require(script.Lobby.LobbyServer).run(ctx)
 	return
 end

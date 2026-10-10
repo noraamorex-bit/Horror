@@ -21,7 +21,6 @@ Economy.Items = {
 	{ Id = "Walkie", Name = "Walkie-talkie", Price = 40, Glyph = "📻", Desc = "Talk to your friends from anywhere in the house." },
 	{ Id = "Energy", Name = "Energy drink", Price = 50, Glyph = "🥤", Desc = "Sprint for much longer, all night." },
 	{ Id = "Lucky", Name = "Lucky charm", Price = 80, Glyph = "🍀", Desc = "Earn 50% more coins from your next night." },
-	{ Id = "Revive", Name = "Revive token", Price = 250, Glyph = "💖", Desc = "Come back once after you're caught for good. Kept until you use it." },
 }
 
 Economy.Rarity = {

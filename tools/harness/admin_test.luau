@@ -113,6 +113,17 @@ local ok, err = pcall(function()
 	for _, f in fired do if f[1] == "PlaySound" and f[2] == owner and f[3] == "HorrorHit" then hits += 1 end end
 	assert(hits == 1, "yanked door: one loud hit, got " .. hits)
 	print("door yank scare ok")
+	-- coins: only for the owner
+	local bank = {}
+	ctx.Economy = {
+		coins = function(p) return bank[p] or 0 end,
+		addCoins = function(p, n) if (bank[p] or 0) + n < 0 then return false end bank[p] = (bank[p] or 0) + n return true end,
+	}
+	cmd(rando, "coins", "5000"); assert((bank[rando] or 0) == 0, "a stranger gets no coins")
+	cmd(owner, "coins", "5000"); assert(bank[owner] == 5000, "owner +5000")
+	cmd(owner, "coins", "-99999"); assert(bank[owner] == 0, "taking back never goes below 0")
+	cmd(owner, "coins"); assert(bank[owner] == 1000, "default +1000: " .. tostring(lastReply(owner)))
+	print("coins:", lastReply(owner))
 	cmd(owner, "ending", "Sirens"); assert(ctx.Ending.isOver(), "ending")
 	print("admin ok")
 end)

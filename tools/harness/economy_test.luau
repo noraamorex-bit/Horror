@@ -58,7 +58,8 @@ local ok, err = pcall(function()
 	-- buy gear
 	assert(E.buy(p, "Walkie") == true, "buy a walkie")
 	assert(E.coins(p) == Cat.StartCoins - 40 and E.itemCount(p, "Walkie") == 1, "paid and carried")
-	assert(E.buy(p, "Revive") == false, "can't afford a revive")
+	assert(E.buy(p, "Revive") == false, "revives are Robux only (no coin revive)")
+	assert(E.buy(p, "PepperSpray") == false, "can't afford it (60 left)")
 	assert(E.buy(p, "Nope") == false, "unknown item")
 	print("buy ok")
 
