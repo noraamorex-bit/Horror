@@ -792,10 +792,10 @@ Story.Endings = {
 }
 
 -- shown once, the first night someone plays, when he starts moving around the house
-Story.SurvivalTipsVersion = 2 -- (bump when the tips change: everyone sees them once more)
+Story.SurvivalTipsVersion = 3 -- (bump when the tips change: everyone sees them once more)
 Story.SurvivalTips = {
 	Title = "HE'S IN THE HOUSE",
-	Body = "• He hunts by SOUND. Walk near him and he'll hear you; run and he'll hear you from across the house. CROUCH and he can't.\n• A quiet noise (a door, a lock) makes him growl and come to look. A loud one makes him ROAR and charge. Anything he runs into, he grabs.\n• Feel the floor shake? He's close. Stop, crouch, or hide: closets, wardrobes, under beds, the shower.\n• If he stops outside your hiding spot to listen, keep your heartbeat steady: press the side each half-heart comes from. Don't come out while he's there.\n• His eyes are bad in the dark. Your flashlight isn't.",
+	Body = "• The way out: CALL 911. One bar of signal by the upstairs bathroom window: call there, then hide until the police come.\n• He hunts by SOUND. Walk near him and he hears you; run and he hears you across the house. CROUCH and he can't.\n• A noise makes him come to look; a loud one makes him charge. Anything he runs into, he grabs.\n• Floor shaking? He's close. Hide: closets, wardrobes, under beds, the shower.\n• If he stops at your hiding spot, keep your heartbeat steady: press the side each half-heart comes from.\n• His eyes are bad in the dark. Your flashlight isn't.",
 	Button = "GOT IT",
 }
 
