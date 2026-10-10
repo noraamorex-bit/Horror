@@ -42,6 +42,11 @@ Sounds.Library = {
 
 	-- House
 	Footstep = { Id = "rbxassetid://9120880067", Fallback = ENGINE_STEP, Volume = 0.9, Range = 70, Caption = "[Footsteps]" },
+	-- ProSoundEffects "Dragon Footsteps": a heavy two-legged thing walking on soft ground (his steps
+	-- in the dirt tunnels under the house; three takes, picked at random)
+	FootstepDirt1 = { Id = "rbxassetid://9114165561", Fallback = ENGINE_STEP, Volume = 1, Range = 70 },
+	FootstepDirt2 = { Id = "rbxassetid://9114166137", Fallback = ENGINE_STEP, Volume = 1, Range = 70 },
+	FootstepDirt3 = { Id = "rbxassetid://9114166413", Fallback = ENGINE_STEP, Volume = 1, Range = 70 },
 	FootstepsAbove = { Id = "rbxassetid://9114493393", Fallback = ENGINE_STEP, Volume = 1, Range = 90, Caption = "[Footsteps... above you]" },
 	DoorOpen = { Id = "rbxassetid://9120839010", Volume = 0.6, Range = 45, Caption = "[A door creaks]" },
 	DoorClose = { Id = "rbxassetid://9120839581", Fallback = ENGINE_THUD, Volume = 0.6, Range = 45, Caption = "[A door closes]" },
@@ -90,7 +95,6 @@ Sounds.Library = {
 	WindowClose = { Id = "rbxassetid://9119205658", Fallback = ENGINE_THUD, Volume = 0.6, Range = 30 },
 
 	-- People
-	Breathing = { Id = "rbxassetid://9116457539", Volume = 0.25, Looped = true, Range = 12 },
 	-- APM "HEARTBEAT 01 96BPM": looped, sped up and louder as your nerve goes
 	Heartbeat = { Id = "rbxassetid://9043365727", Volume = 0.6, Looped = true },
 	-- him, hunting by sound (ProSoundEffects creature vocals, pitched down)

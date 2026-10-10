@@ -212,7 +212,7 @@ function Hiding.start()
 						b = 0
 						player:SetAttribute("HoldingBreath", nil)
 						-- gasp!
-						ctx.Audio.playAt("Breathing", spot.Position, { CaptionText = "[A sharp gasp]", Range = 20, Duration = 2 })
+						ctx.Audio.playAt("Gasp", spot.Position, { CaptionText = "[A sharp gasp]", Range = 20 })
 						ctx.Noise.emit(spot.Position, 18, "Gasp", player)
 					end
 				else

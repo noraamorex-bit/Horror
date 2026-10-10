@@ -33,7 +33,8 @@ local CONCRETE = Color3.fromRGB(112, 110, 104)
 	openings: { { Side = "N"|"S"|"E"|"W", At = coordinate along the wall, W = width } }
 	N/S walls run along X at z1/z0; E/W walls along Z at x1/x0 (each 1 thick, outside the room).
 	opts.Tunnel = "X" | "Z": a tunnel between two rooms' outer wall faces: only its two long
-	walls, floor and ceiling (its open ends are the rooms' doorways).
+	walls, floor and ceiling (its open ends are the rooms' doorways). opts.Gaps: openings in the
+	long walls for alcoves, { { Side = "N"|"S" (X tunnel) or "E"|"W" (Z tunnel), At, W } }.
 ]]
 local function space(B, parent, name: string, x0: number, x1: number, z0: number, z1: number, openings, opts)
 	opts = opts or {}
@@ -41,16 +42,52 @@ local function space(B, parent, name: string, x0: number, x1: number, z0: number
 		local Y0 = Burrow.FloorY
 		local H0 = opts.Height or 9
 		local wc, wm = opts.Wall or EARTH, opts.WallMat or Enum.Material.Ground
+		-- a long wall from a0 to a1 (along the tunnel), with any alcove openings cut out of it
+		local GAP_H = 7
+		local function longWall(side: string, a0: number, a1: number, box: (number, number, number, number) -> ())
+			local gaps = {}
+			for _, g in opts.Gaps or {} do
+				if g.Side == side then
+					table.insert(gaps, { g.At - g.W / 2, g.At + g.W / 2 })
+				end
+			end
+			table.sort(gaps, function(p, q)
+				return p[1] < q[1]
+			end)
+			local cursor = a0
+			for _, g in gaps do
+				box(cursor, g[1], Y0, Y0 + H0)
+				box(g[1], g[2], Y0 + GAP_H, Y0 + H0) -- (the lintel over the alcove)
+				cursor = g[2]
+			end
+			box(cursor, a1, Y0, Y0 + H0)
+		end
 		if opts.Tunnel == "X" then
 			B.box(parent, name .. "Floor", V(x0, Y0 - 1, z0 - 1), V(x1, Y0, z1 + 1), MUD, Enum.Material.Mud)
 			B.box(parent, name .. "Ceiling", V(x0, Y0 + H0, z0 - 1), V(x1, Y0 + H0 + 1, z1 + 1), EARTH_DARK, Enum.Material.Ground)
-			B.box(parent, name .. "Wall", V(x0, Y0, z0 - 1), V(x1, Y0 + H0, z0), wc, wm)
-			B.box(parent, name .. "Wall", V(x0, Y0, z1), V(x1, Y0 + H0, z1 + 1), wc, wm)
+			longWall("S", x0, x1, function(a, b, y0, y1)
+				if b - a > 0.05 then
+					B.box(parent, name .. "Wall", V(a, y0, z0 - 1), V(b, y1, z0), wc, wm)
+				end
+			end)
+			longWall("N", x0, x1, function(a, b, y0, y1)
+				if b - a > 0.05 then
+					B.box(parent, name .. "Wall", V(a, y0, z1), V(b, y1, z1 + 1), wc, wm)
+				end
+			end)
 		else
 			B.box(parent, name .. "Floor", V(x0 - 1, Y0 - 1, z0), V(x1 + 1, Y0, z1), MUD, Enum.Material.Mud)
 			B.box(parent, name .. "Ceiling", V(x0 - 1, Y0 + H0, z0), V(x1 + 1, Y0 + H0 + 1, z1), EARTH_DARK, Enum.Material.Ground)
-			B.box(parent, name .. "Wall", V(x0 - 1, Y0, z0), V(x0, Y0 + H0, z1), wc, wm)
-			B.box(parent, name .. "Wall", V(x1, Y0, z0), V(x1 + 1, Y0 + H0, z1), wc, wm)
+			longWall("W", z0, z1, function(a, b, y0, y1)
+				if b - a > 0.05 then
+					B.box(parent, name .. "Wall", V(x0 - 1, y0, a), V(x0, y1, b), wc, wm)
+				end
+			end)
+			longWall("E", z0, z1, function(a, b, y0, y1)
+				if b - a > 0.05 then
+					B.box(parent, name .. "Wall", V(x1, y0, a), V(x1 + 1, y1, b), wc, wm)
+				end
+			end)
 		end
 		return
 	end
@@ -180,12 +217,36 @@ function Burrow.build(ctx, parent: Instance)
 	space(B, f, "HisRoom", 18, 34, -14, 4, { { Side = "W", At = -5, W = 5 } })
 	space(B, f, "Pantry", 18, 30, 10, 24, { { Side = "W", At = 17, W = 5 } })
 	-- the tunnels between them (each from one room's outer wall face to the next)
-	space(B, f, "TunnelA", -15, -1, 14, 20, nil, { Tunnel = "X" })
-	space(B, f, "TunnelNorth", 1, 7, 22, 39, nil, { Tunnel = "Z" })
-	space(B, f, "TunnelSouth", 1, 7, 0, 12, nil, { Tunnel = "Z" })
-	space(B, f, "TunnelWest", -11, -1, -8, -2, nil, { Tunnel = "X" })
-	space(B, f, "TunnelEast", 9, 17, -8, -2, nil, { Tunnel = "X" })
-	space(B, f, "TunnelPantry", 9, 17, 14, 20, nil, { Tunnel = "X" })
+	-- (each tunnel has an alcove or two dug into its wall: ALCOVES, below)
+	local ALCOVES = {
+		{ Tunnel = "TunnelA", Side = "N", At = -8 },
+		{ Tunnel = "TunnelNorth", Side = "W", At = 34.5 },
+		{ Tunnel = "TunnelNorth", Side = "E", At = 25 },
+		{ Tunnel = "TunnelSouth", Side = "W", At = 3.5 },
+		{ Tunnel = "TunnelWest", Side = "S", At = -8.5 },
+		{ Tunnel = "TunnelEast", Side = "N", At = 13 },
+		{ Tunnel = "TunnelPantry", Side = "S", At = 13 },
+	}
+	local function gapsFor(t: string)
+		local out = {}
+		for _, a in ALCOVES do
+			if a.Tunnel == t then
+				table.insert(out, { Side = a.Side, At = a.At, W = 3 })
+			end
+		end
+		return out
+	end
+	local TUNNELS = {
+		TunnelA = { -15, -1, 14, 20, "X" },
+		TunnelNorth = { 1, 7, 22, 39, "Z" },
+		TunnelSouth = { 1, 7, 0, 12, "Z" },
+		TunnelWest = { -11, -1, -8, -2, "X" },
+		TunnelEast = { 9, 17, -8, -2, "X" },
+		TunnelPantry = { 9, 17, 14, 20, "X" },
+	}
+	for tname, t in TUNNELS do
+		space(B, f, tname, t[1], t[2], t[3], t[4], nil, { Tunnel = t[5], Gaps = gapsFor(tname) })
+	end
 	R.Rooms = {
 		Dining = { Min = V(-38, Y, 6), Max = V(-16, Y + 10, 28) },
 		Pantry = { Min = V(18, Y, 10), Max = V(30, Y + 10, 24) },
@@ -510,6 +571,52 @@ function Burrow.build(ctx, parent: Instance)
 		Kit.box(f, "NookRope", cf * CF(0, 3.3, 0), V(4.8, 0.08, 0.08), Color3.fromRGB(150, 130, 100), Enum.Material.Fabric)
 		local a, b = corner, corner + V(sx * 3, 0, sz * 3)
 		table.insert(R.Nooks, { Min = V(math.min(a.X, b.X), Y, math.min(a.Z, b.Z)), Max = V(math.max(a.X, b.X), Y + 6, math.max(a.Z, b.Z)), Blanket = blanket })
+	end
+	-- the alcoves: a pocket dug into a tunnel wall (3 wide, 3 deep, 7 high), a blanket across the
+	-- opening. Step in behind it and crouch: he walks right past.
+	for i, a in ALCOVES do
+		local t = TUNNELS[a.Tunnel]
+		local tx0, tx1, tz0, tz1 = t[1], t[2], t[3], t[4]
+		local w0, w1 = a.At - 1.5, a.At + 1.5
+		-- out: which way the pocket goes; face: the tunnel's inner wall face on that side
+		local out, face
+		if a.Side == "N" then
+			out, face = V(0, 0, 1), tz1
+		elseif a.Side == "S" then
+			out, face = V(0, 0, -1), tz0
+		elseif a.Side == "E" then
+			out, face = V(1, 0, 0), tx1
+		else
+			out, face = V(-1, 0, 0), tx0
+		end
+		-- a box in "along / out" coordinates: along = [p0, p1], out = [d0, d1] studs past the face
+		local function pbox(nm: string, p0: number, p1: number, d0: number, d1: number, y0: number, y1: number, color, mat)
+			local o0, o1 = face + (out.X + out.Z) * d0, face + (out.X + out.Z) * d1
+			if out.X ~= 0 then
+				B.box(f, nm, V(math.min(o0, o1), y0, p0), V(math.max(o0, o1), y1, p1), color, mat)
+			else
+				B.box(f, nm, V(p0, y0, math.min(o0, o1)), V(p1, y1, math.max(o0, o1)), color, mat)
+			end
+		end
+		pbox("AlcoveFloor", w0, w1, 1, 4, Y - 1, Y, MUD, Enum.Material.Mud)
+		pbox("AlcoveCeiling", w0, w1, 1, 4, Y + 7, Y + 8, EARTH_DARK, Enum.Material.Ground)
+		pbox("AlcoveBack", w0 - 1, w1 + 1, 4, 5, Y - 1, Y + 8, EARTH, Enum.Material.Ground)
+		pbox("AlcoveSide", w0 - 1, w0, 1, 4, Y, Y + 7, EARTH, Enum.Material.Ground)
+		pbox("AlcoveSide", w1, w1 + 1, 1, 4, Y, Y + 7, EARTH, Enum.Material.Ground)
+		-- the blanket, hung in the opening
+		local mid = face + (out.X + out.Z) * 0.5
+		local center = out.X ~= 0 and V(mid, Y + 3.3, a.At) or V(a.At, Y + 3.3, mid)
+		local cf = CFrame.lookAt(center, center + out)
+		local blanket = Kit.box(f, "NookBlanket", cf, V(3, 6.6, 0.12), ({ Color3.fromRGB(110, 50, 46), Color3.fromRGB(60, 80, 110), Color3.fromRGB(80, 90, 60), Color3.fromRGB(120, 100, 70) })[(i % 4) + 1], Enum.Material.Fabric)
+		blanket.CanQuery = true -- (it blocks his view)
+		Kit.box(f, "NookRope", cf * CF(0, 3.4, 0), V(3.2, 0.08, 0.08), Color3.fromRGB(150, 130, 100), Enum.Material.Fabric)
+		local o0, o1 = face, face + (out.X + out.Z) * 4
+		local lo, hi = math.min(o0, o1), math.max(o0, o1)
+		if out.X ~= 0 then
+			table.insert(R.Nooks, { Min = V(lo, Y, w0), Max = V(hi, Y + 6, w1), Blanket = blanket })
+		else
+			table.insert(R.Nooks, { Min = V(w0, Y, lo), Max = V(w1, Y + 6, hi), Blanket = blanket })
+		end
 	end
 
 	---------------------------------------------------------------------------

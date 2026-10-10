@@ -1957,7 +1957,10 @@ local function animate(dt: number)
 	if S.Model:GetAttribute("Gait") ~= gait then
 		S.Model:SetAttribute("Gait", gait)
 	end
-	-- his footsteps, in time with his stride: thunder when he runs, slow and heavy otherwise
+	-- his footsteps, in time with his stride: thunder when he runs, slow and heavy otherwise. Loud
+	-- enough to hear from across the house, louder and louder the closer he is (full volume
+	-- within 10 studs, fading out by 60 walking / 110 running). In the dirt under the house,
+	-- heavier, softer-ground steps.
 	S.StepClock += dt
 	local running = hurrying(speed)
 	local interval = running and math.max(3.75 / speed, 0.3) or math.max(2.6 / math.max(speed, 1), 0.3)
@@ -1968,10 +1971,12 @@ local function animate(dt: number)
 		if caption then
 			S.CaptionClock = running and 2 or 5
 		end
-		ctx.Audio.playAt("Footstep", pos() - V(0, 2.5, 0), {
-			Volume = running and 1 or 0.5,
-			Pitch = running and 0.72 or 0.8,
-			Range = running and 95 or 40,
+		local below = pos().Y < -15
+		ctx.Audio.playAt(below and ("FootstepDirt" .. math.random(1, 3)) or "Footstep", pos() - V(0, 2.5, 0), {
+			Volume = running and 1.6 or 1.1,
+			Pitch = (running and 0.72 or 0.8) * (0.95 + math.random() * 0.1),
+			Min = 10,
+			Range = running and 110 or 60,
 			Caption = caption,
 			CaptionText = running and "[Heavy footsteps, running]" or "[Heavy footsteps]",
 			CaptionRange = running and 70 or 28,

@@ -259,9 +259,18 @@ local ok, err = pcall(function()
 		-- both hide behind blankets (crouched): he walks the tunnels for two minutes
 		local nooks = B.Nooks
 		place1((nooks[1].Min + nooks[1].Max) / 2 + V(0, 3, 0))
-		place2((nooks[2].Min + nooks[2].Max) / 2 + V(0, 3, 0))
+		-- (p2 in the alcove dug into the first tunnel, right on his way out of the dining room)
+		assert(#nooks >= 11, "4 corner nooks and 7 alcoves, got " .. #nooks)
+		local alcove = nooks[5]
+		place2((alcove.Min + alcove.Max) / 2 + V(0, 3, 0))
 		ctx.Remotes.Movement.OnServerEvent:Fire(p1, { Crouch = true })
 		ctx.Remotes.Movement.OnServerEvent:Fire(p2, { Crouch = true })
+		-- him standing in the tunnel right outside it, looking in: the blanket hides p2
+		local outside = V((alcove.Min.X + alcove.Max.X) / 2, B.FloorY, 17)
+		S.P.place(outside, ctx.Util.getRoot(p2).Position)
+		tick(0.2)
+		assert(not F._sees(p2), "behind the alcove blanket: he can't see you from the tunnel")
+		print("alcove: hidden from " .. string.format("%.1f", (S.P.head().Position - ctx.Util.getRoot(p2).Position).Magnitude) .. " studs")
 		local visited, last, still, worst = {}, S.P.position(), 0, 0
 		for _ = 1, 1200 do
 			tick(0.1)

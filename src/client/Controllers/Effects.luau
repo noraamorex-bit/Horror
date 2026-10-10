@@ -1,6 +1,6 @@
 --[[
-	Effects — how fear feels: nerve vignette, desaturation, camera tremor, heartbeat and
-	breathing; screen shake and fades; local-only sounds; the figure at the window.
+	Effects — how fear feels: nerve vignette, desaturation, camera tremor and heartbeat; screen
+	shake and fades; local-only sounds; the figure at the window.
 ]]
 
 local Players = game:GetService("Players")
@@ -18,7 +18,6 @@ local fadeFrame: Frame
 local grade: ColorCorrectionEffect
 local shakeMag, shakeUntil = 0, 0
 local heartbeat: Sound?
-local breathing: Sound?
 
 local function localSound(name: string, parent: Instance?): Sound?
 	local def = ctx.Sounds.get(name)
@@ -211,10 +210,8 @@ function Effects.start()
 	grade.Parent = Lighting
 
 	heartbeat = localSound("Heartbeat")
-	breathing = localSound("Breathing")
-	if breathing then
-		breathing.Looped = true
-	end
+	-- (no breathing loop of your own: the only licensed clip was a man grunting and coughing, which
+	-- came across as somebody coughing and saying "hello" every few seconds. The heartbeat carries it.)
 
 	ctx.Remotes.Fade.OnClientEvent:Connect(Effects.fade)
 	ctx.Remotes.Shake.OnClientEvent:Connect(Effects.shake)
@@ -304,14 +301,6 @@ function Effects.start()
 				end
 			elseif heartbeat.IsPlaying then
 				heartbeat:Stop()
-			end
-		end
-		if breathing then
-			local want = inGame and nerve < heavy and not player:GetAttribute("HoldingBreath")
-			if want and not breathing.IsPlaying then
-				breathing:Play()
-			elseif not want and breathing.IsPlaying then
-				breathing:Stop()
 			end
 		end
 

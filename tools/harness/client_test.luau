@@ -91,13 +91,15 @@ local ok, err = pcall(function()
 	R.Figure.OnClientEvent:Fire(roblox.CFrame.new(), 1)
 	-- the secret ending's card, through every phase (tied up and free)
 	local now = os.clock()
-	local card = nil
+	local card, todo = nil, nil
 	local function cardText()
-		card = card or H.unwrap(player):FindFirstChild("FinaleCard", true)
+		card = card or H.unwrap(player):FindFirstChild("FinaleBar", true)
+		todo = todo or H.unwrap(player):FindFirstChild("FinaleTodo", true)
 		local out = {}
-		for _, d in card:GetDescendants() do
-			if d:IsA("TextLabel") and d.Visible and d.Text ~= "" then table.insert(out, d.Text) end
+		for _, d in card:GetChildren() do
+			if d:IsA("TextLabel") and d.Visible and d.Text ~= "" then table.insert(out, (d.Text:gsub("<[^>]+>", ""))) end
 		end
+		if todo.Visible then table.insert(out, "[" .. todo.Text .. "]") end
 		return table.concat(out, " | ")
 	end
 	player:SetAttribute("FinaleTied", true)
