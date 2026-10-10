@@ -1268,6 +1268,20 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.plant(uhall, F(10.6, U + htH, -25.9, NX), 0.9, "leafy", Color3.fromRGB(240, 240, 236))
 	Kit.photoFrame(uhall, F(10.8, U + htH, -24.1, NX), 0.8, 0.6, WOOD_DARK, 41)
 	target("SignalSpot", V(37, U + 3, 1))
+	if ctx.Phone and ctx.Phone.setupSignalSpot then
+		-- (where the one bar of signal is: a Call 911 prompt, by the bathroom window)
+		local spotPart = Instance.new("Part")
+		spotPart.Name = "SignalSpot"
+		spotPart.Anchored = true
+		spotPart.CanCollide = false
+		spotPart.CanQuery = false
+		spotPart.CanTouch = false
+		spotPart.Transparency = 1
+		spotPart.Size = V(1, 1, 1)
+		spotPart.CFrame = CFrame.new(V(38.4, U + 3.5, 1)) -- (right by the window: the bar is at x > 33)
+		spotPart.Parent = uhall
+		ctx.Phone.setupSignalSpot(spotPart)
+	end
 	sconce(uhall, F(11.62, U + 7.8, -20, NX))
 	sconce(uhall, F(11.62, U + 7.8, 10, NX))
 

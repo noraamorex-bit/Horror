@@ -32,6 +32,7 @@ local loaded: { [number]: boolean } = {}
 local saveQueued: { [number]: boolean } = {}
 local lastAction: { [Player]: number } = {}
 local granted: { [Player]: boolean } = {} -- this night's coins already paid
+local chainPaid: { [Player]: boolean } = {} -- this night's streak already counted
 Economy.MaxStack = 5
 
 local function fresh()
@@ -47,6 +48,7 @@ local function fresh()
 		Crates = 0,
 		Welcomed = false,
 		LevelPaid = -1, -- the highest level whose rewards were given (-1: never counted yet)
+		Chain = { At = 0, N = 0 }, -- the night streak: when the last night ended (unix), how many in a row
 	}
 end
 
@@ -105,6 +107,9 @@ local function clean(data): any
 	d.Crates = math.max(0, math.floor(tonumber(data.Crates) or 0))
 	d.Welcomed = data.Welcomed == true
 	d.LevelPaid = math.floor(tonumber(data.LevelPaid) or -1)
+	if type(data.Chain) == "table" then
+		d.Chain = { At = math.max(0, math.floor(tonumber(data.Chain.At) or 0)), N = math.max(0, math.floor(tonumber(data.Chain.N) or 0)) }
+	end
 	return d
 end
 
@@ -140,6 +145,11 @@ local function mirror(player: Player)
 		return
 	end
 	player:SetAttribute("Coins", d.Coins)
+	-- the night streak, while it's still alive: when it runs out (unix), and the next night's bonus (%)
+	local chainLive = d.Chain and d.Chain.At > 0 and os.time() - d.Chain.At < Cat.Night.ChainWindow
+	player:SetAttribute("ChainUntil", chainLive and d.Chain.At + Cat.Night.ChainWindow or nil)
+	player:SetAttribute("ChainNext", chainLive and math.floor(Cat.chainBonus(d.Chain.N + 1) * 100) or nil)
+	player:SetAttribute("ChainN", chainLive and d.Chain.N or nil)
 	local level, into, need = Cat.levelOf(d.Earned)
 	player:SetAttribute("Level", level)
 	player:SetAttribute("XP", into)
@@ -214,6 +224,8 @@ local function merge(old, d, pend)
 	new.Crates = old.Crates + pend.Crates
 	new.Welcomed = old.Welcomed or d.Welcomed
 	new.LevelPaid = math.max(old.LevelPaid, d.LevelPaid)
+	-- the night streak: whichever copy ended a night most recently
+	new.Chain = (d.Chain.At >= old.Chain.At) and table.clone(d.Chain) or old.Chain
 	return new
 end
 
@@ -262,6 +274,9 @@ local function save(userId: number)
 			d.Owned[k] = true
 		end
 		d.Receipts = r.Receipts
+		if r.Chain.At > d.Chain.At then
+			d.Chain = r.Chain
+		end
 		local p = Players:GetPlayerByUserId(userId)
 		if p then
 			mirror(p)
@@ -645,6 +660,24 @@ function Economy.nightRewards(player: Player, info): any
 	for _, l in lines do
 		total += l.Amount
 	end
+	-- the night streak (once per night): a night started within 15 minutes of the last one ending pays more
+	local d0 = docs[player.UserId]
+	local chain = d0 and d0.Chain and d0.Chain.N or 0
+	if d0 and not chainPaid[player] and (info.Seconds or 0) >= N.MinSeconds then
+		chainPaid[player] = true
+		local now = os.time()
+		local c = d0.Chain or { At = 0, N = 0 }
+		local startedAt = now - math.floor(info.Seconds or 0)
+		chain = (c.At > 0 and startedAt - c.At <= N.ChainWindow) and c.N + 1 or 1
+		d0.Chain = { At = now, N = chain }
+		mirror(player)
+		local bonus = math.floor(total * Cat.chainBonus(chain))
+		if bonus > 0 then
+			table.insert(lines, { Text = string.format("Night streak ×%d", chain), Amount = bonus })
+			total += bonus
+		end
+		queueSave(player.UserId)
+	end
 	local mult = 1
 	if workspace:GetAttribute("Difficulty") == "Hard" then
 		mult *= N.HardMultiplier
@@ -663,7 +696,11 @@ function Economy.nightRewards(player: Player, info): any
 		Economy.addCoins(player, total, true, "Gameplay", "Night")
 	end
 	local level, into, need = Cat.levelOf(d and d.Earned or 0)
-	return { Total = total, Lines = lines, Balance = Economy.coins(player), LevelBefore = before, Level = level, XP = into, XPNext = need }
+	return {
+		Total = total, Lines = lines, Balance = Economy.coins(player), LevelBefore = before, Level = level, XP = into, XPNext = need,
+		-- (the card: "another night now: +25% coins")
+		Chain = chain, NextBonus = math.floor(Cat.chainBonus(chain + 1) * 100), ChainMinutes = math.floor(N.ChainWindow / 60),
+	}
 end
 
 -- the night's quest counters, for everyone who played it (EndingService)
@@ -689,6 +726,7 @@ end
 
 function Economy.resetNight()
 	granted = {}
+	chainPaid = {}
 end
 
 ---------------------------------------------------------------------------
@@ -869,6 +907,7 @@ local function load(player: Player)
 	local d = docs[userId]
 	if fresh_ or not d.Welcomed then
 		-- a welcome present for a brand-new player
+		player:SetAttribute("FirstVisit", true) -- (JourneyService: a brand-new player)
 		d.Welcomed = true
 		Economy.addCoins(player, Cat.StartCoins, nil, "Onboarding", "Welcome")
 	end

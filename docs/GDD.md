@@ -139,7 +139,7 @@ Alone, Jamie expects the others any minute; 24 s in, Riley and Morgan text that 
 - **Loading screen** (`src/first/Loading.client.luau`, ReplicatedFirst): replaces Roblox's default. Rain streaks down a black screen, one warm window glows, and every few seconds a figure is standing in it. Title, a one-line hook, a gameplay tip and a progress bar; it fades out once the game has loaded.
 - **Lobby menu:** a small, plain column in the top-left corner (dark glass, thin outline, white text): PLAY SOLO and FIND PLAYERS, then three small links: Endings, How to play, Settings. While you're queued, your queue status takes the play buttons' place.
 - **Lobby dock** (`client/Controllers/Dock`): a slim column of icons on the right edge with your coin balance on top: 🎁 REWARDS, 🛒 STORE, 🔦 LOCKER, ⭐ SHOP. Each opens one panel; a dot pulses on REWARDS while today's reward is unclaimed. Play solo / Find players put you straight into a queue circle (FIND PLAYERS picks the group circle with the most people waiting, or the smallest when all are empty); walking into a circle still works.
-- **Invite and favorite** (`client/Controllers/Social`): on the ending screen; the favorite prompt also appears once, 8 s into the first ending of a session. (The lobby no longer has these buttons: inviting lives in the Locker, where a locked invite colour asks you to bring a friend.)
+- **Invite, favorite and remind** (`client/Controllers/Social`): on the ending screen; the favorite prompt also appears once, 8 s into the first ending of a session. **🔔 Remind me** is Roblox's experience-notification opt-in, shown only when Roblox can ask (not opted in yet). After a good ending one small line asks for a 👍 on the game page (likes decide how often Roblox recommends it). (The lobby no longer has these buttons: inviting lives in the Locker, where a locked invite colour asks you to bring a friend.)
 - **Saved records** (`Services/StatsService`, DataStore `PlayerStats_v1`): nights played, nights survived, and endings found. The lobby shows `NIGHTS · SURVIVED · ENDINGS x / y`; the ending card says NEW ENDING FOUND the first time you see one.
 - **Endings collection:** an ENDINGS button in the lobby lists all six endings; found ones by name, the rest as ??? with a hint.
 - **Survivors' board:** a lit sign beside the queue circles shows the top 10 players by nights survived (OrderedDataStore `NightsSurvived_v1`). Beside it, FASTEST WINS. The survivors' board is a little taller (still the top 10), with one small line at the bottom: "Secret ending: found by N players" (each player counted once, the owner never; DataStore `Global_v1` key `SecretFound`).
@@ -162,6 +162,9 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 **Nothing talks over anything else.** Phone texts, toasts and the friends' banter wait until no thought line is on screen and no conversation is running, plus a short gap (`Config.Thoughts.QuietGap`); texts arrive at least 8 s apart. Only the instant "task done" tick skips the queue.
 
 **The friends talk out loud.** They also react a few seconds after a scare if two of them are standing together ("WHAT was that?!" / "Kitchen. Something fell in the kitchen."), once per event, and they talk in the final act too. Friends in the house don't text each other — they speak, in the same dialogue box as the delivery man but in green, with no choices and without hiding the touch controls (`Story.Banter`, `Dialogue.say`). Each scene is cast from players standing together (Jamie takes the "Host" lines); with fewer than two people together it waits, and it never plays solo.
+
+### Repeat nights
+When **everyone** in the night has finished one before (`VeteranNight`), the build-up is shorter: no popcorn chore (pizza and the windows only), Act I runs at 80% and Act II at 65% of their lengths (`Config.VeteranPace`). One first-timer in the group and everyone gets the full build-up.
 
 ### Act I — "Friday Night" (4–7 min)
 *Social and cozy, with something slightly off.*
@@ -198,7 +201,7 @@ The Director plays low-intensity events. Each one needs conditions to be met, fo
 - **The power dies**, and it's the main breaker, not the storm. Wi-Fi goes with it, so no more texts.
 - **The landline is dead.** The car keys are gone. The attic hatch now opens.
 - Curtis is now physically in the house. He **lurks**: he moves only while unobserved, watches from doorways, and walks away when someone spots him. Players get glimpses at the end of a hall or in a doorway. He does not attack yet.
-- Objectives: call for help (phone box outside → tape → splice → call), find out what's in the attic, and (optional) get the power back on (flashlight → the **breaker puzzle** at the panel).
+- **Objectives arrive with the blackout** (before it, the act shows none): every way out is open from that moment, the quickest first. **Call 911** is the main goal: "Call from the upstairs bathroom window (one bar of signal), or fix the phone line outside". A standard **Call 911** prompt sits right by the bathroom window (only where the bar is, only while a call can be made): press it and stay put for the 15 s call. Optional alongside it: Mrs. Okafor's, the car, the attic, the power (flashlight → the **breaker puzzle** at the panel). The act's thought points at the bar of signal. (Before, Act III only offered the four-step landline repair: find tape in a random drawer while he hunts you. Half the players who reached the blackout left before the night ended.)
 - Environmental story: an open hatch in the garage ceiling with a stepladder under it, muddy size-12 prints, the contractor invoice in the office (Host key), Lily's drawing of "the ceiling man".
 - **Discovery.** When someone reads Curtis's notebook in the attic nest, Act IV starts at once. Otherwise it starts when the act times out.
 
@@ -252,6 +255,8 @@ Every player has a coin balance (DataStore `Economy_v1`; 100 welcome coins). Sav
 
 **Earning, per night** (shown on the result card): 20 for playing, 1 per minute you lasted, 40 for surviving, 15 per friend you freed, 50 for an ending you hadn't seen, 150 for the secret ending. Hard nights ×1.5; the Lucky charm ×1.5.
 
+**Night streak:** start another night within 15 minutes of the last one ending and it pays more: the 2nd night in a row +25%, the 3rd and on +50% (a "Night streak ×N" line on the card). Saved with the coins (merged: the latest night wins). The result card says "Play another night in the next 15 min: +25% coins" under ANOTHER NIGHT, and the lobby shows "NIGHT STREAK +25% coins · 12:31" under the play buttons while it's alive.
+
 **Daily reward:** a 7-day streak (25, 40, 60, 80, 100, 130, 200 coins, plus an Attic Crate on day 7). Missing a day starts it over. The panel opens by itself when you join with a reward waiting.
 
 **Quests:** 3 a day out of 12 (survive a night, cut a friend free, hide from him, solve the electrics, read clues, play on Hard, find a new ending...), 40–120 coins each, progress shown in REWARDS.
@@ -298,7 +303,7 @@ Wardrobes, closets, under beds, behind the shower curtain, under the basement st
 ### Capture & rescue
 If Curtis grabs you, the screen fades and you wake zip-tied in the boiler room. He takes your pepper spray and car keys (the keys go back to his nest).
 - **Rescue**: a friend holds the prompt for 5 s, or 2.5 s with the multitool.
-- **Struggle**: mash **Space**. It's slow and noisy.
+- **Struggle**: mash **Space** (about 63 presses, 1.6% each: doable in the 45 s last chance on a phone). It's noisy.
 - Curtis comes back regularly to check on his captives.
 - **One second chance only.** Getting caught a second time is fatal: a jumpscare, then you're out of the night and **spectate** your friends (tap to switch; with nobody left, the camera watches the house from the street). Your fate on the recap reads *Didn't make it*.
 
@@ -474,6 +479,15 @@ All coordinates are in studs. The front of the house faces −Z (toward the stre
 - The basement stairs are the single choke point for rescues. That makes "Locked In" possible, and makes rescues risky.
 
 ---
+
+### Our own logs (`JourneyService`, client `Diagnostics`, `tools/pull_stats.py`)
+Creator Hub's charts are slow and coarse, so the game also writes its own logs to DataStores the owner's read-only Open Cloud key can read:
+- **NightLog_v1**, one record per night: the acts and when they started, each objective step the group finished, help called (how), the ending; and per player: first night or not, nights before, role, device, captures (where), frees (friend or self), deaths, heartbeat minigame results, hides and sightings, ANOTHER NIGHT / LOBBY pressed, and **if they left mid-night: when, in which act, tied up / dead / hiding / free, his state and distance, their nerve**. Also nights nobody started (they left while arriving or voting).
+- **LobbyLog_v1**: each lobby visit: brand new or not, nights played, level, came with a friend, how long they stayed, seconds until they first queued (and which circle), teleported.
+- Every client reports its device (Phone / Tablet / PC / Console), memory, frame rate and graphics quality every 15 s: a quitter's last frame rate and peak memory show whether they crashed or gave up on lag.
+- `python3 tools/pull_stats.py <dump.json>` prints it all: lobby conversion, quit points by act and state, first-nighters vs veterans, devices, objectives reached, plus the player records.
+
+A night now counts the moment a player is out early (escaped, or caught twice while friends play on): it used to be counted only when the whole group's night ended, so anyone who left from their own result card never got the night, the escape, the coins' streak or the FirstNight badge.
 
 ### Analytics (`TelemetryService`)
 Creator Hub → Analytics shows where players drop off. **Onboarding funnel** (first-time players): 1 Joined lobby, 2 Queued, 3 Arrived at the house, 4 Night started, 5 Act II, 6 Act III, 7 The hunt, 8 Saw an ending, 9 Second night. **Night funnel** (every night): Started, Act II, Act III, The hunt, Ending. **Custom events:** Ending (which), SecretEnding, QuitDuringNight (the act they left in), LevelUp. **Economy events:** every coin in and out, with the reason (Gameplay, TimedReward, IAP, Shop, Onboarding; admin coins aren't logged). All calls are wrapped: analytics can never break the game.

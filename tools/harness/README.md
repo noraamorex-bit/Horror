@@ -37,6 +37,12 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
 - `lobby_test.luau`: queue circles: a full circle teleports, solo, quick play, START NOW takes whoever's
   on a group circle, a circle that never fills starts on its own after FillWait, and a circle frees up as
   soon as its group has left.
+- `journey_test.luau`: our own logs (JourneyService, a stand-in DataStore): a night with its acts,
+  objective steps, each player's moments, where a quitter was when they left (tied up, his state),
+  device and frame rate; the next night is a new record; nights nobody started; lobby visits.
+- `hunt_goal_test.luau`: the blackout brings the ways out (Call 911 first, the rest optional); the
+  Call 911 prompt by the bathroom window works only in the bar of signal and brings the police;
+  veteran nights drop the popcorn chore, a first-timer in the group keeps it.
 - `telemetry_test.luau`: what Creator Hub analytics receives (a stand-in AnalyticsService): onboarding
   steps once each, the night funnel in order, endings once, a quit mid-night logged with its act (not
   after the ending), coins in and out.

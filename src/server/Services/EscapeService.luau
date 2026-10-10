@@ -73,6 +73,9 @@ function Escape.callForHelp(method: string, player: Player?)
 	state.HelpCalled = true
 	state.HelpMethod = method
 	state.HelpCaller = player
+	if ctx.Journey then
+		ctx.Journey.team("Help:" .. method)
+	end
 	local H = ctx.Config.Help
 	local eta = (method == "Car" and H.CarResponse) or (method == "Neighbor" and H.NeighborResponse) or H.PhoneResponse
 	local hard = ctx.Config.Difficulty and ctx.Config.Difficulty.Hard

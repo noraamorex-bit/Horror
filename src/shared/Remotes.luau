@@ -64,6 +64,7 @@ local NAMES = {
 	"PuzzleInput", -- (puzzleId, action, payload) "Slip" | "Click" | "Submit" | "Cancel"
 	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily"
 	"PlayAgain", -- () from a result card: stay with this group for another night
+	"ClientInfo", -- ({Dev, Mem, Fps, Q}) the device and how well it's running (JourneyService)
 }
 
 local Remotes = {}

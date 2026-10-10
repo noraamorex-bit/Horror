@@ -128,6 +128,21 @@ function LobbyHub.start()
 			end
 		end)
 	end
+	-- the night streak: start another night soon and it pays more (EconomyService)
+	local streak = UI.label({ LayoutOrder = 3, Size = UDim2.fromOffset(MENU_W, 16), Text = "", Font = UI.Font.Bold, TextSize = 12, TextColor3 = Color3.fromRGB(255, 205, 90), TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, Visible = false, Parent = quick })
+	task.spawn(function()
+		local me = game:GetService("Players").LocalPlayer
+		while streak.Parent do
+			local untilT = tonumber(me:GetAttribute("ChainUntil"))
+			local bonus = tonumber(me:GetAttribute("ChainNext")) or 0
+			local left = untilT and math.floor(untilT - workspace:GetServerTimeNow()) or 0
+			streak.Visible = left > 0 and bonus > 0
+			if streak.Visible then
+				streak.Text = string.format("NIGHT STREAK  +%d%% coins  ·  %d:%02d", bonus, left // 60, left % 60)
+			end
+			task.wait(1)
+		end
+	end)
 	UI.new("Frame", { LayoutOrder = 2, Size = UDim2.fromOffset(MENU_W, 6), BackgroundTransparency = 1, Parent = menu })
 	-- (just the three extras; coins, the locker, rewards and the shop are icons on the right: Dock)
 	local endingsBtn = menuButton(menu, "Endings", 3)
@@ -138,7 +153,7 @@ function LobbyHub.start()
 				.. "• Do your tasks (the ! markers and the panel at the top right show what's next).\n"
 				.. "• When he's hunting, he hunts by SOUND: crouch and he can't hear you, run and he will. Or HIDE: closets, wardrobes, under beds.\n"
 				.. "• If he stops at your hiding spot to listen, keep your heartbeat steady (press the side each half-heart flies in from).\n"
-				.. "• Get help: fix the phone line and call 911, reach the neighbor, or take the car.\n"
+				.. "• Get help: call 911 from the one bar of signal by the upstairs bathroom window (or fix the phone line outside), reach the neighbor, or take the car.\n"
 				.. "• Caught once, you're tied up in the boiler room: struggle free, or a friend can cut you loose. Caught twice and you're out.\n"
 				.. "• Every night pays COINS. Spend them in the STORE on gear for your next night, or on crates.\n\n"
 				.. #ctx.Story.EndingOrder .. " endings to find. Some of them are secret.",

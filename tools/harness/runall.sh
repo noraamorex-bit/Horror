@@ -8,6 +8,8 @@ for t in *_test.luau; do
     revive_test.luau) for m in solo nobuy coop credit; do run $t $m; done;;
     client_test.luau|lobby_client_test.luau) run $t; run $t touch;;
     finale_test.luau) for m in escape bedtime patrol; do run $t $m; done;;
+    ending_test.luau) for m in solo coop; do run $t $m; done;;
+    vote_test.luau) for m in tie hard; do run $t $m; done;;
     *) run $t;;
   esac
 done

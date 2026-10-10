@@ -77,6 +77,16 @@ local function scaled(minutes: number): number
 	return minutes * 60 * ctx.Config.TimeScale
 end
 
+-- an act's Min/Max minutes: shorter build-up on a night where everyone has played before
+local function actLimits(name: string): any
+	local cfg = ctx.Config.Acts[name]
+	if not cfg then
+		return nil
+	end
+	local k = (state.Veteran and ctx.Config.VeteranPace and ctx.Config.VeteranPace[name]) or 1
+	return { Min = cfg.Min * k, Max = cfg.Max * k }
+end
+
 local function elapsed(): number
 	return state.GameStart and (os.clock() - state.GameStart) or 0
 end
@@ -221,6 +231,9 @@ end
 
 function Director.onHide(player: Player)
 	Director.thinkOnce(player, "Hide", ctx.Story.Thoughts.Hide)
+	if ctx.Journey then
+		ctx.Journey.count(player, "Hides")
+	end
 	if ctx.Economy and ctx.Intruder and ctx.Intruder.isHunting() then
 		ctx.Economy.track(player, "Hides", 1)
 	end
@@ -315,6 +328,16 @@ local function startGame()
 		end
 	end
 	state.Participants = participants
+	-- everyone here has seen a night through before: they know the story, so the cozy part is
+	-- shorter (one chore fewer, a quicker act II). A first-timer in the group gets the full build-up.
+	local veteran = #participants > 0
+	for _, p in participants do
+		if (tonumber(p:GetAttribute("StatNights")) or 0) < 1 then
+			veteran = false
+		end
+	end
+	state.Veteran = veteran
+	workspace:SetAttribute("VeteranNight", veteran or nil)
 	for _, p in participants do
 		ctx.PlayerState.resetPlayer(p)
 		p:SetAttribute("InGame", true)
@@ -322,6 +345,9 @@ local function startGame()
 	ctx.PlayerState.assignRoles(participants)
 	if ctx.Telemetry then
 		ctx.Telemetry.nightStart(participants)
+	end
+	if ctx.Journey then
+		ctx.Journey.nightStart(participants)
 	end
 	for _, p in Players:GetPlayers() do
 		if not p:GetAttribute("InGame") then
@@ -494,6 +520,9 @@ function Director.startAct(name: string, cause: Player?)
 	if ctx.Telemetry then
 		ctx.Telemetry.act(name)
 	end
+	if ctx.Journey then
+		ctx.Journey.act(name)
+	end
 	local card = ctx.Story.Chapters[name]
 	if card then
 		ctx.Remotes.Chapter:FireAllClients(card.Title, card.Sub)
@@ -522,7 +551,7 @@ function Director.startAct(name: string, cause: Player?)
 		if ctx.Economy then
 			ctx.Economy.resetNight()
 		end
-		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Windows" })
+		ctx.Objectives.set(state.Veteran and { "OrderPizza", "Windows" } or { "OrderPizza", "Popcorn", "Windows" })
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
 		local session = ctx.Util.sessionPlayers()
@@ -553,8 +582,8 @@ function Director.startAct(name: string, cause: Player?)
 	elseif name == "SmallThings" then
 		ctx.Objectives.set({ "LockUp" })
 	elseif name == "SomeoneElse" then
-		ctx.Objectives.set({ "Phone", "Attic", "Power" }, { Power = true })
-		checkHeldItems()
+		-- (the new objectives come with the blackout: until then there's nothing to run from)
+		ctx.Objectives.set({})
 		local myNight = state
 		local function lightsOut()
 			if state ~= myNight or state.Act ~= "SomeoneElse" then
@@ -569,6 +598,12 @@ function Director.startAct(name: string, cause: Player?)
 			ctx.Escape.cutLine()
 			if ctx.Escape.stealKeys() then
 				Director.logTruth("KeysTaken")
+			end
+			-- He's coming. Every way out is open from now on, the quickest first: the one bar of
+			-- signal upstairs (or the line outside). Next door, the car and the attic are there too.
+			if not ctx.Escape.helpCalled() then
+				ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Attic", "Power" }, { Neighbor = true, Car = true, Attic = true, Power = true })
+				checkHeldItems()
 			end
 			local refs = ctx.World.refs()
 			if refs.openGarageHatch then
@@ -721,6 +756,9 @@ end
 
 function Director.onSighting(player: Player)
 	Director.addTension(15)
+	if ctx.Journey then
+		ctx.Journey.count(player, "Seen")
+	end
 	player:SetAttribute("NightSpotted", (tonumber(player:GetAttribute("NightSpotted")) or 0) + 1)
 	if state.Act == "SomeoneElse" then
 		Director.logTruth("Glimpse")
@@ -917,6 +955,9 @@ function Director.enterBelow()
 	state.ActEnding = true
 	state.GoneQuietAt = nil
 	workspace:SetAttribute("Act", "Below")
+	if ctx.Journey then
+		ctx.Journey.act("Below")
+	end
 	local card = ctx.Story.Chapters.Below
 	if card then
 		ctx.Remotes.Chapter:FireAllClients(card.Title, card.Sub)
@@ -1053,7 +1094,8 @@ local function beatsDone(): boolean
 end
 
 local function schedule(actTime: number)
-	local maxT = scaled(ctx.Config.Acts[state.Act] and ctx.Config.Acts[state.Act].Max or 15)
+	local lim = actLimits(state.Act)
+	local maxT = scaled(lim and lim.Max or 15)
 	-- overdue guaranteed beats go first (and ignore the ceiling)
 	for _, b in BEATS[state.Act] or {} do
 		local e = eventById(b[1])
@@ -1235,7 +1277,7 @@ end
 
 local function actTick()
 	local actTime = os.clock() - state.ActStart
-	local cfg = ctx.Config.Acts[state.Act]
+	local cfg = actLimits(state.Act)
 	workspace:SetAttribute("ClockMinutes", Director.clockMinutes())
 	ctx.Phone.update(state.Act, actTime, Director.isQuiet())
 	Director.banterTick(actTime)

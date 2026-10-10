@@ -85,6 +85,9 @@ function Revive.revive(player: Player): boolean
 	player:SetAttribute("Nerve", ctx.Config.Nerve.Max)
 	player:SetAttribute("Stamina", ctx.Config.Movement.StaminaMax)
 	player:SetAttribute("Revives", (tonumber(player:GetAttribute("Revives")) or 0) + 1)
+	if ctx.Journey then
+		ctx.Journey.event(player, "Revive")
+	end
 	if ctx.Intruder and ctx.Intruder.grace then
 		ctx.Intruder.grace(player, cfg().Grace or 10)
 	end

@@ -114,26 +114,54 @@ local function canCall911(): boolean
 	return act == "SomeoneElse" or act == "Guest"
 end
 
+-- start a 911 call on your cell (it connects only where there's a bar of signal)
+function Phone.startCall(player: Player): boolean
+	if not player:GetAttribute("InGame") or player:GetAttribute("Captured") then
+		return false
+	end
+	if not canCall911() then
+		ctx.Audio.caption(ctx.Story.Calls.NotYet[1], nil, nil, { player })
+		return false
+	end
+	if ctx.Escape.helpCalled() then
+		ctx.Audio.caption("Help is already on the way.", nil, nil, { player })
+		return false
+	end
+	if (player:GetAttribute("Signal") or 0) <= 0 then
+		ctx.Audio.caption("No Service. The call won't connect.", nil, nil, { player })
+		return false
+	end
+	calling[player] = calling[player] or 0
+	player:SetAttribute("Calling", true)
+	return true
+end
+
+-- The one bar of signal, at the upstairs bathroom window: a "Call 911" prompt right there, so
+-- nobody has to know the phone has a call button. It shows only while a call can be made.
+local signalPrompt: ProximityPrompt? = nil
+function Phone.setupSignalSpot(part: BasePart)
+	local prompt = ctx.Interaction.prompt(part, {
+		Name = "Call911",
+		Action = "Call 911",
+		Object = "One bar of signal",
+		Hold = 0.3,
+		Distance = 3.5, -- (close enough that you're standing in the signal when you press it)
+	}, function(player)
+		if Phone.startCall(player) then
+			ctx.Audio.caption("Keep still by the window. Stay on the line...", nil, nil, { player })
+		end
+	end)
+	prompt.Enabled = false
+	signalPrompt = prompt
+end
+
 function Phone.start()
 	ctx.Remotes.Phone.OnServerEvent:Connect(function(player, action)
 		if not player:GetAttribute("InGame") or player:GetAttribute("Captured") then
 			return
 		end
 		if action == "CallStart" then
-			if not canCall911() then
-				ctx.Audio.caption(ctx.Story.Calls.NotYet[1], nil, nil, { player })
-				return
-			end
-			if ctx.Escape.helpCalled() then
-				ctx.Audio.caption("Help is already on the way.", nil, nil, { player })
-				return
-			end
-			if (player:GetAttribute("Signal") or 0) <= 0 then
-				ctx.Audio.caption("No Service. The call won't connect.", nil, nil, { player })
-				return
-			end
-			calling[player] = calling[player] or 0
-			player:SetAttribute("Calling", true)
+			Phone.startCall(player)
 		elseif action == "CallStop" then
 			player:SetAttribute("Calling", nil)
 		end
@@ -151,6 +179,10 @@ function Phone.start()
 	task.spawn(function()
 		while true do
 			local dt = task.wait(0.25)
+			local prompt = signalPrompt
+			if prompt and prompt.Parent then
+				prompt.Enabled = canCall911() and not ctx.Escape.helpCalled()
+			end
 			for player, progress in calling do
 				if not player.Parent or not player:GetAttribute("Calling") then
 					continue

@@ -167,8 +167,18 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 		return
 	end
 	ended[player] = outcome
+	if ctx.Journey then
+		ctx.Journey.event(player, "Out", outcome .. (where and ("_" .. where) or ""))
+	end
 	if ctx.Telemetry then
 		ctx.Telemetry.ended(player, outcome .. (where and ("_" .. where) or ""))
+	end
+	-- (their night counts now, in case they leave before the others finish)
+	if ctx.Stats and ctx.Stats.recordOut then
+		pcall(ctx.Stats.recordOut, player, outcome ~= "Died")
+	end
+	if ctx.Badges then
+		ctx.Badges.award(player, "FirstNight")
 	end
 	seq += 1
 	local mine = seq
@@ -250,6 +260,9 @@ function Ending.trigger(kind: string)
 		kind = "CaseClosed"
 	end
 	workspace:SetAttribute("EndingActive", kind)
+	if ctx.Journey then
+		ctx.Journey.ending(kind)
+	end
 	local story = ctx.Story.Endings[kind]
 	if ctx.Intruder then
 		ctx.Intruder.stop()
@@ -386,6 +399,9 @@ function Ending.start()
 			return
 		end
 		stayers[player] = true
+		if ctx.Journey then
+			ctx.Journey.event(player, "Again")
+		end
 		local want, total = 0, 0
 		for _, p in Players:GetPlayers() do
 			total += 1
@@ -411,6 +427,9 @@ function Ending.start()
 		end
 		if not (over or player:GetAttribute("Escaped") or player:GetAttribute("Dead")) then
 			return
+		end
+		if ctx.Journey then
+			ctx.Journey.event(player, "Lobby")
 		end
 		pcall(function()
 			TeleportService:TeleportAsync(ctx.Mode.lobbyPlaceId(), { player })

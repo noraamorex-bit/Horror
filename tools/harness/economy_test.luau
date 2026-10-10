@@ -154,6 +154,38 @@ local ok, err = pcall(function()
 	local r3 = E.nightRewards(p, { NewEnding = true })
 	assert(r3.Total >= Cat.Night.NewEnding, "new ending bonus after")
 	print(("night ok: +%d (%d lines, lucky), then +%d for a new ending"):format(r1.Total, #r1.Lines, r3.Total))
+	-- the night streak: another night started soon after pays more; it's saved and merged
+	assert(r1.Chain == 1 and r1.NextBonus == 25 and r1.ChainMinutes == 15, "first night in a row (next +25%)")
+	local function streakLine(r)
+		for _, l in r.Lines do if tostring(l.Text):find("Night streak") then return l end end
+		return nil
+	end
+	assert(not streakLine(r1), "no streak bonus on the first")
+	assert(p:GetAttribute("ChainNext") == 25 and p:GetAttribute("ChainUntil") ~= nil, "the lobby can show it")
+	E.resetNight()
+	local r4 = E.nightRewards(p, { Seconds = 600, Survived = true })
+	local sl = streakLine(r4)
+	assert(r4.Chain == 2 and sl and sl.Amount > 0 and r4.NextBonus == 50, "second night in a row: +25% (next +50%)")
+	E.resetNight()
+	local r5 = E.nightRewards(p, { Seconds = 600, Survived = true })
+	assert(r5.Chain == 3 and r5.NextBonus == 50, "third: +50%, and it stays there")
+	-- a short visit doesn't count (or break it)
+	E.resetNight()
+	local r6 = E.nightRewards(p, { Seconds = 30 })
+	assert(r6.Chain == 3 and not streakLine(r6), "under the minimum: no streak change")
+	-- a long break: it starts over
+	local d77c = E._docs[77]
+	d77c.Chain.At -= 3 * 3600
+	E.resetNight()
+	local r7 = E.nightRewards(p, { Seconds = 600, Survived = true })
+	assert(r7.Chain == 1 and not streakLine(r7), "after a break the streak starts over")
+	E._save(77)
+	assert(saved.u77.Chain and saved.u77.Chain.N == 1 and saved.u77.Chain.At > 0, "the streak is saved")
+	-- another server ended a night more recently: its streak wins the merge
+	saved.u77.Chain = { At = os.time() + 5, N = 4 }
+	E._save(77)
+	assert(saved.u77.Chain.N == 4 and E._docs[77].Chain.N == 4, "merge keeps the latest streak")
+	print("streak ok")
 	-- levels: XP is coins earned by playing. A player counted for the first time gets the titles of
 	-- the levels they already have (no coins); after that each new level pays once.
 	local d77 = E._docs[77]

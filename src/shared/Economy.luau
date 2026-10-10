@@ -148,7 +148,16 @@ Economy.Night = {
 	HardMultiplier = 1.5,
 	LuckyMultiplier = 1.5,
 	MinSeconds = 120, -- shorter than this (left early): only the minutes
+	-- Night streak: another night soon after the last one pays more (the 2nd +25%, the 3rd on +50%)
+	ChainWindow = 15 * 60, -- seconds from the end of one night to the start of the next
+	ChainBonus = { 0, 0.25, 0.5 },
 }
+
+-- the night-streak bonus (a fraction) for the n-th night in a row
+function Economy.chainBonus(n: number): number
+	local b = Economy.Night.ChainBonus
+	return b[math.clamp(math.floor(n), 1, #b)] or 0
+end
 
 local byId: { [string]: any } = {}
 for _, list in { Economy.Items, Economy.Cosmetics, Economy.Special, Economy.Crates, Economy.Quests } do

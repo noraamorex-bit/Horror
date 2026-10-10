@@ -301,6 +301,17 @@ local function showCard(opts)
 		end)
 	end
 
+	-- the night streak: another night soon pays more (EconomyService.nightRewards)
+	if type(coins) == "table" and (tonumber(coins.NextBonus) or 0) > 0 and opts.ReturnToLobby then
+		local streak = tonumber(coins.Chain) or 0
+		line({
+			Text = (streak >= 2 and ("NIGHT STREAK ×" .. streak .. "  ·  ") or "")
+				.. "Play another night in the next " .. tostring(coins.ChainMinutes or 15) .. " min: +" .. tostring(coins.NextBonus) .. "% coins",
+			Font = UI.Font.Bold,
+			TextSize = 14,
+			TextColor3 = GOLD,
+		})
+	end
 	-- invite / favorite, and the countdown
 	order += 1
 	local social = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, Parent = col })
@@ -308,6 +319,11 @@ local function showCard(opts)
 	if ctx.Social then
 		ctx.Social.button(social, "invite")
 		ctx.Social.button(social, "favorite")
+		ctx.Social.button(social, "remind")
+	end
+	if opts.Good then
+		-- (likes decide how often Roblox recommends the game)
+		line({ Text = "Enjoyed it? A 👍 on the game page helps more people find it.", TextSize = 13, TextColor3 = UI.Color.Dim })
 	end
 	if opts.ReviveIn then
 		-- the last one standing: the night waits a moment for a revive

@@ -40,6 +40,8 @@ Config.Acts = {
 	SmallThings = { Min = 4, Max = 6 },
 	SomeoneElse = { Min = 6, Max = 9 },
 }
+-- a night where everyone has played before: the build-up acts run this much of their length
+Config.VeteranPace = { Evening = 0.8, SmallThings = 0.65 }
 Config.HardCapMinutes = 60
 
 -- The in-game clock starts at 8:47 PM and runs faster than real time.
@@ -230,7 +232,7 @@ Config.Hiding = {
 Config.Capture = {
 	RescueHold = 5,
 	RescueHoldTool = 2.5,
-	StrugglePerPress = 1.1, -- percent
+	StrugglePerPress = 1.6, -- percent (about 63 presses: doable in the 45 s last chance on a phone)
 	StruggleNoiseEvery = 12, -- presses
 	LastChance = 45, -- seconds everyone-captured players get to struggle free before the bad ending
 }

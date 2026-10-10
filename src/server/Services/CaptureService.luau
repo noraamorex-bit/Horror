@@ -81,6 +81,9 @@ function Capture.release(player: Player, by: Player?)
 	if data.Prompt then
 		data.Prompt:Destroy()
 	end
+	if ctx.Journey then
+		ctx.Journey.event(player, "Free", by and "friend" or "self")
+	end
 	player:SetAttribute("Captured", nil)
 	player:SetAttribute("StruggleProgress", nil)
 	ctx.PlayerState.setFrozen(player, false)
@@ -146,6 +149,9 @@ function Capture.kill(player: Player): boolean
 	player:SetAttribute("Dead", true)
 	player:SetAttribute("Captured", true)
 	player:SetAttribute("StruggleProgress", nil)
+	if ctx.Journey then
+		ctx.Journey.event(player, "Dead")
+	end
 	local head = ctx.Intruder and ctx.Intruder.getHead and ctx.Intruder.getHead()
 	local scareTime = 0
 	if head and head.Parent then
@@ -220,6 +226,13 @@ function Capture.capture(player: Player)
 
 	slots[slotIndex] = player
 	everCaptured[player] = true
+	if ctx.Journey then
+		ctx.Journey.event(player, "Cap", ctx.Rooms and (function()
+			local r = ctx.Util.getRoot(player)
+			local room = r and ctx.Rooms.find(r.Position)
+			return room and room.Name or nil
+		end)() or nil)
+	end
 	captives[player] = { Slot = slotIndex, Progress = 0, Presses = 0 }
 	player:SetAttribute("Captured", true)
 	player:SetAttribute("StruggleProgress", 0)

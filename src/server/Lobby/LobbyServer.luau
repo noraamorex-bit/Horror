@@ -586,6 +586,9 @@ local function send(player: Player, payload)
 	if payload and ctx.Telemetry then
 		ctx.Telemetry.onboard(player, 2)
 	end
+	if payload and ctx.Journey then
+		ctx.Journey.lobbyQueued(player, payload.Size)
+	end
 end
 
 local function teleportGroup(pad, group: { Player })
@@ -593,6 +596,9 @@ local function teleportGroup(pad, group: { Player })
 	pad.Group = group
 	for _, p in group do
 		teleporting[p] = true
+		if ctx.Journey then
+			ctx.Journey.lobbyTeleport(p)
+		end
 	end
 	task.spawn(function()
 		local placeId = ctx.Mode.gamePlaceId()

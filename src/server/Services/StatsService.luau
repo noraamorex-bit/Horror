@@ -385,15 +385,43 @@ end
 
 -- A night ended for these players. Returns { [userId] = true } for everyone who saw this ending
 -- for the first time.
+-- Out of the night early (escaped in the car or next door, or caught a second time) while friends
+-- are still inside: the night counts for them now, so it still counts if they leave before the
+-- others finish (NightCounted: the ending below won't count it twice).
+function Stats.recordOut(player: Player, escaped: boolean)
+	local d = cache[player.UserId]
+	if not d or player:GetAttribute("NightCounted") then
+		return
+	end
+	player:SetAttribute("NightCounted", true)
+	d.Nights += 1
+	if escaped then
+		d.Escapes += 1
+	end
+	mirror(player)
+	save(player.UserId)
+	if escaped and board and not offBoards(player.UserId) then
+		local userId, value = player.UserId, d.Escapes
+		task.spawn(function()
+			pcall(function()
+				board:SetAsync("u" .. userId, value)
+			end)
+		end)
+	end
+end
+
 function Stats.recordNight(players: { Player }, kind: string)
 	local firsts = {}
 	for _, p in players do
 		local d = cache[p.UserId]
 		if d then
-			d.Nights += 1
-			if p:GetAttribute("Escaped") or (not p:GetAttribute("Captured") and not (ctx.Story.Endings[kind] and ctx.Story.Endings[kind].Bad)) then
-				d.Escapes += 1
+			if not p:GetAttribute("NightCounted") then
+				d.Nights += 1
+				if p:GetAttribute("Escaped") or (not p:GetAttribute("Captured") and not (ctx.Story.Endings[kind] and ctx.Story.Endings[kind].Bad)) then
+					d.Escapes += 1
+				end
 			end
+			p:SetAttribute("NightCounted", nil)
 			if not d.Endings[kind] then
 				d.Endings[kind] = true
 				firsts[p.UserId] = true

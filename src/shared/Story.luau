@@ -136,7 +136,7 @@ Story.Tasks = {
 	} },
 	-- Act IV
 	Call911 = { Title = "Call 911", Steps = {
-		{ Key = "Call", Text = "Fix the phone line outside, or find a signal by the upstairs bathroom window", Target = { "JunctionBox", "SignalSpot" } },
+		{ Key = "Call", Text = "Call from the upstairs bathroom window (one bar of signal), or fix the phone line outside", Target = { "SignalSpot", "JunctionBox" } },
 	} },
 	Neighbor = { Title = "Get to Mrs. Okafor's house", Steps = {
 		{ Key = "Knock", Text = "Knock on her door next door, and wait", Target = "NeighborDoor" },
@@ -670,7 +670,7 @@ Story.Thoughts = {
 		Power = "The breaker panel is in the garage. Maybe I can get the power back on.",
 		Phone = "The phone's dead. Did something happen to the line outside?",
 		Attic = "The attic hatch in the upstairs hall... what's actually up there?",
-		Call911 = "We need help. Fix the phone line outside, or find a signal by the upstairs bathroom window.|phone",
+		Call911 = "We need help. My phone gets one bar by the upstairs bathroom window.|phone",
 		Neighbor = "Mrs. Okafor lives next door. If I can make it to her porch...",
 		Car = "If we find the car keys, we can drive out of here.",
 		Rescue = "He took someone down to the basement. We can't leave them there.",
@@ -682,7 +682,7 @@ Story.Thoughts = {
 		},
 		SomeoneElse = {
 			"The power's out. All of it. That wasn't the storm.",
-			"I should find a flashlight before I go anywhere dark.",
+			"No signal down here. The only place my phone ever gets a bar is the upstairs bathroom window.|phone",
 		},
 		Guest = {
 			"Someone has been living in the attic. And he's still in the house.",

@@ -72,6 +72,10 @@ Economy.start()
 local Telemetry = require(Services.TelemetryService)
 Telemetry.init(ctx)
 Telemetry.start()
+-- our own detailed logs of every night and lobby visit, readable with tools/pull_stats.py (both places)
+local Journey = require(Services.JourneyService)
+Journey.init(ctx)
+Journey.start()
 
 -- Lobby servers: queue circles that teleport groups into their own game server
 local mode = ctx.Mode.get()
@@ -140,6 +144,10 @@ function ctx.restart(stayHere: boolean?, stayers: { [Player]: boolean }?)
 		return
 	end
 	restarting = true
+	-- (the night's log is written before anyone leaves for the lobby)
+	if ctx.Journey then
+		pcall(ctx.Journey.flush, "restart")
+	end
 	-- a group's own server: everyone goes back to the lobby together, except whoever asked for
 	-- another night here (the ending card's ANOTHER NIGHT): they get a fresh house in this server
 	local players = Players:GetPlayers()

@@ -98,7 +98,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Levels (XP = coins earned playing) with rewards at milestones; LV on the lobby tag, XP bar on the
   result card; tomorrow's daily reward shown at the end of every night.
 - Analytics funnels (TelemetryService): check Creator Hub → Analytics → Funnels to find where new
-  players quit, and fix that step first.
+  players quit, and fix that step first. **Our own logs** (JourneyService → NightLog_v1 / LobbyLog_v1)
+  say exactly when, where and in what state each player left, with device and frame rate:
+  `python3 tools/pull_stats.py <scratch>/dump.json --logs-only`. Read them before every big change.
+- The hunt's main goal from the blackout is **Call 911** from the one bar of signal at the upstairs
+  bathroom window (a prompt sits there); every other way out is listed as optional.
+- Night streak: another night within 15 min of the last pays +25% / +50%. Repeat nights (everyone
+  has finished one) have a shorter build-up. 🔔 Remind me (notification opt-in) on the result card.
 - "Secret ending: found by N players" is one small line at the bottom of the NIGHTS SURVIVED board
   (the owner found a separate board "too much").
 
@@ -144,7 +150,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 66).
+  (last published: version 67).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

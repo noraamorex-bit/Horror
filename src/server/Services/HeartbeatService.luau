@@ -46,6 +46,9 @@ local function finish(s, result: string)
 	if result == "Pass" and ctx.Economy then
 		ctx.Economy.track(s.Player, "Heartbeats", 1)
 	end
+	if ctx.Journey then
+		ctx.Journey.event(s.Player, "Beat", result)
+	end
 end
 
 local function record(s, i: number, hit: boolean)

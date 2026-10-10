@@ -139,6 +139,9 @@ function Objectives.complete(id: string): boolean
 	for _, s in o.Steps do
 		s.Done = true
 	end
+	if ctx.Journey then
+		ctx.Journey.team(id)
+	end
 	broadcast()
 	ctx.Remotes.Notify:FireAllClients("Done: " .. o.Text, "done")
 	if ctx.Director and ctx.Director.onObjectiveDone then
@@ -155,6 +158,9 @@ function Objectives.step(id: string, key: string): boolean
 	for _, s in o.Steps do
 		if s.Key == key and not s.Done then
 			s.Done = true
+			if ctx.Journey then
+				ctx.Journey.team(id .. ":" .. key)
+			end
 			local all = true
 			for _, t in o.Steps do
 				if not t.Done then
