@@ -221,7 +221,9 @@ end
 -- a keypad: type the code, ENTER. A wrong code buzzes (and he hears it).
 local function openCode(data)
 	title.Text = "PADLOCK"
-	hint.Text = "The numbers are in his notes. A wrong code buzzes. Loud."
+	-- (the code found so far, from his notes: FinaleService sends it along)
+	local known = type(data.Hint) == "string" and data.Hint or nil
+	hint.Text = known and ("From his notes:  " .. known .. "      A wrong code buzzes. LOUD.") or "The numbers are in his notes. A wrong code buzzes. Loud."
 	local len = math.clamp(tonumber(data.Len) or 4, 1, 8)
 	local typed = ""
 	local W = 520

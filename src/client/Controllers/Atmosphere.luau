@@ -193,21 +193,10 @@ function Atmosphere.start()
 	local WARM_AMBIENT = Color3.fromRGB(40, 30, 22)
 	local warmOn: boolean? = nil
 	-- soft piano while the evening is still just an evening: indoors, first act, lights on
-	-- his music: a driving chase track while he is chasing someone nearby, low dread while he
-	-- is searching close by. Volumes follow how close he is to you.
-	local chase = ctx.Effects.localSound("ChaseMusic")
-	local dread = ctx.Effects.localSound("TensionMusic")
-	local chaseVol, dreadVol = 0, 0
-	for _, s in { chase, dread } do
-		if s then
-			s.Volume = 0
-			s:Play()
-		end
-	end
+	-- (no chase or tension music: it slammed in whenever he chased anyone nearby, even a friend in
+	-- another room. His footsteps, breathing and your heartbeat carry the hunt.)
 	-- the house settling: a creak somewhere nearby every so often once things start going wrong
 	local nextCreak = os.clock() + 30
-	local curtis: Model? = nil
-	local lookClock = 0
 	local piano = ctx.Effects.localSound("CozyPiano")
 	local pianoVol = 0
 	if piano then
@@ -293,29 +282,6 @@ function Atmosphere.start()
 				Brightness = 0,
 			})
 			ctx.UI.tween(Lighting, 1.2, { Ambient = cozy and WARM_AMBIENT or baseAmbient })
-		end
-		if chase and dread and ctx.Mode ~= "Lobby" then
-			lookClock -= 0.25
-			if (not curtis or not curtis.Parent) and lookClock <= 0 then
-				lookClock = 2
-				local found = ctx.Util.creature()
-				curtis = found and found:IsA("Model") and found or nil
-			end
-			local state = workspace:GetAttribute("IntruderState")
-			local dist = math.huge
-			if curtis and curtis.Parent then
-				dist = (curtis:GetPivot().Position - cam.CFrame.Position).Magnitude
-			end
-			local inNight = game:GetService("Players").LocalPlayer:GetAttribute("InGame") == true
-			local chasing = inNight and state == "Chase" and dist < 140
-			local hunting = inNight and (state == "Prowl" or state == "Search" or state == "CheckSpot" or state == "Patrol" or state == "Investigate" or state == "Charge" or state == "Inspect") and dist < 80
-			local wantChase = chasing and math.clamp(1.2 - dist / 140, 0.35, 1) * 0.5 or 0
-			local wantDread = (hunting and not chasing) and math.clamp(1 - dist / 70, 0.2, 1) * 0.3 or 0
-			-- the chase slams in; everything else eases
-			chaseVol += math.clamp(wantChase - chaseVol, -0.04, 0.25)
-			dreadVol += math.clamp(wantDread - dreadVol, -0.03, 0.03)
-			chase.Volume = chaseVol
-			dread.Volume = dreadVol
 		end
 		local act = workspace:GetAttribute("Act")
 		if inside and (act == "SmallThings" or act == "SomeoneElse" or act == "Guest") and os.clock() > nextCreak then

@@ -25,8 +25,12 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
   pays once.
 - `finale_test.luau escape|bedtime|patrol`: the secret ending in the navsim world. `escape`: two
   players taken at once wake at the dinner table; a strike for struggling while he watches, one
-  struggles free, gets caught off their chair and tied again, both get free, he leaves; the notes
-  give the code (each note document shows its digit), the keypad never sends the answer and turns
-  down a wrong code, the hatch takes four pushes, one climbs out to the yard; the other walks into
-  him → Not Your Family. `bedtime`: nobody gets out → Forever Family. `patrol`: 120 s of patrol
-  visits the tunnel nodes without a long stall and never finds players crouched in the nooks.
+  struggles free, gets caught off their chair and tied again, both get free; he climbs out of the
+  burrow (far away, deaf to noise) while the 3 notes carry markers, a read note loses its marker,
+  then he comes back down the dining-room ladder; the notes give the code, the marker moves to the
+  keypad, the keypad gets the known code as a hint but never the answer and turns down a wrong
+  code, the hatch takes four pushes, one climbs out to the yard; the other walks into him → Not
+  Your Family. `bedtime`: nobody gets out → Forever Family. `patrol`: 120 s of patrol after he
+  comes back visits the tunnel nodes without a long stall and never finds players crouched in the
+  nooks.
+- `client_test.luau` also feeds the finale card every phase (tied and free) and prints what it says.

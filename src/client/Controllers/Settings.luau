@@ -16,8 +16,6 @@ local player = Players.LocalPlayer
 
 local MUSIC = {
 	LobbyMusic = true,
-	ChaseMusic = true,
-	TensionMusic = true,
 	CozyPiano = true,
 	VictorySting = true,
 	DeathSting = true,

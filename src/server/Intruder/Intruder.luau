@@ -2302,7 +2302,7 @@ end
 	Puppet: the brain is switched off and someone else drives him (the secret ending,
 	FinaleService). He keeps his own walk and run, gait, footsteps and breathing.
 	Returns a handle: place(pos, look?), moveTo(pos, speed, run?), stop(), face(pos), gait(name?),
-	position(), head(), model(), release().
+	position(), head(), model(), hide() (off the map until the next place), release().
 ]]
 function Intruder.puppet()
 	ensureModel()
@@ -2331,6 +2331,12 @@ function Intruder.puppet()
 	end
 	function P.gait(name: string?)
 		S.PuppetGait = name
+	end
+	function P.hide()
+		S.PuppetRun = false
+		S.Nav:stop()
+		S.Root.Anchored = true
+		S.Model:PivotTo(OFFSTAGE)
 	end
 	function P.position(): Vector3?
 		return S.Root and S.Root.Position or nil

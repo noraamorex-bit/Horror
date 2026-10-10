@@ -8,19 +8,23 @@
 	            while his back is turned; while he watches, don't move (struggling, or a free player
 	            off their chair, is a strike: he drags them back and bedtime comes 30 s sooner).
 	            Free yourself, then cut the others loose (also only when he isn't looking).
-	            Everyone free: he takes a candle and goes out for "dessert".
+	            Everyone free: he unbolts the door, takes a candle and climbs the ladder up into the
+	            house for "dessert". He's really gone (off the map) for DessertTime.
 	2. TUNNELS  Find the way out: the storm cellar under the back yard, padlocked. The code is in
-	            three of his notes (pantry, nursery, his room). He walks the tunnels listening;
-	            he hunts by sound and sight like upstairs, but walks slower than you. Caught: he
-	            carries you back to your chair; a friend has to cut you loose again. Crouch behind
-	            a hanging blanket and he walks past. The music box in the nursery is a trap.
+	            three of his notes (pantry, nursery, his room): signs over every doorway, a
+	            signpost in each junction, a marker on each note until it's read. Then he comes
+	            back down the dining-room ladder and walks the tunnels listening; he hunts by sound
+	            and sight like upstairs, but walks slower than you. Caught: he carries you back to
+	            your chair; a friend has to cut you loose again. Crouch behind a hanging blanket
+	            and he walks past.
 	3. OUT      The lock opens, but the hatch is rusted: push it open (loud, four times) while
 	            someone bars the cellar door. Climb out into the back yard.
 	Ends: anyone out -> NOT YOUR FAMILY (the police find the rest). Everyone at the table at once,
 	or bedtime -> FOREVER FAMILY.
 
-	Remotes.Finale (to every player in the night): { Phase, Mode?, Strikes?, Ends?, Code?, Hatch?,
-	Barred?, Free?, Total? } for the HUD (client Finale).
+	Remotes.Finale (to every player in the night): { Phase, Mode?, Strikes?, Ends?, Code?, Notes?,
+	Away? (server time he comes back), Hatch?, Barred?, Bars?, Free?, Total? } for the HUD
+	(client Finale).
 ]]
 
 local Players = game:GetService("Players")
@@ -77,6 +81,8 @@ local function broadcast(extra)
 		Hatch = S.Hatch,
 		Barred = S.BarredUntil and os.clock() < S.BarredUntil or false,
 		Bars = S.BarsLeft,
+		Notes = { Pantry = S.Notes.Pantry == true, Nursery = S.Notes.Nursery == true, HisRoom = S.Notes.HisRoom == true },
+		Away = (S.AwayUntil and not S.Returned) and (workspace:GetServerTimeNow() + (S.AwayUntil - os.clock())) or nil,
 	}
 	local free, total = 0, 0
 	for p, seat in S.Seats do
@@ -234,6 +240,9 @@ function Finale._free(player: Player, by: Player?)
 		say(tostring(by:GetAttribute("RoleName") or by.Name) .. " cut you loose.", { player })
 	elseif S.Phase == "Dinner" then
 		say(ctx.Story.Finale.FreeSelf, { player })
+	end
+	if S.Phase == "Dinner" then
+		ctx.Remotes.Notify:FireClient(player, ctx.Story.Finale.FreeTip, "objective")
 	end
 	if S.Phase == "Dinner" then
 		ctx.Objectives.step("FinaleDinner", "Struggle")
@@ -409,7 +418,12 @@ local function lineClear(a: Vector3, b: Vector3): boolean
 		end
 	end
 	params.FilterDescendantsInstances = skip
-	local hit = workspace:Raycast(a, b - a, params)
+	-- (to a stud short of the target: whatever they're wearing or holding never blocks the view)
+	local d = b - a
+	if d.Magnitude > 1.5 then
+		d = d.Unit * (d.Magnitude - 1)
+	end
+	local hit = workspace:Raycast(a, d, params)
 	return hit == nil
 end
 
@@ -463,6 +477,13 @@ local function sees(p: Player): boolean
 		end
 	end
 	return lineClear(eye, root.Position)
+end
+
+Finale._sees = function(p: Player): boolean
+	return S ~= nil and S.P ~= nil and sees(p)
+end
+Finale._lineClear = function(a: Vector3, b: Vector3): boolean
+	return lineClear(a, b)
 end
 
 ---------------------------------------------------------------------------
@@ -600,7 +621,7 @@ end
 
 -- what he heard (Noise.listen): the loudest recent noise in the burrow
 local function onNoise(ev)
-	if not S or (S.Phase ~= "Tunnels" and S.Phase ~= "Out") or not S.P then
+	if not S or (S.Phase ~= "Tunnels" and S.Phase ~= "Out") or not S.P or (S.AwayUntil and not S.Returned) then
 		return
 	end
 	local B = burrow()
@@ -627,6 +648,13 @@ local function hunterLoop()
 		task.wait(0.15)
 		if not S then
 			break
+		end
+		-- up in the house: nobody down here to hunt you, until he comes back down
+		if S.AwayUntil and not S.Returned then
+			if os.clock() >= S.AwayUntil then
+				Finale._comeBack()
+			end
+			continue
 		end
 		if S.Busy and os.clock() < S.Busy then
 			continue
@@ -745,6 +773,23 @@ local function hunterLoop()
 	end
 end
 
+-- back down from the house: the dining-room ladder, then the patrol
+function Finale._comeBack()
+	if not S or S.Returned or not S.P then
+		return
+	end
+	local B = burrow()
+	S.Returned = true
+	S.P.place(B.Ladder, B.TableCenter)
+	S.P.gait("Search")
+	S.Busy = os.clock() + 2.5
+	ctx.Audio.playAt("HatchCreak", B.Ladder + V(0, 9, 1.5), { CaptionText = "[The hatch creaks open. Footsteps on the ladder]", CaptionRange = 120 })
+	for _, p in participants() do
+		ctx.Remotes.Notify:FireClient(p, ctx.Story.Finale.Back, "danger")
+	end
+	broadcast()
+end
+
 function Finale._openCellarDoor(broken: boolean?)
 	local door = burrow().CellarDoor
 	if not S.DoorClosed then
@@ -759,6 +804,8 @@ function Finale._openCellarDoor(broken: boolean?)
 	end
 	broadcast()
 end
+
+local ROOM_NAMES = { Pantry = "PANTRY", Nursery = "NURSERY", HisRoom = "HIS ROOM" }
 
 local function setupTunnels()
 	local B = burrow()
@@ -794,9 +841,15 @@ local function setupTunnels()
 			ctx.Remotes.Document:FireClient(player, "FinaleNote", { Title = doc.Title, Body = string.format(doc.Body, table.unpack(digits[key])) })
 			if not S.Notes[key] then
 				S.Notes[key] = true
+				ctx.Objectives.clearTarget("FinaleNote" .. i)
 				showCode()
+				local all = S.Notes.Pantry and S.Notes.Nursery and S.Notes.HisRoom
 				for _, p in participants() do
-					ctx.Remotes.Notify:FireClient(p, (player:GetAttribute("RoleName") or player.Name) .. " found part of the lock code: " .. S.CodeShown, "done")
+					if all then
+						ctx.Remotes.Notify:FireClient(p, string.format(F.CodeDone, S.CodeShown), "objective")
+					else
+						ctx.Remotes.Notify:FireClient(p, string.format(F.NoteFound, tostring(player:GetAttribute("RoleName") or player.Name), ROOM_NAMES[key], S.CodeShown), "done")
+					end
 				end
 			end
 		end)
@@ -806,10 +859,6 @@ local function setupTunnels()
 	table.insert(S.Prompts, ctx.Interaction.prompt(B.Lore.Photo, { Action = "Look", Object = F.Photo.Title, Distance = 7 }, function(player)
 		ctx.Remotes.Document:FireClient(player, "FinalePhoto", F.Photo)
 	end))
-	-- the music box: the first one into the nursery sets it off (it carries)
-	S.MusicBoxDone = false
-	-- the cellar: found when someone walks in
-	ctx.Objectives.setTarget("FinaleCellar", B.CellarDoor.Inside)
 	ctx.Objectives.setTarget("FinaleKeypad", B.Keypad.Position)
 	ctx.Objectives.setTarget("FinaleLadder", B.LadderOut.Position)
 	-- the keypad
@@ -819,7 +868,7 @@ local function setupTunnels()
 		end
 		ctx.Puzzle.open(player, "Code", B.Keypad, ctx.Puzzle.code(table.concat(code, "")), function()
 			Finale._unlocked(player)
-		end, { Len = 4 })
+		end, { Len = 4, Hint = S.CodeShown })
 	end))
 	-- barring the cellar door (from inside)
 	S.DoorClosed = true
@@ -1020,7 +1069,6 @@ function Finale._begin()
 		},
 		Subtitle = F.Rules,
 	})
-	ctx.Audio.playAt("MusicBox", B.TableCenter, { Volume = 0.5, Caption = false })
 	task.wait(11.5)
 	say(F.Seated, people)
 	for _, p in people do
@@ -1036,45 +1084,53 @@ function Finale._begin()
 		Finale._finish("ForeverFamily")
 		return
 	end
-	-- everyone's free: he goes out for dessert, and leaves the door open
+	-- everyone's free: he unbolts the door, takes a candle and climbs up into the house for
+	-- "dessert". He's really gone for a while (off the map), then he comes back down.
 	S.Phase = "Leaving"
 	ctx.Objectives.complete("FinaleDinner")
 	say(F.AllFree)
+	broadcast()
 	S.P.gait(nil)
 	local door = B.DiningDoor
 	door.Part.CanCollide = false
 	TweenService:Create(door.Part, TweenInfo.new(1.2), { CFrame = door.Open }):Play()
-	ctx.Audio.playAt("DoorOpen", door.Part.Position)
-	walk({ B.Nodes.DinE, B.Nodes.DinDoor, B.Nodes.TunA, B.Nodes.J1, B.Nodes.TunS }, 6)
+	ctx.Audio.playAt("Deadbolt", door.Part.Position, { Caption = false })
+	task.delay(0.4, function()
+		ctx.Audio.playAt("DoorOpen", door.Part.Position)
+	end)
+	walk({ B.Nodes.DinNE, B.Nodes.DinNW, B.Ladder }, 5)
+	if not S then
+		return
+	end
+	S.P.face(B.Ladder + V(0, 0, 5))
+	task.wait(0.8)
+	ctx.Audio.playAt("HatchCreak", B.Ladder + V(0, 9, 1.5), { CaptionText = "[He climbs the ladder. The hatch shuts above]", CaptionRange = 80 })
+	S.P.hide()
 	if not S then
 		return
 	end
 	-- 2. the tunnels
 	S.Phase = "Tunnels"
 	S.EndsAt = os.clock() + c.BurrowTime
+	local dessert = c.DessertTime or 75
+	if workspace:GetAttribute("Difficulty") == "Hard" then
+		dessert *= 0.75
+	end
+	S.AwayUntil = os.clock() + dessert
+	setupTunnels() -- (the markers first, so the task arrives with them)
 	ctx.Objectives.set({ "FinaleBurrow" })
-	setupTunnels()
+	for _, p in participants() do
+		ctx.Remotes.Notify:FireClient(p, F.Away, "objective")
+	end
 	broadcast()
 	task.spawn(hunterLoop)
-	-- the watcher: the music box, the cellar, bedtime
+	-- the watcher: strays, bedtime
 	while S and not S.Ending do
 		task.wait(0.5)
-		local Rm = B.Rooms
 		for _, p in freePlayers() do
 			local root = ctx.Util.getRoot(p)
 			if root then
 				local pos = root.Position
-				local function inside(r)
-					return pos.X > r.Min.X and pos.X < r.Max.X and pos.Z > r.Min.Z and pos.Z < r.Max.Z and pos.Y < r.Max.Y + 2
-				end
-				if not S.MusicBoxDone and inside(Rm.Nursery) then
-					S.MusicBoxDone = true
-					ctx.Audio.playAt("MusicBox", B.MusicBox.Position, { Volume = 1, CaptionText = F.MusicBox, CaptionRange = 80 })
-					ctx.Noise.emit(B.MusicBox.Position, 70, "MusicBox")
-				end
-				if inside(Rm.Cellar) then
-					ctx.Objectives.step("FinaleBurrow", "Cellar")
-				end
 				-- out of the burrow some other way (fell, glitched): back down
 				if pos.Y > B.FloorY + 20 and not p:GetAttribute("Escaped") then
 					ctx.PlayerState.placeStanding(p, CFrame.new(B.Nodes.J1 + V(0, 3, 0)))
@@ -1087,6 +1143,7 @@ function Finale._begin()
 		end
 		if S.EndsAt and not S.WarnedBedtime and os.clock() >= S.EndsAt - c.BedtimeHunt then
 			S.WarnedBedtime = true
+			Finale._comeBack()
 			for _, p in participants() do
 				ctx.Remotes.Notify:FireClient(p, "The candles are burning down. He's coming for everyone. GET OUT.", "danger")
 			end

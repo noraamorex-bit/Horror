@@ -5,7 +5,9 @@
 	channel on it ("TVChannel"). Near the TV, this plays the channel's lines (Story.TVVoice):
 		News, Weather   the presenter reads the bulletin, line by line, round and round
 		Movie           each subtitle is spoken as it comes up on screen ("MovieLine")
-	Louder the closer you are, nothing beyond MAX studs, scaled by the Sounds setting. While a
+	Louder the closer you are, nothing beyond MAX studs, scaled by the Sounds setting. The voice
+	isn't placed in the world (it's wired straight to the speakers), so it's only heard while you
+	can actually see the TV: not through walls and floors, and never from under the house. While a
 	line plays, the presenter's mouth moves; now and then they blink.
 
 	Each line is generated once and kept (replayed from the start), so the whole night costs a
@@ -21,8 +23,8 @@ local TVVoice = {}
 local ctx
 local player = Players.LocalPlayer
 
-local MAX = 46 -- studs: beyond this, nothing
-local FULL = 12 -- studs: full volume inside this
+local MAX = 34 -- studs: beyond this, nothing
+local FULL = 10 -- studs: full volume inside this
 local BASE = 1.6
 
 local output: Instance? = nil
@@ -199,7 +201,35 @@ function TVVoice.start()
 	local face: Model? = nil
 	local faceFor: string? = nil
 	local faceCheck = 0
-	RunService.Heartbeat:Connect(function()
+	-- can you see the screen from here? (checked a few times a second; walls, floors and closed
+	-- doors in between mean you can't hear it either)
+	local seen = false
+	local seenCheck = 0
+	local level = 0 -- 0..1, eased, so it fades as you step out of view instead of cutting off
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	local function canSee(screen: BasePart, from: Vector3): boolean
+		if workspace:GetAttribute("Act") == "Below" then
+			return false
+		end
+		local ignore: { Instance } = { screen }
+		if player.Character then
+			table.insert(ignore, player.Character)
+		end
+		local tv = screen.Parent
+		if tv and tv:IsA("Model") and tv.Name == "TV" then
+			table.insert(ignore, tv)
+		end
+		rayParams.FilterDescendantsInstances = ignore
+		for _, off in { Vector3.zero, Vector3.new(0, 0.6, 0) } do
+			local target = screen.Position + off
+			if not workspace:Raycast(from, target - from, rayParams) then
+				return true
+			end
+		end
+		return false
+	end
+	RunService.Heartbeat:Connect(function(dt)
 		local screen = screenPart()
 		local channel = screen and screen:GetAttribute("TVChannel")
 		local cam = workspace.CurrentCamera
@@ -217,10 +247,15 @@ function TVVoice.start()
 				stopLine()
 			end
 		end
-		-- volume by distance and the Sounds setting
+		-- volume by distance, line of sight and the Sounds setting
+		if os.clock() > seenCheck then
+			seenCheck = os.clock() + 0.25
+			seen = near and screen ~= nil and cam ~= nil and canSee(screen :: BasePart, (cam :: Camera).CFrame.Position)
+		end
+		level += math.clamp((seen and 1 or 0) - level, -dt * 2.5, dt * 2.5)
 		local sfx = tonumber(player:GetAttribute("SetSfx")) or 1
 		local k = near and math.clamp(1 - (dist - FULL) / (MAX - FULL), 0, 1) or 0
-		volume = BASE * k * k * sfx
+		volume = BASE * k * k * sfx * level
 		if current then
 			pcall(function()
 				current.Volume = volume

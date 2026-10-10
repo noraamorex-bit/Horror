@@ -35,7 +35,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -89,6 +89,33 @@ local ok, err = pcall(function()
 	R.Texts.OnClientEvent:Fire({ Messages = {} })
 	R.Lightning.OnClientEvent:Fire(1, 0)
 	R.Figure.OnClientEvent:Fire(roblox.CFrame.new(), 1)
+	-- the secret ending's card, through every phase (tied up and free)
+	local now = os.clock()
+	local card = nil
+	local function cardText()
+		card = card or H.unwrap(player):FindFirstChild("FinaleCard", true)
+		local out = {}
+		for _, d in card:GetDescendants() do
+			if d:IsA("TextLabel") and d.Visible and d.Text ~= "" then table.insert(out, d.Text) end
+		end
+		return table.concat(out, " | ")
+	end
+	player:SetAttribute("FinaleTied", true)
+	for _, mode in { "Back", "Warn", "Watching" } do
+		R.Finale.OnClientEvent:Fire({ Phase = "Dinner", Mode = mode, Strikes = 1, Ends = now + 200, Free = 0, Total = 2 })
+		print("finale dinner (tied, " .. mode .. "): " .. cardText())
+	end
+	player:SetAttribute("FinaleTied", nil)
+	R.Finale.OnClientEvent:Fire({ Phase = "Dinner", Mode = "Back", Strikes = 0, Ends = now + 200, Free = 1, Total = 2 })
+	print("finale dinner (free): " .. cardText())
+	R.Finale.OnClientEvent:Fire({ Phase = "Tunnels", Ends = now + 600, Away = now + 60, Code = "4 _ _ _", Notes = { Pantry = true, Nursery = false, HisRoom = false }, Free = 2, Total = 2 })
+	print("finale tunnels (he's away): " .. cardText())
+	R.Finale.OnClientEvent:Fire({ Phase = "Tunnels", Ends = now + 600, Code = "4 7 1 9", Notes = { Pantry = true, Nursery = true, HisRoom = true }, Free = 2, Total = 2 })
+	print("finale tunnels (code): " .. cardText())
+	R.Finale.OnClientEvent:Fire({ Phase = "Out", Ends = now + 50, Code = "4 7 1 9", Hatch = 2, Barred = true, Bars = 1, Notes = { Pantry = true, Nursery = true, HisRoom = true }, Free = 2, Total = 2 })
+	print("finale out: " .. cardText())
+	R.Finale.OnClientEvent:Fire(nil)
+	assert(not card.Visible, "the card goes away")
 	R.Shake.OnClientEvent:Fire(1, 1)
 	R.Fade.OnClientEvent:Fire(true, 1)
 	R.PlaySound.OnClientEvent:Fire("PhoneVibrate")

@@ -127,8 +127,8 @@ local function bulb(Kit, parent, at: Vector3, lights: { PointLight }, flicker: b
 	Kit.box(parent, "Cord", CF(at.X, Y + 8.6, at.Z), V(0.05, 2.8, 0.05), Color3.fromRGB(20, 20, 20))
 	local b = Kit.ball(parent, "Bulb", V(at.X, Y + 7.1, at.Z), 0.36, Color3.fromRGB(255, 200, 130), Enum.Material.Neon)
 	local l = Instance.new("PointLight")
-	l.Range = 14
-	l.Brightness = 0.75
+	l.Range = 18
+	l.Brightness = 1
 	l.Color = Color3.fromRGB(255, 176, 100)
 	l.Shadows = true
 	l.Parent = b
@@ -230,7 +230,7 @@ function Burrow.build(ctx, parent: Instance)
 	Kit.rug(f, CF(TC.X, Y, TC.Z), 18, 9, Color3.fromRGB(96, 40, 36))
 	Kit.diningTable(f, CF(TC.X, Y, TC.Z), 14, 4.6, Color3.fromRGB(110, 76, 50))
 	local tableTop = Y + 3.8
-	-- four places for the kids, his at the head, and "Mother" at the foot
+	-- four places for the kids, and his at the head
 	local seatSpots = {
 		{ V(-31, Y, 20.4), V(0, 0, -1) },
 		{ V(-23, Y, 20.4), V(0, 0, -1) },
@@ -269,14 +269,6 @@ function Burrow.build(ctx, parent: Instance)
 	local headPos = V(-35.2, Y, 17)
 	Kit.chair(f, CFrame.lookAt(headPos, headPos + V(1, 0, 0)), Color3.fromRGB(70, 50, 36), Color3.fromRGB(40, 40, 44))
 	R.Head = headPos
-	-- "Mother": a dress form in Mom's cardigan, a wig of yarn, at the foot of the table
-	local momPos = V(-18.8, Y, 17)
-	Kit.chair(f, CFrame.lookAt(momPos, momPos + V(-1, 0, 0)), Color3.fromRGB(120, 90, 62))
-	local mom = Kit.model(f, "Mother")
-	Kit.ellipsoid(mom, "DressForm", CF(momPos.X, Y + 3.6, momPos.Z), V(1.6, 2.6, 1.3), Color3.fromRGB(150, 110, 130), Enum.Material.Fabric)
-	Kit.ball(mom, "MotherHead", V(momPos.X, Y + 5.4, momPos.Z), 1.05, Color3.fromRGB(226, 214, 196), Enum.Material.Fabric)
-	Kit.ellipsoid(mom, "MotherHair", CF(momPos.X + 0.15, Y + 5.6, momPos.Z), V(1.2, 0.9, 1.15), Color3.fromRGB(90, 60, 40), Enum.Material.Fabric)
-	Kit.box(mom, "MotherSmile", CF(momPos.X - 0.52, Y + 5.25, momPos.Z) * CFrame.Angles(0, rad(90), 0), V(0.5, 0.06, 0.02), Color3.fromRGB(150, 20, 20), Enum.Material.Plastic)
 	-- the food: the pizza you ordered (two slices gone), candles, glasses of milk
 	local box = Kit.box(f, "PizzaBox", CF(TC.X, tableTop + 0.12, TC.Z), V(2.6, 0.22, 2.6), Color3.fromRGB(196, 170, 130), Enum.Material.Cardboard)
 	sign(box, Enum.NormalId.Top, "TONY'S", 40, Color3.fromRGB(190, 40, 30), Enum.Font.GothamBlack)
@@ -449,6 +441,60 @@ function Burrow.build(ctx, parent: Instance)
 		end)
 	end
 	R.Surface = V(G.X, G.Y + 3, G.Z - 1)
+
+	---------------------------------------------------------------------------
+	-- Finding your way: a sign over every doorway (his handwriting), and a signpost in each
+	-- junction pointing the way. The notes glow a little, so they're seen from the doorway.
+	---------------------------------------------------------------------------
+	local PLANK = Color3.fromRGB(150, 116, 78)
+	local INK = Color3.fromRGB(30, 22, 16)
+	-- a plank over a doorway, readable from the tunnel side (facing = the way it reads from)
+	local function doorSign(at: Vector3, facing: Vector3, text: string, w: number)
+		local cf = CFrame.lookAt(at, at + facing)
+		local plank = Kit.box(f, "DoorSign", cf, V(w, 0.9, 0.1), PLANK, Enum.Material.Wood)
+		sign(plank, Enum.NormalId.Front, text, 30, INK, Enum.Font.PermanentMarker)
+	end
+	doorSign(V(16.9, Y + 8.5, 17), V(-1, 0, 0), "PANTRY", 4)
+	doorSign(V(16.9, Y + 8.5, -5), V(-1, 0, 0), "HIS ROOM", 4)
+	doorSign(V(-10.9, Y + 8.5, -5), V(1, 0, 0), "NURSERY", 4)
+	doorSign(V(4, Y + 8.5, 38.9), V(0, 0, -1), "STORM CELLAR", 4.6)
+	doorSign(V(-14.9, Y + 8.5, 17), V(1, 0, 0), "DINING ROOM", 4.6)
+	-- a signpost: a post, and an arrow-shaped board per way out, the name on both faces
+	local function signpost(at: Vector3, ways: { { any } })
+		Kit.box(f, "SignPost", CF(at.X, Y + 3.6, at.Z), V(0.35, 7.2, 0.35), TIMBER, Enum.Material.Wood)
+		for i, w in ways do
+			local dir: Vector3, text: string = w[1], w[2]
+			local h = Y + 6.7 - (i - 1) * 0.75
+			local len = 3
+			local center = V(at.X, h, at.Z) + dir * (len / 2 + 0.2)
+			local cf = CFrame.fromMatrix(center, dir, V(0, 1, 0))
+			local board = Kit.box(f, "SignBoard", cf, V(len, 0.6, 0.1), PLANK, Enum.Material.Wood)
+			-- the arrow's point
+			Kit.box(f, "SignTip", cf * CF(len / 2, 0, 0) * CFrame.Angles(0, 0, rad(45)), V(0.43, 0.43, 0.1), PLANK, Enum.Material.Wood)
+			sign(board, Enum.NormalId.Front, text, 22, INK, Enum.Font.PermanentMarker)
+			sign(board, Enum.NormalId.Back, text, 22, INK, Enum.Font.PermanentMarker)
+		end
+	end
+	signpost(V(6.4, 0, 14.9), {
+		{ V(0, 0, 1), "STORM CELLAR" },
+		{ V(1, 0, 0), "PANTRY" },
+		{ V(0, 0, -1), "NURSERY / HIS ROOM" },
+		{ V(-1, 0, 0), "DINING ROOM" },
+	})
+	signpost(V(6.4, 0, -2.6), {
+		{ V(-1, 0, 0), "NURSERY" },
+		{ V(1, 0, 0), "HIS ROOM" },
+		{ V(0, 0, 1), "CELLAR / DINING" },
+	})
+	-- each note: a small warm light on it, so it's seen from across the room
+	for _, note in R.Notes do
+		local glow = Instance.new("PointLight")
+		glow.Range = 7
+		glow.Brightness = 1.4
+		glow.Color = Color3.fromRGB(255, 226, 160)
+		glow.Shadows = false
+		glow.Parent = note
+	end
 
 	---------------------------------------------------------------------------
 	-- Hiding nooks: a blanket hung across a dark corner. Crouch behind one and he walks right past

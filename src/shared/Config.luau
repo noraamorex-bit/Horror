@@ -336,6 +336,7 @@ Config.Finale = {
 	CutHold = 2.5, -- a free player cutting someone loose
 	MoveTolerance = 3.5, -- a free player this far from their chair while he watches: caught
 	-- the tunnels
+	DessertTime = 75, -- he climbs up to the house "for dessert" this long before he comes back down (Hard: 3/4)
 	BurrowTime = 660, -- find the way out before bedtime
 	BedtimeHunt = 70, -- the last stretch: he hunts at a run
 	PatrolSpeed = 6.5,

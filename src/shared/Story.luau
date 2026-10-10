@@ -112,14 +112,13 @@ Story.Tasks = {
 	-- Act III
 	-- the secret ending (FinaleService)
 	FinaleDinner = { Title = "Get free", Steps = {
-		{ Key = "Struggle", Text = "Struggle only while his back is turned" },
-		{ Key = "Cut", Text = "Cut the others loose (when he isn't looking)" },
+		{ Key = "Struggle", Text = "Break your zip tie: struggle ONLY while his back is turned" },
+		{ Key = "Cut", Text = "Cut your friends loose (hold at their chair while he isn't looking)" },
 	} },
-	FinaleBurrow = { Title = "Find the way out", Steps = {
-		{ Key = "Cellar", Text = "Find a way out of the tunnels", Target = "FinaleCellar" },
-		{ Key = "Code", Text = "Find the lock code: three numbers in his notes", Target = { "FinaleNote1", "FinaleNote2", "FinaleNote3" } },
-		{ Key = "Unlock", Text = "Unlock the cellar hatch", Target = "FinaleKeypad" },
-		{ Key = "Climb", Text = "Push the hatch open and climb out", Target = "FinaleLadder" },
+	FinaleBurrow = { Title = "Get out from under the house", Steps = {
+		{ Key = "Code", Text = "Read his 3 notes for the lock code: PANTRY, NURSERY, HIS ROOM", Target = { "FinaleNote1", "FinaleNote2", "FinaleNote3" } },
+		{ Key = "Unlock", Text = "Enter the code on the keypad in the STORM CELLAR (north)", Target = "FinaleKeypad" },
+		{ Key = "Climb", Text = "Push the hatch open, then climb the ladder out", Target = "FinaleLadder" },
 	} },
 	Power = { Title = "Get the power back on", Steps = {
 		{ Key = "Flashlight", Text = "Find a flashlight (search the drawers and shelves)", Target = { "Flashlight1", "Flashlight2" } },
@@ -860,28 +859,16 @@ Story.Finale = {
 	},
 	Seated = "You're zip-tied to a chair at a long table. There's a card with your name on it.",
 	Rules = "FAMILY DINNER. NOBODY LEAVES THE TABLE. FATHER IS WATCHING.",
-	Dinner = {
-		Title = "Get free",
-		Steps = {
-			{ Key = "Struggle", Text = "Struggle only while his back is turned" },
-			{ Key = "Cut", Text = "Free yourself, then cut the others loose (when he isn't looking)" },
-		},
-	},
-	Tips = "STRUGGLE when his back is turned. When he turns around, DON'T MOVE.",
+	Tips = "When his back is turned: STRUGGLE to break the zip tie. When he turns around: DON'T MOVE.",
 	Strike = { "He slams his hand down on the table. The plates jump.", "He leans over you and breathes, slow, through his teeth.", "He pulls your chair back in. Tighter this time." },
-	FreeSelf = "The zip tie snaps. Stay in your chair while he's looking. Cut the others loose.",
-	AllFree = "He picks up a candle and walks out through the door. \"Dessert,\" he says. The only word he's said all night.",
-	Burrow = {
-		Title = "Find the way out",
-		Steps = {
-			{ Key = "Cellar", Text = "Find a way out of the tunnels" },
-			{ Key = "Code", Text = "Find the lock code: three numbers in his notes" },
-			{ Key = "Unlock", Text = "Unlock the cellar hatch" },
-			{ Key = "Climb", Text = "Push the hatch open and climb out" },
-		},
-	},
+	FreeSelf = "The zip tie snaps!",
+	FreeTip = "You're free. While he WATCHES: stand still by your chair. While his BACK is turned: go to a friend and HOLD to cut them loose.",
+	AllFree = "He picks up a candle. \"Dessert,\" he says, the only word all night, and climbs the ladder up into the house.",
+	Away = "He's gone up to the house. Get the lock code from his 3 NOTES (pantry, nursery, his room), then get out through the STORM CELLAR. Follow the signs.",
+	Back = "The hatch creaks. He's coming back down. Keep out of his sight: crouch behind a hanging blanket to hide.",
+	NoteFound = "%s read the note in the %s. The code so far: %s",
+	CodeDone = "That's the whole code: %s. Go to the STORM CELLAR (north tunnel) and type it on the keypad.",
 	Caught = "He carries you back to the table, humming. Somebody cut you loose. Please.",
-	MusicBox = "[A music box starts playing in the nursery]",
 	WrongCode = "[The lock buzzes. Loud.]",
 	Unlocked = "The lock clicks open. The hatch above is stiff with rust: push it open!",
 	DoorBarred = "You drop the bar across the door.",

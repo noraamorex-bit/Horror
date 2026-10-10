@@ -93,6 +93,14 @@ local function make(id: string, optional: boolean?)
 	}
 end
 
+-- a marker that's no longer needed (a note already read): gone from everyone's screen
+function Objectives.clearTarget(name: string)
+	if targets[name] then
+		targets[name] = nil
+		broadcast()
+	end
+end
+
 function Objectives.set(ids: { string }, optional: { [string]: boolean }?)
 	list = {}
 	for _, id in ids do

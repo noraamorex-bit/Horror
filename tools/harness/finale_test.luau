@@ -231,6 +231,30 @@ local ok, err = pcall(function()
 	Sim.index() -- (the sim reads the swung-open door again)
 	print("everyone free: he went for dessert. Tunnels.")
 
+	-- he climbed up into the house: really gone (off the map) until he comes back down
+	local function burrowTargets()
+		local last = nil
+		for _, f in allFired do if f[1] == "Objectives" then last = f[2] end end
+		for _, o in last or {} do if o.Id == "FinaleBurrow" then return #o.Targets end end
+		return -1
+	end
+	assert(S.AwayUntil and not S.Returned, "he's away")
+	assert((S.P.position() - B.TableCenter).Magnitude > 100, "and far away: " .. tostring(S.P.position()))
+	assert(burrowTargets() == 3, "a marker on each of the 3 notes, got " .. burrowTargets())
+	ctx.Noise.emit(B.Nodes.J1, 80, "Door", p1)
+	tick(0.5)
+	assert(S.Heard == nil and (S.P.position() - B.TableCenter).Magnitude > 100, "he can't hear you from up there")
+	print(("he's upstairs for %.0f s, the 3 notes are marked"):format(S.AwayUntil - T))
+	-- the notes can be read while he's gone: each one's marker goes once it's read
+	trigger(B.Notes.Pantry, nil, p1)
+	assert(burrowTargets() == 2, "the pantry note's marker is gone")
+	assert(S.Notes.Pantry, "pantry note read")
+	-- then he comes back down the dining-room ladder
+	T = S.AwayUntil + 0.1
+	tickUntil(function() return S.Returned end, 5, "him coming back")
+	assert((S.P.position() - B.Ladder).Magnitude < 6, "back down the dining-room ladder: " .. tostring(S.P.position()))
+	print("he came back down the ladder at " .. tostring(S.P.position()))
+
 	if SCENARIO == "patrol" then
 		-- both hide behind blankets (crouched): he walks the tunnels for two minutes
 		local nooks = B.Nooks
@@ -267,11 +291,13 @@ local ok, err = pcall(function()
 		assert(doc and type(doc[4]) == "table" and string.find(doc[4].Body, tostring(code[i == 3 and 3 or i])), key .. " note shows its digit")
 	end
 	assert(S.CodeShown == table.concat(code, " "), "code known: " .. tostring(S.CodeShown))
+	assert(burrowTargets() == 1, "all notes read: the marker moves to the keypad, got " .. burrowTargets())
 	-- the keypad: the client never sees the answer
 	place1(B.Keypad.Position + V(0, 0, -3))
 	trigger(B.Keypad, nil, p1)
 	local pz = lastFired("Puzzle", p1)
 	assert(pz and pz[3].Kind == "Code" and pz[3].Data.Len == 4 and pz[3].Data.Answer == nil, "keypad opened without the answer")
+	assert(pz[3].Data.Hint == S.CodeShown, "but with the code from the notes as a hint")
 	ctx.Remotes.PuzzleInput.OnServerEvent:Fire(p1, pz[3].Id, "Submit", "0000" == table.concat(code, "") and "1111" or "0000")
 	tick(0.2)
 	assert(F.phase() == "Tunnels", "wrong code: still locked")
@@ -294,8 +320,17 @@ local ok, err = pcall(function()
 	print("p1 out in the yard")
 
 	-- p2 walks right into him in the tunnels: caught -> nobody free, one out -> NOT YOUR FAMILY
-	local hp = S.P.position()
-	place2(hp + (S.P.head().CFrame.LookVector * 3) + V(0, 0, 0))
+	-- (keeps stepping right in front of his face until he grabs them; the sim doesn't turn him
+	-- to face where he walks the way a Humanoid does, so "in front" is where his head looks)
+	local t = 0
+	while not S.Seats[p2].Tied and t < 12 do
+		local head = S.P.head()
+		local look = V(head.CFrame.LookVector.X, 0, head.CFrame.LookVector.Z).Unit
+		local root = S.P.position()
+		place2(V(root.X, B.FloorY + 3, root.Z) + look * 3)
+		tick(0.1)
+		t += 0.1
+	end
 	tickUntil(function() return WS:GetAttribute("EndingActive") ~= nil end, 30, "the ending")
 	assert(WS:GetAttribute("EndingActive") == "NotYourFamily", "not your family, got " .. tostring(WS:GetAttribute("EndingActive")))
 	print("p2 caught, p1 out -> " .. WS:GetAttribute("EndingActive"))

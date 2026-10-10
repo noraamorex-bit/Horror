@@ -609,6 +609,9 @@ local function hintText(): string
 	if player:GetAttribute("Dead") then
 		return ""
 	end
+	if player:GetAttribute("FinaleTied") then
+		return "" -- (the finale card says when it's safe to struggle)
+	end
 	if player:GetAttribute("Captured") then
 		return touch and "Mash STRUGGLE" or "Mash SPACE to struggle"
 	end
