@@ -366,14 +366,17 @@ local function build(root: Folder)
 	end
 	-- two boards beside the queue circles (top 10, refreshed): nights survived, and fastest wins
 	local function leaderboard(name: string, at: Vector3, heading: string, empty: string, which: string?)
-		local boardCF = CFrame.lookAt(ORIGIN + at, ORIGIN + V(0, at.Y, at.Z))
+		-- (the survivors' board is a little taller: the top 10, and a line about the secret ending)
+		local tall = which == nil
+		local h = tall and 8 or 7
+		local boardCF = CFrame.lookAt(ORIGIN + at, ORIGIN + V(0, at.Y, at.Z)) * CFrame.new(0, tall and 0.5 or 0, 0)
 		for _, s in { -1, 1 } do
-			Kit.box(root, "BoardPost", boardCF * CFrame.new(s * 5.2, -3.3, 0.3), V(0.5, 7.4, 0.5), Color3.fromRGB(60, 44, 32), Kit.M.Wood, { CanCollide = true })
+			Kit.box(root, "BoardPost", boardCF * CFrame.new(s * 5.2, -3.3 - (tall and 0.5 or 0), 0.3), V(0.5, 7.4, 0.5), Color3.fromRGB(60, 44, 32), Kit.M.Wood, { CanCollide = true })
 		end
-		local sign = Kit.box(root, name, boardCF, V(11, 7, 0.4), Color3.fromRGB(26, 22, 20), Kit.M.Wood, { CanCollide = true })
+		local sign = Kit.box(root, name, boardCF, V(11, h, 0.4), Color3.fromRGB(26, 22, 20), Kit.M.Wood, { CanCollide = true })
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = Enum.NormalId.Front
-		gui.CanvasSize = Vector2.new(550, 350)
+		gui.CanvasSize = Vector2.new(550, h * 50)
 		gui.LightInfluence = 0.2
 		gui.Parent = sign
 		local title = Instance.new("TextLabel")
@@ -395,7 +398,7 @@ local function build(root: Folder)
 		body.TextColor3 = Color3.fromRGB(230, 224, 212)
 		body.Text = empty
 		body.Parent = gui
-		local lamp = Kit.box(root, "BoardLamp", boardCF * CFrame.new(0, 4, -0.6), V(3, 0.3, 0.6), Color3.fromRGB(255, 210, 150), Enum.Material.Neon)
+		local lamp = Kit.box(root, "BoardLamp", boardCF * CFrame.new(0, h / 2 + 0.5, -0.6), V(3, 0.3, 0.6), Color3.fromRGB(255, 210, 150), Enum.Material.Neon)
 		local l = Instance.new("SpotLight")
 		l.Face = Enum.NormalId.Bottom
 		l.Range = 12
@@ -418,11 +421,10 @@ local function build(root: Folder)
 			f.Text = "Secret ending: found by nobody yet"
 			f.Parent = gui
 			footer = f
-			body.TextSize = 22
 		end
 		task.spawn(function()
 			while sign.Parent do
-				local top = ctx.Stats and ctx.Stats.top(footer and 9 or 10, which) or {}
+				local top = ctx.Stats and ctx.Stats.top(10, which) or {}
 				local found = footer and ctx.Stats and ctx.Stats.global and ctx.Stats.global("SecretFound")
 				if footer and found then
 					footer.Text = found > 0 and string.format("Secret ending: found by %d player%s", found, found == 1 and "" or "s") or "Secret ending: found by nobody yet"
