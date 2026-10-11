@@ -40,8 +40,9 @@ Config.Acts = {
 	SmallThings = { Min = 4, Max = 6 },
 	SomeoneElse = { Min = 6, Max = 9 },
 }
--- a night where everyone has played before: the build-up acts run this much of their length
-Config.VeteranPace = { Evening = 0.8, SmallThings = 0.65 }
+-- a night where everyone has played before: the build-up acts could run shorter (this much of
+-- their length). Off: the owner found the night too fast; repeat groups can SKIP TO THE BLACKOUT.
+Config.VeteranPace = {}
 Config.HardCapMinutes = 60
 
 -- The in-game clock starts at 8:47 PM and runs faster than real time.
@@ -261,8 +262,9 @@ Config.Director = {
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
-	WrapUp = 20, -- act II's tasks all done: the lights go this many seconds later at the soonest...
-	WrapUpAfterBeat = 15, -- ...and this long after the last of its scares (fired 12 s apart meanwhile)
+	BeatSpacing = 35, -- a scripted scare waits this long after the last one (one thing at a time)
+	AfterNews = 40, -- act II ends this long after the news was watched at the soonest...
+	AfterScare = 30, -- ...and this long after the last scare
 }
 
 -- Inner monologue: the character thinking out loud about what to do next

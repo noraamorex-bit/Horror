@@ -143,7 +143,7 @@ local ok, err = pcall(function()
 	ctx2.Remotes.Objectives.FireAllClients = function(_, l) list2 = l end
 	ctx2.Director.adminStart("Normal")
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("VeteranNight") == true, "a veteran night")
-	assert(list2 and #list2 == 2 and not has(list2, "Popcorn"), "one chore fewer")
+	assert(list2 and #list2 == 3 and has(list2, "Popcorn"), "the full build-up for veterans too (the owner found it too fast)")
 	-- a first-timer joins the group: the full build-up
 	local ctx3 = ctx
 	ctx3.Director.enterLobby()
@@ -156,7 +156,7 @@ local ok, err = pcall(function()
 	assert(list3 and has(list3, "Popcorn"), "all three chores")
 	print("hunt goal ok")
 
-	-- act II: once everything's done, no waiting around for the act's minimum
+	-- act II: one thing at a time, and a breather before the lights go
 	ctx.Director.enterLobby()
 	ctx.Intruder.setMode("Offstage") -- (he was hunting in the part above: back in the attic)
 	-- (and the police came for that night: a fresh night's state)
@@ -164,32 +164,68 @@ local ok, err = pcall(function()
 		if ctx[k].reset then ctx[k].reset() end
 	end
 	assert(not ctx.Ending.isOver(), "a fresh night")
-	local solo = mkPlayer("Wrap")
+	local solo = mkPlayer("Pace")
 	H.services.Players.GetPlayers = function() return { solo } end
+	-- (record when each scare fires and when Mom's texts arrive)
+	local scares, texts = {}, {}
+	local realDeliver = ctx.Phone.deliver
+	ctx.Phone.deliver = function(pl, from, body)
+		table.insert(texts, { T = T, From = from })
+		return realDeliver(pl, from, body)
+	end
 	ctx.Director.startAct("SmallThings")
 	local t0 = T
-	ctx.Director.startMomNews()
-	H.flush(30)
-	assert(ctx.Objectives.has("News"), "mom's news task")
+	local seen = {}
 	ctx.Objectives.complete("LockUp")
-	ctx.Objectives.complete("News")
-	local doneAt = T
-	while H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SmallThings" and T - t0 < 400 do
+	ctx.Director.onDoorLockChanged({ Locked = true, Id = "BackDoor" }, solo)
+	local newsAt, tvDuringNews = nil, false
+	while H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SmallThings" and T - t0 < 700 do
 		H.flush(1)
-		if ctx.Objectives.has("Investigate") and not ctx.Objectives.isDone("Investigate") then
+		local st = ctx.Director._state()
+		for id in st.Fired do
+			if not seen[id] then
+				seen[id] = true
+				table.insert(scares, { Id = id, T = T })
+				if id == "TVAlert" and ctx.Objectives.has("News") and not ctx.Objectives.isDone("News") then tvDuringNews = true end
+			end
+		end
+		if ctx.Objectives.has("Investigate") and not ctx.Objectives.isDone("Investigate") and T - (st.LastScareAt or T) > 20 then
 			ctx.Objectives.complete("Investigate")
-			doneAt = T
+		end
+		if ctx.Objectives.has("News") and not ctx.Objectives.isDone("News") and not newsAt then
+			newsAt = T + 25
+		end
+		if newsAt and T >= newsAt and not ctx.Objectives.isDone("News") then
+			ctx.Objectives.complete("News")
 		end
 	end
+	ctx.Phone.deliver = realDeliver
 	local actLen = T - t0
-	local st = ctx.Director._state()
-	local fired = {}
-	for id in st.Fired do table.insert(fired, id) end
-	print("fired:", table.concat(fired, ","), "wrapup", st.WrapUp and (st.WrapUp - t0), "allDone", ctx.Objectives.allRequiredDone(), "pending", table.concat(ctx.Objectives.pending(), ","))
-	print(("act II wrapped up after %.0f s (%.0f s after the last task)"):format(actLen, T - doneAt))
+	local names = {}
+	for _, sc in scares do table.insert(names, ("%s@%.0f"):format(sc.Id, sc.T - t0)) end
+	print(("act II lasted %.0f s; scares: %s"):format(actLen, table.concat(names, " ")))
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SomeoneElse", "on to act III")
-	assert(actLen < ctx.Config.Acts.SmallThings.Min * 60, "sooner than the act's minimum")
-	assert(T - doneAt <= 75, "and soon after the last task")
+	assert(actLen >= ctx.Config.Acts.SmallThings.Min * 60, "no rushing: the act runs its course")
+	assert(not tvDuringNews, "the emergency alert never cuts in while they're watching the news")
+	-- scripted beats never land on top of each other
+	local beatIds = { PlateCrash = true, FootstepsUpstairs = true, TVAlert = true, FigureWindow = true }
+	local lastBeat = nil
+	for _, sc in scares do
+		if beatIds[sc.Id] then
+			if lastBeat then assert(sc.T - lastBeat >= 30, "two beats too close: " .. sc.Id) end
+			lastBeat = sc.T
+		end
+	end
+	-- Mom's texts came (after the house was locked), and no text lands within a few seconds of a scare
+	local moms = 0
+	for _, tx in texts do if tx.From == "Mom" then moms += 1 end end
+	assert(moms >= 3 and newsAt ~= nil, "mom texted about the news, and the news task came")
+	for _, tx in texts do
+		for _, sc in scares do
+			assert(math.abs(tx.T - sc.T) >= 3, ("a text from %s at %.0f on top of %s at %.0f"):format(tx.From, tx.T - t0, sc.Id, sc.T - t0))
+		end
+	end
+	print("act II pacing ok")
 end)
 print(ok and "HUNTGOAL OK" or ("HUNTGOAL FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

@@ -52,7 +52,9 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
 - `vote_test.luau` (tie | hard) also covers SKIP TO THE BLACKOUT: offered only when everyone has
   finished a night, more than half needed (tie run: one of two, starts at the top; hard run: both,
   starts in act III). `ending_test.luau coop`: an escaper's ANOTHER NIGHT counts before the end.
-- `hunt_goal_test.luau` also checks act II wraps up soon after its last task (before its minimum).
+- `hunt_goal_test.luau` also checks act II's pacing: it runs at least its minimum, scripted scares
+  never land within 30 s of each other, Mom's texts never on top of a scare, the TV alert never
+  during the news.
 - `figure_test.luau` asserts a steady heartbeat is a PASS (it used to end as a plain stop).
 - `telemetry_test.luau`: what Creator Hub analytics receives (a stand-in AnalyticsService): onboarding
   steps once each, the night funnel in order, endings once, a quit mid-night logged with its act (not

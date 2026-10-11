@@ -81,8 +81,14 @@ function Phone.answer(player: Player, index: number)
 	end
 end
 
+-- when the last scheduled text came in (the Director keeps scares a few seconds clear of it)
+function Phone.lastTextAt(): number
+	return lastText
+end
+
 -- Called by the Director every second with the current act and act time. A text that is due
--- waits for a quiet moment (quiet = nothing being thought or said), one text at a time.
+-- waits for a quiet moment (quiet = nothing being thought or said, no scare just now), one text at
+-- a time.
 function Phone.update(act: string, actTime: number, quiet: boolean?)
 	local texts = ctx.Story.Texts[act]
 	if not texts or quiet == false or os.clock() - lastText < 8 then

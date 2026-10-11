@@ -603,7 +603,7 @@ function Director.startAct(name: string, cause: Player?)
 		if ctx.Economy then
 			ctx.Economy.resetNight()
 		end
-		ctx.Objectives.set(state.Veteran and { "OrderPizza", "Windows" } or { "OrderPizza", "Popcorn", "Windows" })
+		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Windows" })
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
 		local session = ctx.Util.sessionPlayers()
@@ -870,6 +870,7 @@ function Director.startMomNews()
 		return
 	end
 	state.MomNews = true
+	state.MomTexting = true
 	local M = ctx.Story.MomNews
 	local myState = state
 	task.spawn(function()
@@ -881,6 +882,7 @@ function Director.startMomNews()
 			for _, p in ctx.Util.sessionPlayers() do
 				ctx.Phone.deliver(p, "Mom", line)
 			end
+			myState.LastTextAt = os.clock()
 			task.wait(5.5)
 		end
 		if state ~= myState or state.Act ~= "SmallThings" then
@@ -897,13 +899,19 @@ function Director.startMomNews()
 				task.wait(2.5)
 				if state == myState and state.Act == "SmallThings" then
 					ctx.Phone.deliver(p, "Mom", M.Answers[i] or M.Answers[1])
+					myState.LastTextAt = os.clock()
 					task.wait(3)
 					if state == myState and state.Act == "SmallThings" then
 						ctx.Phone.deliver(p, "Mom", M.After)
+						myState.LastTextAt = os.clock()
 					end
 				end
 			end)
 		end
+		myState.LastTextAt = os.clock()
+		-- (her question stays the only thing happening for a few seconds more)
+		task.wait(8)
+		myState.MomTexting = nil
 	end)
 end
 
@@ -933,8 +941,9 @@ end
 function Director.onDoorLockChanged(door, player: Player)
 	if door.Locked and (door.Id == "BackDoor" or door.Id == "GarageSide") then
 		ctx.Objectives.step("LockUp", door.Id)
-		if ctx.Objectives.isDone("LockUp") and state.Act == "SmallThings" then
-			task.delay(5, Director.startMomNews)
+		if ctx.Objectives.isDone("LockUp") and state.Act == "SmallThings" and not state.MomNewsDue then
+			-- (her texts come when nothing else is going on: see actTick)
+			state.MomNewsDue = os.clock() + 5
 		end
 	end
 	if door.Id == "BackDoor" and door.Locked and (state.Act == "Evening" or state.Act == "SmallThings") then
@@ -1070,6 +1079,7 @@ end
 local function fire(e, data)
 	state.Fired[e.Id] = true
 	state.LastFired[e.Id] = os.clock()
+	state.LastScareAt = os.clock()
 	Director.addTension(e.Tension or 5)
 	if ctx.Config.Debug then
 		print("[Director] event " .. e.Id)
@@ -1152,19 +1162,27 @@ local function schedule(actTime: number)
 	local lim = actLimits(state.Act)
 	local maxT = scaled(lim and lim.Max or 15)
 	-- overdue guaranteed beats go first (and ignore the ceiling)
-	-- (act II's tasks all done: the beats still to come are due now, a few seconds apart)
-	local rushing = state.WrapUp ~= nil and os.clock() - state.WrapUp >= 4 and os.clock() - (state.LastBeatAt or 0) >= 12
+	-- (one thing at a time: a beat waits until the last scare is a while back and Mom has finished
+	-- texting; the TV's emergency alert waits until nobody's watching the news on it)
+	local spaced = os.clock() - (state.LastScareAt or -1e9) >= (ctx.Config.Director.BeatSpacing or 35) * math.max(ctx.Config.TimeScale, 0.25)
+	-- (a text just came in: let it be read first)
+	local lastText = math.max(state.LastTextAt or -1e9, ctx.Phone.lastTextAt and ctx.Phone.lastTextAt() or -1e9)
+	local texted = os.clock() - lastText < 6
 	for _, b in BEATS[state.Act] or {} do
 		local e = eventById(b[1])
-		if e and not state.Fired[e.Id] and (actTime >= b[2] * maxT or rushing) and canFire(e) then
-			if tryEvent(e, true) then
-				state.LastBeatAt = os.clock()
+		local busy = state.MomTexting or texted or (e and e.Id == "TVAlert" and ctx.Objectives.has("News") and not ctx.Objectives.isDone("News"))
+		if e and not state.Fired[e.Id] and actTime >= b[2] * maxT and canFire(e) then
+			if spaced and not busy and tryEvent(e, true) then
 				setGap()
+				return
+			end
+			if not busy then
+				-- (an overdue beat is waiting for its moment: nothing else jumps the queue)
 				return
 			end
 		end
 	end
-	if os.clock() < state.NextEventAt or not Director.isQuiet() then
+	if os.clock() < state.NextEventAt or not Director.isQuiet() or state.MomTexting or texted then
 		return
 	end
 	local ceiling = ctx.Config.Director.Ceiling[state.Act] or 50
@@ -1337,7 +1355,9 @@ local function actTick()
 	local actTime = os.clock() - state.ActStart
 	local cfg = actLimits(state.Act)
 	workspace:SetAttribute("ClockMinutes", Director.clockMinutes())
-	ctx.Phone.update(state.Act, actTime, Director.isQuiet())
+	-- (texts wait for a quiet moment: nothing being said, no scare in the last few seconds, not
+	-- while Mom's own conversation is going)
+	ctx.Phone.update(state.Act, actTime, Director.isQuiet() and not state.MomTexting and os.clock() - (state.LastScareAt or -1e9) >= 6)
 	Director.banterTick(actTime)
 
 	-- tension decays
@@ -1422,22 +1442,24 @@ local function actTick()
 	elseif state.Act == "SmallThings" then
 		-- Mom's news texts come once the house is locked (or, if nobody gets round to it, partway
 		-- through the act); the act waits for the report to be watched
-		if not state.MomNews and actTime >= maxT * 0.55 then
-			Director.startMomNews()
+		-- Mom's texts: once the house is locked, when nothing else is going on (not on top of a scare,
+		-- not while someone's still meant to be checking upstairs); partway through the act at the latest
+		if not state.MomNews then
+			local investigating = ctx.Objectives.has("Investigate") and not ctx.Objectives.isDone("Investigate")
+			local calm = Director.isQuiet() and os.clock() - (state.LastScareAt or -1e9) >= 15 * math.max(ctx.Config.TimeScale, 0.25)
+			if (state.MomNewsDue and os.clock() >= state.MomNewsDue and calm and not investigating) or actTime >= maxT * 0.55 then
+				Director.startMomNews()
+			end
 		end
 		local newsDone = state.MomNews and (not ctx.Objectives.has("News") or ctx.Objectives.isDone("News"))
-		-- Everything to do is done (locked up, news watched, upstairs checked): no waiting around
-		-- for the act's minimum. The scares still to come fire a few seconds apart, then the lights go.
-		-- (Players used to wander with nothing to do for two minutes here.)
-		local tasksDone = newsDone and ctx.Objectives.allRequiredDone()
-		if tasksDone and not state.WrapUp then
-			state.WrapUp = os.clock()
+		if newsDone and not state.NewsDoneAt then
+			state.NewsDoneAt = os.clock()
 		end
-		-- (a scare that can't find its moment within a minute is skipped)
-		local wrapped = state.WrapUp ~= nil and tasksDone and (beatsDone() or os.clock() - state.WrapUp >= 60 * math.max(ctx.Config.TimeScale, 0.25))
-			and os.clock() - state.WrapUp >= (ctx.Config.Director.WrapUp or 20) * math.max(ctx.Config.TimeScale, 0.25)
-			and os.clock() - (state.LastBeatAt or 0) >= (ctx.Config.Director.WrapUpAfterBeat or 15) * math.max(ctx.Config.TimeScale, 0.25)
-		done = wrapped or (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet and newsDone) or (actTime >= maxT and newsDone) or actTime >= maxT + 120
+		-- (and a breather before the lights go: never straight after the news or a scare)
+		local scale = math.max(ctx.Config.TimeScale, 0.25)
+		local breather = newsDone and os.clock() - (state.NewsDoneAt or 0) >= (ctx.Config.Director.AfterNews or 40) * scale
+			and os.clock() - (state.LastScareAt or -1e9) >= (ctx.Config.Director.AfterScare or 30) * scale
+		done = (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet and breather) or (actTime >= maxT and breather) or actTime >= maxT + 120
 	elseif state.Act == "SomeoneElse" then
 		done = actTime >= maxT and not ctx.Escape.helpCalled()
 	end
