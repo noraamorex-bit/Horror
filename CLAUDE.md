@@ -136,8 +136,8 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
-  RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. Latest: **#8**
-  (the secret ending). Keep #2's slot lengths so the cuts and **the same music** land identically;
+  RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
+  ending. Latest: **#9** (the pizza man asks if you're home alone → the 911 call; `reel_source/reel20`). Keep #2's slot lengths so the cuts and **the same music** land identically;
   change the story/clips each time.
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
@@ -208,5 +208,8 @@ keeping goes in the repo.
   render of the world dump + creature + avatars), `comp_cantplay.mjs` (the #N caption format),
   `render.mjs` (quick previews), `dump_world_b.luau` / `dump.luau` (world → JSON, run from
   tools/harness), `creature_frames2.luau` (poses him per frame). Encode with
+  New reel: `npm install` in tools; dump the world (dump_world_b.luau from tools/harness); scene.py
+  preview → contact sheet → fix → full render in 4 parallel `film2.mjs <from> <to>` runs (the street shot is
+  slow); edit.py → `comp_cantplay.mjs` (4 parallel); audio.py (#2's track); encode with
   `ffmpeg -framerate 30 -i final/%04d.png -i reel_audio.wav -c:v libx264 -crf 17 -pix_fmt yuv420p -c:a aac -b:a 192k -shortest -movflags +faststart`.
   Finished reels go in `marketing/attic/`.

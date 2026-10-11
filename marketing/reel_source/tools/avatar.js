@@ -64,6 +64,18 @@
     const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8;
     return t;
   }
+  // a blank stare: small dot eyes set wide, a flat mouth (the pizza man)
+  function blankTexture(skin) {
+    const c = document.createElement('canvas'); c.width = c.height = 512;
+    const g = c.getContext('2d');
+    g.fillStyle = skin; g.fillRect(0, 0, 512, 512);
+    g.fillStyle = '#100c0a';
+    for (const x of [178, 334]) { g.beginPath(); g.ellipse(x, 236, 15, 17, 0, 0, Math.PI * 2); g.fill(); }
+    g.strokeStyle = '#100c0a'; g.lineWidth = 9; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(206, 318); g.lineTo(306, 314); g.stroke();
+    const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8;
+    return t;
+  }
   window.buildAvatar = function (o) {
     const C = Object.assign({ skin: '#f2c9a6', hoodie: '#d23b3b', hoodieDark: '#a52a2e', pants: '#2b3b5c', shoe: '#efefef', sole: '#2a2a2e', hair: '#3a2618', string: '#f2f2f2' }, o.colors || {});
     const P = Object.assign({ waist: 0, neckX: 0, neckY: 0, neckZ: 0, lShoulder: [0, 0, 0], rShoulder: [0, 0, 0], lElbow: 0, rElbow: 0, lHip: 0, rHip: 0, lKnee: 0, rKnee: 0 }, o.pose || {});
@@ -85,7 +97,7 @@
     const neck = joint(waist, 0, 1.62, 0); neck.rotation.set(P.neckX, P.neckY, P.neckZ);
     add(neck, new T.CylinderGeometry(0.32, 0.32, 0.3, 20), mSkin, 0, 0.1, 0);
     const headGeo = rbox(1.22, 1.22, 1.22, 0.42, 8);
-    const faceMat = new T.MeshStandardMaterial({ map: (o.face === 'scared' ? scaredTexture : faceTexture)(C.skin), roughness: 0.6 });
+    const faceMat = new T.MeshStandardMaterial({ map: (o.face === 'scared' ? scaredTexture : o.face === 'blank' ? blankTexture : faceTexture)(C.skin), roughness: 0.6 });
     add(neck, headGeo, [mSkin, mSkin, mSkin, mSkin, mSkin, faceMat], 0, 0.86, 0);
     // messy hair: a cap with tufts
     const mHair = mat(C.hair, { roughness: 0.95 });
