@@ -173,6 +173,11 @@ keeping goes in the repo.
   First logs (11 Oct, 52 nights): new players 71% queue and 68% reach the house; first-nighters 82%
   see their night's end; phones/tablets quit mid-night ~42% vs PC 26% (mostly in Act I); deaths
   are caught → struggled free → caught again; Call 911 via the bathroom bar is the main way out.
+- **Daily reminder notification** (Roblox experience notifications; string "Your daily reward is ready.
+  Don't break your streak!", id `4b35088f-90bc-7d4e-9361-d9ba1176dd42`): `python3 tools/notify.py
+  [--dry-run]` sends it to players who claimed their daily reward yesterday or the day before (Roblox
+  delivers only to opted-in 13+, max 1/day). A daily Claude Code routine runs it at ~22:53 UTC (an
+  hour before the US-evening peak, 00-04 UTC). The key has `user.user-notification:write`.
 - **Dev products:** POST `https://apis.roblox.com/developer-products/v2/universes/$ROBLOX_UNIVERSE_ID/developer-products`.
 - **Reels / renders:** sources per reel in `marketing/reel_source/reelN/` (scene.py → shots, edit.py →
   edit.json, audio.py → music). Shared tools in `marketing/reel_source/tools/`: `film2.mjs` (three.js
