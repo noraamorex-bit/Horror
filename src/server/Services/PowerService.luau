@@ -11,6 +11,7 @@ local ctx
 local mainOn = true
 local switches = {} -- room -> bool
 local lights = {} -- { {Room, Bulb, Light, Brightness} }
+local plates = {} -- light switch plates (Power.registerSwitch)
 local listeners = {}
 local staticLit = {} -- room -> true (battery lanterns, fire, etc.)
 local flickering = false
@@ -24,6 +25,7 @@ end
 function Power.reset()
 	mainOn = true
 	switches = {}
+	plates = {}
 	lights = {}
 	staticLit = {}
 	flickering = false
@@ -69,12 +71,22 @@ function Power.registerLight(room: string, bulb: BasePart, light: Light?)
 	applyLight(entry)
 end
 
+-- (Roblox shows one prompt per key: the second switch of a double plate, and the garage's next to
+-- the door opener, take the secondary key so both show)
 function Power.registerSwitch(room: string, plate: BasePart)
+	local secondary = room == "Garage"
+	for _, other in plates do
+		if other.Parent and (other.Position - plate.Position).Magnitude < 2.5 then
+			secondary = true
+		end
+	end
+	table.insert(plates, plate)
 	local prompt
 	prompt = ctx.Interaction.prompt(plate, {
 		Action = "Light switch",
 		Object = ctx.Rooms.ByName[room] and ctx.Rooms.ByName[room].Display or room,
 		Distance = 6,
+		Key = secondary and Enum.KeyCode.R or nil,
 	}, function(player)
 		Power.setSwitch(room, not switches[room], player)
 	end)

@@ -85,6 +85,7 @@ function Interaction.document(part: BasePart, docId: string, opts, onRead)
 		Object = opts.Object or ctx.Story.Documents[docId].Title,
 		Distance = opts.Distance or 7,
 		Offset = opts.Offset,
+		Key = opts.Key,
 	}, function(player)
 		ctx.Remotes.Document:FireClient(player, docId)
 		local first = not readers[player]
@@ -128,6 +129,7 @@ function Interaction.pickup(part: BasePart, item: string, opts, onTaken)
 		Hold = opts.Hold or 0,
 		Distance = opts.Distance or 7,
 		Offset = opts.Offset,
+		Key = opts.Key,
 	}, function(player)
 		ctx.Audio.playAt(opts.Sound or Interaction.pickupSound(item, opts.Action), part.Position, { Caption = false })
 		ctx.Inventory.give(player, item, opts.Count or 1)

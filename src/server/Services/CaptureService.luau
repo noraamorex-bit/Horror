@@ -94,6 +94,16 @@ function Capture.release(player: Player, by: Player?)
 	else
 		ctx.Audio.caption("The zip tie finally snaps! You won't get a second chance.", nil, nil, { player })
 	end
+	-- a head start: he can't see, hear or grab them for a little while (the second capture kills)
+	local grace = ctx.Intruder and ctx.Intruder._tune and ctx.Intruder._tune().FreedGrace or 0
+	if grace > 0 and ctx.Intruder.spare then
+		ctx.Intruder.spare(player, grace)
+		task.delay(3.5, function()
+			if ctx.Director and player.Parent and not player:GetAttribute("Captured") and not player:GetAttribute("Dead") then
+				ctx.Director.think(player, "Get out of the basement. Quietly. Find somewhere to hide.")
+			end
+		end)
+	end
 	if ctx.Director then
 		ctx.Director.onRescue(player, by)
 	end

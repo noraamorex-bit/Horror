@@ -55,8 +55,11 @@ function Interior.build(ctx, root: Instance, refs)
 	-- Stashes: drawers and shelves that can hold a useful item. Each night the flashlights, tape
 	-- and batteries go into different ones (see the end of the build); the rest are empty.
 	local stashes = {}
-	local function stash(name: string, part: BasePart, label: string, floor: string, visible: boolean?)
-		table.insert(stashes, { Name = name, Part = part, Label = label, Floor = floor, Visible = visible == true })
+	-- (Minor: right next to a task's own prompt. Roblox shows one prompt per key, and on a phone the
+	-- drawer under the microwave kept winning over "Make popcorn": these take the secondary key and
+	-- sit just below, so both always show)
+	local function stash(name: string, part: BasePart, label: string, floor: string, visible: boolean?, minor: boolean?)
+		table.insert(stashes, { Name = name, Part = part, Label = label, Floor = floor, Visible = visible == true, Minor = minor == true })
 	end
 
 	-- somewhere to sit: invisible seats on each cushion of a sofa/armchair (touching them does
@@ -83,7 +86,7 @@ function Interior.build(ctx, root: Instance, refs)
 		local anchor = Kit.box(parent, "SitSpot", cf * CF(0, 2.6, -0.4), V(math.max(1.5, length - 1.2), 1.2, 1.2), Color3.new(), KM.Plastic)
 		anchor.Transparency = 1
 		anchor.CanQuery = true
-		ctx.Interaction.prompt(anchor, { Action = "Sit", Object = label, Distance = 7 }, function(player)
+		ctx.Interaction.prompt(anchor, { Action = "Sit", Object = label, Distance = 7, Key = Enum.KeyCode.R }, function(player)
 			local hum = ctx.Util.getHumanoid(player)
 			local root = ctx.Util.getRoot(player)
 			if not hum or not root or hum.SeatPart or player:GetAttribute("Hiding") or player:GetAttribute("Captured") then
@@ -709,8 +712,8 @@ function Interior.build(ctx, root: Instance, refs)
 		mwPrompt.HoldDuration = 0
 		mwPrompt.Enabled = true
 	end)
-	stash("JunkDrawer", spot(kitchen, "JunkDrawer", CF(PCX - 1.28, G + 3.0, 4.67), V(0.2, 0.7, 2.1)), "Junk drawer", "Ground")
-	stash("KitchenDrawer", spot(kitchen, "Drawer", CF(PCX - 1.28, G + 3.0, 9.33), V(0.2, 0.7, 2.1)), "Kitchen drawer", "Ground")
+	stash("JunkDrawer", spot(kitchen, "JunkDrawer", CF(PCX - 1.28, G + 3.0, 4.67), V(0.2, 0.7, 2.1)), "Junk drawer", "Ground", nil, true)
+	stash("KitchenDrawer", spot(kitchen, "Drawer", CF(PCX - 1.28, G + 3.0, 9.33), V(0.2, 0.7, 2.1)), "Kitchen drawer", "Ground", nil, true)
 	Kit.box(kitchen, "Corkboard", CF(-8.42, G + 7, 7), V(0.1, 2.4, 3.4), Color3.fromRGB(176, 136, 90), KM.Cardboard)
 	for i = 0, 3 do
 		Kit.box(kitchen, "Note", CF(-8.48, G + 6.4 + (i % 2) * 1.0, 5.9 + i * 0.7) * ANG(rad(i * 4 - 6), 0, 0), V(0.02, 0.8, 0.6), Color3.fromHSV(i * 0.15 + 0.1, 0.25, 0.95), KM.Plastic)
@@ -722,7 +725,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.upperCabinets(kitchen, F(-27.1, G + 10.8, 28.3, NZ), 5.2, 1.6, 1.6, CAB)
 	ctx.Audio.loopOn("FridgeHum", fridge, { Caption = false })
 	local note = paper(kitchen, "FridgeNote", noteFace * CF(-0.2, 5.8, -0.02), V(1.4, 1.8, 0.04))
-	ctx.Interaction.document(note, "FridgeNote", { Object = "Note on the fridge", Distance = 6 })
+	ctx.Interaction.document(note, "FridgeNote", { Object = "Note on the fridge", Distance = 6, Key = Enum.KeyCode.R })
 	local menu = paper(kitchen, "PizzaMenu", noteFace * CF(0.25, 8.4, -0.02) * ANG(0, 0, rad(-4)), V(1.3, 1.9, 0.04))
 	menu.Color = Color3.fromRGB(200, 60, 45)
 	Kit.box(kitchen, "MenuBand", noteFace * CF(0.25, 9.0, -0.045) * ANG(0, 0, rad(-4)), V(1.2, 0.35, 0.01), Color3.fromRGB(245, 230, 190), KM.Plastic)
@@ -895,7 +898,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.monitor(office, F(31.0, G + deskH, -21.8, PX), 2.8, 1.8)
 	Kit.keyboard(office, F(32.6, G + deskH, -21.8, PX))
 	local invoice = paper(office, "Invoice", CF(32.4, G + deskH + 0.02, -19.6) * ANG(0, rad(12), 0), V(1.5, 0.03, 1.9))
-	ctx.Interaction.document(invoice, "Invoice", { Object = "Invoice on the desk", Distance = 6 })
+	ctx.Interaction.document(invoice, "Invoice", { Object = "Invoice on the desk", Distance = 6, Key = Enum.KeyCode.R })
 	Kit.mug(office, F(31.4, G + deskH, -19.1, PX), Color3.fromRGB(60, 80, 120))
 	lamp(office, "Office", F(31.1, G + deskH, -24.1, PX), "table", Color3.fromRGB(40, 60, 50))
 	local deskDrawer = spot(office, "DeskDrawer", CF(33.8, G + 3.0, -19.1), V(0.2, 0.9, 1.7))
@@ -943,7 +946,7 @@ function Interior.build(ctx, root: Instance, refs)
 		Kit.box(mud, "ShelfBracket", CF(x, G + 4.7, -9.4), V(0.2, 0.7, 0.6), WOOD_DARK, KM.Wood)
 	end
 	Kit.box(mud, "Basket", CF(35.6, G + 5.8, -8.8), V(1.6, 1.0, 1.5), Color3.fromRGB(170, 130, 80), KM.Fabric)
-	stash("MudShelf", spot(mud, "ShelfSpot", CF(38.3, G + 5.6, -8.6), V(1.6, 0.7, 1.2)), "Mudroom shelf", "Ground", true)
+	stash("MudShelf", spot(mud, "ShelfSpot", CF(38.3, G + 5.6, -8.6), V(1.6, 0.7, 1.2)), "Mudroom shelf", "Ground", true, true)
 	Kit.box(mud, "KeyBoard", CF(35.5, G + 7.6, -9.55), V(2, 1, 0.14), WOOD_DARK, KM.Wood)
 	local bkey = Kit.box(mud, "BasementKey", CF(35.4, G + 6.9, -9.42), V(0.35, 0.6, 0.08), BRASS, KM.Metal)
 	bkey.CanQuery = true
@@ -1652,7 +1655,7 @@ function Interior.build(ctx, root: Instance, refs)
 				target(targetName, s.Part.Position)
 			end
 			local look = visual(s, itemId)
-			ctx.Interaction.pickup(s.Part, itemId, { Action = look and "Take" or "Search", Object = look and ITEM_LOOK[itemId] or (s.Label .. " (" .. ITEM_LOOK[itemId]:lower() .. ")"), Keep = true, Sound = (not look) and "DrawerOpen" or nil }, function()
+			ctx.Interaction.pickup(s.Part, itemId, { Action = look and "Take" or "Search", Object = look and ITEM_LOOK[itemId] or (s.Label .. " (" .. ITEM_LOOK[itemId]:lower() .. ")"), Keep = true, Sound = (not look) and "DrawerOpen" or nil, Key = s.Minor and Enum.KeyCode.R or nil }, function()
 				if look then
 					Anim.vanish(look)
 				else
@@ -1683,7 +1686,7 @@ function Interior.build(ctx, root: Instance, refs)
 		-- the rest turn up nothing (once)
 		for _, s in pool do
 			local p
-			p = ctx.Interaction.prompt(s.Part, { Action = "Search", Object = s.Label, Distance = 7 }, function(player)
+			p = ctx.Interaction.prompt(s.Part, { Action = "Search", Object = s.Label, Distance = 7, Key = s.Minor and Enum.KeyCode.R or nil }, function(player)
 				ctx.Audio.playAt(s.Visible and "Pickup" or "DrawerOpen", s.Part.Position, { Caption = false, Volume = s.Visible and 0.3 or 0.6 })
 				if not s.Visible then
 					Anim.drawer(s.Part)

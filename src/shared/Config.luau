@@ -163,6 +163,7 @@ Config.Intruder = {
 	RetreatAfterStun = 30,
 	RetreatAfterCapture = 14, -- after a capture he walks off somewhere far from the boiler room
 	CaptiveGrace = 45, -- and for this long ignores the basement (struggling, rescues): the rescue window
+	FreedGrace = 40, -- just got free (yourself or a friend): he can't see, hear or grab you for this long
 	-- patrolling (nobody to sense): he sweeps the rooms you were last in, listening
 	PatrolSpeed = 7.5,
 	PatrolPause = { 1.5, 3 },
@@ -196,6 +197,7 @@ Config.Difficulty = {
 			WithdrawMax = 14,
 			RetreatAfterCapture = 8,
 			CaptiveGrace = 30,
+			FreedGrace = 20,
 			-- (Hard keeps the sharper senses Normal had before it was eased)
 			SightLit = 32,
 			SightFlashlight = 45,

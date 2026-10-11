@@ -66,6 +66,7 @@ local function fresh()
 		WasHidden = {},
 		UnhidAt = {},
 		Ignore = {},
+		Spared = {}, -- player -> until when: just broke free, he can't see, hear or grab them
 		StungAt = {},
 		LastFelt = {},
 		HuntTarget = nil,
@@ -283,9 +284,15 @@ local function rootOf(p: Player): BasePart?
 	return ctx.Util.getRoot(p)
 end
 
+-- just broke free (Intruder.spare): a head start out of the basement
+local function spared(p: Player?): boolean
+	return p ~= nil and S.Spared ~= nil and now() < (S.Spared[p] or 0)
+end
+
 local function valid(p: Player?): boolean
 	return p ~= nil and p.Parent ~= nil and p:GetAttribute("InGame") == true and not p:GetAttribute("Captured")
 		and not p:GetAttribute("Escaped") and not p:GetAttribute("AdminGhost") and ctx.Util.isAlive(p)
+		and not spared(p)
 end
 
 local function faceToward(target: Vector3)
@@ -456,6 +463,9 @@ local function grabFails(target: Player): boolean
 end
 
 local function tryGrab(target: Player): boolean
+	if spared(target) then
+		return false
+	end
 	local r = rootOf(target)
 	if not r or (r.Position - pos()).Magnitude > tune().GrabRange then
 		return false
@@ -1724,6 +1734,9 @@ local function onNoise(ev)
 	end
 	local st = S.State
 	local who = ev.Source
+	if spared(who) then
+		return
+	end
 	if figure() then
 		-- busy: listening at a hiding spot, carrying someone off, stunned, trapped, or he can see you
 		if st == "Inspect" or st == "Retreat" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" or st == "Chase" or st == "CheckSpot" then
@@ -2047,7 +2060,7 @@ local function think(dt: number)
 	local visible = {}
 	local head = S.Head.CFrame
 	for _, p in ctx.Util.activePlayers() do
-		if Perception.intruderSees(head, p, S.Model) then
+		if not spared(p) and Perception.intruderSees(head, p, S.Model) then
 			table.insert(visible, p)
 			local r = rootOf(p)
 			if r then
@@ -2185,6 +2198,28 @@ end
 -- his head, for the capture jumpscare
 function Intruder.getHead(): BasePart?
 	return S.Head
+end
+
+-- just broke free (or was cut free): for a few seconds he can't see, hear or grab them, and he
+-- forgets where they were, so they get out of the basement (second capture = death; logs: 9 of 35
+-- deaths came within a minute of getting free)
+function Intruder.spare(player: Player, seconds: number)
+	if not S.Spared or seconds <= 0 then
+		return
+	end
+	S.Spared[player] = now() + seconds
+	if S.Trails then
+		S.Trails[player] = {}
+	end
+	if S.Memory then
+		S.Memory[player] = nil
+	end
+	if S.LastFelt then
+		S.LastFelt[player] = nil
+	end
+	if S.HuntTarget == player then
+		S.HuntTarget = nil
+	end
 end
 
 -- (tests) his internal state, to simulate walking where there's no physics

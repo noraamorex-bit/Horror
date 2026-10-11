@@ -154,12 +154,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
-- **Next:** pull the logs with `--since=74` and check what v74/v75 changed: did the result card's
-  auto-continue raise nights per player, does ▶ PLAY get new players into groups faster, do phones
-  still quit in Act I (the biggest open problem: phone/tablet ~40% mid-night quits vs PC ~25%).
-- Check the daily reminder routine's results (Claude routines: "Daily reward reminder (attic game)",
-  22:53 UTC; its first real send was 11 Oct). Opt-ins come from 🔔 REMIND ME (result card + REWARDS).
-- Solo nights are almost always abandoned (7/8); groups of 3-4 almost never.
+- **11 Oct (v76):** v74/v75 had too little traffic to judge (2 nights). Fixed from the logs:
+  (1) phone-only groups took 104-166 s from the popcorn bag to the microwave (PC ~20 s): Roblox
+  shows one prompt per key and the kitchen drawer under the microwave (and the junk drawer under the
+  phone) won on touch; nearby minor prompts now use the secondary key (`prompts_test` guards it).
+  (2) half of all players get caught, 46% of those die, 9 of 35 deaths within a minute of getting
+  free: breaking free now gives a 40 s head start (Hard 20 s; `Config.Intruder.FreedGrace`).
+- **Next:** pull logs `--since=76`: phone groups' Popcorn:Bag→Cook gap, deaths per captured
+  player, quits while dead; and v74/v75's auto-continue / ▶ PLAY effects once there's traffic.
+- Daily reminder routine ("Daily reward reminder (attic game)", 22:53 UTC) fires tonight for the
+  first real send; dry run on 11 Oct: 60 players would get it.
+- Solo nights are almost always abandoned (8/9); groups of 3-4 almost never.
 - Coming back on another day is still ~2%: that's the gap to the 250 highly engaged players.
 
 ## Workflow and commands
@@ -167,17 +172,21 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 Paths: repo `/home/user/Horror`. `/tmp` scratch space does **not** survive sessions — anything worth
 keeping goes in the repo.
 
-- **Typecheck** (baseline = same error count as HEAD, currently 45 lines matching `Error|Warn`; never add new ones):
+- **Typecheck** (baseline = same error count as HEAD, currently 101 lines matching `Error|Warn` with luau-lsp 1.53; never add new ones):
   `rojo sourcemap -o sm.json && luau-lsp analyze --definitions=globalTypes.d.luau --sourcemap=sm.json src`
   (`globalTypes.d.luau` from the luau-lsp repo's `scripts/globalTypes.d.luau`, e.g.
   `curl -sL https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau -o globalTypes.d.luau`
-  (gitignored-worthy, don't commit); tools in `/root/bin`).
+  (gitignored-worthy, don't commit); tools in `/root/bin`. A fresh container may lack them: download
+  the release zips (the API is blocked, direct downloads work) into /root/bin:
+  `github.com/rojo-rbx/rojo/releases/download/v7.4.4/rojo-7.4.4-linux-x86_64.zip`,
+  `github.com/lune-org/lune/releases/download/v0.10.4/lune-0.10.4-linux-x86_64.zip`,
+  `github.com/JohnnyMorganz/luau-lsp/releases/download/1.53.0/luau-lsp-linux-x86_64.zip`).
 - **Tests** (Lune harness, runs straight from the repo): `cd tools/harness && ./runall.sh` — every
   `*_test.luau` (finale_test with escape|bedtime|patrol). Add/extend a test for each feature.
 - **Build + publish:**
-  `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` then
+  `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 75).
+  (last published: version 76).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

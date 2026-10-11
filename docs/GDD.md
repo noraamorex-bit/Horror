@@ -326,6 +326,7 @@ If Curtis grabs you, the screen fades and you wake zip-tied in the boiler room. 
 - **Rescue**: a friend holds the prompt for 5 s, or 2.5 s with the multitool.
 - **Struggle**: mash **Space** (about 63 presses, 1.6% each: doable in the 45 s last chance on a phone). It's noisy.
 - Curtis comes back regularly to check on his captives.
+- **A head start once you're free.** Breaking your zip tie (or being cut loose) gives you 40 s (Hard: 20 s) in which he can't see, hear or grab you, and he forgets your trail: "Get out of the basement. Quietly." (The logs: 9 of 35 deaths came within a minute of getting free, often still in the basement.)
 - **One second chance only.** Getting caught a second time is fatal: a jumpscare, then you're out of the night and **spectate** your friends (tap to switch; with nobody left, the camera watches the house from the street). Your fate on the recap reads *Didn't make it*.
 
 ### The electrics puzzles (`PuzzleService`, client `Puzzle`)
@@ -405,7 +406,7 @@ Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host
 | Space | BREATH (hold) / STRUGGLE (mash) | A | Hold breath (hiding) / struggle (captured) |
 | E | LEAVE | B | Leave a hiding spot |
 
-**Mobile layout.** Roblox's own thumbstick (move), camera drag (look) and jump button stay. The action buttons sit in an arc around the jump button and change with context: exploring shows SPRINT, CROUCH, LIGHT and SPRAY (the last two only once you carry the item); hiding swaps them for a big BREATH button and LEAVE (drag anywhere to peek around); captured shows one big STRUGGLE button. Interactions use the standard Roblox ProximityPrompt, which only fires on a deliberate tap (dragging the camera across it does nothing). Phones get a lighter rain density, and panels (phone, documents) move off the right side so they never cover the buttons. Every touch button fires the same input action as its key, so there is one code path for all devices (`client/Controllers/Input` → `MobileControls`).
+**Mobile layout.** Roblox's own thumbstick (move), camera drag (look) and jump button stay. The action buttons sit in an arc around the jump button and change with context: exploring shows SPRINT, CROUCH, LIGHT and SPRAY (the last two only once you carry the item); hiding swaps them for a big BREATH button and LEAVE (drag anywhere to peek around); captured shows one big STRUGGLE button. Interactions use the standard Roblox ProximityPrompt, which only fires on a deliberate tap (dragging the camera across it does nothing). Roblox shows only one prompt per key at a time, so a prompt right next to a task's prompt takes the secondary key and sits just below it (the drawers under the microwave and the kitchen phone, the note beside the pizza menu, Sit on the sofa next to Search the cushions, double light switches): on phones the drawer kept winning over "Make popcorn" and phone groups lost 2-3 minutes there. `prompts_test` fails on any such pair. Phones get a lighter rain density, and panels (phone, documents) move off the right side so they never cover the buttons. Every touch button fires the same input action as its key, so there is one code path for all devices (`client/Controllers/Input` → `MobileControls`).
 
 ---
 
