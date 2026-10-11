@@ -1,8 +1,9 @@
 --[[
-	ChatTags — in the chat, each player's name carries their tags: ★ for supporters, their level,
-	and the title they've equipped in the LOCKER, in its colour (the same as the tag over their
-	head in the lobby). Built from the speaker's attributes (EconomyService mirrors TitleText,
-	TitleColor and Level; ShopService sets Pass_Supporter), in the lobby and in the house.
+	ChatTags — in the chat, each player's name carries their tags: ★ for supporters and the title
+	they've equipped in the LOCKER, in its colour (the same as the tag over their head in the
+	lobby). Built from the speaker's attributes (EconomyService mirrors TitleText and TitleColor;
+	ShopService sets Pass_Supporter), in the lobby and in the house. (Level and nights survived
+	are in the server's player list instead: StatsService leaderstats.)
 ]]
 
 local Players = game:GetService("Players")
@@ -35,10 +36,6 @@ function ChatTags.prefixFor(p: Player): string
 	local parts = {}
 	if p:GetAttribute("Pass_Supporter") == true then
 		table.insert(parts, "<font color=\"" .. GOLD .. "\">★</font>")
-	end
-	local level = tonumber(p:GetAttribute("Level"))
-	if level then
-		table.insert(parts, "<font color=\"" .. GOLD .. "\">LV " .. math.floor(level) .. "</font>")
 	end
 	local title = p:GetAttribute("TitleText")
 	if type(title) == "string" and title ~= "" then

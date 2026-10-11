@@ -50,6 +50,25 @@ local ok, err = pcall(function()
 	Stats.recordOut(p, false)
 	assert(p:GetAttribute("StatNights") == n0 + 3 and p:GetAttribute("StatEscapes") == e0 + 2, "a death counts the night only")
 	print("out early ok")
+	-- the server's player list: level and nights survived
+	assert(p:FindFirstChild("leaderstats"), "leaderstats made on start")
+	-- (the harness doesn't fire attribute signals: build them again the way a change would sync them)
+	p:FindFirstChild("leaderstats").Parent = nil
+	p:SetAttribute("Level", 9)
+	Stats._leaderstats(p)
+	local ls = p:FindFirstChild("leaderstats")
+	assert(ls.Level.Value == 9 and ls.Survived.Value == p:GetAttribute("StatEscapes"), "level and nights survived")
+	Stats._leaderstats(p)
+	local n = 0
+	for _, c in p:GetChildren() do if c.Name == "leaderstats" then n += 1 end end
+	assert(n == 1, "only one")
+	-- the owner is left off every board, this one too
+	ctx.Config = { Admins = { 42 } }
+	ls.Parent = nil
+	Stats._leaderstats(p)
+	assert(p:FindFirstChild("leaderstats") == nil, "no stats for the owner")
+	ctx.Config = nil
+	print("leaderstats ok")
 end)
 print(ok and "STATS OK" or ("STATS FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

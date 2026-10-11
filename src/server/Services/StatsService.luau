@@ -548,6 +548,31 @@ function Stats.top(n: number, which: string?)
 	return out
 end
 
+-- The server's player list (Roblox's own, top right in the lobby): each player's level and nights
+-- survived. (The owner is left off every board: no stats for them.)
+local function leaderstats(p: Player)
+	if offBoards(p.UserId) or p:FindFirstChild("leaderstats") then
+		return
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "leaderstats"
+	local lv = Instance.new("IntValue")
+	lv.Name = "Level"
+	lv.Parent = folder
+	local survived = Instance.new("IntValue")
+	survived.Name = "Survived"
+	survived.Parent = folder
+	local function sync()
+		lv.Value = tonumber(p:GetAttribute("Level")) or 1
+		survived.Value = tonumber(p:GetAttribute("StatEscapes")) or 0
+	end
+	sync()
+	p:GetAttributeChangedSignal("Level"):Connect(sync)
+	p:GetAttributeChangedSignal("StatEscapes"):Connect(sync)
+	folder.Parent = p
+end
+Stats._leaderstats = leaderstats -- (tests)
+
 function Stats.start()
 	if ctx.Remotes then
 		ctx.Remotes.SetBeam.OnServerEvent:Connect(function(player, id)
@@ -559,8 +584,10 @@ function Stats.start()
 	end
 	for _, p in Players:GetPlayers() do
 		task.spawn(load, p)
+		leaderstats(p)
 	end
 	Players.PlayerAdded:Connect(load)
+	Players.PlayerAdded:Connect(leaderstats)
 	-- the rainbow beam cycles through the colours
 	task.spawn(function()
 		local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))

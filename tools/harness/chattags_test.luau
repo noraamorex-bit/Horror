@@ -1,5 +1,5 @@
--- chattags_test: the chat shows each player's tags before their name: ★ for supporters, their
--- level, and the equipped title in its colour; nothing for a player with none.
+-- chattags_test: the chat shows each player's tags before their name: ★ for supporters and the
+-- equipped title in its colour; nothing for a player with none. (No level: that's in the player list.)
 local H = require("./env")
 local R = H.roblox
 local ok, err = pcall(function()
@@ -11,15 +11,15 @@ local ok, err = pcall(function()
 	local a = mk()
 	assert(C.prefixFor(a) == "", "no tags: nothing")
 	a:SetAttribute("Level", 7)
-	assert(C.prefixFor(a) == '<font color="#ffdc8c">LV 7</font>', "level only: " .. C.prefixFor(a))
+	assert(C.prefixFor(a) == "", "the level isn't a chat tag: " .. C.prefixFor(a))
 	a:SetAttribute("TitleText", "Night Owl")
 	a:SetAttribute("TitleColor", R.Color3.fromRGB(90, 160, 255))
 	local p = C.prefixFor(a)
-	assert(p:find("LV 7", 1, true) and p:find("[Night Owl]", 1, true), "level and title: " .. p)
+	assert(not p:find("LV", 1, true) and p:find("[Night Owl]", 1, true), "the title: " .. p)
 	assert(p:lower():find("#5aa0ff", 1, true) or p:find("#ffffff", 1, true), "in its colour: " .. p)
 	a:SetAttribute("Pass_Supporter", true)
 	local q = C.prefixFor(a)
-	assert(q:find("★", 1, true) and q:find("★", 1, true) < q:find("LV", 1, true), "supporters first: " .. q)
+	assert(q:find("★", 1, true) and q:find("★", 1, true) < q:find("Night Owl", 1, true), "supporters first: " .. q)
 	-- a title can't break the rich text
 	a:SetAttribute("TitleText", "<b>x</b>")
 	assert(not C.prefixFor(a):find("<b>", 1, true), "escaped")
