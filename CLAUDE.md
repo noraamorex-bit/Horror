@@ -104,7 +104,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - The hunt's main goal from the blackout is **Call 911** from the one bar of signal at the upstairs
   bathroom window (a prompt sits there); every other way out is listed as optional.
 - Night streak: another night within 15 min of the last pays +25% / +50%. Repeat nights (everyone
-  has finished one) have a shorter build-up. 🔔 Remind me (notification opt-in) on the result card.
+  has finished one) have a shorter build-up, and the vote offers ⏩ SKIP TO THE BLACKOUT. 🔔 Remind me
+  (notification opt-in) on the result card. Out early, you can already press ANOTHER NIGHT.
+- Act II ends ~30 s after its tasks are done (no dead time). The heartbeat minigame must stay
+  passable (logs: 0/22 passes before the fix); Normal is forgiving, Hard is tight.
+- Chat: name tags ★ (supporter), LV, and the equipped title in its colour (the owner asked).
 - "Secret ending: found by N players" is one small line at the bottom of the NIGHTS SURVIVED board
   (the owner found a separate board "too much").
 
@@ -142,7 +146,7 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 Paths: repo `/home/user/Horror`. `/tmp` scratch space does **not** survive sessions — anything worth
 keeping goes in the repo.
 
-- **Typecheck** (baseline = same error count as HEAD, currently 46; never add new ones):
+- **Typecheck** (baseline = same error count as HEAD, currently 45 lines matching `Error|Warn`; never add new ones):
   `rojo sourcemap -o sm.json && luau-lsp analyze --definitions=globalTypes.d.luau --sourcemap=sm.json src`
   (`globalTypes.d.luau` from the luau-lsp repo's `scripts/globalTypes.d.luau`; tools in `/root/bin`).
 - **Tests** (Lune harness, runs straight from the repo): `cd tools/harness && ./runall.sh` — every
@@ -150,11 +154,14 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 69).
+  (last published: version 70).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
   only 14% of finishers played a 2nd night; ~2% came back another day; 58% came with a Roblox friend.
+  First logs (11 Oct, 52 nights): new players 71% queue and 68% reach the house; first-nighters 82%
+  see their night's end; phones/tablets quit mid-night ~42% vs PC 26% (mostly in Act I); deaths
+  are caught → struggled free → caught again; Call 911 via the bathroom bar is the main way out.
 - **Dev products:** POST `https://apis.roblox.com/developer-products/v2/universes/$ROBLOX_UNIVERSE_ID/developer-products`.
 - **Reels / renders:** sources per reel in `marketing/reel_source/reelN/` (scene.py → shots, edit.py →
   edit.json, audio.py → music). Shared tools in `marketing/reel_source/tools/`: `film2.mjs` (three.js

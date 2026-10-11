@@ -319,8 +319,9 @@ function Director.enterLobby()
 	broadcastLobby()
 end
 
-local function startGame()
+local function startGame(skipToBlackout: boolean?)
 	state.Countdown = nil
+	state.SkipToBlackout = skipToBlackout == true
 	local participants = {}
 	for _, p in Players:GetPlayers() do
 		if #participants < ctx.Config.MaxPlayers and not p:GetAttribute("Leaving") then
@@ -369,6 +370,11 @@ local function startGame()
 		ctx.Remotes.Intro:FireClient(p)
 	end
 	Director.startAct("Evening")
+	if state.SkipToBlackout then
+		-- they've seen the cozy part: straight to the night going wrong
+		Director.logTruthRaw("You skipped ahead to the blackout.")
+		Director.startAct("SomeoneElse")
+	end
 end
 
 ---------------------------------------------------------------------------
@@ -389,6 +395,36 @@ local function tally(): (number, number, number)
 	return normal, hard, #Players:GetPlayers()
 end
 
+-- Everyone here has finished a night before: they may vote to skip the build-up and start at
+-- the blackout (more than half of them must want it). Repeat players were leaving a minute into
+-- the cozy part they'd already seen.
+local function everyoneVeteran(): boolean
+	local players = Players:GetPlayers()
+	if #players == 0 then
+		return false
+	end
+	for _, p in players do
+		if (tonumber(p:GetAttribute("StatNights")) or 0) < 1 then
+			return false
+		end
+	end
+	return true
+end
+
+local function skipCount(): number
+	local n = 0
+	for p, on in (state.Vote and state.Vote.Skip) or {} do
+		if on and p.Parent then
+			n += 1
+		end
+	end
+	return n
+end
+
+local function skipWins(total: number): boolean
+	return state.Vote ~= nil and state.Vote.CanSkip == true and skipCount() * 2 > total
+end
+
 local function sendVote(target: Player?)
 	local v = state.Vote
 	if not v then
@@ -403,13 +439,17 @@ local function sendVote(target: Player?)
 			Hard = hard,
 			Total = total,
 			Mine = v.Votes[p],
+			CanSkip = v.CanSkip or nil,
+			Skip = v.CanSkip and skipCount() or nil,
+			SkipNeed = v.CanSkip and (math.floor(total / 2) + 1) or nil,
+			MySkip = v.CanSkip and v.Skip[p] == true or nil,
 		})
 	end
 end
 
 local function beginVote()
 	state.Countdown = nil
-	state.Vote = { Ends = os.clock() + ((ctx.Config.Difficulty and ctx.Config.Difficulty.VoteTime) or 12), Votes = {} }
+	state.Vote = { Ends = os.clock() + ((ctx.Config.Difficulty and ctx.Config.Difficulty.VoteTime) or 12), Votes = {}, Skip = {}, CanSkip = everyoneVeteran() }
 	broadcastLobby()
 	sendVote()
 end
@@ -422,8 +462,9 @@ local function voteTick(): boolean
 	if v.Result then
 		-- (the result shows for a moment, then the night starts)
 		if os.clock() >= v.StartAt then
+			local skip = v.SkipResult == true
 			state.Vote = nil
-			startGame()
+			startGame(skip)
 		end
 		return true
 	end
@@ -440,13 +481,17 @@ local function voteTick(): boolean
 	local diff = hard > normal and "Hard" or "Normal"
 	workspace:SetAttribute("Difficulty", diff)
 	v.Result = diff
+	v.SkipResult = skipWins(total)
 	v.StartAt = os.clock() + 2
 	for _, p in Players:GetPlayers() do
-		ctx.Remotes.Vote:FireClient(p, { Result = diff, Normal = normal, Hard = hard, Total = total })
+		ctx.Remotes.Vote:FireClient(p, { Result = diff, Normal = normal, Hard = hard, Total = total, Skip = v.SkipResult or nil })
 	end
 	return true
 end
 Director._voteTick = voteTick -- (tests)
+Director._state = function()
+	return state
+end
 Director._beginVote = beginVote
 
 -- a group's own server: start as soon as the whole group has arrived (or after a timeout)
@@ -524,7 +569,8 @@ function Director.startAct(name: string, cause: Player?)
 		ctx.Journey.act(name)
 	end
 	local card = ctx.Story.Chapters[name]
-	if card then
+	local skipping = name == "Evening" and state.SkipToBlackout
+	if card and not skipping then
 		ctx.Remotes.Chapter:FireAllClients(card.Title, card.Sub)
 	end
 	ctx.Escape.refreshLandline()
@@ -532,7 +578,7 @@ function Director.startAct(name: string, cause: Player?)
 
 	state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint + 10
 	local actLines = ctx.Story.Thoughts.Acts[name]
-	if actLines then
+	if actLines and not skipping then
 		-- act II waits for the pizza place's call; the others start right after the chapter card
 		task.delay(name == "SmallThings" and 5 or 7, function()
 			for _, line in actLines do
@@ -558,12 +604,12 @@ function Director.startAct(name: string, cause: Player?)
 		local solo = #session == 1
 		for _, p in session do
 			local lines = solo and ctx.Story.Thoughts.SoloIntro or ctx.Story.Thoughts.Intro[p:GetAttribute("Role") == "Host" and "Host" or "Guest"]
-			for _, line in lines do
+			for _, line in (not skipping) and lines or {} do
 				Director.think(p, line)
 			end
 		end
 		-- alone: the friends text that the flooded road turned them back
-		if solo then
+		if solo and not skipping then
 			local myState = state
 			task.delay(24, function()
 				if state ~= myState or state.Act ~= "Evening" then
@@ -1097,10 +1143,13 @@ local function schedule(actTime: number)
 	local lim = actLimits(state.Act)
 	local maxT = scaled(lim and lim.Max or 15)
 	-- overdue guaranteed beats go first (and ignore the ceiling)
+	-- (act II's tasks all done: the beats still to come are due now, a few seconds apart)
+	local rushing = state.WrapUp ~= nil and os.clock() - state.WrapUp >= 4 and os.clock() - (state.LastBeatAt or 0) >= 12
 	for _, b in BEATS[state.Act] or {} do
 		local e = eventById(b[1])
-		if e and not state.Fired[e.Id] and actTime >= b[2] * maxT and canFire(e) then
+		if e and not state.Fired[e.Id] and (actTime >= b[2] * maxT or rushing) and canFire(e) then
 			if tryEvent(e, true) then
+				state.LastBeatAt = os.clock()
 				setGap()
 				return
 			end
@@ -1359,7 +1408,18 @@ local function actTick()
 			Director.startMomNews()
 		end
 		local newsDone = state.MomNews and (not ctx.Objectives.has("News") or ctx.Objectives.isDone("News"))
-		done = (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet and newsDone) or (actTime >= maxT and newsDone) or actTime >= maxT + 120
+		-- Everything to do is done (locked up, news watched, upstairs checked): no waiting around
+		-- for the act's minimum. The scares still to come fire a few seconds apart, then the lights go.
+		-- (Players used to wander with nothing to do for two minutes here.)
+		local tasksDone = newsDone and ctx.Objectives.allRequiredDone()
+		if tasksDone and not state.WrapUp then
+			state.WrapUp = os.clock()
+		end
+		-- (a scare that can't find its moment within a minute is skipped)
+		local wrapped = state.WrapUp ~= nil and tasksDone and (beatsDone() or os.clock() - state.WrapUp >= 60 * math.max(ctx.Config.TimeScale, 0.25))
+			and os.clock() - state.WrapUp >= (ctx.Config.Director.WrapUp or 20) * math.max(ctx.Config.TimeScale, 0.25)
+			and os.clock() - (state.LastBeatAt or 0) >= (ctx.Config.Director.WrapUpAfterBeat or 15) * math.max(ctx.Config.TimeScale, 0.25)
+		done = wrapped or (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet and newsDone) or (actTime >= maxT and newsDone) or actTime >= maxT + 120
 	elseif state.Act == "SomeoneElse" then
 		done = actTime >= maxT and not ctx.Escape.helpCalled()
 	end
@@ -1377,7 +1437,18 @@ function Director.start()
 
 	ctx.Remotes.CastVote.OnServerEvent:Connect(function(player, choice)
 		local v = state.Vote
-		if not v or v.Result or (choice ~= "Normal" and choice ~= "Hard") then
+		if not v or v.Result then
+			return
+		end
+		if choice == "Skip" or choice == "NoSkip" then
+			-- (only offered when everyone here has finished a night before)
+			if v.CanSkip then
+				v.Skip[player] = choice == "Skip" or nil
+				sendVote()
+			end
+			return
+		end
+		if choice ~= "Normal" and choice ~= "Hard" then
 			return
 		end
 		v.Votes[player] = choice

@@ -206,7 +206,7 @@ Config.Difficulty = {
 			InvestigateSpeed = 8.5,
 			InspectNearChance = 0.5,
 		},
-		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22 },
+		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22, Travel = 0.9, Lead = 1.2 },
 		BatteryMultiplier = 0.7, -- flashlights die faster
 		PoliceMultiplier = 1.25, -- help takes longer to arrive
 		LastChance = 30,
@@ -216,12 +216,14 @@ Config.Difficulty = {
 -- The heartbeat minigame (DOORS-style): he's listening at your hiding spot. Half-hearts fly in
 -- from the left and the right; press that side as each one reaches the heart. Miss too many and
 -- he hears you. (Hard: Config.Difficulty.Hard.Heartbeat overrides.)
+-- (Normal was failed 14 times out of 22 in the first day of logs, and no pass ever counted: it's
+-- meant to be tense, not a wall. Hard keeps the tight version.)
 Config.Heartbeat = {
-	Interval = 1.0, -- seconds between beats
-	Travel = 0.9, -- how long a half-heart takes to fly in
-	Window = 0.26, -- seconds either side of arrival that count (a little forgiving on touch screens)
-	Lead = 1.2, -- the heart shows this long before the first beat
-	Misses = 3, -- this many misses and he hears you
+	Interval = 1.15, -- seconds between beats
+	Travel = 1.1, -- how long a half-heart takes to fly in (easier to read)
+	Window = 0.32, -- seconds either side of arrival that count (forgiving on touch screens)
+	Lead = 1.4, -- the heart shows this long before the first beat
+	Misses = 3, -- this many misses and he hears you (more and doing nothing could outlast him)
 }
 
 Config.Hiding = {
@@ -259,6 +261,8 @@ Config.Director = {
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
+	WrapUp = 20, -- act II's tasks all done: the lights go this many seconds later at the soonest...
+	WrapUpAfterBeat = 15, -- ...and this long after the last of its scares (fired 12 s apart meanwhile)
 }
 
 -- Inner monologue: the character thinking out loud about what to do next

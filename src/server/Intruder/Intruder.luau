@@ -1709,6 +1709,9 @@ STATES.Inspect = function(_, visible)
 	end
 	if now() >= d.Until then
 		-- nothing. He turns away and goes somewhere else
+		if who and ctx.Heartbeat and ctx.Heartbeat.pass then
+			ctx.Heartbeat.pass(who)
+		end
 		S.SpotCooldown[spot] = now() + 40
 		patrol()
 	end

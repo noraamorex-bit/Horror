@@ -178,6 +178,7 @@ local ok, err = pcall(function()
 	assert(payload and #payload.Beats >= 3, "beats dealt")
 	assert(not b:GetAttribute("Captured"), "steady heartbeat -> safe")
 	assert(S.State == "Patrol", "he walks away, got " .. S.State)
+	assert(passed, "a steady heartbeat counts as a pass (it used to end as a plain stop)")
 	print("heartbeat pass ok (beats " .. #payload.Beats .. ")")
 	-- 7) step out while he's listening: he has you
 	ctx.Hiding.exit(b)

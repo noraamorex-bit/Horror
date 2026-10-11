@@ -132,6 +132,41 @@ local ok, err = pcall(function()
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("VeteranNight") == nil, "not with a first-timer")
 	assert(list3 and has(list3, "Popcorn"), "all three chores")
 	print("hunt goal ok")
+
+	-- act II: once everything's done, no waiting around for the act's minimum
+	ctx.Director.enterLobby()
+	ctx.Intruder.setMode("Offstage") -- (he was hunting in the part above: back in the attic)
+	-- (and the police came for that night: a fresh night's state)
+	for _, k in { "Ending", "Escape", "Objectives", "Capture" } do
+		if ctx[k].reset then ctx[k].reset() end
+	end
+	assert(not ctx.Ending.isOver(), "a fresh night")
+	local solo = mkPlayer("Wrap")
+	H.services.Players.GetPlayers = function() return { solo } end
+	ctx.Director.startAct("SmallThings")
+	local t0 = T
+	ctx.Director.startMomNews()
+	H.flush(30)
+	assert(ctx.Objectives.has("News"), "mom's news task")
+	ctx.Objectives.complete("LockUp")
+	ctx.Objectives.complete("News")
+	local doneAt = T
+	while H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SmallThings" and T - t0 < 400 do
+		H.flush(1)
+		if ctx.Objectives.has("Investigate") and not ctx.Objectives.isDone("Investigate") then
+			ctx.Objectives.complete("Investigate")
+			doneAt = T
+		end
+	end
+	local actLen = T - t0
+	local st = ctx.Director._state()
+	local fired = {}
+	for id in st.Fired do table.insert(fired, id) end
+	print("fired:", table.concat(fired, ","), "wrapup", st.WrapUp and (st.WrapUp - t0), "allDone", ctx.Objectives.allRequiredDone(), "pending", table.concat(ctx.Objectives.pending(), ","))
+	print(("act II wrapped up after %.0f s (%.0f s after the last task)"):format(actLen, T - doneAt))
+	assert(H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SomeoneElse", "on to act III")
+	assert(actLen < ctx.Config.Acts.SmallThings.Min * 60, "sooner than the act's minimum")
+	assert(T - doneAt <= 75, "and soon after the last task")
 end)
 print(ok and "HUNTGOAL OK" or ("HUNTGOAL FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

@@ -202,6 +202,31 @@ def report_nights(nights):
         if g:
             q = [r for r in g if r in quit_]
             print(f"  {dev:<8} n={len(g):<4} quit mid-night {pct(len(q), len(g))}")
+    # where quitters were, by device (act at the moment they left; dead players excluded)
+    for dev in ("Phone", "Tablet", "PC", "Console"):
+        g = [r for r in quit_ if (r[2].get("Perf") or {}).get("Dev") == dev and not r[2]["Out"].get("dead")]
+        if g:
+            print(f"  {dev:<8} quit (alive) in act: {dict(Counter(r[2]['Out'].get('act') for r in g).most_common())}")
+    # captures: where, and how people got free; deaths; the heartbeat minigame
+    caps = Counter(ev[2] if len(ev) > 2 else None for r in rows for ev in r[2].get("Ev") or [] if ev[1] == "Cap")
+    frees = Counter(ev[2] for r in rows for ev in r[2].get("Ev") or [] if ev[1] == "Free" and len(ev) > 2)
+    print(f"  captured in: {dict(caps.most_common(8))}  freed by: {dict(frees)}")
+    outs = Counter(ev[2] for r in rows for ev in r[2].get("Ev") or [] if ev[1] == "Out" and len(ev) > 2)
+    print(f"  out early: {dict(outs)}")
+    beats = Counter(ev[2] for r in rows for ev in r[2].get("Ev") or [] if ev[1] == "Beat" and len(ev) > 2)
+    print(f"  heartbeat minigame: {dict(beats)}  (Pass = survived it)")
+    again = Counter(ev[1] for r in rows for ev in r[2].get("Ev") or [] if ev[1] in ("Again", "Lobby", "Revive"))
+    print(f"  card buttons: {dict(again)}")
+    # idle time: act II's last task -> the blackout
+    idle = []
+    for n in started:
+        obj = {c: t for t, c in n.get("Obj") or []}
+        st = [t for t, a in n.get("Acts") or [] if a == "SomeoneElse"]
+        last = max([obj[k] for k in ("News", "Investigate", "LockUp") if k in obj] or [None]) if obj else None
+        if st and last is not None and st[0] > last:
+            idle.append(st[0] - last)
+    if idle:
+        print(f"  act II last task -> blackout: median {median(idle):.0f}s (n={len(idle)})")
     # the team's progress: how far groups get
     steps = Counter(code for n in started for _, code in n.get("Obj") or [])
     print("  objective steps reached (nights):", dict(steps.most_common(25)))

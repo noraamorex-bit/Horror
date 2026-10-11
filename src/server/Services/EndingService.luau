@@ -380,6 +380,7 @@ function Ending.trigger(kind: string)
 			ReturnToLobby = ctx.Reserved == true,
 			InGame = p:GetAttribute("InGame") == true,
 			Coins = coinsFor[p],
+			Again = stayers[p] == true or nil, -- (already said yes from their own card)
 		})
 	end
 
@@ -395,7 +396,9 @@ function Ending.start()
 	-- "Another night" from the ending card: the group stays together (no trip through the lobby).
 	-- Everyone still here asks: it starts right away.
 	ctx.Remotes.PlayAgain.OnServerEvent:Connect(function(player)
-		if not over or stayers[player] then
+		-- (out early, escaped or dead, you can already say you're in for the next one: players who
+		-- died used to leave for the lobby alone, and the group fell apart)
+		if not (over or ended[player]) or stayers[player] then
 			return
 		end
 		stayers[player] = true
@@ -412,7 +415,7 @@ function Ending.start()
 		for _, p in Players:GetPlayers() do
 			ctx.Remotes.Notify:FireClient(p, string.format("%s wants another night (%d/%d)", player.DisplayName, want, total), "info")
 		end
-		if want >= total then
+		if over and want >= total then
 			task.delay(1.5, function()
 				if over then
 					finishNight()

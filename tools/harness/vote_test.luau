@@ -99,6 +99,32 @@ local ok, err = pcall(function()
 	-- back to the lobby clears it
 	ctx.Director.enterLobby()
 	assert(ws:GetAttribute("Difficulty") == nil, "difficulty cleared for the next night")
+	-- skip to the blackout: only when everyone has finished a night; more than half must want it
+	ctx.Director._beginVote()
+	assert(last(fired, "Vote", a).CanSkip == nil, "first-timers here: no skip offered")
+	ctx.Remotes.CastVote.OnServerEvent:Fire(a, "Skip")
+	assert(last(fired, "Vote", a).Skip == nil, "and a skip vote is ignored")
+	ctx.Director.enterLobby()
+	a:SetAttribute("StatNights", 2); b:SetAttribute("StatNights", 1)
+	ctx.Director._beginVote()
+	local sv = last(fired, "Vote", a)
+	assert(sv.CanSkip == true and sv.Skip == 0 and sv.SkipNeed == 2, "veterans: skip offered (2 of 2 needed)")
+	ctx.Remotes.CastVote.OnServerEvent:Fire(a, "Skip")
+	assert(last(fired, "Vote", a).Skip == 1 and last(fired, "Vote", a).MySkip == true, "counted")
+	local wantSkip = MODE == "hard" -- (tie run: only one wants it, so the night starts at the top)
+	if wantSkip then
+		ctx.Remotes.CastVote.OnServerEvent:Fire(b, "Skip")
+	end
+	ctx.Remotes.CastVote.OnServerEvent:Fire(a, "Normal")
+	ctx.Remotes.CastVote.OnServerEvent:Fire(b, "Normal")
+	ctx.Director._voteTick()
+	assert((last(fired, "Vote", a).Skip == true) == wantSkip, "the result says whether it skips")
+	local t1 = os.clock()
+	while os.clock() - t1 < 2.1 do end
+	ctx.Director._voteTick()
+	local act = ws:GetAttribute("Act")
+	print("skip", wantSkip, "-> act", act)
+	assert(act == (wantSkip and "SomeoneElse" or "Evening"), "starts at the blackout only when skipped")
 end)
 print(ok and ("VOTE OK " .. MODE) or ("VOTE FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

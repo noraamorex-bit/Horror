@@ -123,6 +123,15 @@ function Heartbeat.begin(player: Player, seconds: number, onFail: () -> ())
 	return s
 end
 
+-- he listened the whole time and heard nothing: they made it (he calls this as he walks off, which
+-- used to come a moment before the session's own end and was counted as a plain stop)
+function Heartbeat.pass(player: Player)
+	local s = sessions[player]
+	if s and s.Misses < s.Limit then
+		finish(s, "Pass")
+	end
+end
+
 function Heartbeat.stop(player: Player)
 	local s = sessions[player]
 	if s then

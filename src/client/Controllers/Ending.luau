@@ -114,6 +114,10 @@ end
 	opts: Headline, Good, Line, EndingTitle?, NewEnding?, Duration?, WinTime?, NewBest?, Revive?, ReviveIn?, Spectate?, Lobby?, RestartIn?,
 	ReturnToLobby?, Coins? ({Total, Lines, Balance, LevelBefore, Level, XP, XPNext})
 ]]
+-- this night: already said yes to another one (from an early card); and on our way to the lobby
+local saidAgain = false
+local leaving = false
+
 local function showCard(opts)
 	closeCard()
 	local UI = ctx.UI
@@ -285,22 +289,57 @@ local function showCard(opts)
 			end
 		end)
 	end
-	if opts.ReturnToLobby and opts.RestartIn then
-		-- the night is over: another one with the same group, right here, or the lobby
+	-- back to the lobby: says so at once (the teleport takes a few seconds; people kept tapping)
+	local function lobbyButton(parent: Instance, text: string, primary: boolean, order: number)
+		local b
+		b = button(parent, leaving and "GOING TO THE LOBBY..." or text, primary, order, function()
+			if leaving then
+				return
+			end
+			leaving = true
+			b.Text = "GOING TO THE LOBBY..."
+			b.AutoButtonColor = false
+			ctx.Remotes.LeaveGame:FireServer()
+			task.delay(15, function()
+				-- (the teleport failed: let them try again)
+				leaving = false
+				if b.Parent then
+					b.Text = text
+					b.AutoButtonColor = true
+				end
+			end)
+		end)
+		return b
+	end
+	local function againButton(parent: Instance, primary: boolean, order: number)
 		local again
-		again = button(row, "ANOTHER NIGHT", true, 1, function()
+		again = button(parent, saidAgain and "WAITING FOR FRIENDS..." or "ANOTHER NIGHT", primary, order, function()
+			if saidAgain then
+				return
+			end
+			saidAgain = true
 			ctx.Remotes.PlayAgain:FireServer()
 			again.Text = "WAITING FOR FRIENDS..."
 			again.AutoButtonColor = false
 		end)
-		again.Size = UDim2.fromOffset(250, 54)
-		button(row, "LOBBY", false, 2, function()
-			ctx.Remotes.LeaveGame:FireServer()
-		end)
+		return again
+	end
+	if opts.Again then
+		saidAgain = true
+	end
+	if opts.ReturnToLobby and opts.RestartIn then
+		-- the night is over: another one with the same group, right here, or the lobby
+		againButton(row, true, 1).Size = UDim2.fromOffset(250, 54)
+		lobbyButton(row, "LOBBY", false, 2)
+	elseif opts.ReturnToLobby and opts.Spectate then
+		-- out early while friends play on: watch them, and say you're in for the next night
+		order += 1
+		local row2 = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 52), BackgroundTransparency = 1, Parent = col })
+		UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = row2 })
+		againButton(row2, false, 1).Size = UDim2.fromOffset(250, 48)
+		lobbyButton(row2, "LOBBY", false, 2)
 	elseif opts.ReturnToLobby then
-		button(row, opts.Spectate and "BACK TO LOBBY" or "PLAY AGAIN", not opts.Spectate, 2, function()
-			ctx.Remotes.LeaveGame:FireServer()
-		end)
+		lobbyButton(row, "PLAY AGAIN", true, 2)
 	end
 
 	-- the night streak: another night soon pays more (EconomyService.nightRewards)
@@ -511,6 +550,7 @@ local function onEnding(payload)
 			ReturnToLobby = payload.ReturnToLobby,
 			RestartIn = payload.RestartIn,
 			Coins = payload.Coins,
+			Again = payload.Again,
 		})
 		task.delay(8, function()
 			if card and ctx.Social then
@@ -537,6 +577,8 @@ function Ending.start()
 	-- the next lobby clears it all
 	workspace:GetAttributeChangedSignal("Act"):Connect(function()
 		if workspace:GetAttribute("Act") == "Lobby" then
+			saidAgain = false
+			leaving = false
 			closeCard()
 			stopMusic()
 			if savedClock then

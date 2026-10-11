@@ -145,6 +145,13 @@ local ok, err = pcall(function()
 	local list = E.applyLoadout(p)
 	assert(given.Walkie == 1 and given.Flashlight == 1 and p:GetAttribute("Boost_Lucky") == true, "loadout given")
 	assert(E.itemCount(p, "Walkie") == 0 and E.itemCount(p, "Lucky") == 0, "and used up")
+	-- (today's quests already done: on some days one is "earn coins", and the night's pay would finish it)
+	local function questsDone(doc)
+		local done = {}
+		for _, qq in Cat.questsFor(Cat.day()) do done[qq.Id] = true end
+		doc.Quests = { Day = Cat.day(), P = {}, Done = done }
+	end
+	questsDone(E._docs[77])
 	E.resetNight()
 	local cBefore = E.coins(p)
 	local r1 = E.nightRewards(p, { Seconds = 600, Survived = true })
@@ -190,6 +197,7 @@ local ok, err = pcall(function()
 	local z = H.wrap(R.Instance.new("Player"))
 	rawset(z, "UserId", 99)
 	E._load(z)
+	questsDone(E._docs[99])
 	E.resetNight()
 	local cz = E.coins(z)
 	local rz = E.nightRewards(z, { Seconds = 600, Survived = true })
@@ -227,6 +235,7 @@ local ok, err = pcall(function()
 	assert(d88.LevelPaid == 12 and E.coins(q) == 5, "veteran: level 12 counted, no back pay (" .. E.coins(q) .. ")")
 	assert(E.owns(q, "Title_Lv5") and E.owns(q, "Title_Lv10") and not E.owns(q, "Title_Lv20"), "veteran: the level 5 and 10 titles")
 	-- then a night that crosses two levels: coins for each, the crate level opens a crate
+	questsDone(d88)
 	local c0 = E.coins(q)
 	local before = Cat.levelOf(d88.Earned)
 	local need = Cat.xpFor(14) - d88.Earned + 1

@@ -43,6 +43,13 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
 - `hunt_goal_test.luau`: the blackout brings the ways out (Call 911 first, the rest optional); the
   Call 911 prompt by the bathroom window works only in the bar of signal and brings the police;
   veteran nights drop the popcorn chore, a first-timer in the group keeps it.
+- `chattags_test.luau`: the chat prefix: ★ for supporters, LV, the equipped title in its colour,
+  nothing for a player with none, a title can't break the rich text.
+- `vote_test.luau` (tie | hard) also covers SKIP TO THE BLACKOUT: offered only when everyone has
+  finished a night, more than half needed (tie run: one of two, starts at the top; hard run: both,
+  starts in act III). `ending_test.luau coop`: an escaper's ANOTHER NIGHT counts before the end.
+- `hunt_goal_test.luau` also checks act II wraps up soon after its last task (before its minimum).
+- `figure_test.luau` asserts a steady heartbeat is a PASS (it used to end as a plain stop).
 - `telemetry_test.luau`: what Creator Hub analytics receives (a stand-in AnalyticsService): onboarding
   steps once each, the night funnel in order, endings once, a quit mid-night logged with its act (not
   after the ending), coins in and out.

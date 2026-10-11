@@ -4,6 +4,9 @@
 
 	Owners of the "pick your role" pass also choose who they play tonight here; everyone else
 	sees a small button that offers the pass.
+
+	When everyone here has finished a night before, a toggle offers to SKIP TO THE BLACKOUT (the
+	cozy part they've already seen); more than half of them must want it.
 ]]
 
 local Players = game:GetService("Players")
@@ -22,6 +25,8 @@ local boxes: { [string]: { Frame: TextButton, Stroke: UIStroke, Count: TextLabel
 local roleRow: Frame
 local roleButtons: { [string]: TextButton } = {}
 local roleOffer: TextButton
+local skipButton: TextButton
+local mySkip = false
 local ends = 0
 local mine: string? = nil
 local open = false
@@ -67,6 +72,15 @@ local function render(payload)
 		b.Frame.BackgroundTransparency = picked and 0.55 or 0.8
 	end
 	footer.Text = string.format("%d / %d voted", (payload.Normal or 0) + (payload.Hard or 0), payload.Total or #Players:GetPlayers())
+	-- skip the build-up (only offered when everyone has played a night before)
+	skipButton.Visible = payload.CanSkip == true and payload.Result == nil
+	if payload.CanSkip then
+		mySkip = payload.MySkip == true
+		local need = tonumber(payload.SkipNeed) or 1
+		skipButton.Text = string.format("%s  SKIP TO THE BLACKOUT   %d / %d", mySkip and "✓" or "⏩", tonumber(payload.Skip) or 0, need)
+		skipButton.BackgroundColor3 = mySkip and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(28, 28, 32)
+		skipButton.TextColor3 = mySkip and Color3.fromRGB(15, 15, 15) or Color3.fromRGB(232, 228, 218)
+	end
 end
 
 local function show()
@@ -96,12 +110,13 @@ local function show()
 	-- (no music here: it blared over the start of every night)
 end
 
-local function close(result: string?)
+local function close(result: string?, skip: boolean?)
 	if not open then
 		return
 	end
 	timer.Visible = false
 	roleRow.Visible = false
+	skipButton.Visible = false
 	if result then
 		-- the winning mode, big, for a moment
 		local m = result == "Hard" and MODES[2] or MODES[1]
@@ -112,6 +127,9 @@ local function close(result: string?)
 			boxes[mm.Key].Frame.Visible = mm.Key == result
 		end
 		footer.Text = result == "Hard" and "Good luck." or "Stay quiet. Stay together."
+		if skip then
+			footer.Text = "Skipping to the blackout."
+		end
 		ctx.Effects.playSound(result == "Hard" and "HorrorHitLow" or "UISelect", nil, { Caption = false })
 	end
 	closing = task.delay(result and 1.6 or 0, function()
@@ -183,11 +201,11 @@ local function build()
 		boxes[m.Key] = { Frame = b, Stroke = stroke, Count = count, Color = m.Color }
 	end
 
-	timer = UI.label({ Size = UDim2.new(1, 0, 0, 44), Text = "(12)", Font = Enum.Font.Arcade, TextSize = 40, LayoutOrder = 3, ZIndex = 5, Parent = col })
+	timer = UI.label({ Size = UDim2.new(1, 0, 0, 44), Text = "(12)", Font = Enum.Font.Arcade, TextSize = 40, LayoutOrder = 4, ZIndex = 5, Parent = col })
 	UI.new("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0), Parent = timer })
 
 	-- pick your role (pass)
-	roleRow = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 46), BackgroundTransparency = 1, LayoutOrder = 4, ZIndex = 5, Parent = col })
+	roleRow = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 46), BackgroundTransparency = 1, LayoutOrder = 5, ZIndex = 5, Parent = col })
 	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = roleRow })
 	for i, r in ctx.Story.Roles do
 		local first = string.match(r.Name, "^(%S+)") or r.Name
@@ -231,7 +249,31 @@ local function build()
 		end
 	end)
 
-	footer = UI.label({ Size = UDim2.new(1, 0, 0, 26), Text = "", TextSize = 18, TextColor3 = UI.Color.Dim, LayoutOrder = 5, ZIndex = 5, Parent = col })
+	footer = UI.label({ Size = UDim2.new(1, 0, 0, 26), Text = "", TextSize = 18, TextColor3 = UI.Color.Dim, LayoutOrder = 6, ZIndex = 5, Parent = col })
+
+	-- skip the cozy part (repeat groups)
+	skipButton = UI.new("TextButton", {
+		Size = UDim2.fromOffset(420, 48),
+		Text = "⏩  SKIP TO THE BLACKOUT",
+		Font = UI.Font.Bold,
+		TextSize = 19,
+		BackgroundColor3 = Color3.fromRGB(28, 28, 32),
+		TextColor3 = UI.Color.Text,
+		LayoutOrder = 3,
+		Visible = false,
+		ZIndex = 5,
+		Parent = col,
+	})
+	UI.corner(skipButton, 10)
+	UI.stroke(skipButton, Color3.new(1, 1, 1), 1.5, 0.6)
+	skipButton.Activated:Connect(function()
+		if not open then
+			return
+		end
+		mySkip = not mySkip
+		ctx.Remotes.CastVote:FireServer(mySkip and "Skip" or "NoSkip")
+		ctx.Effects.playSound("UISelect", nil, { Caption = false })
+	end)
 end
 
 function Vote.init(c)
@@ -252,7 +294,7 @@ function Vote.start()
 		end
 		if payload.Result then
 			render(payload)
-			close(payload.Result)
+			close(payload.Result, payload.Skip == true)
 			return
 		end
 		ends = payload.Ends or ends

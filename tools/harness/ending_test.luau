@@ -87,6 +87,14 @@ local ok, err = pcall(function()
 		print("co-op: over", ctx.Ending.isOver(), "result to", r[1] and r[1][2].Name, r[1] and r[1][3].Title, r[1] and r[1][3].CanSpectate)
 		assert(not ctx.Ending.isOver(), "the night goes on for the friend inside")
 		assert(r[1] and r[1][2] == a and r[1][3].Title == "YOU ESCAPED" and r[1][3].CanSpectate, "the escaper gets a result card")
+		-- out early, they can already say they're in for another night (the one still inside can't yet)
+		ctx.Remotes.PlayAgain.OnServerEvent:Fire(b)
+		ctx.Remotes.PlayAgain.OnServerEvent:Fire(a)
+		local wants = 0
+		for _, f in kinds(fired, "Notify") do
+			if tostring(f[3]):find("wants another night") then wants += 1 end
+		end
+		assert(wants == 2 and not ctx.Ending.isOver(), "the escaper's yes counts (told to both), the night goes on")
 		-- then the friend dies: nobody left inside, the night ends (a lost ending, since nobody was free)
 		local co = coroutine.create(function() ctx.Capture.capture(b) end)
 		H.ours[co] = true
@@ -101,6 +109,9 @@ local ok, err = pcall(function()
 		print("co-op end:", ctx.Ending.isOver(), e[1] and e[1][3].Kind, "Out:", heads.Out, "In:", heads.In)
 		assert(ctx.Ending.isOver() and e[1] and e[1][3].Kind == "NextDoor", "someone got out next door")
 		assert(heads.Out == "YOU ESCAPED" and heads.In == "YOU DIED", "each player gets their own headline")
+		local again = {}
+		for _, f in e do again[f[2].Name] = f[3].Again end
+		assert(again.Out == true and again.In == nil, "the ending card knows who already said yes")
 	end
 end)
 print(ok and "ENDING OK" or ("ENDING FAIL: " .. tostring(err)))
