@@ -115,7 +115,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 
 **Economy / monetization**
 - Coins from playing (daily streak, quests, night pay); store with one-night gear (no revive), crates
-  with cosmetics (beams, titles, trails), Robux coin packs. Cheap passes starting at 10 R$; donations.
+  with cosmetics (beams, trails), Robux coin packs. Cheap passes starting at 10 R$; donations.
+- **Titles are never in crates** (the owner asked): each is earned in the game (Attic Explorer =
+  climb into the attic, Pizza Lover, Scaredy Cat, Survivor, Night Owl, Phrogger, The Quiet One,
+  Legend of Alder Lane, levels). Old crate titles stay with whoever has them.
 - Admin COINS tab (lobby + game) for the owner.
 
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
@@ -155,7 +158,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 71).
+  (last published: version 72).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

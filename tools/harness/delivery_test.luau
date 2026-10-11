@@ -41,6 +41,9 @@ local ok, err = pcall(function()
 	H.services.Players.GetPlayers = function() return { p } end
 	p:SetAttribute("InGame", true)
 	p:SetAttribute("Role", "Host")
+	-- (who earns which title)
+	local earned = {}
+	ctx.Economy = { achieve = function(pl, id) table.insert(earned, { pl, id }) return true end, track = function() end, resetNight = function() end }
 	ctx.Director.startAct("Evening")
 	ctx.Objectives.set({ "OrderPizza" })
 	local Delivery = H.load("Server/Director/Delivery")
@@ -83,6 +86,9 @@ local ok, err = pcall(function()
 		end
 	end
 	print("done", done, "lines", #lines, "choices", choicesMade, "door task", ctx.Objectives.isDone("Door"))
+	local pizza = false
+	for _, e in earned do if e[1] == p and e[2] == "Title_Pizza" then pizza = true end end
+	assert(pizza, "whoever answers the door earns Pizza Lover")
 	for k, l in lines do
 		if l then print(" ", l.IsPlayer and "YOU" or (l.Speaker == "" and "*" or l.Speaker), "|", l.Text, l.Choices and ("[" .. table.concat(l.Choices, " / ") .. "]") or "") else print("  <close>") end
 	end

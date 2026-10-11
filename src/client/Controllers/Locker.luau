@@ -1,7 +1,7 @@
 --[[
 	Locker — what you wear (dock icon LOCKER, the flashlight): FLASHLIGHT colours (by bringing
-	friends, with a game pass, or out of crates), TITLES over your name and lobby TRAILS (from
-	crates). Tap one you have to use it; tap one you don't to see how to get it.
+	friends, with a game pass, or out of crates), TITLES over your name (earned in the game: each
+	says how) and lobby TRAILS (from crates). Tap one you have to use it; tap one you don't to see how to get it.
 ]]
 
 local Players = game:GetService("Players")
@@ -92,7 +92,13 @@ local function makeRow(page: Instance, order: number, def, kind: string)
 	table.insert(rows, r)
 	row.Activated:Connect(function()
 		if not r.Unlocked then
-			if kind ~= "Beam" or def.Crate then
+			if def.How or def.Level then
+				-- (earned in the game: the row already says how)
+				if ctx.Effects then
+					ctx.Effects.playSound("UIClick", nil, { Caption = false })
+				end
+				return
+			elseif kind ~= "Beam" or def.Crate then
 				if ctx.StoreUI then
 					ctx.StoreUI.open("Crates")
 				end

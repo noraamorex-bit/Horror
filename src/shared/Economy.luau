@@ -4,8 +4,9 @@
 	Coins are earned at the end of every night (EconomyService.nightRewards), from the daily
 	reward streak and from daily quests, and can be bought with Robux (Packs). They buy:
 	  • Items: one-use gear you carry into your next night (Store tab "Items").
-	  • Crates: a random cosmetic (flashlight colours, titles, lobby trails). A duplicate pays
-	    back some coins instead.
+	  • Crates: a random cosmetic (flashlight colours, lobby trails). A duplicate pays back some
+	    coins instead. Titles aren't in crates: each one is earned by doing something in the game
+	    (Economy.Special, EconomyService.achieve).
 	Nothing coins buy is needed to finish the game: they're shortcuts and looks.
 ]]
 
@@ -31,9 +32,9 @@ Economy.Rarity = {
 }
 
 --[[
-	Cosmetics. Kind "Beam": a flashlight colour (everyone sees it, in the house too).
-	"Title": a line over your name in the lobby. "Trail": a glowing trail behind you in the lobby.
-	Rainbow beams/trails cycle through the colours.
+	Cosmetics (what crates hold). Kind "Beam": a flashlight colour (everyone sees it, in the house
+	too). "Trail": a glowing trail behind you in the lobby. Rainbow beams/trails cycle through the
+	colours. (Titles, a line over your name in the lobby and in the chat, are earned: Special.)
 ]]
 Economy.Cosmetics = {
 	-- flashlight colours
@@ -44,15 +45,6 @@ Economy.Cosmetics = {
 	{ Id = "Beam_Violet", Kind = "Beam", Name = "Violet", Rarity = "Epic", Color = Color3.fromRGB(170, 110, 255) },
 	{ Id = "Beam_Sunset", Kind = "Beam", Name = "Sunset", Rarity = "Epic", Color = Color3.fromRGB(255, 110, 90) },
 	{ Id = "Beam_Rainbow", Kind = "Beam", Name = "Rainbow", Rarity = "Legendary", Color = Color3.fromRGB(255, 80, 200), Rainbow = true },
-	-- titles
-	{ Id = "Title_Scaredy", Kind = "Title", Name = "Scaredy Cat", Rarity = "Common", Color = Color3.fromRGB(230, 230, 230) },
-	{ Id = "Title_Pizza", Kind = "Title", Name = "Pizza Lover", Rarity = "Common", Color = Color3.fromRGB(255, 170, 90) },
-	{ Id = "Title_NightOwl", Kind = "Title", Name = "Night Owl", Rarity = "Common", Color = Color3.fromRGB(180, 190, 255) },
-	{ Id = "Title_Quiet", Kind = "Title", Name = "The Quiet One", Rarity = "Rare", Color = Color3.fromRGB(150, 230, 210) },
-	{ Id = "Title_Survivor", Kind = "Title", Name = "Survivor", Rarity = "Rare", Color = Color3.fromRGB(120, 230, 150) },
-	{ Id = "Title_Attic", Kind = "Title", Name = "Attic Explorer", Rarity = "Epic", Color = Color3.fromRGB(200, 120, 255) },
-	{ Id = "Title_Phrogger", Kind = "Title", Name = "Phrogger", Rarity = "Epic", Color = Color3.fromRGB(110, 255, 120) },
-	{ Id = "Title_Legend", Kind = "Title", Name = "Legend of Alder Lane", Rarity = "Legendary", Color = Color3.fromRGB(255, 205, 80) },
 	-- lobby trails
 	{ Id = "Trail_Dust", Kind = "Trail", Name = "Dust", Rarity = "Common", Color = Color3.fromRGB(210, 200, 180) },
 	{ Id = "Trail_Moon", Kind = "Trail", Name = "Moonbeam", Rarity = "Rare", Color = Color3.fromRGB(140, 180, 255) },
@@ -61,12 +53,26 @@ Economy.Cosmetics = {
 	{ Id = "Trail_Rainbow", Kind = "Trail", Name = "Rainbow", Rarity = "Legendary", Color = Color3.fromRGB(255, 80, 200), Rainbow = true },
 }
 
--- the secret ending's own reward (not in any crate)
+--[[
+	Titles: never in crates, each one earned in the game (How = what the Locker says while it's
+	locked). EconomyService.achieve grants them; the ids are the ones crates used to give, so
+	anyone who already has one keeps it.
+]]
 Economy.Special = {
+	-- things you do in a night
+	{ Id = "Title_Attic", Kind = "Title", Name = "Attic Explorer", Rarity = "Rare", Color = Color3.fromRGB(200, 120, 255), How = "Climb into the attic" },
+	{ Id = "Title_Pizza", Kind = "Title", Name = "Pizza Lover", Rarity = "Common", Color = Color3.fromRGB(255, 170, 90), How = "Answer the door to the pizza man" },
+	{ Id = "Title_Scaredy", Kind = "Title", Name = "Scaredy Cat", Rarity = "Common", Color = Color3.fromRGB(230, 230, 230), How = "Hide from him 5 times in one night" },
+	{ Id = "Title_Survivor", Kind = "Title", Name = "Survivor", Rarity = "Rare", Color = Color3.fromRGB(120, 230, 150), How = "Survive a night" },
+	{ Id = "Title_Phrogger", Kind = "Title", Name = "Phrogger", Rarity = "Epic", Color = Color3.fromRGB(110, 255, 120), How = "Find his nest in the attic" },
+	{ Id = "Title_Quiet", Kind = "Title", Name = "The Quiet One", Rarity = "Epic", Color = Color3.fromRGB(150, 230, 210), How = "Survive a night without him ever seeing you" },
+	{ Id = "Title_NightOwl", Kind = "Title", Name = "Night Owl", Rarity = "Rare", Color = Color3.fromRGB(180, 190, 255), How = "Play 3 nights in a row (night streak)" },
+	{ Id = "Title_Legend", Kind = "Title", Name = "Legend of Alder Lane", Rarity = "Legendary", Color = Color3.fromRGB(255, 205, 80), How = "Survive a Hard night without being caught" },
+	-- the secret ending's own reward
 	{ Id = "Title_Family", Kind = "Title", Name = "Not Your Family", Rarity = "Legendary", Color = Color3.fromRGB(255, 70, 70), How = "The secret ending" },
 	-- earned by levelling up (Economy.Levels)
-	{ Id = "Title_Lv5", Kind = "Title", Name = "Night Owl", Rarity = "Rare", Color = Color3.fromRGB(150, 190, 255), Level = 5 },
-	{ Id = "Title_Lv10", Kind = "Title", Name = "Survivor", Rarity = "Epic", Color = Color3.fromRGB(120, 230, 150), Level = 10 },
+	{ Id = "Title_Lv5", Kind = "Title", Name = "Insomniac", Rarity = "Rare", Color = Color3.fromRGB(150, 190, 255), Level = 5 },
+	{ Id = "Title_Lv10", Kind = "Title", Name = "Still Breathing", Rarity = "Epic", Color = Color3.fromRGB(120, 230, 150), Level = 10 },
 	{ Id = "Title_Lv20", Kind = "Title", Name = "Attic Veteran", Rarity = "Epic", Color = Color3.fromRGB(255, 190, 90), Level = 20 },
 	{ Id = "Title_Lv30", Kind = "Title", Name = "He Can't Catch Me", Rarity = "Legendary", Color = Color3.fromRGB(255, 120, 220), Level = 30 },
 }
@@ -100,7 +106,7 @@ function Economy.levelOf(xp: number): (number, number, number)
 end
 
 Economy.Crates = {
-	{ Id = "Basic", Name = "Attic Crate", Price = 150, Glyph = "📦", Odds = { Common = 62, Rare = 27, Epic = 9, Legendary = 2 }, Desc = "A random colour, title or trail." },
+	{ Id = "Basic", Name = "Attic Crate", Price = 150, Glyph = "📦", Odds = { Common = 62, Rare = 27, Epic = 9, Legendary = 2 }, Desc = "A random flashlight colour or lobby trail." },
 	{ Id = "Midnight", Name = "Midnight Crate", Price = 450, Glyph = "🎁", Odds = { Common = 0, Rare = 55, Epic = 33, Legendary = 12 }, Desc = "Rare or better, every time." },
 }
 

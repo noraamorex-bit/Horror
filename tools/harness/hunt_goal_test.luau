@@ -109,6 +109,29 @@ local ok, err = pcall(function()
 	assert(prompt.Enabled == false, "the prompt goes once help is called")
 
 	-- veteran pacing: a group that has all played before
+	-- titles earned in the house: Scaredy Cat (5 hides while he hunts), Phrogger (his nest),
+	-- Attic Explorer (climbing into the attic)
+	local earned = {}
+	ctx.Economy = { achieve = function(pl, id) earned[id] = pl return true end, track = function() end, resetNight = function() end }
+	p:SetAttribute("NightHuntHides", 0)
+	local realHunting = ctx.Intruder.isHunting
+	ctx.Intruder.isHunting = function() return false end
+	for _ = 1, 6 do ctx.Director.onHide(p) end
+	assert(not earned.Title_Scaredy, "hiding before the hunt doesn't count")
+	ctx.Intruder.isHunting = function() return true end
+	for _ = 1, 4 do ctx.Director.onHide(p) end
+	assert(not earned.Title_Scaredy, "not after four")
+	ctx.Director.onHide(p)
+	assert(earned.Title_Scaredy == p, "five hides from him: Scaredy Cat")
+	ctx.Intruder.isHunting = realHunting
+	ctx.Director.onDiscovery(p, "Notebook")
+	assert(earned.Title_Phrogger == p, "his nest: Phrogger")
+	root.CFrame = R.CFrame.new(0, ctx.Layout.Y and ctx.Layout.Y.Attic and ctx.Layout.Y.Attic + 2 or 32, 0)
+	assert(ctx.Rooms.floorOf(root.Position) == "Attic", "standing in the attic (" .. ctx.Rooms.floorOf(root.Position) .. ")")
+	H.flush(2)
+	assert(earned.Title_Attic == p, "in the attic: Attic Explorer")
+	ctx.Economy = nil
+
 	-- (one world per test file: modules are shared; back to the house's own lobby state)
 	local ctx2 = ctx
 	ctx2.Director.enterLobby()

@@ -237,7 +237,7 @@ Paintings are real public-domain artworks: free Creator Store decals (`World/Art
 
 Every ending plays a short letterboxed cutscene for that ending (the car's taillights going down the road, the police at the van, dawn over the house...) with one line of what happened (`Story.Endings[kind].Short`), skippable with SKIP. Then a simple result card: **YOU SURVIVED / YOU ESCAPED / YOU DIED / YOU WERE TAKEN**, the ending's name, that one line, a NEW ENDING tag when it's your first time, the **coins** you earned (counting up, with the reasons and your new balance), and **ANOTHER NIGHT** / LOBBY. ANOTHER NIGHT keeps you in this server: everyone who presses it plays the next night together in a fresh house ("Sam wants another night (1/3)"); once everyone has chosen, it starts at once. Whoever doesn't press it goes back to the lobby when the countdown ends. Out early (escaped or dead, friends still inside), your own card already has **ANOTHER NIGHT** and LOBBY under SPECTATE: say yes there and the ending card shows WAITING FOR FRIENDS. (In the logs, players who died almost always left alone for the lobby, and the group was gone.) LOBBY says GOING TO THE LOBBY... the moment it's tapped (the teleport takes a few seconds; people tapped it six times).
 
-**Chat tags** (client `ChatTags`, `TextChatService.OnIncomingMessage`): in the chat, a player's name carries ★ (supporter) and their equipped title in its colour, e.g. ★ [Night Owl] Sam, in the lobby and the house.
+**Chat tags** (client `ChatTags`, `TextChatService.OnIncomingMessage`): in the chat, a player's name carries ★ (supporter) and their equipped title in its colour, e.g. ★ [Attic Explorer] Sam, in the lobby and the house.
 
 **Player list** (Roblox's own, top right in the lobby; `StatsService` leaderstats): each player's **Level** and **Survived** (nights survived), kept up to date. The owner has none (off every board). The house hides the list, as before.
 
@@ -269,13 +269,28 @@ Every player has a coin balance (DataStore `Economy_v1`; 100 welcome coins). Sav
 
 **Store, Items tab:** one-night gear, bought in the lobby and handed to you when the next night starts (one of each kind per night): Flashlight 60, Walkie-talkie 40, Multitool 70, Pepper spray 90, Energy drink 50 (more stamina), Lucky charm 80. (No revive for coins: revives are Robux only.)
 
-**Store, Crates tab:** Attic Crate 150 (62% common, 27% rare, 9% epic, 2% legendary) and Midnight Crate 450 (rare or better). A crate spins a reel and lands on a flashlight colour, a title or a trail. A duplicate pays back coins by rarity. Odds are printed on each crate.
+**Store, Crates tab:** Attic Crate 150 (62% common, 27% rare, 9% epic, 2% legendary) and Midnight Crate 450 (rare or better). A crate spins a reel and lands on a flashlight colour or a trail (no titles: those are earned, below). A duplicate pays back coins by rarity. Odds are printed on each crate.
 
 **Store, Coins tab:** Robux coin packs (developer products): 250 coins for 25 R$, 650 for 49, 1,500 for 99, 4,000 for 199.
 
-**Locker:** equip flashlight colours (invite rewards, passes, crate colours incl. the rainbow one), a title shown above your name in the lobby, and a lobby trail. Locked items say how to get them (crates, "Reach level 10", "The secret ending").
+**Locker:** equip flashlight colours (invite rewards, passes, crate colours incl. the rainbow one), a title shown above your name in the lobby (and in the chat), and a lobby trail. Locked items say how to get them (crates, "Reach level 10", "Climb into the attic"); tapping a locked title does nothing (it isn't for sale).
 
-**Levels.** XP is every coin earned by playing (nights, quests, daily rewards; never bought coins). Level L takes 50·L·(L−1) XP in all (level 2 at 100, 5 at 1,000, 10 at 4,500). Each level up pays 20 × level coins (level-up coins aren't XP), and some levels give more: 3 an Attic Crate, 5 the title "Night Owl", 8 an Attic Crate, 10 "Survivor" + a Midnight Crate, 15 a Midnight Crate, 20 "Attic Veteran" + Midnight, 25 Midnight, 30 "He Can't Catch Me" + Midnight. Rewards are paid once per level (`LevelPaid`, merged as the highest across servers); a player counted for the first time gets the titles of the levels they already have, no back pay. Shown as "LV 7" before your title over your head in the lobby, with an XP bar under the coin balance, and on the result card: the XP bar fills with the night's coins and LEVEL UP if it goes over. The card also says what tomorrow's daily reward is ("Don't break your streak!").
+**Titles are earned, never in crates** (`Economy.Special`, `EconomyService.achieve`: granted once, with "Title unlocked: ... (equip it in the lobby LOCKER)"). Anyone who got one from a crate before keeps it (same ids).
+
+| Title | How |
+|---|---|
+| Pizza Lover | Answer the door to the pizza man |
+| Attic Explorer | Climb into the attic |
+| Scaredy Cat | Hide from him 5 times in one night (while he hunts) |
+| Survivor | Survive a night (escape, or still standing at a good ending) |
+| Night Owl | Play 3 nights in a row (night streak ×3) |
+| Phrogger | Find his nest in the attic (read his notebook or polaroids) |
+| The Quiet One | Survive a night without him ever seeing you |
+| Legend of Alder Lane | Survive a Hard night without being caught |
+| Not Your Family | The secret ending |
+| Insomniac, Still Breathing, Attic Veteran, He Can't Catch Me | Levels 5, 10, 20, 30 |
+
+**Levels.** XP is every coin earned by playing (nights, quests, daily rewards; never bought coins). Level L takes 50·L·(L−1) XP in all (level 2 at 100, 5 at 1,000, 10 at 4,500). Each level up pays 20 × level coins (level-up coins aren't XP), and some levels give more: 3 an Attic Crate, 5 the title "Insomniac", 8 an Attic Crate, 10 "Still Breathing" + a Midnight Crate, 15 a Midnight Crate, 20 "Attic Veteran" + Midnight, 25 Midnight, 30 "He Can't Catch Me" + Midnight. Rewards are paid once per level (`LevelPaid`, merged as the highest across servers); a player counted for the first time gets the titles of the levels they already have, no back pay. Shown as "LV 7" before your title over your head in the lobby, with an XP bar under the coin balance, and on the result card: the XP bar fills with the night's coins and LEVEL UP if it goes over. The card also says what tomorrow's daily reward is ("Don't break your streak!").
 
 ---
 

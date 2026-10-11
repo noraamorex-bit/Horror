@@ -236,6 +236,12 @@ function Director.onHide(player: Player)
 	end
 	if ctx.Economy and ctx.Intruder and ctx.Intruder.isHunting() then
 		ctx.Economy.track(player, "Hides", 1)
+		-- (the title "Scaredy Cat": hide from him 5 times in one night)
+		local n = (tonumber(player:GetAttribute("NightHuntHides")) or 0) + 1
+		player:SetAttribute("NightHuntHides", n)
+		if n >= 5 and ctx.Economy.achieve then
+			ctx.Economy.achieve(player, "Title_Scaredy")
+		end
 	end
 end
 
@@ -590,7 +596,7 @@ function Director.startAct(name: string, cause: Player?)
 	if name == "Evening" then
 		workspace:SetAttribute("Delivery", nil)
 		for _, p in ctx.Util.sessionPlayers() do
-			for _, a in { "NightHides", "NightSpotted", "NightCaught", "NightRescues" } do
+			for _, a in { "NightHides", "NightSpotted", "NightCaught", "NightRescues", "NightHuntHides" } do
 				p:SetAttribute(a, 0)
 			end
 		end
@@ -765,6 +771,9 @@ end
 
 function Director.onDiscovery(player: Player, docId: string)
 	ctx.Objectives.step("Attic", "Search")
+	if ctx.Economy and ctx.Economy.achieve then
+		ctx.Economy.achieve(player, "Title_Phrogger") -- (found his nest)
+	end
 	Director.logTruthRaw((player:GetAttribute("RoleName") or player.Name) .. " found the nest in the attic.")
 	if state.Act == "SomeoneElse" and not state.Discovered and not ctx.Escape.helpCalled() then
 		state.Discovered = true
@@ -1367,6 +1376,15 @@ local function actTick()
 		end
 	end
 	investigateTick()
+	-- the title "Attic Explorer": anyone who climbs up into the attic
+	if ctx.Economy and ctx.Economy.achieve then
+		for _, p in ctx.Util.activePlayers() do
+			local root = ctx.Util.getRoot(p)
+			if root and ctx.Rooms.floorOf(root.Position) == "Attic" then
+				ctx.Economy.achieve(p, "Title_Attic") -- (once: nothing happens if they have it)
+			end
+		end
+	end
 
 	-- hard cap
 	if elapsed() >= scaled(ctx.Config.HardCapMinutes) and not ctx.Escape.helpCalled() then

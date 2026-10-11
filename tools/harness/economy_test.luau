@@ -103,10 +103,39 @@ local ok, err = pcall(function()
 	end
 	assert(counts.Common > 2700 and counts.Legendary > 30 and counts.Legendary < 220, "odds: " .. counts.Common .. "/" .. counts.Rare .. "/" .. counts.Epic .. "/" .. counts.Legendary)
 	print(("crates ok (5000 rolls: %d common, %d rare, %d epic, %d legendary)"):format(counts.Common, counts.Rare, counts.Epic, counts.Legendary))
+	-- titles aren't in crates any more: each one is earned in the game
+	for _ = 1, 2000 do
+		local c = E._roll(Cat.crate(math.random() < 0.5 and "Basic" or "Midnight"), rng)
+		assert(c and c.Kind ~= "Title", "a crate gave a title")
+	end
+	for _, c in Cat.Cosmetics do assert(c.Kind ~= "Title", "no titles in the crate pool") end
+	for _, c in Cat.Special do
+		assert(c.Kind ~= "Title" or c.How or c.Level, c.Id .. " says how to earn it")
+	end
+	local seenNames = {}
+	for _, c in Cat.Special do
+		assert(not seenNames[c.Name], "two titles called " .. c.Name)
+		seenNames[c.Name] = true
+	end
+	local notes = 0
+	for _, f in fired do if f[1] == "Notify" then notes += 1 end end
+	assert(E.achieve(p, "Title_Attic") == true and E.owns(p, "Title_Attic"), "attic explorer earned")
+	assert(E.achieve(p, "Title_Attic") == false, "only once")
+	local notes2 = 0
+	for _, f in fired do if f[1] == "Notify" and tostring(f[3]):find("Attic Explorer") then notes2 += 1 end end
+	assert(notes2 == 1, "one note about it")
+	-- someone who got a title out of a crate before keeps it, and can still wear it
+	local old = H.wrap(R.Instance.new("Player"))
+	rawset(old, "UserId", 66)
+	saved.u66 = { Coins = 10, Welcomed = true, Owned = { Title_Phrogger = true, Title_Legend = true } }
+	E._load(old)
+	assert(E.owns(old, "Title_Phrogger") and E.owns(old, "Title_Legend"), "old crate titles kept")
+	assert(E.equip(old, "Title_Legend") and old:GetAttribute("TitleText") == "Legend of Alder Lane", "and still worn")
+	print("titles ok")
 
 	-- equip a title you own; not one you don't
 	local title
-	for _, c in Cat.Cosmetics do if c.Kind == "Title" and E.owns(p, c.Id) then title = c break end end
+	for _, c in Cat.Special do if c.Kind == "Title" and E.owns(p, c.Id) then title = c break end end
 	if title then
 		assert(E.equip(p, title.Id) and p:GetAttribute("TitleText") == title.Name, "title equipped")
 	end
@@ -192,7 +221,31 @@ local ok, err = pcall(function()
 	saved.u77.Chain = { At = os.time() + 5, N = 4 }
 	E._save(77)
 	assert(saved.u77.Chain.N == 4 and E._docs[77].Chain.N == 4, "merge keeps the latest streak")
+	assert(E.owns(p, "Title_NightOwl"), "three nights in a row: Night Owl")
 	print("streak ok")
+	-- titles a night earns: survived, unseen, a Hard night uncaught
+	local t = H.wrap(R.Instance.new("Player"))
+	rawset(t, "UserId", 55)
+	E._load(t)
+	E.resetNight()
+	t:SetAttribute("NightSpotted", 2)
+	E.nightRewards(t, { Seconds = 600, Survived = false })
+	assert(not E.owns(t, "Title_Survivor"), "not for a night you didn't survive")
+	E.resetNight()
+	E.nightRewards(t, { Seconds = 600, Survived = true })
+	assert(E.owns(t, "Title_Survivor") and not E.owns(t, "Title_Quiet"), "survived, but he saw you")
+	E.resetNight()
+	t:SetAttribute("NightSpotted", 0)
+	H.unwrap(H.workspaceRoot):SetAttribute("Difficulty", "Hard")
+	t:SetAttribute("NightCaught", 1)
+	E.nightRewards(t, { Seconds = 600, Survived = true })
+	assert(E.owns(t, "Title_Quiet") and not E.owns(t, "Title_Legend"), "unseen: the Quiet One; caught on Hard: no legend")
+	E.resetNight()
+	t:SetAttribute("NightCaught", 0)
+	E.nightRewards(t, { Seconds = 600, Survived = true })
+	assert(E.owns(t, "Title_Legend"), "a Hard night, never caught: Legend of Alder Lane")
+	H.unwrap(H.workspaceRoot):SetAttribute("Difficulty", nil)
+	print("night titles ok")
 	-- today's daily reward comes with a night (not day 7: that crate opens in the lobby)
 	local z = H.wrap(R.Instance.new("Player"))
 	rawset(z, "UserId", 99)

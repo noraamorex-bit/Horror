@@ -45,6 +45,9 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
   veteran nights drop the popcorn chore, a first-timer in the group keeps it.
 - `chattags_test.luau`: the chat prefix: ★ for supporters and the equipped title in its colour (no
   level), nothing for a player with none, a title can't break the rich text.
+- Titles: `economy_test.luau` (crates never give one, earned once with one note, old crate titles
+  kept and wearable, the night titles), `hunt_goal_test.luau` (Scaredy Cat, Phrogger, Attic
+  Explorer), `delivery_test.luau` (Pizza Lover for whoever answers the door).
 - `stats_test.luau` also checks the player list's leaderstats (Level, Survived), none for the owner.
 - `vote_test.luau` (tie | hard) also covers SKIP TO THE BLACKOUT: offered only when everyone has
   finished a night, more than half needed (tie run: one of two, starts at the top; hard run: both,

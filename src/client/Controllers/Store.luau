@@ -237,7 +237,7 @@ function Store.start()
 	end
 
 	-- crates
-	UI.label({ LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 34), Text = "Flashlight colours (everyone sees them in the house), titles over your name and glowing trails in the lobby.", TextSize = 13, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 42, Parent = P.Pages.Crates })
+	UI.label({ LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 34), Text = "Flashlight colours (everyone sees them in the house) and glowing trails in the lobby. Titles are earned in the game: see the LOCKER.", TextSize = 13, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 42, Parent = P.Pages.Crates })
 	Store.CrateRows = {}
 	for i, crate in Cat.Crates do
 		local row = Dock.row(P.Pages.Crates, i, 96)

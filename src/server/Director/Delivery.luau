@@ -485,6 +485,9 @@ function Delivery.run(ctx, D, onDone)
 
 	if answeredBy then
 		ctx.Objectives.complete("Door")
+		if ctx.Economy and ctx.Economy.achieve then
+			ctx.Economy.achieve(answeredBy, "Title_Pizza") -- (the title "Pizza Lover")
+		end
 		if door then
 			ctx.Doors.setLocked(door, false)
 			ctx.Doors.open(door, "Pizza")

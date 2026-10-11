@@ -33,6 +33,7 @@ local saveQueued: { [number]: boolean } = {}
 local lastAction: { [Player]: number } = {}
 local granted: { [Player]: boolean } = {} -- this night's coins already paid
 local chainPaid: { [Player]: boolean } = {} -- this night's streak already counted
+local achievedNight: { [Player]: boolean } = {} -- this night's titles already checked
 Economy.MaxStack = 5
 
 local function fresh()
@@ -498,6 +499,19 @@ function Economy.grantCosmetic(player: Player, id: string): boolean
 	return true
 end
 
+-- a title earned by doing something in the game (Cat.Special, How): granted once, with a note
+function Economy.achieve(player: Player, id: string): boolean
+	local c = Cat.cosmetic(id)
+	if not c or not Economy.grantCosmetic(player, id) then
+		return false
+	end
+	ctx.Remotes.Notify:FireClient(player, "Title unlocked: " .. c.Name .. " (equip it in the lobby LOCKER)", "done")
+	if ctx.Telemetry and ctx.Telemetry.custom then
+		ctx.Telemetry.custom(player, "TitleEarned", 1, id)
+	end
+	return true
+end
+
 function Economy.equip(player: Player, id: string): boolean
 	local d = docs[player.UserId]
 	local c = type(id) == "string" and Cat.cosmetic(id)
@@ -660,6 +674,19 @@ function Economy.nightRewards(player: Player, info): any
 	for _, l in lines do
 		total += l.Amount
 	end
+	-- titles a night can earn (once per night, with the pay)
+	if not achievedNight[player] then
+		achievedNight[player] = true
+		if info.Survived then
+			Economy.achieve(player, "Title_Survivor")
+			if (tonumber(player:GetAttribute("NightSpotted")) or 0) == 0 then
+				Economy.achieve(player, "Title_Quiet")
+			end
+			if workspace:GetAttribute("Difficulty") == "Hard" and (tonumber(player:GetAttribute("NightCaught")) or 0) == 0 then
+				Economy.achieve(player, "Title_Legend")
+			end
+		end
+	end
 	-- the night streak (once per night): a night started within 15 minutes of the last one ending pays more
 	local d0 = docs[player.UserId]
 	local chain = d0 and d0.Chain and d0.Chain.N or 0
@@ -671,6 +698,9 @@ function Economy.nightRewards(player: Player, info): any
 		chain = (c.At > 0 and startedAt - c.At <= N.ChainWindow) and c.N + 1 or 1
 		d0.Chain = { At = now, N = chain }
 		mirror(player)
+		if chain >= 3 then
+			Economy.achieve(player, "Title_NightOwl")
+		end
 		local bonus = math.floor(total * Cat.chainBonus(chain))
 		if bonus > 0 then
 			table.insert(lines, { Text = string.format("Night streak ×%d", chain), Amount = bonus })
@@ -739,6 +769,7 @@ end
 function Economy.resetNight()
 	granted = {}
 	chainPaid = {}
+	achievedNight = {}
 end
 
 ---------------------------------------------------------------------------
