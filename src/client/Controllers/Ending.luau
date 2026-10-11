@@ -64,12 +64,32 @@ local function reviveCredits(): number
 	return tonumber(player:GetAttribute("ReviveCredits")) or 0
 end
 
+-- the price this player is actually charged (Roblox can price it lower in some regions), read
+-- live from the product rather than hard-coded; Config's price until that answers
+local livePrice: number? = nil
+local livePriceAt = -1e9
+local function revivePrice(): number?
+	local r = ctx.Config.Shop.Revive
+	if r and r.Id > 0 and os.clock() - livePriceAt > 300 then
+		livePriceAt = os.clock()
+		task.spawn(function()
+			local ok, info = pcall(function()
+				return MarketplaceService:GetProductInfo(r.Id, Enum.InfoType.Product)
+			end)
+			if ok and type(info) == "table" and tonumber(info.PriceInRobux) then
+				livePrice = tonumber(info.PriceInRobux)
+			end
+		end)
+	end
+	return livePrice or (r and r.Price) or nil
+end
+Ending.revivePrice = revivePrice
+
 function Ending.reviveLabel(): string
 	if reviveCredits() > 0 then
 		return "USE REVIVE (" .. reviveCredits() .. ")"
 	end
-	local r = ctx.Config.Shop.Revive
-	return "REVIVE  ·  " .. tostring(r and r.Price or "") .. " R$"
+	return "REVIVE  ·  " .. tostring(revivePrice() or "") .. " R$"
 end
 
 function Ending.revive()
@@ -561,6 +581,7 @@ local function onEnding(payload)
 end
 
 function Ending.start()
+	revivePrice() -- (fetch this player's price now, so the first death already shows it)
 	ctx.Remotes.Result.OnClientEvent:Connect(onResult)
 	ctx.Remotes.Ending.OnClientEvent:Connect(onEnding)
 	-- revived: back in your own body, the night goes on

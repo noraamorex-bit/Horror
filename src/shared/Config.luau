@@ -315,7 +315,10 @@ Config.Shop = {
 		{ Key = "PepperSpray", Id = 2006030307, Price = 35, Name = "Pepper spray", Desc = "Start every night with a can of pepper spray (one use)." },
 	},
 	-- bought on the spot after you die: back into this night, somewhere away from him
-	Revive = { Id = 3716706476, Price = 25, Window = 15, Grace = 10 },
+	-- (Price: the default the product is set to on Roblox, shown until the live price loads; the card
+	-- shows each player's own price. 25 R$ sold 0 of 35 deaths; DOORS sells its death-screen revive for
+	-- 40 R$ with a far bigger brand. 10 R$ = the cheapest pass, an impulse buy for a leftover balance)
+	Revive = { Id = 3716706476, Price = 10, Window = 15, Grace = 10 },
 	Donations = {
 		{ Id = 3716700047, Amount = 5 },
 		{ Id = 3715928524, Amount = 10 },

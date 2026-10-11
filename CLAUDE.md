@@ -39,7 +39,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **Admin tools are only for the owner** — UserId **915496194** (`Config.Admins`), checked on the server
   for every command. Nobody else, ever.
 - **The owner is left off all leaderboards.**
-- **Revives are Robux only** (25 R$ product). No coin revive — it would kill Robux revive sales.
+- **Revives are Robux only** (10 R$ product since 11 Oct; 25 R$ sold 0 of 35 deaths). No coin revive — it would kill Robux revive sales.
 - Git: develop on the designated branch, `git push -u origin <branch>`. **No PRs unless asked.** No model
   names in commits/code. End commit messages with the Co-Authored-By / Claude-Session lines the session
   gives.
@@ -160,6 +160,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   phone) won on touch; nearby minor prompts now use the secondary key (`prompts_test` guards it).
   (2) half of all players get caught, 46% of those die, 9 of 35 deaths within a minute of getting
   free: breaking free now gives a 40 s head start (Hard 20 s; `Config.Intruder.FreedGrace`).
+- **v77:** revive price 25 → 10 R$ (25 sold 0 of 35 deaths; DOORS' death-screen revive is 40 R$).
+  The card shows each player's live price (GetProductInfo), so regional pricing can be switched on
+  for the product in Creator Hub. Check revive sales (ReviveCredits / Journey "Revive" events).
 - **Next:** pull logs `--since=76`: phone groups' Popcorn:Bag→Cook gap, deaths per captured
   player, quits while dead; and v74/v75's auto-continue / ▶ PLAY effects once there's traffic.
 - Daily reminder routine ("Daily reward reminder (attic game)", 22:53 UTC) fires tonight for the
@@ -186,7 +189,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 76).
+  (last published: version 77).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

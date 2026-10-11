@@ -124,7 +124,7 @@ local ok, err = pcall(function()
 	R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 3 })
 	R.Result.OnClientEvent:Fire({ Outcome = "Died", Title = "YOU DIED", Good = false, Line = "y", CanSpectate = true, ReturnToLobby = true })
 	R.Result.OnClientEvent:Fire({ Outcome = "Died", Title = "YOU DIED", Good = false, Line = "y", CanRevive = true, ReviveIn = 12, CanSpectate = false, ReturnToLobby = true })
-	assert(ctx.EndingUI.reviveLabel():find("25"), "revive priced on the card")
+	assert(ctx.EndingUI.reviveLabel():find(tostring(ctx.Config.Shop.Revive.Price) .. " R$", 1, true), "revive priced on the card (Config's price until the live one loads)")
 	R.Revived.OnClientEvent:Fire()
 	print("revive card ok")
 	-- the heartbeat minigame: opens, takes presses, closes on the result
