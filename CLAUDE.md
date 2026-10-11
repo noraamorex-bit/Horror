@@ -152,6 +152,16 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   for it — `marketing/beat/` has the 64 s MP3/WAV and a video to post it as Instagram audio (rename the
   audio to the game's name).
 
+## Where we left off (update this at the end of every session)
+
+- **Next:** pull the logs with `--since=74` and check what v74/v75 changed: did the result card's
+  auto-continue raise nights per player, does ▶ PLAY get new players into groups faster, do phones
+  still quit in Act I (the biggest open problem: phone/tablet ~40% mid-night quits vs PC ~25%).
+- Check the daily reminder routine's results (Claude routines: "Daily reward reminder (attic game)",
+  22:53 UTC; its first real send was 11 Oct). Opt-ins come from 🔔 REMIND ME (result card + REWARDS).
+- Solo nights are almost always abandoned (7/8); groups of 3-4 almost never.
+- Coming back on another day is still ~2%: that's the gap to the 250 highly engaged players.
+
 ## Workflow and commands
 
 Paths: repo `/home/user/Horror`. `/tmp` scratch space does **not** survive sessions — anything worth
@@ -159,7 +169,9 @@ keeping goes in the repo.
 
 - **Typecheck** (baseline = same error count as HEAD, currently 45 lines matching `Error|Warn`; never add new ones):
   `rojo sourcemap -o sm.json && luau-lsp analyze --definitions=globalTypes.d.luau --sourcemap=sm.json src`
-  (`globalTypes.d.luau` from the luau-lsp repo's `scripts/globalTypes.d.luau`; tools in `/root/bin`).
+  (`globalTypes.d.luau` from the luau-lsp repo's `scripts/globalTypes.d.luau`, e.g.
+  `curl -sL https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau -o globalTypes.d.luau`
+  (gitignored-worthy, don't commit); tools in `/root/bin`).
 - **Tests** (Lune harness, runs straight from the repo): `cd tools/harness && ./runall.sh` — every
   `*_test.luau` (finale_test with escape|bedtime|patrol). Add/extend a test for each feature.
 - **Build + publish:**
