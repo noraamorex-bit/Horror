@@ -6,3 +6,4 @@
 sourcemap.json
 __pycache__/
 sm.json
+globalTypes.d.luau
