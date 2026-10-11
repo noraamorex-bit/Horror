@@ -16,6 +16,8 @@ local P
 local badge: Frame
 local tiles = {}
 local claim: TextButton
+local remind: TextButton
+local remindOk = false -- Roblox will show the notification opt-in (not opted in yet)
 local claimNote: TextLabel
 local questRows = {}
 local autoOpened = false
@@ -48,6 +50,8 @@ local function refresh()
 		t.Amount.Text = (done and "✓ " or "") .. tostring(Cat.Daily[i]) .. (i == Cat.DailyCrateDay and " +📦" or "")
 	end
 	claim.Visible = can
+	-- claimed: in the claim button's place, the notification opt-in (a reminder when tomorrow's is ready)
+	remind.Visible = not can and remindOk
 	claimNote.Text = can and ("Day " .. nextDay .. " of 7. Come back tomorrow for day " .. (nextDay % 7 + 1) .. ".")
 		or ("Claimed. Next reward in " .. hms((Cat.day() + 1) * 86400 - os.time()) .. ". Don't break your streak!")
 	-- quests
@@ -107,6 +111,21 @@ function Rewards.start()
 	claimNote = UI.label({ Position = UDim2.fromOffset(152, 0), Size = UDim2.new(1, -152, 1, 0), Text = "", TextSize = 13, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 43, Parent = claimRow })
 	claim.Activated:Connect(function()
 		ctx.Remotes.Economy:FireServer("Daily")
+	end)
+	remind = Dock.button(claimRow, "🔔 REMIND ME", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.fromOffset(140, 42), Visible = false })
+	remind.Activated:Connect(function()
+		if ctx.Social and ctx.Social.remind then
+			ctx.Social.remind()
+		end
+		remindOk = false
+		remind.Visible = false
+	end)
+	task.spawn(function()
+		local ok, can = pcall(function()
+			return game:GetService("ExperienceNotificationService"):CanPromptOptInAsync()
+		end)
+		remindOk = ok and can == true
+		refresh()
 	end)
 	UI.label({ LayoutOrder = 4, Size = UDim2.new(1, 0, 0, 30), Text = "TODAY'S QUESTS", Font = UI.Font.Bold, TextSize = 16, TextColor3 = Dock.Gold, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Bottom, ZIndex = 42, Parent = page })
 	for i = 1, Cat.QuestsPerDay do
