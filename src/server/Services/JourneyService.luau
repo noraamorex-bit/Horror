@@ -5,7 +5,7 @@
 	they left. Everything is best-effort: a failed write never touches the game.
 
 	NightLog_v1  key "<yyyymmdd>-<server>-<n>": one night in a game server
-		{ V, Day, Start (unix), Diff, Size, Acts = { {t, name} }, Obj = { {t, "Task:Step"} },
+		{ V, Ver (place version), Day, Start (unix), Diff, Size, Acts = { {t, name} }, Obj = { {t, "Task:Step"} },
 		  End = { t, kind } | nil,
 		  P = { ["<userId>"] = { New, Nights, Dev, Role, Arr (s before the night started), Ev = { {t, code, x} },
 		        Hides, Seen, Out = { t, act, why, cap, dead, esc, hid, him, dist, nerve } | nil, Perf } } }
@@ -104,7 +104,7 @@ local function ensureNight()
 		Key = string.format("%s-%s-%d", day(), serverId(), nightN),
 		Clock = os.clock(), -- (moved to the real start when the night starts)
 		Started = false,
-		Data = { V = 1, Day = day(), Start = os.time(), Acts = {}, Obj = {}, P = {} },
+		Data = { V = 1, Ver = game.PlaceVersion, Day = day(), Start = os.time(), Acts = {}, Obj = {}, P = {} },
 	}
 	return night
 end
@@ -288,6 +288,7 @@ local function lobbyLeave(p: Player)
 	end
 	table.insert(lobbyDone, {
 		U = p.UserId,
+		Ver = game.PlaceVersion,
 		New = p:GetAttribute("FirstVisit") == true or nil,
 		Nights = tonumber(p:GetAttribute("StatNights")) or 0,
 		Lv = tonumber(p:GetAttribute("Level")),

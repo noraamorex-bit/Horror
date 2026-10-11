@@ -283,11 +283,14 @@ function LobbyHub.start()
 			until nights ~= nil or os.clock() - t0 > 4
 		end
 		if (tonumber(nights) or 0) == 0 then
+			-- (one tap and you're in: new players took a median 39 s to queue, a third never did)
 			ctx.Notice.show({
 				Title = "Welcome to Hollis Creek",
-				Body = "Tap PLAY SOLO to start right away, or FIND PLAYERS to team up with others.\n\nYou can also walk into a white circle to queue for 1, 2, 3 or 4 players. Here are 100 coins to start: spend them in the STORE (right side).",
-				Button = "OK",
-			})
+				Body = "Someone lives in the attic. Survive the night, alone or with friends.\n\nPLAY puts you in a group with whoever's here (START NOW if nobody comes). Here are 100 coins to start: the STORE is on the right.",
+				Button = "▶  PLAY",
+			}, function()
+				ctx.Remotes.QuickPlay:FireServer("Group") -- (ignored if they've already stepped into a circle)
+			end)
 		end
 	end)
 

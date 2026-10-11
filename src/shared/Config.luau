@@ -22,7 +22,7 @@ Config.Lobby = {
 	FillWait = 45, -- a group circle that isn't full starts anyway, with whoever's there, after this long
 	StartNowAfter = 8, -- (and anyone in it can press START NOW after this long)
 	ArrivalTimeout = 30, -- game server: start without stragglers after this long
-	ReturnDelay = 45, -- game server: seconds on the ending screen before going back to the lobby
+	ReturnDelay = 35, -- game server: seconds on the ending screen before the next night starts (LOBBY to leave)
 }
 
 -- The owner's test panel (AdminService): these UserIds (plus the experience owner, plus Studio).

@@ -2,10 +2,11 @@
 """Pull the game's saved data (Open Cloud, read-only) and print a retention summary.
 
 Needs ROBLOX_API_KEY with universe-datastores read/list and ordered-data-stores read.
-Usage: python3 tools/pull_stats.py [out.json] [--fresh] [--logs-only]
+Usage: python3 tools/pull_stats.py [out.json] [--fresh] [--logs-only] [--since=VERSION]
   out.json      raw dump (default stats_dump.json); out.json.cache keeps fetched entries
   --fresh       re-fetch player records (night/lobby logs never change, so they stay cached)
   --logs-only   only the night and lobby logs (JourneyService), not the player records
+  --since=N     only logs written by place version N or later (logs carry Ver from v74 on)
 
 Sections: player records (PlayerStats_v1, Economy_v1), then our own logs: every night
 (NightLog_v1: acts, objectives, who left when and in what state, devices, frame rates) and every
@@ -227,6 +228,32 @@ def report_nights(nights):
             idle.append(st[0] - last)
     if idle:
         print(f"  act II last task -> blackout: median {median(idle):.0f}s (n={len(idle)})")
+    # outcomes by group size (solo nights used to be abandoned almost every time)
+    for size in (1, 2, 3, 4):
+        g = [n for n in started if n.get("Size") == size]
+        if g:
+            ends = Counter((n.get("End") or [None, "(no ending)"])[1] for n in g)
+            print(f"  size {size}: {len(g)} nights, no ending {pct(ends['(no ending)'], len(g))}: {dict(ends.most_common())}")
+    # after the ending: pressed ANOTHER NIGHT, LOBBY, or neither
+    after = Counter()
+    for n in started:
+        if not n.get("End"):
+            continue
+        for p in (n.get("P") or {}).values():
+            if p.get("In"):
+                ev = [e[1] for e in p.get("Ev") or []]
+                after["again" if "Again" in ev else "lobby" if "Lobby" in ev else "neither"] += 1
+    print(f"  on the result card: {dict(after)}")
+    # minutes per player in these logs (nights + lobby)
+    mins = Counter()
+    for n in started:
+        for u, p in (n.get("P") or {}).items():
+            if p.get("In"):
+                end = p["Out"]["t"] if p.get("Out") else (n.get("Len") or 0)
+                mins[u] += max(0, end) / 60
+    if mins:
+        m = sorted(mins.values())
+        print(f"  minutes in nights per player: median {m[len(m) // 2]:.1f}, 30+ min: {sum(1 for x in m if x >= 30)} of {len(m)}")
     # the team's progress: how far groups get
     steps = Counter(code for n in started for _, code in n.get("Obj") or [])
     print("  objective steps reached (nights):", dict(steps.most_common(25)))
@@ -250,6 +277,11 @@ def main():
     finally:
         json.dump(CACHE, open(cache, "w"))
     json.dump({"stats": stats, "economy": econ, "nights": nights, "lobby": lobby}, open(out, "w"), indent=1, default=str)
+    since = next((int(a.split("=", 1)[1]) for a in flags if a.startswith("--since=")), None)
+    if since is not None:
+        nights = [e for e in nights if (e.get("data") or {}).get("Ver") and e["data"]["Ver"] >= since]
+        lobby = [{**e, "data": [v for v in (e.get("data") or []) if (v.get("Ver") or 0) >= since]} for e in lobby]
+        print(f"(only logs from version {since} on)")
     report_lobby(lobby)
     report_nights(nights)
     if "--logs-only" in flags:

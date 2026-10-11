@@ -51,7 +51,8 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
 - `stats_test.luau` also checks the player list's leaderstats (Level, Survived), none for the owner.
 - `vote_test.luau` (tie | hard) also covers SKIP TO THE BLACKOUT: offered only when everyone has
   finished a night, more than half needed (tie run: one of two, starts at the top; hard run: both,
-  starts in act III). `ending_test.luau coop`: an escaper's ANOTHER NIGHT counts before the end.
+  starts in act III). `ending_test.luau coop`: an escaper's ANOTHER NIGHT counts before the end; when the card's
+  countdown ends everyone still there stays for the next night, except whoever tapped LOBBY.
 - `hunt_goal_test.luau` also checks act II's pacing: it runs at least its minimum, scripted scares
   never land within 30 s of each other, Mom's texts never on top of a scare, the TV alert never
   during the news.

@@ -22,6 +22,7 @@ local reviveUntil = 0 -- the last one standing died: the night waits this long f
 local seq = 0 -- bumped on every death / revive, so a stale timer from an earlier death does nothing
 local doneSeq: { [Player]: number } = {}
 local stayers: { [Player]: boolean } = {} -- "another night": stay together in this server
+local goingToLobby: { [Player]: boolean } = {} -- tapped LOBBY: not part of the next night
 local restartSeq = 0
 
 function Ending.init(c)
@@ -35,16 +36,20 @@ function Ending.reset()
 	seq += 1
 	doneSeq = {}
 	stayers = {}
+	goingToLobby = {}
 	restartSeq += 1
 	workspace:SetAttribute("EndingActive", nil)
 end
 
--- the night's over: back to the lobby (or, for whoever asked for another night, a fresh house here)
-local function finishNight()
+-- The night's over: everyone still here plays the next night together in a fresh house, unless they
+-- tapped LOBBY (they're on their way already). `onlyAsked`: just the ones who pressed ANOTHER NIGHT.
+-- (Half the players never touched the card; the countdown used to send them to the lobby, and most
+-- of them left the game from there.)
+local function finishNight(onlyAsked: boolean?)
 	restartSeq += 1
 	local stay = {}
-	for p in stayers do
-		if p.Parent then
+	for _, p in Players:GetPlayers() do
+		if (stayers[p] or not onlyAsked) and not goingToLobby[p] then
 			stay[p] = true
 		end
 	end
@@ -428,12 +433,14 @@ function Ending.start()
 		if not ctx.Reserved then
 			return
 		end
-		if not (over or player:GetAttribute("Escaped") or player:GetAttribute("Dead")) then
+		-- (Leaving: a teleport to the lobby that didn't go through; they can try again)
+		if not (over or player:GetAttribute("Escaped") or player:GetAttribute("Dead") or player:GetAttribute("Leaving")) then
 			return
 		end
 		if ctx.Journey then
 			ctx.Journey.event(player, "Lobby")
 		end
+		goingToLobby[player] = true
 		pcall(function()
 			TeleportService:TeleportAsync(ctx.Mode.lobbyPlaceId(), { player })
 		end)

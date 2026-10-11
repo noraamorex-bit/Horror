@@ -164,6 +164,26 @@ function ctx.restart(stayHere: boolean?, stayers: { [Player]: boolean }?)
 		pcall(function()
 			TeleportService:TeleportAsync(ctx.Mode.lobbyPlaceId(), leaving)
 		end)
+		-- (a teleport that doesn't go through is tried again; if it never does, they're back in for
+		-- the next night here rather than stuck in the dark)
+		for _, p in leaving do
+			task.spawn(function()
+				for _ = 1, 2 do
+					task.wait(10)
+					if not p.Parent or not p:GetAttribute("Leaving") then
+						return
+					end
+					pcall(function()
+						TeleportService:TeleportAsync(ctx.Mode.lobbyPlaceId(), { p })
+					end)
+				end
+				task.wait(10)
+				if p.Parent and p:GetAttribute("Leaving") then
+					p:SetAttribute("Leaving", nil)
+					p:LoadCharacter()
+				end
+			end)
+		end
 		stayHere = true
 	elseif ctx.Reserved and #leaving == 0 and #players > 0 then
 		stayHere = true
