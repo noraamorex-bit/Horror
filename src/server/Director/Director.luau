@@ -104,6 +104,12 @@ function Director.isSkipping(): boolean
 	return state.SkipToBlackout == true
 end
 
+-- can someone who arrives now still join this night? The first two acts, until bedtime (the
+-- blackout comes soon after): late arrivals from the lobby (MatchService) and friends who follow
+function Director.lateJoinOpen(): boolean
+	return state.Act == "Evening" or (state.Act == "SmallThings" and not state.BedtimeGiven and not state.SkipToBlackout)
+end
+
 function Director.elapsedSeconds(): number
 	return elapsed()
 end
@@ -619,11 +625,16 @@ function Director.startAct(name: string, cause: Player?)
 				Director.think(p, line)
 			end
 		end
-		-- alone: the friends text that the flooded road turned them back
+		-- alone: the friends text that the flooded road turned them back. A lone player from a group
+		-- circle may still get company (MatchService), so then the texts wait until nobody else can
+		-- come, and never come at all once someone has
 		if solo and not skipping then
 			local myState = state
 			task.delay(24, function()
-				if state ~= myState or state.Act ~= "Evening" then
+				while ctx.Match and ctx.Match.isOpen() and state == myState and #ctx.Util.sessionPlayers() == 1 do
+					task.wait(3)
+				end
+				if state ~= myState or (state.Act ~= "Evening" and state.Act ~= "SmallThings") or #ctx.Util.sessionPlayers() ~= 1 then
 					return
 				end
 				for _, t in ctx.Story.SoloTexts do
@@ -1563,8 +1574,9 @@ function Director.start()
 		readPartySize(p)
 		task.wait(1.5)
 		ctx.Remotes.Lobby:FireClient(p, lobbyPayload())
-		if state.Act == "Evening" and #ctx.Util.sessionPlayers() < ctx.Config.MaxPlayers then
-			-- late arrival during the cozy part: join the night
+		if Director.lateJoinOpen() and #ctx.Util.sessionPlayers() < ctx.Config.MaxPlayers then
+			-- late arrival before the blackout: join the night
+			local others = ctx.Util.sessionPlayers()
 			p:SetAttribute("InGame", true)
 			ctx.PlayerState.assignRoles({ p })
 			local char = p.Character
@@ -1572,6 +1584,12 @@ function Director.start()
 				char:PivotTo(spawnFor(p) :: CFrame)
 			end
 			ctx.Remotes.Notify:FireClient(p, "You made it just in time. The others are inside.", "info")
+			-- (and the ones already here hear about it: nobody is alone tonight after all)
+			for _, o in others do
+				if o ~= p and o.Parent then
+					ctx.Remotes.Notify:FireClient(o, p.DisplayName .. " made it here. You're not alone tonight.", "info")
+				end
+			end
 			if ctx.Journey then
 				ctx.Journey.event(p, "Joined")
 			end

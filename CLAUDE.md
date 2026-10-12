@@ -96,7 +96,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Rain sound and occasional thunder; fog outside.
 
 **Retention (the 250 highly-engaged goal)**
-- A circle that isn't full at 0 first tries to join a group night that started short (MatchService).
+- Every group circle at 0 first tries to join a group night that started short (MatchService; open through
+  acts I-II until bedtime, up to 4 players). An arrow at the screen edge points to the current task when its "!" is off screen.
 - Levels (XP = coins earned playing) with rewards at milestones; LV on the lobby tag, XP bar on the
   result card; tomorrow's daily reward shown at the end of every night.
 - Analytics funnels (TelemetryService): check Creator Hub → Analytics → Funnels to find where new
@@ -170,6 +171,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **12 Oct (v81)**, from 4.5 h of v78-80 logs (46 nights, 101 lobby visits): new players queue 97%; the
+  quit rate per minute is ~7x higher before the first task than after; **solo nights: 14 of 15
+  abandoned** (11 in act I), and half of solo phone players never found the pizza menu. Groups of 2
+  and 3: 40% / 20% no ending. Help got called in 22 of 25 blackouts (cell 14, neighbour 5, Okafor 3).
+  Fixed in v81: (1) MatchService only caught 1 of 68 teleports (150 s window; only short circles
+  looked) while 44 of 57 lone departures had another departure within 8 min → open until bedtime
+  (max 420 s), room up to 4, full circles look too, "X made it here" notice, solo "not coming" texts
+  wait until nobody can join; (2) edge arrow to the current task when its "!" is off screen.
 - **12 Oct (v78)**, from 17 h of v77 logs (292 nights, 1,038 lobby visits, 1,275 players):
   - **Highly engaged player = a user who spent a minimum amount anywhere on Roblox in the last 60
     days and plays our game** (Roblox's Kids/Select page). So it's unique paying players over a rolling
@@ -184,9 +193,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
     before the blackout; (4) **MatchService**: lone/short circles join a group night that started
     short (92% of solo nights abandoned, 18/52 in the first minute); alone in the lobby, circles
     start after 20 s.
-- **Next:** `pull_stats.py --since=78`: first-night mid-night quit rate (v77: 43%; solo 92%, pairs 46%),
-  "joined a night in progress", help called by method (Okafor), hunt quits by nerve, night length
-  (should stay ~12-13 min). Phones still quit most (54% vs PC 30%).
+- **Next:** `pull_stats.py --logs-only --since=81`: "joined a night in progress" (v78: 1 of 68), solo
+  night count and abandonment (v78: 14/15), solo phone players reaching OrderPizza:Menu (v77-80: 20/40),
+  night length (should stay ~12-13 min). Phones still quit most (62% vs PC 30%).
 - Daily reminder routine's first send (11 Oct 22:53) failed on the usage limit; it retries daily.
 - Coming back another day is ~1%; veterans quit at minute 1 (mostly auto-continued nights they didn't want).
 
@@ -209,7 +218,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 80).
+  (last published: version 81).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

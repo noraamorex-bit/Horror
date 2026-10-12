@@ -113,6 +113,32 @@ local ok, err = pcall(function()
 	assert(lastOptions.ReservedServerAccessCode == "night-7", "into that night's server")
 	assert(lastOptions.Data and lastOptions.Data.Cap == 4 and lastOptions.Data.Code == "night-7", "teleport data carries the code and the circle size")
 	print("join a night in progress ok")
+	-- a full circle also tries an open night first (a lone player there gets company); none: a fresh house
+	asked = nil
+	ctx.Match = { find = function(n) asked = n; return nil end }
+	local pad3 = lobby:FindFirstChild("Pad3")
+	for i = 1, 3 do
+		local _, r = makePlayer("G" .. i)
+		r.CFrame = roblox.CFrame.new(pad3.CFrame.Position + roblox.Vector3.new(i - 2, 3, 0))
+	end
+	hb:Fire(0.3)
+	waitFor(L.FullCountdown + 0.3)
+	hb:Fire(0.3)
+	assert(asked == 3, "a full circle of 3 looked for room for 3, got " .. tostring(asked))
+	assert(#teleports == 5 and teleports[5][2] == 3, "then off to a fresh house")
+	assert(lastOptions.ReservedServerAccessCode == "code-123" and lastOptions.Data.Cap == 3, "a fresh night")
+	-- PLAY SOLO never joins anyone
+	asked = nil
+	rawset(c, "Parent", nil) -- (the earlier solo player has gone: the circle is free)
+	table.remove(players, table.find(players, c))
+	hb:Fire(0.3)
+	local s1, rs1 = makePlayer("S1")
+	rs1.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad1").CFrame.Position + roblox.Vector3.new(0, 3, 0))
+	hb:Fire(0.3)
+	waitFor(L.FullCountdown + 0.3)
+	hb:Fire(0.3)
+	assert(asked == nil and #teleports == 6, "solo: straight to its own house")
+	print("full circles look too, solo never ok")
 end)
 print(ok and "LOBBY OK" or ("LOBBY FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

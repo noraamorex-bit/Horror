@@ -727,15 +727,16 @@ local function tick()
 				for i = 1, counted do
 					table.insert(group, members[i])
 				end
-				if pad.Short and pad.Size > 1 and ctx.Match then
-					-- not full: a group night that's just starting with room for them first (MatchService)
+				if pad.Size > 1 and ctx.Match then
+					-- a group night that started short and has room for them all first (MatchService): a
+					-- lone player there gets company, and a bigger group abandons far less often
 					pad.Matching = true
 					task.spawn(function()
 						local ok, code = pcall(ctx.Match.find, #group)
 						pad.Matching = false
 						if not pad.Teleporting then
 							if ok and code then
-								pad.Status.Text = "Joining a night that's just starting..."
+								pad.Status.Text = "Joining a night that's under way..."
 							end
 							teleportGroup(pad, group, ok and code or nil)
 						end

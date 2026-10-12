@@ -18,10 +18,13 @@ Config.Lobby = {
 	LobbyPlaceId = nil :: number?,
 	QueueSizes = { 1, 2, 3, 4 },
 	-- every circle: a 10 s countdown from the moment someone steps in, 3 s once it's full; at 0 it
-	-- goes with whoever's on it (not full: into a group night that's just starting, if there's one)
+	-- goes with whoever's on it (into a group night that started short and has room, if there's one)
 	Countdown = 10,
 	FullCountdown = 3,
-	JoinOpenFor = 150, -- game server: a short group night takes late arrivals for this long (the cozy part)
+	-- game server: a group night that started short takes late arrivals (up to MaxPlayers) through the
+	-- first two acts, until bedtime, and never past this many seconds. (v78 logs: 150 s caught 1 of 68
+	-- teleports, while 44 of 57 lone departures had someone else leave the lobby within 8 minutes.)
+	JoinOpenFor = 420,
 	ArrivalTimeout = 30, -- game server: start without stragglers after this long
 	ReturnDelay = 35, -- game server: seconds on the ending screen before the next night starts (LOBBY to leave)
 }

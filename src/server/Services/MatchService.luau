@@ -1,17 +1,16 @@
 --[[
 	MatchService — no lonely nights when someone else's has just started.
 
-	The logs: a night alone was abandoned 12 times out of 13, a night of three or four almost never,
-	and with few people online a group circle often started with one player after waiting 45 s
-	(and 28% of the players who queued left during that wait).
+	The logs: a night alone was abandoned 12 times out of 13 (v78: 14 of 15), a night of three or four
+	almost never, and with few people online a group circle often goes with one player.
 
-	• Game server (a group circle's reserved server): while its night is in the cozy first part
-	  (Config.Lobby.JoinOpenFor seconds) and it has fewer players than the circle was for, it lists
-	  itself in a MemoryStore sorted map (key = its access code, which arrived with the players'
-	  teleport data). PLAY SOLO nights (circle of 1) and full circles are never listed.
-	• Lobby: a group circle that's waiting for players looks for such a night every few seconds and,
-	  if there's room, sends its players there instead (the game server already lets late arrivals
-	  into the first act: "You made it just in time").
+	• Game server (a group circle's reserved server): a night that started short (fewer players than
+	  its circle was for) lists itself in a MemoryStore sorted map (key = its access code, which arrived
+	  with the players' teleport data) while late arrivals can still join (Director.lateJoinOpen: the
+	  first two acts, until bedtime; Config.Lobby.JoinOpenFor at most) and it has room, up to
+	  MaxPlayers. PLAY SOLO nights (circle of 1) and nights that started full are never listed.
+	• Lobby: every group circle, full or not, looks for such a night when its countdown runs out and,
+	  if there's room for all of them, sends its players there instead ("You made it just in time").
 ]]
 
 local MemoryStoreService = game:GetService("MemoryStoreService")
@@ -24,6 +23,7 @@ local TTL = 30 -- seconds an entry lives unless refreshed
 local map = nil
 local code: string? = nil -- (game server) this server's access code
 local cap: number? = nil -- (game server) the size of the circle it came from
+local party: number? = nil -- (game server) how many came over together to start the night
 local listed = false
 
 local function getMap()
@@ -58,6 +58,9 @@ local function readJoin(p: Player)
 		if tonumber(td.Cap) and not cap then
 			cap = tonumber(td.Cap)
 		end
+		if tonumber(td.PartySize) and not party then
+			party = tonumber(td.PartySize)
+		end
 	end
 end
 
@@ -69,8 +72,11 @@ function Match.isOpen(): (boolean, number)
 	if not (code and cap and cap > 1 and D) then
 		return false, n
 	end
-	local open = D.getAct() == "Evening" and D.elapsedSeconds() < (L.JoinOpenFor or 150) and not (D.isSkipping and D.isSkipping())
-		and n >= 1 and n < math.min(cap, ctx.Config.MaxPlayers)
+	-- (a night that started full is a group that wanted to be together: never offered)
+	local startedShort = party == nil or party < cap
+	local early = if D.lateJoinOpen then D.lateJoinOpen() else D.getAct() == "Evening"
+	local open = startedShort and early and D.elapsedSeconds() < (L.JoinOpenFor or 420) and not (D.isSkipping and D.isSkipping())
+		and n >= 1 and n < ctx.Config.MaxPlayers
 	return open, n
 end
 
@@ -89,7 +95,7 @@ local function publish()
 				if claimed and os.time() - claimed < 25 then
 					nn = math.max(n, tonumber(old.n) or n)
 				end
-				return { n = nn, cap = cap, at = os.time(), claimed = claimed }
+				return { n = nn, cap = ctx.Config.MaxPlayers, at = os.time(), claimed = claimed }
 			end, TTL)
 		end) or listed
 	elseif listed then
@@ -121,8 +127,8 @@ function Match.startGame()
 end
 
 Match._publish = publish -- (tests)
-Match._set = function(c: string?, size: number?) -- (tests)
-	code, cap, listed = c, size, false
+Match._set = function(c: string?, size: number?, started: number?) -- (tests)
+	code, cap, party, listed = c, size, started, false
 end
 
 ---------------------------------------------------------------------------

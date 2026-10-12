@@ -188,8 +188,22 @@ local ok, err = pcall(function()
 	ctx.Director.onDoorLockChanged({ Locked = true, Id = "BackDoor" }, solo)
 	local newsAt, tvDuringNews = nil, false
 	local bedAt, brushedAt = nil, nil
+	-- a late arrival 30 s into act II still joins the night (MatchService keeps it open until bedtime)
+	local notes = {}
+	ctx.Remotes.Notify.FireClient = function(_, pl, text) table.insert(notes, { P = pl, Text = text }) end
+	local late = nil
+	local openBeforeBed, openAfterBed = nil, nil
 	while H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SmallThings" and T - t0 < 700 do
 		H.flush(1)
+		if not late and T - t0 >= 30 then
+			assert(ctx.Director.lateJoinOpen(), "act II, before bedtime: open to late arrivals")
+			late = mkPlayer("Late")
+			late:SetAttribute("InGame", nil)
+			H.services.Players.GetPlayers = function() return { solo, late } end
+			H.services.Players.PlayerAdded:Fire(late)
+		end
+		if late and openBeforeBed == nil then openBeforeBed = ctx.Director.lateJoinOpen() end
+		if ctx.Objectives.has("Bedtime") and openAfterBed == nil then openAfterBed = ctx.Director.lateJoinOpen() end
 		local st = ctx.Director._state()
 		for id in st.Fired do
 			if not seen[id] then
@@ -220,6 +234,16 @@ local ok, err = pcall(function()
 	local actLen = T - t0
 	local names = {}
 	for _, sc in scares do table.insert(names, ("%s@%.0f"):format(sc.Id, sc.T - t0)) end
+	assert(late:GetAttribute("InGame") == true, "the late arrival joined the night")
+	local toLate, toSolo = false, false
+	for _, n in notes do
+		if n.P == late and string.find(n.Text, "just in time") then toLate = true end
+		if n.P == solo and string.find(n.Text, "not alone tonight") then toSolo = true end
+	end
+	assert(toLate and toSolo, "both told: the arrival and the one already there")
+	assert(openBeforeBed == true and openAfterBed == false, "closed to late arrivals once it's bedtime")
+	H.services.Players.GetPlayers = function() return { solo } end
+	print("late join in act II ok")
 	print(("act II lasted %.0f s; scares: %s"):format(actLen, table.concat(names, " ")))
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SomeoneElse", "on to act III")
 	assert(bedAt and newsAt and bedAt >= newsAt, "after the news: get ready for bed")
@@ -284,6 +308,38 @@ local ok, err = pcall(function()
 	local floor = ctx.Config.Nerve.DarkFloor
 	assert(nerve <= floor + 2 and nerve >= floor - 1, ("the dark alone stops at %d, got %.1f"):format(floor, nerve))
 	print(("nerve in the dark settles at %.0f ok"):format(nerve))
+
+	-- alone from a group circle: "they're not coming" waits while someone could still join, and never
+	-- comes once someone has (PLAY SOLO: right away, as before)
+	ctx.Power.setMain(true, "Test")
+	local function soloNight(openFor, joinAt)
+		local open = openFor ~= nil
+		ctx.Match = { isOpen = function() return open end }
+		local me = mkPlayer("Alone")
+		local list = { me }
+		H.services.Players.GetPlayers = function() return list end
+		local got = {}
+		ctx.Phone.deliver = function(_, from) table.insert(got, { From = from, T = T }) end
+		local t0 = T
+		ctx.Director.startAct("Evening")
+		for _ = 1, 120 do
+			H.flush(1)
+			if openFor and T - t0 >= openFor then open = false end
+			if joinAt and T - t0 >= joinAt and #list == 1 then table.insert(list, (mkPlayer("Joiner"))) end
+		end
+		ctx.Phone.deliver = realDeliver
+		local first = nil
+		for _, g in got do if g.From == "Riley" then first = first or (g.T - t0) end end
+		return first
+	end
+	local soloAt = soloNight(nil, nil)
+	assert(soloAt and soloAt < 30, "PLAY SOLO: the friends text at 24 s, got " .. tostring(soloAt))
+	local openAt = soloNight(60, nil)
+	assert(openAt and openAt >= 60 and openAt < 70, "open to joiners: the text waits until it closes, got " .. tostring(openAt))
+	local joined = soloNight(60, 40)
+	assert(joined == nil, "someone joined: no 'we had to turn around'")
+	ctx.Match = nil
+	print(("solo texts: %.0f s, %.0f s once closed, none after a join ok"):format(soloAt, openAt))
 end)
 print(ok and "HUNTGOAL OK" or ("HUNTGOAL FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

@@ -46,6 +46,23 @@ local ok, err = pcall(function()
 		end
 	end
 	print("controllers started (touch=" .. tostring(touch) .. ")")
+	-- the objective arrow: hidden when the "!" is on screen; at the edge pointing the way when it isn't
+	do
+		local M = mods.Markers
+		local RB = H.roblox
+		local cam = RB.CFrame.new(0, 5, 0) -- (looking down -Z)
+		local vp = RB.Vector2.new(1000, 600)
+		assert(M.pointerFor(cam, vp, RB.Vector3.new(0, 5, -20), true, RB.Vector3.new(500, 300, 20)) == nil, "on screen: no arrow")
+		local x, y = M.pointerFor(cam, vp, RB.Vector3.new(30, 5, -1), false, RB.Vector3.new(1400, 300, 1))
+		assert(x and x > 0.85 and math.abs(y - 0.5) < 0.05, "off to the right: arrow at the right edge")
+		x, y = M.pointerFor(cam, vp, RB.Vector3.new(-30, 5, 2), false, RB.Vector3.new(-400, 300, -2))
+		assert(x and x < 0.15, "behind, to the left: arrow at the left edge")
+		x, y = M.pointerFor(cam, vp, RB.Vector3.new(0.5, 5, 20), false, RB.Vector3.new(500, 300, -20))
+		assert(x and (x > 0.85 or x < 0.15) and y >= 0.24 and y <= 0.8, "straight behind: to a side, never under the panel or the controls")
+		x, y = M.pointerFor(cam, vp, RB.Vector3.new(0, 60, -5), false, RB.Vector3.new(500, -900, 5))
+		assert(x and y >= 0.24, "upstairs: up, but below the objective panel")
+		print("objective arrow ok")
+	end
 	local R = ctx.Remotes
 	-- the difficulty vote, the role picker, settings
 	R.Vote.OnClientEvent:Fire({ Ends = os.clock() + 10, Normal = 0, Hard = 1, Total = 2 })
