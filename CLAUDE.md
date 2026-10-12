@@ -141,7 +141,8 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
-  ending. Latest: **#9** (the pizza man asks if you're home alone → the 911 call; `reel_source/reel20`). Keep #2's slot lengths so the cuts and **the same music** land identically;
+  ending. #9: the pizza man → the 911 call (`reel20`). Latest: **#10** (bedtime: brushing teeth, lights out, the hall
+  closet, "don't breathe."; `reel_source/reel21`). Keep #2's slot lengths so the cuts and **the same music** land identically;
   change the story/clips each time.
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
