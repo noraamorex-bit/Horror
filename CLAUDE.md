@@ -51,7 +51,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Menu on the left side, not the middle: PLAY SOLO, FIND PLAYERS, then only Endings, How to play,
   Settings. Everything else is a small **icon dock** on the right (Rewards, Store, Locker, Shop) with the
   coin balance. Don't add big buttons back.
-- Queue circles: white **outline** only, spread out so labels don't overlap. Queue countdown 10 s.
+- Queue circles: white **outline** only, spread out so labels don't overlap. **Every circle counts down
+  10 s from the moment someone steps in, 3 s once full; at 0 it teleports whoever's on it** (the owner's
+  rule; no START NOW, no waiting for players).
 - Shop has a pulsing "!" to attract; donation board on the lawn.
 
 **HUD / text**
@@ -94,8 +96,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Rain sound and occasional thunder; fog outside.
 
 **Retention (the 250 highly-engaged goal)**
-- Group queue circles start with whoever's there (45 s, 20 s alone in the lobby, or START NOW) — never wait
-  forever at low CCU — and first try to join a group night that started short (MatchService).
+- A circle that isn't full at 0 first tries to join a group night that started short (MatchService).
 - Levels (XP = coins earned playing) with rewards at milestones; LV on the lobby tag, XP bar on the
   result card; tomorrow's daily reward shown at the end of every night.
 - Analytics funnels (TelemetryService): check Creator Hub → Analytics → Funnels to find where new
@@ -196,7 +197,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 79).
+  (last published: version 80).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

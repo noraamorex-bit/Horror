@@ -532,8 +532,6 @@ local function build(root: Folder)
 			Status = status,
 			Members = {},
 			CountdownEnd = nil,
-			WaitStart = nil, -- since when somebody's been waiting on a circle that isn't full
-			StartNow = false,
 			Short = false, -- (the countdown is for fewer than Size)
 			Teleporting = false,
 			CooldownUntil = 0,
@@ -577,7 +575,7 @@ local function padOf(player: Player)
 end
 
 local function send(player: Player, payload)
-	local key = payload and string.format("%d|%d|%s|%s|%s|%s", payload.Size, payload.Count, tostring(payload.Countdown), payload.Status, tostring(payload.AutoIn), tostring(payload.CanStart)) or "none"
+	local key = payload and string.format("%d|%d|%s|%s", payload.Size, payload.Count, tostring(payload.Countdown), payload.Status) or "none"
 	if lastSent[player] == key then
 		return
 	end
@@ -632,12 +630,12 @@ local function teleportGroup(pad, group: { Player }, joinCode: string?)
 			task.wait(2)
 		end
 		if not ok and joinCode then
-			-- (the night we tried to join is gone or full: back to waiting, as before)
+			-- (the night we tried to join is gone or full: a fresh house instead, straight away)
 			for _, p in group do
 				teleporting[p] = nil
 			end
 			pad.Teleporting = false
-			pad.CountdownEnd = nil
+			teleportGroup(pad, group)
 			return
 		elseif not ok then
 			warn("[Lobby] teleport failed: " .. tostring(err))
@@ -705,64 +703,49 @@ local function tick()
 		pad.Members = members
 
 		local counted = math.min(#members, pad.Size)
-		-- nobody else coming? With few people online a group circle could wait forever: after
-		-- FillWait (or START NOW) it starts with whoever's there
-		if counted == 0 or pad.Teleporting then
-			pad.WaitStart, pad.StartNow = nil, false
-		elseif counted < pad.Size and not pad.WaitStart then
-			pad.WaitStart = now
-		end
+		-- every circle: a 10 s countdown from the moment someone steps in, down to 3 s once it's full;
+		-- at 0 it goes with whoever's on it (the owner's rule: no waiting for players)
 		local L = ctx.Config.Lobby
-		-- nobody else in the lobby who could still step in: no point waiting the full FillWait
-		local fill = L.FillWait or 45
-		if counted >= 1 and counted < pad.Size and #Players:GetPlayers() <= counted then
-			fill = math.min(fill, L.FillWaitAlone or fill)
+		if counted == 0 or pad.Teleporting then
+			pad.CountdownEnd = nil
+		elseif now >= pad.CooldownUntil then
+			if not pad.CountdownEnd then
+				pad.CountdownEnd = now + (L.Countdown or 10)
+			end
+			if counted >= pad.Size then
+				pad.CountdownEnd = math.min(pad.CountdownEnd, now + (L.FullCountdown or 3))
+			end
 		end
-		-- a group night elsewhere that started short and has room: join it (MatchService)
-		if ctx.Match and counted >= 1 and counted < pad.Size and pad.WaitStart and not pad.Teleporting and not pad.Matching
-			and not pad.CountdownEnd and now - pad.WaitStart >= (L.JoinAfter or 3) and now >= (pad.NextMatch or 0) then
-			pad.Matching = true
-			pad.NextMatch = now + (L.JoinEvery or 4)
-			local group = table.clone(members)
-			task.spawn(function()
-				local ok, code = pcall(ctx.Match.find, #group)
-				pad.Matching = false
-				if not ok or not code or pad.Teleporting then
-					return
-				end
-				-- (still the same people on the circle)
-				for _, p in group do
-					if not table.find(pad.Members, p) then
-						return
-					end
-				end
-				pad.Status.Text = "Joining a night that's just starting..."
-				teleportGroup(pad, group, code)
-			end)
-		end
-		pad.Fill = fill
-		local short = counted >= 1 and counted < pad.Size and pad.WaitStart ~= nil and (pad.StartNow or now - pad.WaitStart >= fill)
+		pad.Short = counted < pad.Size
 		if pad.Teleporting then
 			pad.Status.Text = "Heading to 14 Alder Lane..."
-		elseif (counted >= pad.Size or short) and now >= pad.CooldownUntil then
-			if not pad.CountdownEnd then
-				pad.CountdownEnd = now + (pad.Size == 1 and L.SoloCountdown or (pad.StartNow and 3 or L.Countdown))
-			end
-			pad.Short = counted < pad.Size
+		elseif pad.CountdownEnd then
 			local left = math.max(0, math.ceil(pad.CountdownEnd - now))
-			pad.Status.Text = pad.Short and ("Starting with " .. counted .. " in " .. left .. "...") or ("Starting in " .. left .. "...")
-			if now >= pad.CountdownEnd then
+			pad.Status.Text = "Starting in " .. left .. "..."
+			if now >= pad.CountdownEnd and not pad.Matching then
 				local group = {}
 				for i = 1, counted do
 					table.insert(group, members[i])
 				end
-				teleportGroup(pad, group)
-				pad.WaitStart, pad.StartNow = nil, false
+				if pad.Short and pad.Size > 1 and ctx.Match then
+					-- not full: a group night that's just starting with room for them first (MatchService)
+					pad.Matching = true
+					task.spawn(function()
+						local ok, code = pcall(ctx.Match.find, #group)
+						pad.Matching = false
+						if not pad.Teleporting then
+							if ok and code then
+								pad.Status.Text = "Joining a night that's just starting..."
+							end
+							teleportGroup(pad, group, ok and code or nil)
+						end
+					end)
+				else
+					teleportGroup(pad, group)
+				end
 			end
 		else
-			pad.CountdownEnd = nil
-			pad.Short = false
-			pad.Status.Text = counted == 0 and "Step in to queue" or ("Waiting for " .. (pad.Size - counted) .. " more")
+			pad.Status.Text = "Step in to queue"
 		end
 		pad.Count.Text = counted .. " / " .. pad.Size
 		local glow = counted > 0 and 0 or 0.3
@@ -788,9 +771,6 @@ local function tick()
 				Count = counted,
 				Countdown = pad.CountdownEnd and math.max(0, math.ceil(pad.CountdownEnd - now)) or nil,
 				Status = status,
-				-- (not full yet: when it starts anyway, and whether START NOW is offered)
-				AutoIn = (status == "Waiting" and pad.WaitStart) and math.max(0, math.ceil(pad.WaitStart + (pad.Fill or L.FillWait or 45) - now)) or nil,
-				CanStart = status == "Waiting" and pad.WaitStart ~= nil and now - pad.WaitStart >= (L.StartNowAfter or 8) or nil,
 				Short = pad.Short or nil,
 			})
 		end
@@ -953,17 +933,6 @@ function LobbyServer.run(c)
 		local char = player.Character
 		if char and padOf(player) then
 			char:PivotTo(spawnCF * CFrame.new(math.random(-4, 4), 0, 3))
-		end
-	end)
-	-- START NOW: anyone waiting on a group circle that isn't full, once they've waited a little
-	ctx.Remotes.StartNow.OnServerEvent:Connect(function(player)
-		local pad = padOf(player)
-		if not pad or pad.Teleporting or not pad.WaitStart or os.clock() - pad.WaitStart < (ctx.Config.Lobby.StartNowAfter or 8) then
-			return
-		end
-		local i = table.find(pad.Members, player)
-		if i and i <= pad.Size then
-			pad.StartNow = true
 		end
 	end)
 	TeleportService.TeleportInitFailed:Connect(function(player, result, message)

@@ -17,14 +17,11 @@ Config.Lobby = {
 	GamePlaceId = nil :: number?,
 	LobbyPlaceId = nil :: number?,
 	QueueSizes = { 1, 2, 3, 4 },
-	Countdown = 10, -- seconds a full circle waits before teleporting (lets people step off)
-	SoloCountdown = 3,
-	FillWait = 45, -- a group circle that isn't full starts anyway, with whoever's there, after this long
-	FillWaitAlone = 20, -- (...this long when nobody else is in the lobby to step in)
-	JoinAfter = 3, -- a circle waiting for players looks for a group night that started short (MatchService)...
-	JoinEvery = 4, -- ...this often
+	-- every circle: a 10 s countdown from the moment someone steps in, 3 s once it's full; at 0 it
+	-- goes with whoever's on it (not full: into a group night that's just starting, if there's one)
+	Countdown = 10,
+	FullCountdown = 3,
 	JoinOpenFor = 150, -- game server: a short group night takes late arrivals for this long (the cozy part)
-	StartNowAfter = 8, -- (and anyone in it can press START NOW after this long)
 	ArrivalTimeout = 30, -- game server: start without stragglers after this long
 	ReturnDelay = 35, -- game server: seconds on the ending screen before the next night starts (LOBBY to leave)
 }

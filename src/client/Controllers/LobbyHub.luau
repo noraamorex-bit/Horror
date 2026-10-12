@@ -25,7 +25,6 @@ end
 local quick: Frame
 local lobbyMenu: Frame
 
-local startNow: TextButton? = nil
 
 local function render(state)
 	if quick then
@@ -41,14 +40,9 @@ local function render(state)
 		queueStatus.Text = "Heading to the house..."
 	elseif state.Status == "Full" then
 		queueStatus.Text = "This circle is full. Try another one."
-	elseif state.Status == "Starting" then
-		queueStatus.Text = (state.Short and ("Starting with " .. state.Count .. " in ") or "Starting in ") .. tostring(state.Countdown or 0) .. "... step off to cancel"
 	else
-		local need = state.Size - state.Count
-		queueStatus.Text = "Waiting for " .. need .. " more" .. (state.AutoIn and (". Starts anyway in " .. state.AutoIn .. "s") or ". Invite a friend!")
-	end
-	if startNow then
-		startNow.Visible = state.CanStart == true
+		-- (every circle counts down from 10 the moment someone steps in; 3 once it's full)
+		queueStatus.Text = state.Countdown and ("Starting in " .. tostring(state.Countdown) .. "... step off to cancel") or "Starting soon..."
 	end
 end
 
@@ -286,7 +280,7 @@ function LobbyHub.start()
 			-- (one tap and you're in: new players took a median 39 s to queue, a third never did)
 			ctx.Notice.show({
 				Title = "Welcome to Hollis Creek",
-				Body = "Someone lives in the attic. Survive the night, alone or with friends.\n\nPLAY puts you in a group with whoever's here (START NOW if nobody comes). Here are 100 coins to start: the STORE is on the right.",
+				Body = "Someone lives in the attic. Survive the night, alone or with friends.\n\nPLAY puts you in a group with whoever's here. Here are 100 coins to start: the STORE is on the right.",
 				Button = "▶  PLAY",
 			}, function()
 				ctx.Remotes.QuickPlay:FireServer("Group") -- (ignored if they've already stepped into a circle)
@@ -323,26 +317,6 @@ function LobbyHub.start()
 	leave.Activated:Connect(function()
 		ctx.Remotes.LeaveQueue:FireServer()
 	end)
-	-- nobody else coming? start now with whoever's here
-	local sn = UI.new("TextButton", {
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 8, 1, -8),
-		Size = UDim2.fromOffset(MENU_W - 16 - 96 - 8, 36),
-		Text = "START NOW",
-		Font = UI.Font.Bold,
-		TextSize = 14,
-		TextColor3 = Color3.fromRGB(15, 15, 15),
-		BackgroundColor3 = Color3.fromRGB(235, 232, 226),
-		Visible = false,
-		Parent = panel,
-	})
-	UI.corner(sn, 6)
-	sn.Activated:Connect(function()
-		ctx.Remotes.StartNow:FireServer()
-		sn.Visible = false
-	end)
-	startNow = sn
-
 	ctx.Remotes.Queue.OnClientEvent:Connect(render)
 	ctx.Remotes.Notify.OnClientEvent:Connect(function(text)
 		queueStatus.Text = text

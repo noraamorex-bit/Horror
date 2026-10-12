@@ -52,85 +52,65 @@ local ok, err = pcall(function()
 	local n = 0
 	for _, d in lobby:GetDescendants() do if d:IsA("BasePart") then n += 1 end end
 	print("lobby parts", n)
-	-- two players step onto the 2-player circle
+	-- every circle counts down from Countdown the moment someone steps in; full, it drops to FullCountdown
+	local L = ctx.Config.Lobby
+	assert(L.Countdown == 10 and L.FullCountdown == 3, "10 s, 3 s when full")
+	local function waitFor(sec) local t = os.clock(); while os.clock() - t < sec do end end
+	-- (the last queue state sent to anyone on a circle; players off the circles get nil)
+	local function lastQueue()
+		for i = #fired, 1, -1 do
+			if fired[i] ~= "Queue:nil" then return fired[i] end
+		end
+		return nil
+	end
 	local pad2 = lobby:FindFirstChild("Pad2")
 	local a, ra = makePlayer("A")
 	local b, rb = makePlayer("B")
 	ra.CFrame = roblox.CFrame.new(pad2.CFrame.Position + roblox.Vector3.new(0, 3, 0))
 	local hb = S.RunService.Heartbeat
 	hb:Fire(0.3)
-	print("after A only:", fired[#fired])
+	assert(lastQueue() == "Queue:Starting 1/2", "one player: the countdown starts at once, got " .. tostring(lastQueue()))
+	-- B steps in: full, so it drops to 3 s
 	rb.CFrame = roblox.CFrame.new(pad2.CFrame.Position + roblox.Vector3.new(1, 3, 1))
 	hb:Fire(0.3)
-	print("after B joins:", fired[#fired])
-	-- wait out the countdown (os.clock based)
-	local t0 = os.clock()
-	while os.clock() - t0 < ctx.Config.Lobby.Countdown + 0.5 do end
+	assert(lastQueue() == "Queue:Starting 2/2", "two players, got " .. tostring(lastQueue()))
+	waitFor(L.FullCountdown + 0.3)
 	hb:Fire(0.3)
-	assert(#teleports == 1 and teleports[1][2] == 2, "the full 2-player circle left with both")
-	print("teleports:", #teleports, teleports[1] and ("place " .. teleports[1][1] .. " players " .. teleports[1][2]) or "")
-	-- solo circle
+	assert(#teleports == 1 and teleports[1][2] == 2, "full: off with both after 3 s, not 10")
+	print("full circle drops to 3 s ok")
+	-- solo circle: full at once, 3 s
 	local c, rc = makePlayer("C")
 	rc.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad1").CFrame.Position + roblox.Vector3.new(0, 3, 0))
 	hb:Fire(0.3)
-	t0 = os.clock()
-	while os.clock() - t0 < ctx.Config.Lobby.SoloCountdown + 0.5 do end
+	waitFor(L.FullCountdown + 0.3)
 	hb:Fire(0.3)
-	print("teleports after solo:", #teleports)
-	-- quick play: a player taps FIND PLAYERS and lands in a group circle
+	assert(#teleports == 2 and teleports[2][2] == 1, "solo: off after 3 s")
+	print("solo ok")
+	-- a circle that isn't full goes at 0 with whoever's on it (shortened here: Countdown 1)
+	L.Countdown = 1
 	local d, rd = makePlayer("D")
 	rd.CFrame = roblox.CFrame.new(0, 3, 408)
 	ctx.Remotes.QuickPlay.OnServerEvent:Fire(d, "Group")
 	hb:Fire(0.3)
-	print("quickplay moved to", rd.Position, "queued:", fired[#fired])
-	-- nobody else coming: START NOW (after a short wait) takes whoever's on the circle
-	local L = ctx.Config.Lobby
-	L.StartNowAfter, L.FillWait, L.Countdown = 0.4, 100, 1
-	local before = #teleports
-	t0 = os.clock()
-	while os.clock() - t0 < 0.5 do end
+	assert(string.find(lastQueue(), "Starting 1/"), "quick play: on a group circle, counting down, got " .. tostring(lastQueue()))
+	waitFor(1.2)
 	hb:Fire(0.3)
-	ctx.Remotes.StartNow.OnServerEvent:Fire(d)
-	hb:Fire(0.3)
-	t0 = os.clock()
-	while os.clock() - t0 < 3.3 do end
-	hb:Fire(0.3)
-	assert(#teleports == before + 1 and teleports[#teleports][2] == 1, "START NOW: off with 1 player (" .. #teleports .. ")")
-	print("start now ok:", #teleports - before, "group of", teleports[#teleports][2])
-	-- (D has gone to the house: the circle is free again straight away)
+	assert(#teleports == 3 and teleports[3][2] == 1, "not full: off at 0 with one player")
+	assert(lastOptions.Data.Code == lastOptions.ReservedServerAccessCode and lastOptions.Data.Cap ~= nil, "a fresh night, offered to the next lobby")
+	print("not full at 0 ok")
 	rawset(d, "Parent", nil)
 	table.remove(players, table.find(players, d))
-	-- and a circle that never fills starts on its own after FillWait
-	local e, re = makePlayer("E")
-	re.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad3").CFrame.Position + roblox.Vector3.new(0, 3, 0))
-	L.FillWait = 0.5
-	hb:Fire(0.3)
-	t0 = os.clock()
-	while os.clock() - t0 < 0.6 do end
-	hb:Fire(0.3)
-	assert(string.find(fired[#fired], "Starting"), "auto-start countdown, got " .. tostring(fired[#fired]))
-	t0 = os.clock()
-	while os.clock() - t0 < 1.3 do end
-	hb:Fire(0.3)
-	assert(#teleports == before + 2 and teleports[#teleports][2] == 1, "the 3-player circle left with 1 after the wait")
-	print("auto start ok")
-	-- a lone player on a group circle joins a group night elsewhere that started short (MatchService)
-	rawset(e, "Parent", nil)
-	table.remove(players, table.find(players, e))
+	-- not full at 0, and a group night elsewhere started short with room: they join it (MatchService)
 	local asked = nil
 	ctx.Match = { find = function(n) asked = n; return "night-7" end }
-	L.FillWait, L.FillWaitAlone, L.JoinAfter, L.JoinEvery = 100, 100, 0.2, 1
 	local f, rf = makePlayer("F")
 	rf.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad4").CFrame.Position + roblox.Vector3.new(0, 3, 0))
-	before = #teleports
 	hb:Fire(0.3)
-	t0 = os.clock()
-	while os.clock() - t0 < 0.3 do end
-	hb:Fire(0.3)
+	waitFor(1.2)
 	hb:Fire(0.3)
 	assert(asked == 1, "looked for a night with room for 1")
-	assert(#teleports == before + 1 and teleports[#teleports][2] == 1, "joined it")
-	assert(lastOptions and lastOptions.ReservedServerAccessCode == "night-7", "into that night's server")
+	assert(#teleports == 4 and teleports[4][2] == 1, "joined it")
+	assert(lastOptions.ReservedServerAccessCode == "night-7", "into that night's server")
 	assert(lastOptions.Data and lastOptions.Data.Cap == 4 and lastOptions.Data.Code == "night-7", "teleport data carries the code and the circle size")
 	print("join a night in progress ok")
 end)
