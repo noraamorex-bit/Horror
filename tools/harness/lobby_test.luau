@@ -24,10 +24,14 @@ local ok, err = pcall(function()
 	end
 	S.Players.GetPlayers = function() return players end
 	S.RunService.IsStudio = function() return false end -- (a live server: teleports really go)
+	local lastOptions = nil
 	local realNew = H.Instance.new
 	H.Instance.new = function(className, parent)
 		if className == "TeleportOptions" then
-			return { SetTeleportData = function() end }
+			local o = {}
+			o.SetTeleportData = function(_, data) o.Data = data end
+			lastOptions = o
+			return o
 		end
 		return realNew(className, parent)
 	end
@@ -110,6 +114,25 @@ local ok, err = pcall(function()
 	hb:Fire(0.3)
 	assert(#teleports == before + 2 and teleports[#teleports][2] == 1, "the 3-player circle left with 1 after the wait")
 	print("auto start ok")
+	-- a lone player on a group circle joins a group night elsewhere that started short (MatchService)
+	rawset(e, "Parent", nil)
+	table.remove(players, table.find(players, e))
+	local asked = nil
+	ctx.Match = { find = function(n) asked = n; return "night-7" end }
+	L.FillWait, L.FillWaitAlone, L.JoinAfter, L.JoinEvery = 100, 100, 0.2, 1
+	local f, rf = makePlayer("F")
+	rf.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad4").CFrame.Position + roblox.Vector3.new(0, 3, 0))
+	before = #teleports
+	hb:Fire(0.3)
+	t0 = os.clock()
+	while os.clock() - t0 < 0.3 do end
+	hb:Fire(0.3)
+	hb:Fire(0.3)
+	assert(asked == 1, "looked for a night with room for 1")
+	assert(#teleports == before + 1 and teleports[#teleports][2] == 1, "joined it")
+	assert(lastOptions and lastOptions.ReservedServerAccessCode == "night-7", "into that night's server")
+	assert(lastOptions.Data and lastOptions.Data.Cap == 4 and lastOptions.Data.Code == "night-7", "teleport data carries the code and the circle size")
+	print("join a night in progress ok")
 end)
 print(ok and "LOBBY OK" or ("LOBBY FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

@@ -59,6 +59,7 @@ Story.Chapters = {
 Story.Objectives = {
 	OrderPizza = "Order pizza (kitchen phone)",
 	Popcorn = "Make popcorn (microwave)",
+	Bedtime = "Get ready for bed (upstairs bathroom)",
 	Windows = "Close the upstairs windows before the storm",
 
 	Explore = "Figure out what that noise was",
@@ -105,6 +106,11 @@ Story.Tasks = {
 	LockUp = { Title = "Lock up for the night", Steps = {
 		{ Key = "BackDoor", Text = "Lock the back door in the kitchen", Target = "Door_BackDoor" },
 		{ Key = "GarageSide", Text = "Lock the garage side door", Target = "Door_GarageSide" },
+	} },
+	-- (after the news: the wait for the blackout used to be 2.5 minutes of nothing; now it sends
+	-- everyone upstairs, past the one bar of signal by the bathroom window, and the lights go there)
+	Bedtime = { Title = "Get ready for bed", Steps = {
+		{ Key = "Teeth", Text = "Brush your teeth in the upstairs bathroom", Target = "BathSink" },
 	} },
 	Investigate = { Title = "Check upstairs", Steps = {
 		{ Key = "Look", Text = "Find out what made that noise upstairs", Target = "Hatch" },
@@ -667,6 +673,7 @@ Story.Thoughts = {
 		Windows = "The storm's getting worse. Somebody left the windows open upstairs.",
 		Door = "The doorbell. That's the pizza. Somebody get the front door.",
 		Investigate = "Someone has to go up there and look. It's probably nothing.",
+		Bedtime = "It's late. Teeth, then bed. Mom would kill me.",
 		Power = "The breaker panel is in the garage. Maybe I can get the power back on.",
 		Phone = "The phone's dead. Did something happen to the line outside?",
 		Attic = "The attic hatch in the upstairs hall... what's actually up there?",

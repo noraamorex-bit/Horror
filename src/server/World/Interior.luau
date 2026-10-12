@@ -1313,6 +1313,26 @@ function Interior.build(ctx, root: Instance, refs)
 	---------------------------------------------------------------------------
 	local hbath = folder("HallBath")
 	Kit.vanity(hbath, F(17.5, U, -4.3, PZ), 5.6, 2, WHITE_WOOD, Color3.fromRGB(60, 60, 62), 1)
+	-- the "Get ready for bed" task: brush your teeth here (and the phone finds one bar by the window)
+	-- (in its own block: this function is near Luau's 200-local limit)
+	do
+	local sink = Kit.box(hbath, "BrushTeeth", CF(17.5, U + 3.9, -4.4), V(2.2, 1, 1.4), Color3.new(), KM.Plastic, { Transparency = 1, CanQuery = true })
+	target("BathSink", sink.Position)
+	local brushed = false
+	ctx.Interaction.prompt(sink, { Action = "Brush your teeth", Object = "Sink", Hold = 1.5, Distance = 6 }, function(player)
+		ctx.Audio.playAt("Faucet", sink.Position, { Volume = 0.6 })
+		if ctx.Objectives.has("Bedtime") and not ctx.Objectives.isDone("Bedtime") then
+			ctx.Objectives.step("Bedtime", "Teeth")
+			if not brushed and ctx.Director then
+				brushed = true
+				-- (the hint they'll need in a few minutes)
+				task.delay(3, function()
+					ctx.Director.think(player, "Huh. My phone's got one bar of signal by that window. Nowhere else in the house gets any.")
+				end)
+			end
+		end
+	end)
+	end
 	Kit.mirror(hbath, F(17.5, U + 6.6, -5.62, PZ), 4, 3.4, Color3.fromRGB(200, 200, 196))
 	Kit.toilet(hbath, F(24, U, -3.75, PZ))
 	Kit.box(hbath, "ShowerBase", CF(36.3, U + 0.2, 5.35), V(5.7, 0.4, 4.7), Color3.fromRGB(230, 230, 228), KM.Tile, { CanCollide = true, CanQuery = true })

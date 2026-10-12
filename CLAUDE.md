@@ -94,7 +94,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Rain sound and occasional thunder; fog outside.
 
 **Retention (the 250 highly-engaged goal)**
-- Group queue circles start with whoever's there (45 s, or START NOW) — never wait forever at low CCU.
+- Group queue circles start with whoever's there (45 s, 20 s alone in the lobby, or START NOW) — never wait
+  forever at low CCU — and first try to join a group night that started short (MatchService).
 - Levels (XP = coins earned playing) with rewards at milestones; LV on the lobby tag, XP bar on the
   result card; tomorrow's daily reward shown at the end of every night.
 - Analytics funnels (TelemetryService): check Creator Hub → Analytics → Funnels to find where new
@@ -154,21 +155,25 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
-- **11 Oct (v76):** v74/v75 had too little traffic to judge (2 nights). Fixed from the logs:
-  (1) phone-only groups took 104-166 s from the popcorn bag to the microwave (PC ~20 s): Roblox
-  shows one prompt per key and the kitchen drawer under the microwave (and the junk drawer under the
-  phone) won on touch; nearby minor prompts now use the secondary key (`prompts_test` guards it).
-  (2) half of all players get caught, 46% of those die, 9 of 35 deaths within a minute of getting
-  free: breaking free now gives a 40 s head start (Hard 20 s; `Config.Intruder.FreedGrace`).
-- **v77:** revive price 25 → 10 R$ (25 sold 0 of 35 deaths; DOORS' death-screen revive is 40 R$).
-  The card shows each player's live price (GetProductInfo), so regional pricing can be switched on
-  for the product in Creator Hub. Check revive sales (ReviveCredits / Journey "Revive" events).
-- **Next:** pull logs `--since=76`: phone groups' Popcorn:Bag→Cook gap, deaths per captured
-  player, quits while dead; and v74/v75's auto-continue / ▶ PLAY effects once there's traffic.
-- Daily reminder routine ("Daily reward reminder (attic game)", 22:53 UTC) fires tonight for the
-  first real send; dry run on 11 Oct: 60 players would get it.
-- Solo nights are almost always abandoned (8/9); groups of 3-4 almost never.
-- Coming back on another day is still ~2%: that's the gap to the 250 highly engaged players.
+- **12 Oct (v78)**, from 17 h of v77 logs (292 nights, 1,038 lobby visits, 1,275 players):
+  - **Highly engaged player = a user who spent a minimum amount anywhere on Roblox in the last 60
+    days and plays our game** (Roblox's Kids/Select page). So it's unique paying players over a rolling
+    60 days: more players who stay and play is the lever, not returns.
+  - Worked: ▶ PLAY (new players queue 91%, bounce 7%); the phone prompt fix (touch groups' popcorn
+    step 104 s → 20 s); revive at 10 R$ sold 2 (0 at 25).
+  - Fixed in v78: (1) nerve: the dark alone drained everyone to 0 three minutes into the hunt
+    (55/102 alive hunt quitters had nerve < 20) → floor 50 (`Nerve.DarkFloor`), softer vignette;
+    (2) the 911 call: 36% of nights never got help → Normal whispers a 10 s call (Hard unchanged);
+    Mrs. Okafor calls the police 100 s into the last act if nobody did; act III max 7 min;
+    (3) "Get ready for bed" (brush teeth upstairs, the phone finds the bar) fills the 149 s of nothing
+    before the blackout; (4) **MatchService**: lone/short circles join a group night that started
+    short (92% of solo nights abandoned, 18/52 in the first minute); alone in the lobby, circles
+    start after 20 s.
+- **Next:** `pull_stats.py --since=78`: first-night mid-night quit rate (v77: 43%; solo 92%, pairs 46%),
+  "joined a night in progress", help called by method (Okafor), hunt quits by nerve, night length
+  (should stay ~12-13 min). Phones still quit most (54% vs PC 30%).
+- Daily reminder routine's first send (11 Oct 22:53) failed on the usage limit; it retries daily.
+- Coming back another day is ~1%; veterans quit at minute 1 (mostly auto-continued nights they didn't want).
 
 ## Workflow and commands
 
@@ -189,7 +194,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 77).
+  (last published: version 78).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

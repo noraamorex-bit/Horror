@@ -20,6 +20,10 @@ Config.Lobby = {
 	Countdown = 10, -- seconds a full circle waits before teleporting (lets people step off)
 	SoloCountdown = 3,
 	FillWait = 45, -- a group circle that isn't full starts anyway, with whoever's there, after this long
+	FillWaitAlone = 20, -- (...this long when nobody else is in the lobby to step in)
+	JoinAfter = 3, -- a circle waiting for players looks for a group night that started short (MatchService)...
+	JoinEvery = 4, -- ...this often
+	JoinOpenFor = 150, -- game server: a short group night takes late arrivals for this long (the cozy part)
 	StartNowAfter = 8, -- (and anyone in it can press START NOW after this long)
 	ArrivalTimeout = 30, -- game server: start without stragglers after this long
 	ReturnDelay = 35, -- game server: seconds on the ending screen before the next night starts (LOBBY to leave)
@@ -38,7 +42,7 @@ Config.Acts = {
 	-- (kept short: the cozy part sets the mood, but players came for him)
 	Evening = { Min = 2.5, Max = 5 },
 	SmallThings = { Min = 4, Max = 6 },
-	SomeoneElse = { Min = 6, Max = 9 },
+	SomeoneElse = { Min = 6, Max = 7 }, -- (9 left nights without a call dragging past 20 minutes)
 }
 -- a night where everyone has played before: the build-up acts could run shorter (this much of
 -- their length). Off: the owner found the night too fast; repeat groups can SKIP TO THE BLACKOUT.
@@ -72,7 +76,8 @@ Config.Noise = {
 	Knock = 50,
 	Deadbolt = 20,
 	GlassBreak = 140,
-	PhoneCall = 30,
+	PhoneCall = 30, -- (Hard: a 911 call at full voice)
+	PhoneWhisper = 16, -- (Normal: whispering into the phone at the window)
 	Struggle = 30,
 	GarageRelease = 70,
 	GarageMotor = 90,
@@ -83,7 +88,8 @@ Config.Noise = {
 
 Config.Nerve = {
 	Max = 100,
-	AloneDarkDrain = 0.55, -- per second, acts 2+
+	AloneDarkDrain = 0.3, -- per second, acts 2+ (with your flashlight on: AloneDrain)
+	DarkFloor = 50, -- the dark alone drains you down to here; below it, only he does
 	AloneDrain = 0.15,
 	NearFriendsRegen = 0.9,
 	LitRegen = 0.35,
@@ -246,7 +252,10 @@ Config.Help = {
 	PhoneResponse = 150,
 	NeighborResponse = 120,
 	CarResponse = 60,
-	CellCallDuration = 15,
+	CellCallDuration = 15, -- (Hard)
+	CellCallDurationNormal = 10,
+	OkaforCallsAfter = 100, -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
+	OkaforResponse = 80,
 	LandlineCallDuration = 6,
 	NeighborWait = 15,
 	JunctionRepair = 10,
@@ -266,6 +275,9 @@ Config.Director = {
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
 	BeatSpacing = 35, -- a scripted scare waits this long after the last one (one thing at a time)
 	AfterNews = 40, -- act II ends this long after the news was watched at the soonest...
+	BedtimeAfterNews = 8, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
+	AfterBedtime = 12,
+	BedtimeMinAct = 150, -- (but act II still runs at least this long: its scares need room)
 	AfterScare = 30, -- ...and this long after the last scare
 }
 

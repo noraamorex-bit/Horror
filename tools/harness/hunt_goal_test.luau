@@ -101,8 +101,16 @@ local ok, err = pcall(function()
 	rawget(prompt, "__signals").Triggered:Fire(p)
 	assert(p:GetAttribute("Calling") == true, "calling")
 	-- (PlayerState recomputes Signal from the position every tick: keep it there)
-	for _ = 1, 20 do p:SetAttribute("Signal", 1); H.flush(1) end
-	assert(ctx.Escape.helpCalled(), "help is on the way")
+	-- Normal: a whispered call (quieter, less often) that takes CellCallDurationNormal
+	local voices = {}
+	ctx.Noise.listen(function(ev) if ev.Kind == "Voice" and ev.Source == p then table.insert(voices, ev.Radius) end end)
+	local need = ctx.Config.Help.CellCallDurationNormal
+	for _ = 1, need - 1 do p:SetAttribute("Signal", 1); H.flush(1) end
+	assert(not ctx.Escape.helpCalled(), "not through yet")
+	for _ = 1, 3 do p:SetAttribute("Signal", 1); H.flush(1) end
+	assert(ctx.Escape.helpCalled(), "help is on the way after " .. need .. " s")
+	assert(#voices >= 2 and #voices <= math.ceil(need / 3) + 1, "a whisper every 3 s, got " .. #voices)
+	for _, r in voices do assert(r == ctx.Config.Noise.PhoneWhisper, "whispering, not talking out loud") end
 	assert(has(sent, "Survive"), "survive until they come")
 	assert(not has(sent, "Neighbor") and not has(sent, "Car"), "the other ways out are gone")
 	H.flush(0.5)
@@ -179,6 +187,7 @@ local ok, err = pcall(function()
 	ctx.Objectives.complete("LockUp")
 	ctx.Director.onDoorLockChanged({ Locked = true, Id = "BackDoor" }, solo)
 	local newsAt, tvDuringNews = nil, false
+	local bedAt, brushedAt = nil, nil
 	while H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SmallThings" and T - t0 < 700 do
 		H.flush(1)
 		local st = ctx.Director._state()
@@ -198,6 +207,14 @@ local ok, err = pcall(function()
 		if newsAt and T >= newsAt and not ctx.Objectives.isDone("News") then
 			ctx.Objectives.complete("News")
 		end
+		-- then bed: someone goes up and brushes their teeth 20 s later
+		if ctx.Objectives.has("Bedtime") and not bedAt then
+			bedAt = T
+		end
+		if bedAt and T >= bedAt + 20 and not ctx.Objectives.isDone("Bedtime") then
+			ctx.Objectives.step("Bedtime", "Teeth")
+			brushedAt = T
+		end
 	end
 	ctx.Phone.deliver = realDeliver
 	local actLen = T - t0
@@ -205,7 +222,9 @@ local ok, err = pcall(function()
 	for _, sc in scares do table.insert(names, ("%s@%.0f"):format(sc.Id, sc.T - t0)) end
 	print(("act II lasted %.0f s; scares: %s"):format(actLen, table.concat(names, " ")))
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("Act") == "SomeoneElse", "on to act III")
-	assert(actLen >= ctx.Config.Acts.SmallThings.Min * 60, "no rushing: the act runs its course")
+	assert(bedAt and newsAt and bedAt >= newsAt, "after the news: get ready for bed")
+	assert(brushedAt and T - brushedAt <= ctx.Config.Director.AfterBedtime + 17, ("the lights go soon after (%.0f s)"):format(T - (brushedAt or T)))
+	assert(actLen >= ctx.Config.Director.BedtimeMinAct, "no rushing: act II still runs a few minutes")
 	assert(not tvDuringNews, "the emergency alert never cuts in while they're watching the news")
 	-- scripted beats never land on top of each other
 	local beatIds = { PlateCrash = true, FootstepsUpstairs = true, TVAlert = true, FigureWindow = true }
@@ -226,6 +245,45 @@ local ok, err = pcall(function()
 		end
 	end
 	print("act II pacing ok")
+
+	-- nobody got help out: a while into the last act, Mrs. Okafor calls the police herself
+	for _, k in { "Ending", "Escape", "Objectives" } do
+		if ctx[k].reset then ctx[k].reset() end
+	end
+	local notes = {}
+	local realNotify = ctx.Remotes.Notify.FireAllClients
+	ctx.Remotes.Notify.FireAllClients = function(_, text) table.insert(notes, text) end
+	ctx.Director.startAct("Guest")
+	local tg = T
+	while not ctx.Escape.helpCalled() and T - tg < 300 do H.flush(1) end
+	ctx.Remotes.Notify.FireAllClients = realNotify
+	local after = T - tg
+	assert(ctx.Escape.helpCalled(), "help was called for them")
+	assert(math.abs(after - ctx.Config.Help.OkaforCallsAfter) <= 3, ("after OkaforCallsAfter (%.0f s)"):format(after))
+	local told = false
+	for _, n in notes do if string.find(n, "Okafor") then told = true end end
+	assert(told, "and everyone is told")
+	print(("okafor called after %.0f s ok"):format(after))
+
+	-- nerve: alone in the dark (power out, him nowhere near) wears you down to DarkFloor, no further
+	H.flush(ctx.Config.Help.OkaforResponse + 5) -- (the police come for that night)
+	for _, k in { "Ending", "Escape" } do
+		if ctx[k].reset then ctx[k].reset() end
+	end
+	ctx.Intruder.setMode("Offstage")
+	ctx.Power.setMain(false, "Test")
+	local lone, lroot = mkPlayer("Lone")
+	H.services.Players.GetPlayers = function() return { lone } end
+	lroot.CFrame = R.CFrame.new(-30, 17, -20) -- (the master bedroom, upstairs)
+	lone:SetAttribute("Nerve", 100)
+	local realAct = ctx.Director.getAct
+	ctx.Director.getAct = function() return "Guest" end -- (the hunt, without him in it)
+	for _ = 1, 480 do H.services.RunService.Heartbeat:Fire(0.5); T += 0.5 end
+	ctx.Director.getAct = realAct
+	local nerve = lone:GetAttribute("Nerve")
+	local floor = ctx.Config.Nerve.DarkFloor
+	assert(nerve <= floor + 2 and nerve >= floor - 1, ("the dark alone stops at %d, got %.1f"):format(floor, nerve))
+	print(("nerve in the dark settles at %.0f ok"):format(nerve))
 end)
 print(ok and "HUNTGOAL OK" or ("HUNTGOAL FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

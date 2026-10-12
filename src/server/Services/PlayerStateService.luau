@@ -384,10 +384,11 @@ local function slowTick(dt: number)
 		local delta = 0
 		local friends = PlayerState.friendsNear(player)
 		local lit = PlayerState.isLit(player)
-		if tense then
-			if friends == 0 then
-				delta -= lit and N.AloneDrain or N.AloneDarkDrain
-			end
+		-- (the dark alone wears you down, but only so far: below DarkFloor it takes seeing him or
+		-- having him close. Logs: players alone in the dark hit 0 three minutes into the hunt,
+		-- with a black screen, a pounding heart and breathing he could hear, and quit there)
+		if tense and friends == 0 and (player:GetAttribute("Nerve") or 100) > (N.DarkFloor or 0) then
+			delta -= (lit or player:GetAttribute("FlashlightOn")) and N.AloneDrain or N.AloneDarkDrain
 		end
 		if friends > 0 then
 			delta += N.NearFriendsRegen

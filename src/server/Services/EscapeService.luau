@@ -77,7 +77,8 @@ function Escape.callForHelp(method: string, player: Player?)
 		ctx.Journey.team("Help:" .. method)
 	end
 	local H = ctx.Config.Help
-	local eta = (method == "Car" and H.CarResponse) or (method == "Neighbor" and H.NeighborResponse) or H.PhoneResponse
+	local eta = (method == "Car" and H.CarResponse) or (method == "Neighbor" and H.NeighborResponse)
+		or (method == "Okafor" and (H.OkaforResponse or H.PhoneResponse)) or H.PhoneResponse
 	local hard = ctx.Config.Difficulty and ctx.Config.Difficulty.Hard
 	if workspace:GetAttribute("Difficulty") == "Hard" and hard and hard.PoliceMultiplier then
 		eta = math.floor(eta * hard.PoliceMultiplier + 0.5)
@@ -87,7 +88,7 @@ function Escape.callForHelp(method: string, player: Player?)
 	workspace:SetAttribute("HelpMethod", method)
 
 	-- the way out that worked is done; the other routes (and the search) simply stop mattering
-	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone" }, Neighbor = { "Neighbor" }, Car = { "Car" } }
+	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone" }, Neighbor = { "Neighbor" }, Car = { "Car" }, Okafor = {} }
 	for _, id in used[method] or { "Call911" } do
 		ctx.Objectives.complete(id)
 	end
@@ -214,6 +215,15 @@ end
 -- the secret ending holds the police and the dawn (FinaleService decides how it ends)
 function Escape.suspend(on: boolean)
 	(state :: any).Suspended = on or nil
+end
+
+-- nobody got help out in time: the neighbour saw the van and called the police herself
+function Escape.okaforCalls()
+	if state.HelpCalled or (state :: any).Suspended or ctx.Ending.isOver() then
+		return
+	end
+	ctx.Remotes.Notify:FireAllClients("Mrs. Okafor saw a van behind the house. She called the police. Hold on.", "info")
+	Escape.callForHelp("Okafor", nil)
 end
 
 function Escape.dawn()

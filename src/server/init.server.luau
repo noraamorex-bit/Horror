@@ -85,6 +85,9 @@ workspace:SetAttribute("Mode", mode)
 local Shop = require(Services.ShopService)
 Shop.init(ctx)
 Shop.start()
+-- group nights that started short take late arrivals from the lobby
+local Match = require(Services.MatchService)
+Match.init(ctx)
 if mode == "Lobby" then
 	-- the owner's panel works here too, for the coins tab
 	local LobbyAdmin = require(Services.AdminService)
@@ -234,5 +237,7 @@ for _, name in ORDER do
 		s.start()
 	end
 end
+
+Match.startGame()
 
 print("[HomeAlone] server ready")

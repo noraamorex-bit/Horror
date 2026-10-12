@@ -283,7 +283,7 @@ function Effects.start()
 		if not inGame then
 			fear = 0
 		end
-		setVignette(0.15 + fear * 0.7)
+		setVignette(0.15 + fear * 0.45) -- (it used to close to 0.85: half a phone screen black at low nerve)
 		grade.Saturation = -fear * 0.5
 		grade.Contrast = fear * 0.15
 

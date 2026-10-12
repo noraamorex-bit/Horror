@@ -134,6 +134,9 @@ def report_lobby(lobby):
     print("  devices:", dict(dev.most_common()))
     sizes = Counter(v.get("Q") for v in visits if v.get("Q"))
     print("  circle picked:", dict(sorted(sizes.items())))
+    late = [v for v in visits if v.get("Late")]
+    tp = [v for v in visits if v.get("Tp") is not None]
+    print(f"  joined a night in progress (MatchService, v78+): {len(late)} of {len(tp)} teleports")
 
 
 def report_nights(nights):
@@ -257,6 +260,12 @@ def report_nights(nights):
     # the team's progress: how far groups get
     steps = Counter(code for n in started for _, code in n.get("Obj") or [])
     print("  objective steps reached (nights):", dict(steps.most_common(25)))
+    # how help came (v78+: Okafor = the neighbour called it in because nobody else did)
+    helps = Counter(next((c for _, c in n.get("Obj") or [] if c.startswith("Help:")), "none") for n in started
+                    if any(a == "SomeoneElse" for _, a in n.get("Acts") or []))
+    print("  help called (nights that reached the blackout):", dict(helps.most_common()))
+    joined = sum(1 for n in started for p in (n.get("P") or {}).values() if any(ev[1] == "Joined" for ev in p.get("Ev") or []))
+    print(f"  late arrivals who joined a night in progress: {joined}")
 
 
 def main():

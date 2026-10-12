@@ -273,10 +273,11 @@ function Journey.lobbyQueued(p: Player, size: number)
 	end
 end
 
-function Journey.lobbyTeleport(p: Player)
+function Journey.lobbyTeleport(p: Player, joined: boolean?)
 	local s = lobby[p]
 	if s then
 		s.Tp = math.floor(os.clock() - s.Clock)
+		s.Late = joined or nil -- (into a night already under way: MatchService)
 	end
 end
 
@@ -294,6 +295,7 @@ local function lobbyLeave(p: Player)
 		Lv = tonumber(p:GetAttribute("Level")),
 		Ref = p:GetAttribute("StatReferred") == true or nil,
 		Join = s.Join,
+		Late = s.Late,
 		Secs = math.floor(os.clock() - s.Clock),
 		Queued = s.Queued,
 		Q = s.Q,

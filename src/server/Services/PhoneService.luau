@@ -200,12 +200,17 @@ function Phone.start()
 				end
 				progress += dt
 				calling[player] = progress
-				local total = ctx.Config.Help.CellCallDuration
+				-- (Normal: a short whispered call he can miss. The logs: most groups never got a call
+				-- through: 15 s standing at the window, talking loud enough for him to charge every 2 s)
+				local hard = workspace:GetAttribute("Difficulty") == "Hard"
+				local H = ctx.Config.Help
+				local total = hard and H.CellCallDuration or (H.CellCallDurationNormal or H.CellCallDuration)
 				player:SetAttribute("CallProgress", progress / total)
-				-- talking is noisy
+				-- talking is noisy (whispering, less so)
 				local root = ctx.Util.getRoot(player)
-				if root and math.floor(progress * 4) % 8 == 0 then
-					ctx.Noise.emit(root.Position, ctx.Config.Noise.PhoneCall, "Voice", player)
+				local every = hard and 2 or 3
+				if root and math.floor(progress * 4) % (every * 4) == 0 then
+					ctx.Noise.emit(root.Position, hard and ctx.Config.Noise.PhoneCall or (ctx.Config.Noise.PhoneWhisper or ctx.Config.Noise.PhoneCall), "Voice", player)
 				end
 				-- dispatcher lines as captions
 				local lines = ctx.Story.Calls.Dispatch

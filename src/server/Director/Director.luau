@@ -99,6 +99,11 @@ function Director.clockString(): string
 	return ctx.Util.clockString(Director.clockMinutes())
 end
 
+-- (a veterans' night that skips straight to the blackout: no place for a newcomer)
+function Director.isSkipping(): boolean
+	return state.SkipToBlackout == true
+end
+
 function Director.elapsedSeconds(): number
 	return elapsed()
 end
@@ -1379,6 +1384,13 @@ local function actTick()
 	schedule(actTime)
 	hintTick()
 	lastChanceTick()
+	-- nobody has got help out by now: next door, Mrs. Okafor sees the van and calls the police (a
+	-- night with no call used to drag on past 20 minutes until everyone gave up)
+	if state.Act == "Guest" and not state.OkaforCalled and not ctx.Escape.helpCalled()
+		and actTime >= (ctx.Config.Help.OkaforCallsAfter or 100) * math.max(ctx.Config.TimeScale, 0.25) then
+		state.OkaforCalled = true
+		ctx.Escape.okaforCalls()
+	end
 	-- first visits to each room in the first act get a line of their own
 	if state.Act == "Evening" and Director.isQuiet() then
 		for _, p in ctx.Util.activePlayers() do
@@ -1455,11 +1467,29 @@ local function actTick()
 		if newsDone and not state.NewsDoneAt then
 			state.NewsDoneAt = os.clock()
 		end
-		-- (and a breather before the lights go: never straight after the news or a scare)
+		-- then bed: brush your teeth upstairs (the blackout comes while they're up there)
 		local scale = math.max(ctx.Config.TimeScale, 0.25)
+		local investigating = ctx.Objectives.has("Investigate") and not ctx.Objectives.isDone("Investigate")
+		-- (the News task itself watched: newsDone is already true while Mom is still texting)
+		if ctx.Objectives.isDone("News") and not state.NewsWatchedAt then
+			state.NewsWatchedAt = os.clock()
+		end
+		if state.NewsWatchedAt and not state.BedtimeGiven and not investigating and Director.isQuiet()
+			and os.clock() - state.NewsWatchedAt >= (ctx.Config.Director.BedtimeAfterNews or 8) * scale then
+			state.BedtimeGiven = true
+			ctx.Objectives.add("Bedtime")
+			Director.think(nil, ctx.Story.Thoughts.Objectives.Bedtime)
+		end
+		if state.BedtimeGiven and ctx.Objectives.isDone("Bedtime") and not state.BedtimeDoneAt then
+			state.BedtimeDoneAt = os.clock()
+		end
+		local afterBed = state.BedtimeDoneAt ~= nil and os.clock() - state.BedtimeDoneAt >= (ctx.Config.Director.AfterBedtime or 12) * scale
+			and os.clock() - (state.LastScareAt or -1e9) >= 15 * scale
+			and actTime >= (ctx.Config.Director.BedtimeMinAct or 150) * scale
+		-- (and a breather before the lights go: never straight after the news or a scare)
 		local breather = newsDone and os.clock() - (state.NewsDoneAt or 0) >= (ctx.Config.Director.AfterNews or 40) * scale
 			and os.clock() - (state.LastScareAt or -1e9) >= (ctx.Config.Director.AfterScare or 30) * scale
-		done = (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet and breather) or (actTime >= maxT and breather) or actTime >= maxT + 120
+		done = afterBed or (actTime >= minT and beatsDone() and state.Tension < ctx.Config.Director.SmallThingsQuiet and breather) or (actTime >= maxT and breather) or actTime >= maxT + 120
 	elseif state.Act == "SomeoneElse" then
 		done = actTime >= maxT and not ctx.Escape.helpCalled()
 	end
@@ -1542,6 +1572,9 @@ function Director.start()
 				char:PivotTo(spawnFor(p) :: CFrame)
 			end
 			ctx.Remotes.Notify:FireClient(p, "You made it just in time. The others are inside.", "info")
+			if ctx.Journey then
+				ctx.Journey.event(p, "Joined")
+			end
 		elseif state.Act ~= "Lobby" then
 			ctx.Remotes.Notify:FireClient(p, "A night is already under way. You'll join the next one.", "info")
 		end
