@@ -48,6 +48,10 @@ Config.Acts = {
 -- their length). Off: the owner found the night too fast; repeat groups can SKIP TO THE BLACKOUT.
 Config.VeteranPace = {}
 Config.HardCapMinutes = 60
+-- the FASTEST WINS board (and personal bests) ignore anything faster: a full night can't be won
+-- that quickly (the fastest real one in the logs: 7:21, by car), and skip-to-the-blackout nights
+-- never count at all (they put a 0:51 on the board)
+Config.MinBoardWin = 360
 
 -- The in-game clock starts at 8:47 PM and runs faster than real time.
 Config.ClockStartMinutes = 20 * 60 + 47

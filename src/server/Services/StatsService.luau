@@ -16,6 +16,16 @@ local ctx
 local store = nil
 local board = nil -- OrderedDataStore: nights survived, for the lobby leaderboard
 local fastBoard = nil -- OrderedDataStore: fastest win in seconds (lowest first), for the second sign
+
+-- a real night can't be won faster than this: anything quicker came from a night that skipped
+-- straight to the blackout (the owner: a 0:51 on the board), so it never counts
+local function minWin(): number
+	return ctx and ctx.Config and ctx.Config.MinBoardWin or 360
+end
+local function validBest(x: number?): number
+	x = tonumber(x) or 0
+	return if x >= minWin() then math.floor(x) else 0
+end
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
@@ -125,7 +135,7 @@ local function load(player: Player)
 			d.Referrals = tonumber(data.Referrals) or 0
 			d.Referred = data.Referred == true
 			d.Beam = type(data.Beam) == "string" and data.Beam or "Classic"
-			d.Best = math.max(0, math.floor(tonumber(data.Best) or 0))
+			d.Best = validBest(data.Best)
 			d.ReviveCredits = math.max(0, math.floor(tonumber(data.ReviveCredits) or 0))
 			d.Tips = math.max(0, math.floor(tonumber(data.Tips) or 0))
 			local set = type(data.Settings) == "table" and data.Settings or {}
@@ -169,7 +179,7 @@ local function save(userId: number)
 					Referred = old.Referred == true or d.Referred,
 					Beam = d.Beam,
 					Best = (function()
-						local a, b = tonumber(old.Best) or 0, d.Best
+						local a, b = validBest(old.Best), validBest(d.Best)
 						if a > 0 and b > 0 then
 							return math.min(a, b)
 						end
@@ -323,6 +333,13 @@ function Stats.recordWin(player: Player, seconds: number): boolean
 	local d = cache[player.UserId]
 	seconds = math.floor(seconds)
 	if not d or seconds <= 0 or (ctx.Config and ctx.Config.Debug) then
+		return false
+	end
+	-- (a night that started at the blackout isn't a night: no time on the board, no personal best)
+	if ctx.Director and ctx.Director.isSkipping and ctx.Director.isSkipping() then
+		return false
+	end
+	if seconds < minWin() then
 		return false
 	end
 	if d.Best > 0 and seconds >= d.Best then
@@ -509,6 +526,17 @@ function Stats.init(c)
 					end)
 				end
 			end
+		end
+		-- (and take off any time too fast to be a real night: skip-to-the-blackout wins)
+		if fastBoard then
+			pcall(function()
+				local pages = fastBoard:GetSortedAsync(true, 100, 0, minWin() - 1)
+				for _, entry in pages:GetCurrentPage() do
+					pcall(function()
+						fastBoard:RemoveAsync(entry.key)
+					end)
+				end
+			end)
 		end
 	end)
 end

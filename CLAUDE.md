@@ -118,6 +118,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   forgiving, Hard is tight.
 - Chat: name tags ★ (supporter) and the equipped title in its colour; no level (the owner asked).
   Level and nights survived are in the server's player list (leaderstats; not for the owner).
+- FASTEST WINS: skip-to-the-blackout nights never count, nor any win under 6:00 (`Config.MinBoardWin`);
+  old entries like that are removed (the owner saw a 0:51).
 - "Secret ending: found by N players" is one small line at the bottom of the NIGHTS SURVIVED board
   (the owner found a separate board "too much").
 
@@ -194,7 +196,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 78).
+  (last published: version 79).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
