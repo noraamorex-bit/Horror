@@ -76,6 +76,15 @@
     const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8;
     return t;
   }
+  // re-pose a built avatar (film2.mjs: per-frame "av")
+  window.poseAvatar = function (root, pose) {
+    const J = root.userData.joints, P = Object.assign({ waist: 0, neckX: 0, neckY: 0, neckZ: 0, lShoulder: [0, 0, 0], rShoulder: [0, 0, 0], lElbow: 0, rElbow: 0, lHip: 0, rHip: 0, lKnee: 0, rKnee: 0 }, pose || {});
+    J.waist.rotation.x = P.waist; J.neck.rotation.set(P.neckX, P.neckY, P.neckZ);
+    for (const s of ['l', 'r']) {
+      J[s + 'Shoulder'].rotation.set(...P[s + 'Shoulder']); J[s + 'Elbow'].rotation.x = P[s + 'Elbow'];
+      J[s + 'Hip'].rotation.x = P[s + 'Hip']; J[s + 'Knee'].rotation.x = P[s + 'Knee'];
+    }
+  };
   window.buildAvatar = function (o) {
     const C = Object.assign({ skin: '#f2c9a6', hoodie: '#d23b3b', hoodieDark: '#a52a2e', pants: '#2b3b5c', shoe: '#efefef', sole: '#2a2a2e', hair: '#3a2618', string: '#f2f2f2' }, o.colors || {});
     const P = Object.assign({ waist: 0, neckX: 0, neckY: 0, neckZ: 0, lShoulder: [0, 0, 0], rShoulder: [0, 0, 0], lElbow: 0, rElbow: 0, lHip: 0, rHip: 0, lKnee: 0, rKnee: 0 }, o.pose || {});
@@ -95,6 +104,7 @@
     }
     // head: the rounded Roblox head, face on the -Z side
     const neck = joint(waist, 0, 1.62, 0); neck.rotation.set(P.neckX, P.neckY, P.neckZ);
+    const J = { waist, neck };                                                                // (joints, for per-frame posing)
     add(neck, new T.CylinderGeometry(0.32, 0.32, 0.3, 20), mSkin, 0, 0.1, 0);
     const headGeo = rbox(1.22, 1.22, 1.22, 0.42, 8);
     const faceMat = new T.MeshStandardMaterial({ map: (o.face === 'scared' ? scaredTexture : o.face === 'blank' ? blankTexture : faceTexture)(C.skin), roughness: 0.6 });
@@ -113,9 +123,9 @@
     // arms
     const arms = {};
     for (const [side, sx] of [['l', -1], ['r', 1]]) {
-      const sh = joint(waist, sx * 1.5, 1.52, 0); sh.rotation.set(...P[side + 'Shoulder']);
+      const sh = joint(waist, sx * 1.5, 1.52, 0); sh.rotation.set(...P[side + 'Shoulder']); J[side + 'Shoulder'] = sh;
       add(sh, rbox(0.96, 1.22, 0.96, 0.24), mHood, 0, -0.55, 0);
-      const el = joint(sh, 0, -1.15, 0); el.rotation.x = P[side + 'Elbow'];
+      const el = joint(sh, 0, -1.15, 0); el.rotation.x = P[side + 'Elbow']; J[side + 'Elbow'] = el;
       add(el, rbox(0.94, 1.1, 0.94, 0.24), mHood, 0, -0.5, 0);
       add(el, rbox(0.98, 0.22, 0.98, 0.08), mHoodD, 0, -0.98, 0);                              // the cuff
       const hand = add(el, rbox(0.7, 0.36, 0.7, 0.16), mSkin, 0, -1.2, 0);
@@ -123,14 +133,15 @@
     }
     // legs
     for (const [side, sx] of [['l', -1], ['r', 1]]) {
-      const hip = joint(root, sx * 0.5, -0.21, 0); hip.rotation.x = P[side + 'Hip'];
+      const hip = joint(root, sx * 0.5, -0.21, 0); hip.rotation.x = P[side + 'Hip']; J[side + 'Hip'] = hip;
       add(hip, rbox(0.98, 1.2, 0.98, 0.2), mPants, 0, -0.6, 0);
-      const kn = joint(hip, 0, -1.2, 0); kn.rotation.x = P[side + 'Knee'];
+      const kn = joint(hip, 0, -1.2, 0); kn.rotation.x = P[side + 'Knee']; J[side + 'Knee'] = kn;
       add(kn, rbox(0.96, 1.15, 0.96, 0.2), mPants, 0, -0.58, 0);
       add(kn, rbox(1.0, 0.36, 1.25, 0.16), mat(C.shoe), 0, -1.3, -0.12);
       add(kn, rbox(1.02, 0.1, 1.27, 0.04), mat(C.sole), 0, -1.45, -0.12);
     }
     root.userData.hands = arms;
+    root.userData.joints = J;
     root.userData.headNode = neck;
     return root;
   };

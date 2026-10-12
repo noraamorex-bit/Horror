@@ -97,6 +97,7 @@ if (spec.avatars && spec.avatars.length) {
       const g = window.buildAvatar(a);
       g.position.set(...a.pos); g.rotation.order = "YXZ"; g.rotation.set(a.pitch || 0, a.yaw || 0, 0);
       window.S.add(g); g.updateMatrixWorld(true);
+      (window.AV = window.AV || []).push(g);
       if (a.flashlight) {
         // a flashlight in the right hand, pointing where the avatar faces (or at a.flashlight.target)
         const r = new T.Vector3(); g.userData.hands.r.getWorldPosition(r);
@@ -220,6 +221,15 @@ for (const fr of spec.frames) {
       const M = new T.Matrix4().makeTranslation(h[0], h[1] || 0, h[2]).multiply(R).multiply(new T.Matrix4().makeTranslation(-h[0], -(h[1] || 0), -h[2]));
       for (const o of window.DOOR) o.matrix.copy(M.clone().multiply(o.userData.m0));
     }
+    // avatars moved and posed per frame (fr.av: [{ i, pos, yaw, pose }]); with fr.av, the ones not listed hide
+    if (fr.av && window.AV) {
+      for (const g of window.AV) g.visible = false;
+      for (const a of fr.av) {
+        const g = window.AV[a.i]; if (!g) continue;
+        g.visible = true; g.position.set(...a.pos); g.rotation.set(a.pitch || 0, a.yaw || 0, 0);
+        if (a.pose) window.poseAvatar(g, a.pose);
+      }
+    } else if (window.AV) for (const g of window.AV) g.visible = true;
     // creature
     window.CRG.visible = !!crFrame;
     if (crFrame) crFrame.forEach((c, i) => window.place(window.CR[i].mesh, c, window.CR[i].gi));

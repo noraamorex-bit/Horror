@@ -144,6 +144,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   ending. #9: the pizza man → the 911 call (`reel20`). Latest: **#10** (bedtime: brushing teeth, lights out, the hall
   closet, "don't breathe."; `reel_source/reel21`). Keep #2's slot lengths so the cuts and **the same music** land identically;
   change the story/clips each time.
+- **Second format (the owner's idea, reel22 on): "AMAZING NEW ROBLOX HORROR GAME TO PLAY WITH YOUR
+  FRIENDS"** — gameplay-style footage (third person behind the player like the real game: walking, the
+  lights going out, running from him, him running at you, hiding, saving a friend, the secret dinner,
+  escaping), cut on the bar/half bar of an **upbeat original track** (`reel22/audio.py`, 128 BPM, A minor),
+  the game's name **always pinned at the top**, yellow accent, short captions, end card SEARCH IT ON
+  ROBLOX. Tools: `comp_gameplay.mjs`; avatars walk/run per frame (`film2.mjs` "av", `avatar.js` poseAvatar).
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
