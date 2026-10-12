@@ -144,12 +144,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   ending. #9: the pizza man → the 911 call (`reel20`). Latest: **#10** (bedtime: brushing teeth, lights out, the hall
   closet, "don't breathe."; `reel_source/reel21`). Keep #2's slot lengths so the cuts and **the same music** land identically;
   change the story/clips each time.
-- **Second format (the owner's idea, reel22 on): "AMAZING NEW ROBLOX HORROR GAME TO PLAY WITH YOUR
-  FRIENDS"** — gameplay-style footage (third person behind the player like the real game: walking, the
-  lights going out, running from him, him running at you, hiding, saving a friend, the secret dinner,
-  escaping), cut on the bar/half bar of an **upbeat original track** (`reel22/audio.py`, 128 BPM, A minor),
-  the game's name **always pinned at the top**, yellow accent, short captions, end card SEARCH IT ON
-  ROBLOX. Tools: `comp_gameplay.mjs`; avatars walk/run per frame (`film2.mjs` "av", `avatar.js` poseAvatar).
+- **Second format: "PEAK ROBLOX HORROR GAME TO PLAY WITH FRIENDS (Part 1)"** (reel23, built to match the
+  owner's reference reel instagram.com/reel/Dd4Lknqg4hh as closely as possible): slow first-person
+  handheld walk through dark rooms (porch in the rain → lights out → hall → him), the hook word by word
+  in the middle (PEAK yellow, ROBLOX red, HORROR GAME white, TO PLAY WITH / FRIENDS green, "(Part 1)"),
+  then a small three-line card at the top (NAME / GAMEPLAY 10.5/10 / GENRE Survival Horror) and one
+  spaced line low ("OUT NOW"), a pixelated grey jumpscare, a stretched blue glitch line, a noise-block
+  glitch into a black end card. Music: **dark phonk** (`reel23/audio.py`, 112 BPM, E Phrygian: distorted
+  808, cowbell riff, choir, a half-beat gated drop on the scare). Tools: `comp_peak.mjs`.
+  reel22's version (third person, upbeat 128 BPM track, name banner on top, `comp_gameplay.mjs`) was
+  rejected: "not at all what I wanted", and the upbeat song "sounded Christmas, not horror". Keep music
+  dark; when copying a reference, match it closely (watch it frame by frame first).
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
