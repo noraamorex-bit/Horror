@@ -206,6 +206,14 @@ local function showCard(opts)
 	task.delay(0.4, function()
 		UI.tween(body, 0.6, { TextTransparency = 0 })
 	end)
+	-- a good night: the moment to ask for a like (20 votes so far, 45%: happy players rarely vote
+	-- unless asked; only on wins, and only for a player's first few)
+	if opts.Good and (tonumber(player:GetAttribute("StatNights")) or 0) < 5 then
+		local ask = line({ Text = "Liked tonight? A 👍 on the game page helps a lot.", Font = UI.Font.Body, TextSize = 15, TextColor3 = UI.Color.Dim, TextTransparency = 1 })
+		task.delay(1.6, function()
+			UI.tween(ask, 0.6, { TextTransparency = 0 })
+		end)
+	end
 	-- he got you: how, and how not to next time
 	local tipText = not opts.Good and player:GetAttribute("DeathTip") or nil
 	if type(tipText) == "string" and tipText ~= "" then

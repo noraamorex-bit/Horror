@@ -180,7 +180,7 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   quit the next night within 2 min (the same chores again); skip-to-blackout used in 9 of 46
   all-veteran nights. Fixed in v82: caller grace (6 s Normal) + urgent "HIDE. NOW." thought with the
   how-to; heartbeat wider/slower; death card TIP (how he got you); script error logging (client
-  Perf.Err, server SErr; pull_stats lists them).
+  Perf.Err, server SErr; pull_stats lists them); winning cards (first 5 nights) ask for a 👍.
 - **12 Oct (v81)**, from 4.5 h of v78-80 logs (46 nights, 101 lobby visits): new players queue 97%; the
   quit rate per minute is ~7x higher before the first task than after; **solo nights: 14 of 15
   abandoned** (11 in act I), and half of solo phone players never found the pizza menu. Groups of 2
@@ -229,7 +229,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 82).
+  (last published: version 83).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

@@ -149,6 +149,18 @@ local ok, err = pcall(function()
 	R.Fade.OnClientEvent:Fire(true, 1)
 	R.PlaySound.OnClientEvent:Fire("PhoneVibrate")
 	R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 3 })
+	do
+		local asked = false
+		for _ = 1, 40 do
+			for _, d in H.unwrap(pg):GetDescendants() do
+				if d:IsA("TextLabel") and string.find(d.Text, "on the game page", 1, true) then asked = true end
+			end
+			if asked then break end
+			task.wait(0.1)
+		end
+		assert(asked, "a win asks for a like")
+		print("like ask ok")
+	end
 	player:SetAttribute("DeathTip", "Hide before he turns the corner.")
 	R.Result.OnClientEvent:Fire({ Outcome = "Died", Title = "YOU DIED", Good = false, Line = "y", CanSpectate = true, ReturnToLobby = true })
 	do
