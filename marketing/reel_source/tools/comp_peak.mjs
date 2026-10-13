@@ -4,7 +4,7 @@
 // green, "(Part 1)"); then a small three-line card pinned at the top (NAME / GAMEPLAY / GENRE, coloured
 // labels) and one spaced-out line low in the frame; the jumpscare pixelated and grey; a blue glitch-text
 // flash; a noise-block glitch into the black end card. Film grain, vignette, rain on the outdoor shot.
-// edit.json: { frames: [{ src, section, i, rain, thought, scare, glitchText, end }], text: {...} }
+// edit.json: { frames: [{ src, section, i, rain, thought, scare, glitchText, cardLines }], text: {...} }
 import { chromium } from 'playwright';
 import fs from 'fs';
 const [,, editPath, outDir, fromArg, toArg] = process.argv;
@@ -58,7 +58,7 @@ html,body { margin:0; width:1080px; height:1920px; overflow:hidden; background:#
 <div class="o hk sh" id="h2">HORROR GAME</div>
 <div class="o hk sh" id="h3"><span id="w4">TO PLAY WITH</span> <span class="g" id="w5">FRIENDS</span></div>
 <div class="o sh" id="part">${T.part}</div>
-<div class="o sh" id="card"><span class="g">NAME</span> : ${T.name}<br/><span class="y">GAMEPLAY</span> : ${T.score}<br/><span class="r">GENRE</span> : ${T.genre}</div>
+<div class="o sh" id="card"><div id="c1"><span class="g">NAME</span> : ${T.name}</div><div id="c2"><span class="y">GAMEPLAY</span> : ${T.score}</div><div id="c3"><span class="r">GENRE</span> : ${T.genre}</div></div>
 <div class="o sh" id="low">${T.low}</div>
 <div class="o sh" id="thought"></div>
 <div class="o" id="glt">${T.glitch}</div>
@@ -103,7 +103,13 @@ window.setFrame = (f, fr) => {
     $('part').style.opacity = lt >= HT[5] ? 1 : 0;
   }
   // the card and the low line, for the rest (not on the end card)
-  if (fr.section === 'clip') { $('card').style.opacity = 1; $('low').style.opacity = 1; }
+  // (fr.cardLines: the lines pop in one by one with the track; without it, all at once)
+  if (fr.section === 'clip') {
+    const n = fr.cardLines === undefined ? 4 : fr.cardLines;
+    $('card').style.opacity = n > 0 ? 1 : 0;
+    ['c1', 'c2', 'c3'].forEach((id, k) => { $(id).style.visibility = n > k ? 'visible' : 'hidden'; });
+    $('low').style.opacity = n >= 4 ? 1 : 0;
+  }
   if (fr.thought) { const th = $('thought'); th.textContent = fr.thought; th.style.opacity = Math.min(1, fr.ti / 6); }
   // the glitch text: blue, sliced and shifted
   if (fr.glitchText) {

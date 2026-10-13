@@ -156,6 +156,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   reel22's version (third person, upbeat 128 BPM track, name banner on top, `comp_gameplay.mjs`) was
   rejected: "not at all what I wanted", and the upbeat song "sounded Christmas, not horror". Keep music
   dark; when copying a reference, match it closely (watch it frame by frame first).
+  **Part 2** (`reel24`, `peak_horror_game_friends_2.mp4`): the owner asked for this format with **#2's
+  song**: the clips keep #2's slot lengths (105/120/72/33/90/60/60/60/75/30 + 180 end) so #2's track
+  (`reel24/audio.py`, a copy of #10's) lands identically; hook words on the music-box notes, the card's
+  lines pop with the track's four pops after the drop, the scare on #2's 22.15 s hit, the glitch on
+  RUN. Story: hiding under the dining table, he drops in upside down. The renders now include the
+  Creator Store furniture (film2 `spec.props`, world = a stage.json).
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**

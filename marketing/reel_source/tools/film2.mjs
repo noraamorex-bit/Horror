@@ -4,12 +4,20 @@
 //                    flash:{i, pos, target, angle}, creature: true|false, radius, hide:[names | {near:[x,z], r}] }] }
 import { chromium } from 'playwright';
 import fs from 'fs';
+import { loadProps } from '../../../tools/assets/propload.mjs';
 const [,, worldPath, crPath, specPath, outDir, fromArg, toArg] = process.argv;
 const world = JSON.parse(fs.readFileSync(worldPath, 'utf8'));
 const cr = JSON.parse(fs.readFileSync(crPath, 'utf8'));
 const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'));
 fs.mkdirSync(outDir, { recursive: true });
 const W = spec.W, H = spec.H;
+// Creator Store furniture (spec.props = { cache }): the world file is then a stage.json from
+// tools/harness/stage_dump.luau, and its placeholders get their props exactly as the game places them
+let props = null;
+if (spec.props && world.holders) {
+  props = await loadProps(world, spec.props.cache);
+  world.swapped = world.holders.filter(h => props.models[String(h.entry.Id)]).map(h => h.key);
+}
 const photos = (spec.photos || []).map(p => 'data:image/png;base64,' + fs.readFileSync(p).toString('base64'));
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
@@ -63,7 +71,9 @@ await page.evaluate(([world, cr, W, H]) => {
     mesh.matrix.copy(m);
   }
   const scene = new T.Scene(); window.S = scene;
+  const swapped = new Set(world.swapped || []);
   for (const p of world.parts) {
+    if (p.ph && swapped.has(p.ph)) continue;
     const gi = geo(p);
     const mesh = new T.Mesh(gi.g, mat(p));
     mesh.matrixAutoUpdate = false; place(mesh, p.c, gi);
@@ -88,6 +98,13 @@ await page.evaluate(([world, cr, W, H]) => {
   // the photos on his wall: real pictures of the family's rooms
   window.PHOTOS = [];
 }, [world, { parts: cr.parts }, W, H]);
+if (props) {
+  await page.addScriptTag({ path: '../../../tools/assets/propscene.js' });
+  await page.evaluate(async ([stage, models, meshes, textures]) => {
+    await window.addProps(window.S, stage, models, meshes, textures);
+    window.S.updateMatrixWorld(true);
+  }, [{ holders: world.holders }, props.models, props.meshes, props.textures]);
+}
 // staged Roblox avatars (spec.avatars), with a phone in their hands if asked
 if (spec.avatars && spec.avatars.length) {
   await page.addScriptTag({ path: 'avatar.js' });
