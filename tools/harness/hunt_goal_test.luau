@@ -165,7 +165,7 @@ local ok, err = pcall(function()
 	ctx2.Remotes.Objectives.FireAllClients = function(_, l) list2 = l end
 	ctx2.Director.adminStart("Normal")
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("VeteranNight") == true, "a veteran night")
-	assert(list2 and #list2 == 3 and has(list2, "OrderPizza"), "the full build-up for veterans too (the owner found it too fast): pizza and two chores")
+	assert(list2 and #list2 == 1 and has(list2, "OrderPizza"), "one quick task before the pizza man (13 Oct: scary from minute 1)")
 	-- a first-timer joins the group: the full build-up
 	local ctx3 = ctx
 	ctx3.Director.enterLobby()
@@ -175,7 +175,7 @@ local ok, err = pcall(function()
 	ctx3.Remotes.Objectives.FireAllClients = function(_, l) list3 = l end
 	ctx3.Director.adminStart("Normal")
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("VeteranNight") == nil, "not with a first-timer")
-	assert(list3 and has(list3, "Popcorn"), "all three chores")
+	assert(list3 and #list3 == 1 and has(list3, "OrderPizza"), "first-timers too: just the pizza")
 	print("hunt goal ok")
 
 	-- act II: one thing at a time, and a breather before the lights go
@@ -198,8 +198,6 @@ local ok, err = pcall(function()
 	ctx.Director.startAct("SmallThings")
 	local t0 = T
 	local seen = {}
-	ctx.Objectives.complete("LockUp")
-	ctx.Director.onDoorLockChanged({ Locked = true, Id = "BackDoor" }, solo)
 	local newsAt, tvDuringNews = nil, false
 	local bedAt, brushedAt = nil, nil
 	-- a late arrival 30 s into act II still joins the night (MatchService keeps it open until bedtime)
@@ -265,15 +263,15 @@ local ok, err = pcall(function()
 	assert(actLen >= ctx.Config.Director.BedtimeMinAct, "no rushing: act II still runs a few minutes")
 	assert(not tvDuringNews, "the emergency alert never cuts in while they're watching the news")
 	-- scripted beats never land on top of each other
-	local beatIds = { PlateCrash = true, FootstepsUpstairs = true, TVAlert = true, FigureWindow = true }
+	local beatIds = { PlateCrash = true, FootstepsUpstairs = true, TVAlert = true, WindowBang = true }
 	local lastBeat = nil
 	for _, sc in scares do
 		if beatIds[sc.Id] then
-			if lastBeat then assert(sc.T - lastBeat >= 30, "two beats too close: " .. sc.Id) end
+			if lastBeat then assert(sc.T - lastBeat >= ctx.Config.Director.BeatSpacing - 1, "two beats too close: " .. sc.Id) end
 			lastBeat = sc.T
 		end
 	end
-	-- Mom's texts came (after the house was locked), and no text lands within a few seconds of a scare
+	-- Mom's texts came, and no text lands within a few seconds of a scare
 	local moms = 0
 	for _, tx in texts do if tx.From == "Mom" then moms += 1 end end
 	assert(moms >= 3 and newsAt ~= nil, "mom texted about the news, and the news task came")

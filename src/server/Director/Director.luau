@@ -13,8 +13,6 @@ local Players = game:GetService("Players")
 
 local Events = require(script.Parent.Events)
 local Delivery = require(script.Parent.Delivery)
-local NightPlan = require(script.Parent.NightPlan)
-local lastChores: { string }? = nil -- this server's last night's chores (the next night draws others)
 local Perception = require(script.Parent.Parent.Intruder.Perception)
 
 local Director = {}
@@ -26,9 +24,11 @@ Director.Perception = Perception
 local ACT_ORDER = { "Evening", "SmallThings", "SomeoneElse", "Guest" }
 
 -- guaranteed beats per act: { event id, deadline as a fraction of the act's Max }
+-- (scary from minute 1: a figure at the window in a lightning flash about 50 s in, the door slam
+-- before the pizza man; then act II's scares one after another)
 local BEATS = {
-	Evening = { { "WindSlam", 0.45 } },
-	SmallThings = { { "PlateCrash", 0.2 }, { "FootstepsUpstairs", 0.35 }, { "TVAlert", 0.55 }, { "FigureWindow", 0.7 } },
+	Evening = { { "FigureWindow", 0.33 }, { "WindSlam", 0.7 } },
+	SmallThings = { { "FootstepsUpstairs", 0.12 }, { "PlateCrash", 0.32 }, { "TVAlert", 0.52 }, { "WindowBang", 0.7 } },
 }
 
 local state: any = {}
@@ -71,10 +71,6 @@ end
 ---------------------------------------------------------------------------
 -- Queries
 ---------------------------------------------------------------------------
-function Director.chores(): { string }
-	return state.Chores or NightPlan.Classic
-end
-
 function Director.getAct(): string
 	return state.Act
 end
@@ -620,29 +616,12 @@ function Director.startAct(name: string, cause: Player?)
 		if ctx.Economy then
 			ctx.Economy.resetNight()
 		end
-		-- tonight's chores: the tuned set on anyone's first night, two from the pool otherwise
-		-- (never the same two as this server's last night)
-		local anyNew = false
-		for _, p in ctx.Util.sessionPlayers() do
-			if (tonumber(p:GetAttribute("StatNights")) or 0) < 1 then
-				anyNew = true
-			end
-		end
-		local chores = NightPlan.choose(anyNew, lastChores)
-		lastChores = chores
-		state.Chores = chores
+		-- one quick task before the pizza man: the night is about him now (13 Oct: "boring, slow start")
 		local fire = ctx.World.refs().Fire
-		if fire and fire.douse and fire.relight then
-			if table.find(chores, "Fire") then
-				fire.douse()
-			else
-				fire.relight()
-			end
+		if fire and fire.relight then
+			fire.relight()
 		end
-		ctx.Objectives.set(NightPlan.evening(chores))
-		if ctx.Journey and ctx.Journey.plan then
-			ctx.Journey.plan(NightPlan.key(chores))
-		end
+		ctx.Objectives.set({ "OrderPizza" })
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
 		local session = ctx.Util.sessionPlayers()
@@ -676,7 +655,17 @@ function Director.startAct(name: string, cause: Player?)
 			end)
 		end
 	elseif name == "SmallThings" then
-		ctx.Objectives.set({ "LockUp" })
+		-- (no lock-up chore any more: Mom's texts about the news come a few seconds in)
+		ctx.Objectives.set({})
+		state.MomNewsDue = os.clock() + 8 * math.max(ctx.Config.TimeScale, 0.25)
+		-- he's around from here on (13 Oct: "not scary"): now and then he's standing at the end of a
+		-- hall when you turn round, then gone (Intruder Lurk). The first time comes after the first scare.
+		local myAct = state
+		task.delay((ctx.Config.Director.LurkAfter or 30) * math.max(ctx.Config.TimeScale, 0.25), function()
+			if state == myAct and state.Act == "SmallThings" then
+				ctx.Intruder.setMode("Lurk")
+			end
+		end)
 		-- (the fire chore left undone: Jamie gets it going. The living room keeps its light for the blackout)
 		local fire = ctx.World.refs().Fire
 		if fire and fire.relight and not fire.Lit then
@@ -728,7 +717,6 @@ function Director.startAct(name: string, cause: Player?)
 				end
 			end
 			task.wait(6)
-			ctx.Remotes.Notify:FireAllClients("That wasn't the storm. Something flipped the main breaker.", "danger")
 			-- a glimpse or two of him in the dark, then the hunt begins
 			local myState = state
 			task.wait(ctx.Config.Director.HuntDelay or 35)
@@ -756,8 +744,7 @@ function Director.startAct(name: string, cause: Player?)
 		end
 		ctx.Intruder.setMode("Hunt", cause)
 		Director.addTension(30)
-		Director.think(nil, "Somewhere in the house, something heavy hits the floor.")
-		Director.think(nil, "He knows.")
+		Director.think(nil, "Something heavy just hit the floor. He knows.")
 	end
 end
 
@@ -864,7 +851,7 @@ function Director.onSighting(player: Player)
 		ctx.Journey.count(player, "Seen")
 	end
 	player:SetAttribute("NightSpotted", (tonumber(player:GetAttribute("NightSpotted")) or 0) + 1)
-	if state.Act == "SomeoneElse" then
+	if state.Act == "SomeoneElse" or state.Act == "SmallThings" then
 		Director.logTruth("Glimpse")
 		Director.thinkOnce(player, "Glimpse", ctx.Story.Thoughts.Events.Glimpse)
 	end
@@ -973,7 +960,7 @@ function Director.onNewsWatched(watchers: { Player })
 	end
 	Director.logTruthRaw("You watched the 7 News report about a man living inside Hollis Creek homes.")
 	task.delay(14, function()
-		if state ~= myState then
+		if state ~= myState or not M.AskAfter then
 			return
 		end
 		for _, p in ctx.Util.sessionPlayers() do
@@ -1477,7 +1464,11 @@ local function actTick()
 	if state.Act == "Evening" then
 		-- once the chores are done (or it's getting late) the pizza arrives; the act ends when
 		-- the delivery man has gone
-		if not state.Delivery and ((ctx.Objectives.allRequiredDone() and actTime >= 10) or actTime >= maxT) then
+		if ctx.Objectives.isDone("OrderPizza") and not state.OrderedAt then
+			state.OrderedAt = os.clock()
+		end
+		local waited = state.OrderedAt ~= nil and os.clock() - state.OrderedAt >= (ctx.Config.Director.PizzaWait or 25) * math.max(ctx.Config.TimeScale, 0.25)
+		if not state.Delivery and ((ctx.Objectives.allRequiredDone() and actTime >= 10 and waited) or actTime >= maxT) then
 			state.Delivery = true
 			state.DeliveryAt = os.clock()
 			local myState = state

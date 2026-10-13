@@ -117,8 +117,8 @@ function Objectives.add(id: string, optional: boolean?)
 	end
 	local o = make(id, optional)
 	table.insert(list, o)
+	-- (no "New objective" note: the panel and the thought line already say it. 13 Oct: "too much text")
 	broadcast()
-	ctx.Remotes.Notify:FireAllClients("New objective: " .. o.Text, "objective")
 end
 
 local function find(id: string)

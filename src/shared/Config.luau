@@ -39,10 +39,11 @@ Config.LobbyCountdown = 10
 -- Act lengths in minutes. An act ends at Max, or earlier once its exit condition is met (never before Min).
 Config.TimeScale = 1
 Config.Acts = {
-	-- (kept short: the cozy part sets the mood, but players came for him)
-	Evening = { Min = 2.5, Max = 5 },
-	SmallThings = { Min = 4, Max = 6 },
-	SomeoneElse = { Min = 6, Max = 7 }, -- (9 left nights without a call dragging past 20 minutes)
+	-- (13 Oct, the owner: "boring, slow start". Scary from minute 1, nights ~8-10 min: one task
+	-- before the pizza man, a short act II, the blackout around minute 5)
+	Evening = { Min = 1.5, Max = 2.5 },
+	SmallThings = { Min = 2, Max = 3 },
+	SomeoneElse = { Min = 4, Max = 5 },
 }
 -- a night where everyone has played before: the build-up acts could run shorter (this much of
 -- their length). Off: the owner found the night too fast; repeat groups can SKIP TO THE BLACKOUT.
@@ -255,12 +256,12 @@ Config.Capture = {
 }
 
 Config.Help = {
-	PhoneResponse = 150,
-	NeighborResponse = 120,
+	PhoneResponse = 110,
+	NeighborResponse = 90,
 	CarResponse = 60,
 	CellCallDuration = 15, -- (Hard)
 	CellCallDurationNormal = 10,
-	OkaforCallsAfter = 100, -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
+	OkaforCallsAfter = 80, -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
 	OkaforResponse = 80,
 	-- the call goes through and he hears it (he screams and charges the caller): on Normal the caller
 	-- gets this head start to hide (v81 logs: most upstairs-bathroom captures came 3-12 s after the
@@ -274,22 +275,25 @@ Config.Help = {
 
 -- The Director: tension ceilings per act, seconds between scheduled events, storm cadence
 Config.Director = {
-	Ceiling = { Evening = 25, SmallThings = 65, SomeoneElse = 85, Guest = 100 },
+	Ceiling = { Evening = 45, SmallThings = 75, SomeoneElse = 85, Guest = 100 },
 	Gap = {
-		Evening = { 30, 55 },
-		SmallThings = { 30, 50 },
+		Evening = { 20, 35 },
+		SmallThings = { 20, 32 },
 		SomeoneElse = { 32, 55 },
 		Guest = { 45, 80 },
 	},
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
-	BeatSpacing = 35, -- a scripted scare waits this long after the last one (one thing at a time)
-	AfterNews = 40, -- act II ends this long after the news was watched at the soonest...
-	BedtimeAfterNews = 8, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
-	AfterBedtime = 12,
-	BedtimeMinAct = 150, -- (but act II still runs at least this long: its scares need room)
-	AfterScare = 30, -- ...and this long after the last scare
+	BeatSpacing = 22, -- a scripted scare waits this long after the last one (one thing at a time)
+	AfterNews = 15, -- act II ends this long after the news was watched at the soonest...
+	BedtimeAfterNews = 4, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
+	AfterBedtime = 6,
+	BedtimeMinAct = 130, -- (but act II still runs at least this long: its scares need room)
+	AfterScare = 12, -- ...and this long after the last scare
+	PizzaWait = 25, -- the pizza man rings this long after the order (room for the first scare)
+	HuntDelay = 20, -- after the blackout, this long before he starts hunting
+	LurkAfter = 30, -- act II: this far in, he starts showing himself (Intruder Lurk)
 }
 
 -- Inner monologue: the character thinking out loud about what to do next

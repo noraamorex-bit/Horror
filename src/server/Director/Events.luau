@@ -293,7 +293,7 @@ Events.List = {
 	---------------------------------------------------------------------------
 	{
 		Id = "FigureWindow",
-		Acts = { SmallThings = true },
+		Acts = { Evening = true, SmallThings = true },
 		Weight = 3,
 		Tension = 20,
 		Once = true,

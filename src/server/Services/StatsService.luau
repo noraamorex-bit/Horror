@@ -29,7 +29,7 @@ end
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true, Captions = false } }
 end
 
 --[[
@@ -112,6 +112,7 @@ local function mirror(player: Player)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
+	player:SetAttribute("SetCaptions", d.Settings.Captions == true)
 	for _, b in Stats.Beams do
 		if b.Id == beam then
 			player:SetAttribute("StatBeamColor", b.Color)
@@ -143,6 +144,7 @@ local function load(player: Player)
 				Music = math.clamp(tonumber(set.Music) or 1, 0, 1),
 				Sfx = math.clamp(tonumber(set.Sfx) or 1, 0, 1),
 				Shake = set.Shake ~= false,
+				Captions = set.Captions == true, -- (sound captions are opt-in since 13 Oct: "too much text")
 			}
 			for k, v in (type(data.Endings) == "table" and data.Endings or {}) do
 				if v then
@@ -283,7 +285,7 @@ end
 -- the settings panel: music and sound volume (0-1), camera shake. Saved a few seconds after the
 -- last change, so dragging through the options doesn't spam the DataStore.
 local settingsSave: { [number]: boolean } = {}
-function Stats.setSettings(player: Player, music: any, sfx: any, shake: any)
+function Stats.setSettings(player: Player, music: any, sfx: any, shake: any, captions: any)
 	local d = cache[player.UserId]
 	if not d or type(music) ~= "number" or type(sfx) ~= "number" or type(shake) ~= "boolean" then
 		return
@@ -291,7 +293,7 @@ function Stats.setSettings(player: Player, music: any, sfx: any, shake: any)
 	if music ~= music or sfx ~= sfx then -- NaN
 		return
 	end
-	d.Settings = { Music = math.clamp(music, 0, 1), Sfx = math.clamp(sfx, 0, 1), Shake = shake }
+	d.Settings = { Music = math.clamp(music, 0, 1), Sfx = math.clamp(sfx, 0, 1), Shake = shake, Captions = captions == true }
 	mirror(player)
 	local userId = player.UserId
 	if not settingsSave[userId] then
@@ -606,8 +608,8 @@ function Stats.start()
 		ctx.Remotes.SetBeam.OnServerEvent:Connect(function(player, id)
 			Stats.setBeam(player, id)
 		end)
-		ctx.Remotes.SaveSettings.OnServerEvent:Connect(function(player, music, sfx, shake)
-			Stats.setSettings(player, music, sfx, shake)
+		ctx.Remotes.SaveSettings.OnServerEvent:Connect(function(player, music, sfx, shake, captions)
+			Stats.setSettings(player, music, sfx, shake, captions)
 		end)
 	end
 	for _, p in Players:GetPlayers() do

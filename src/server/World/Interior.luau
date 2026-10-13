@@ -741,7 +741,7 @@ function Interior.build(ctx, root: Instance, refs)
 			return
 		end
 		if not ctx.Inventory.take(player, "PopcornBag") then
-			ctx.Director.think(player, "I need a bag of popcorn first. They're in the cupboard.")
+			ctx.Director.think(player, "Popcorn first. It's in the cupboard.")
 			return
 		end
 		mwState = "Cooking"
@@ -1379,7 +1379,7 @@ function Interior.build(ctx, root: Instance, refs)
 				brushed = true
 				-- (the hint they'll need in a few minutes)
 				task.delay(3, function()
-					ctx.Director.think(player, "Huh. My phone's got one bar of signal by that window. Nowhere else in the house gets any.")
+					ctx.Director.think(player, "One bar of signal by this window. Nowhere else gets any.")
 				end)
 			end
 		end

@@ -35,7 +35,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Tension", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -90,6 +90,43 @@ local ok, err = pcall(function()
 		assert(math.abs(eq.HighGain) < 0.5, "in the open again: clear")
 		H.camera = realCam
 		print("acoustics ok")
+	end
+	-- tension: the drone swells as he gets close, and is silent while he's offstage
+	do
+		local Tn = mods.Tension
+		local RB = H.roblox
+		local lp = H.services.Players.LocalPlayer
+		local wasInGame = lp:GetAttribute("InGame")
+		lp:SetAttribute("InGame", true)
+		local ws = H.unwrap(H.workspaceRoot)
+		local oldAct, oldSt = ws:GetAttribute("Act"), ws:GetAttribute("IntruderState")
+		ws:SetAttribute("Act", "Guest")
+		local realCam = H.camera
+		H.camera = { CFrame = RB.CFrame.new(0, 5, 0) }
+		local curtis = H.Instance.new("Model", H.workspaceRoot)
+		curtis.Name = "Curtis"
+		local root = H.Instance.new("Part", curtis)
+		root.Name = "HumanoidRootPart"
+		root.CFrame = RB.CFrame.new(0, 5, -12)
+		ws:SetAttribute("IntruderState", "Offstage")
+		for _ = 1, 30 do S.RunService.Heartbeat:Fire(0.1) end
+		assert(Tn.level() == 0, "offstage: silent")
+		ws:SetAttribute("IntruderState", "Prowl")
+		for _ = 1, 40 do S.RunService.Heartbeat:Fire(0.1) end
+		assert(Tn.level() > 0.9, "right next to you: full, got " .. Tn.level())
+		root.CFrame = RB.CFrame.new(0, 5, -200)
+		for _ = 1, 80 do S.RunService.Heartbeat:Fire(0.1) end
+		assert(Tn.level() < 0.05, "far away: it fades, got " .. Tn.level())
+		ws:SetAttribute("IntruderState", "Chase")
+		for _ = 1, 40 do S.RunService.Heartbeat:Fire(0.1) end
+		assert(Tn.level() > 0.1 and Tn.level() < 0.5, "chasing someone across the house: a little")
+		ws:SetAttribute("IntruderState", oldSt)
+		ws:SetAttribute("Act", oldAct)
+		curtis:Destroy()
+		for _ = 1, 80 do S.RunService.Heartbeat:Fire(0.1) end
+		H.camera = realCam
+		lp:SetAttribute("InGame", wasInGame)
+		print("tension ok")
 	end
 	-- script errors on the device are counted for the logs (5 different at most)
 	do

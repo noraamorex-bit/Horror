@@ -98,6 +98,8 @@ Sounds.Library = {
 	-- People
 	-- APM "HEARTBEAT 01 96BPM": looped, sped up and louder as your nerve goes
 	Heartbeat = { Id = "rbxassetid://9043365727", Volume = 0.6, Looped = true },
+	-- APM "DARK DRONE 13" (Horror Tools): swells in as he gets close (client Tension)
+	TensionDrone = { Id = "rbxassetid://9043359885", Volume = 0.55, Looped = true },
 	-- him, hunting by sound (ProSoundEffects creature vocals, pitched down)
 	Growl = { Id = "rbxassetid://9125476001", Volume = 0.9, Pitch = 0.62, Range = 60, Caption = "[A low growl]" },
 	Roar = { Id = "rbxassetid://9113980319", Volume = 1, Pitch = 0.75, Range = 140, Caption = "[A ROAR, and running]" },
@@ -111,7 +113,8 @@ Sounds.Library = {
 	-- his breathing, always with him: you hear it only when he's a few steps away
 	IntruderBreath = { Id = "rbxassetid://9113585946", Volume = 0.45, Range = 16, Looped = true },
 	-- Creator Store (public): "Phone Vibrating On Table"
-	PhoneVibrate = { Id = "rbxassetid://121031853982816", Fallback = ENGINE_BEEP, Volume = 0.45 },
+	-- (the file buzzes for 3 s: the owner found it "so loud, long and annoying". One short, quiet buzz)
+	PhoneVibrate = { Id = "rbxassetid://121031853982816", Fallback = ENGINE_BEEP, Volume = 0.16, Length = 0.55 },
 
 	-- Interface / handling (mostly client-side)
 	Pickup = { Id = "rbxassetid://9113849306", Volume = 0.5, Range = 20 },

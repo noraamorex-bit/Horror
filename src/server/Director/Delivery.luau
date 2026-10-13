@@ -519,11 +519,11 @@ function Delivery.run(ctx, D, onDone)
 		if door and door.IsOpen then
 			ctx.Doors.close(door)
 		end
-		D.think(answeredBy, "Okay. That was... weird. Lock the door.")
+		D.think(answeredBy, "That was weird. Lock the door.")
 	else
 		-- nobody came: he leaves the pizza on the porch
 		pizzaBoxes(world, CF(4.2, 1, -33.2))
-		D.think(nil, "The pizza guy gave up. He left the boxes on the porch.")
+		D.think(nil, "He left the pizza on the porch.")
 	end
 	D.logTruth("PizzaGuy")
 

@@ -53,6 +53,16 @@ function Effects.playSound(name: string, position: Vector3?, opts)
 		end
 		s:Play()
 		Debris:AddItem(att or s, 10)
+		-- (Length: only the first part of a long file, faded out at the end)
+		local def = ctx.Sounds.get(name)
+		local len = opts.Length or (def and def.Length)
+		if len then
+			task.delay(len, function()
+				if s.Parent then
+					ctx.UI.tween(s, 0.15, { Volume = 0 })
+				end
+			end)
+		end
 	elseif att then
 		att:Destroy()
 	end
@@ -287,15 +297,17 @@ function Effects.start()
 		grade.Saturation = -fear * 0.5
 		grade.Contrast = fear * 0.15
 
-		-- heartbeat below Heavy
+		-- heartbeat below Heavy, or when he's very close (Tension)
 		local heavy = ctx.Config.Nerve.Heavy
 		if heartbeat then
-			local want = inGame and nerve < heavy
+			local near = inGame and ctx.Tension and ctx.Tension.level() or 0
+			local want = inGame and (nerve < heavy or near > 0.4)
 			if want then
 				heartbeat.Looped = true
 				-- 96 bpm at the edge of panic, up to ~150 at the bottom
-				heartbeat.PlaybackSpeed = 1 + (1 - nerve / heavy) * 0.6
-				heartbeat.Volume = 0.25 + fear * 0.5
+				local panic = math.max(nerve < heavy and 1 - nerve / heavy or 0, (near - 0.4) / 0.6)
+				heartbeat.PlaybackSpeed = 1 + panic * 0.6
+				heartbeat.Volume = math.max(0.25 + fear * 0.5, near * 0.8)
 				if not heartbeat.IsPlaying then
 					heartbeat:Play()
 				end
