@@ -74,8 +74,43 @@ local function wrapAll(...)
 end
 
 local EXTRA = {}
-function EXTRA.PivotTo(self, cf) if M.onPivotTo then M.onPivotTo(self, cf) end end
-function EXTRA.GetPivot(self) return roblox.CFrame.new() end
+-- (M.realModels: models really pivot and scale, for World/Props; otherwise pivots are stubs)
+local function modelPivot(self)
+	local ok, piv = pcall(function() return self.WorldPivot end)
+	return ok and piv or roblox.CFrame.new()
+end
+function EXTRA.PivotTo(self, cf)
+	if M.onPivotTo then M.onPivotTo(self, cf) end
+	if M.realModels then
+		if self:IsA("Model") then
+			local delta = cf * modelPivot(self):Inverse()
+			for _, d in self:GetDescendants() do
+				if d:IsA("BasePart") then d.CFrame = delta * d.CFrame end
+			end
+			self.WorldPivot = cf
+		elseif self:IsA("BasePart") then
+			self.CFrame = cf
+		end
+	end
+end
+function EXTRA.GetPivot(self)
+	if M.realModels and self:IsA("Model") then return modelPivot(self) end
+	return roblox.CFrame.new()
+end
+function EXTRA.GetScale(self) return self:GetAttribute("_Scale") or 1 end
+function EXTRA.ScaleTo(self, s)
+	if not M.realModels then return end
+	local k = s / (self:GetAttribute("_Scale") or 1)
+	local P = modelPivot(self)
+	for _, d in self:GetDescendants() do
+		if d:IsA("BasePart") then
+			local rel = P:ToObjectSpace(d.CFrame)
+			d.CFrame = P * (rel - rel.Position + rel.Position * k)
+			d.Size = d.Size * k
+		end
+	end
+	self:SetAttribute("_Scale", s)
+end
 function EXTRA.SetNetworkOwner() end
 function EXTRA.GetPropertyChangedSignal() return signal() end
 function EXTRA.GetAttributeChangedSignal() return signal() end

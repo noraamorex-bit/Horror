@@ -25,6 +25,17 @@ Props.Models = {
 	Pumpkin = 11600489662, -- a plain pumpkin
 	Flowers = 5675479692, -- pink flowers in a white vase
 	Kettle = 17604332991, -- stovetop kettle
+	-- furniture (front = -Z after Yaw; checked with tools/assets/preview.mjs and stage.mjs)
+	Sofa = { Id = 11290198233, Yaw = 0 }, -- "Couch (Old Sofa)": a patterned three-seater, cushions
+	DenSofa = { Id = 14393549681, Yaw = 0, Fit = "width" }, -- "Realistic Sofa": worn brown leather, taped up (a two-seater: as wide as the old one)
+	Armchair = { Id = 11213986020, Yaw = 180 }, -- "Regal_Chair": a wingback (built facing +Z)
+	Bookcase = { Id = 15077805709, Yaw = 0, Fit = "width", Back = true }, -- "Bookshelf (For Libraries)": painted books, four shelves
+	OfficeBookcase = { Id = 9914694425, Yaw = 0, Fit = "width", Back = true }, -- "Bookshelf (With Books)": tall, two columns of old books
+	DiningChair = { Id = 17056776920, Yaw = 180 }, -- "Wooden Chair (Doors)" (built facing +Z)
+	DadChair = { Id = 17056797478, Yaw = 180 }, -- "Office Chair (Doors)": old leather, swivel (built facing +Z)
+	Plant_tree = { Id = 8704290264, Yaw = 0 }, -- a palm in a clay pot
+	Plant_leafy = { Id = 14278794019, Yaw = 0 }, -- a monstera on a wooden stand
+	Plant_snake = { Id = 10508319719, Yaw = 0 }, -- a spiky dracaena in a tall white pot
 }
 
 -- flat things are fitted by their width only (a scattered heap of shards is only a few
@@ -154,45 +165,105 @@ local function settle(prop: Model, placeholder: Model, centre: Vector3, size: Ve
 	end
 end
 
--- Put the loaded model where the placeholder is, as big as it is. Creators build their models
--- upright in the world, but the model's own pivot is often turned (that's what laid the plates
--- and the fruit bowl on their sides): so the model keeps its authored world orientation, and
--- only turns about the vertical to match the placeholder.
-local function fit(placeholder: Model, assetId: number)
-	local tpl = template(assetId)
+-- the box around a model's visible parts in a frame's own axes (min, max)
+local function localBox(model: Instance, frame: CFrame): (Vector3?, Vector3?)
+	local mn, mx
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d.Transparency < 0.99 then
+			local cf, sz = d.CFrame, d.Size / 2
+			for _, sx in { -1, 1 } do
+				for _, sy in { -1, 1 } do
+					for _, sz2 in { -1, 1 } do
+						local p = frame:PointToObjectSpace(cf:PointToWorldSpace(Vector3.new(sx * sz.X, sy * sz.Y, sz2 * sz.Z)))
+						mn = mn and mn:Min(p) or p
+						mx = mx and mx:Max(p) or p
+					end
+				end
+			end
+		end
+	end
+	return mn, mx
+end
+Props._localBox = localBox
+
+-- Props.Models entries: an asset id, or { Id, Yaw = degrees (turns the model about the vertical
+-- so its front faces -Z, the way our furniture faces), Fit = "inside" (default: as big as fits
+-- inside the placeholder's box) | "width" (as wide as the placeholder, height allowed 25% over),
+-- Back = true (its back lines up with the placeholder's back: against a wall, a deeper model
+-- reaches into the room instead of into the wall) }
+local function entryOf(v: any): any
+	if type(v) == "number" then
+		return { Id = v }
+	end
+	return v
+end
+
+-- Put the loaded model where the placeholder is, in the placeholder's frame. Creators build their
+-- models upright in the world but rarely facing a known way, so each entry says how far to turn it
+-- (checked with tools/assets/preview.mjs); furniture from Kit carries its frame as its WorldPivot
+-- (front = local -Z). Then it's scaled to the placeholder's box and stood on the floor under it.
+local function fit(placeholder: Model, raw: any)
+	local entry = entryOf(raw)
+	local tpl = template(entry.Id)
 	if not tpl or not placeholder.Parent or placeholder:GetAttribute("PropSwapped") then
 		return
 	end
-	local pmn, pmx = worldBox(placeholder)
+	-- (upright only: its turn about the vertical, from where it looks. Not ToOrientation, whose Y
+	-- comes out 0 for a frame turned right round, as (180, 0, 180))
+	local pivot = placeholder:GetPivot()
+	local look = pivot.LookVector
+	local frame = CFrame.new(pivot.Position) * CFrame.Angles(0, math.atan2(-look.X, -look.Z), 0)
+	local pmn, pmx = localBox(placeholder, frame)
 	if not pmn or not pmx then
 		return
 	end
-	local size = pmx - pmn
-	local centre = (pmn + pmx) / 2
-	local look = placeholder:GetPivot().LookVector
-	local yaw = math.atan2(-look.X, -look.Z)
+	local psize = pmx - pmn
 	local prop = tpl:Clone()
 	prop.Name = "Prop"
+	-- 1. turn it about its own centre so its front faces -Z
 	local bmn, bmx = worldBox(prop)
 	if not bmn or not bmx then
 		prop:Destroy()
 		return
 	end
-	local bsize = bmx - bmn
 	prop.WorldPivot = CFrame.new((bmn + bmx) / 2)
-	local horiz = math.max(size.X, size.Z) / math.max(bsize.X, bsize.Z, 0.01)
-	local vert = size.Y / math.max(bsize.Y, 0.01)
-	local s = math.clamp(FLAT[placeholder.Name] and horiz or math.min(horiz, vert), 0.02, 50)
+	prop:PivotTo(prop.WorldPivot * CFrame.Angles(0, math.rad(entry.Yaw or 0), 0))
+	bmn, bmx = worldBox(prop)
+	if not bmn or not bmx then
+		prop:Destroy()
+		return
+	end
+	prop.WorldPivot = CFrame.new((bmn + bmx) / 2)
+	local bsize = bmx - bmn
+	-- 2. its size
+	local rx, ry, rz = psize.X / math.max(bsize.X, 0.01), psize.Y / math.max(bsize.Y, 0.01), psize.Z / math.max(bsize.Z, 0.01)
+	local s
+	if FLAT[placeholder.Name] then
+		s = math.max(rx, rz)
+	elseif entry.Fit == "width" then
+		s = math.min(rx, ry * 1.25)
+	else
+		s = math.min(rx, ry, rz)
+	end
+	s = math.clamp(s, 0.02, 50)
 	pcall(function()
 		prop:ScaleTo(prop:GetScale() * s)
 	end)
 	local nmn, nmx = worldBox(prop)
 	local h = (nmn and nmx) and (nmx.Y - nmn.Y) or bsize.Y * s
-	-- stand it on the placeholder's base, turned only about the vertical
-	prop:PivotTo(CFrame.new(centre.X, pmn.Y + h / 2, centre.Z) * CFrame.Angles(0, yaw, 0))
-	-- then sit it exactly on the surface under it: a model's box isn't always where its mesh is (that
-	-- left plates and bowls sunk into the table), so measure its real underside and the real tabletop
-	settle(prop, placeholder, centre, size)
+	-- 3. in the placeholder's frame: centred on its footprint, standing on its base
+	local c = (pmn + pmx) / 2
+	local cz = c.Z
+	if entry.Back then
+		local lmn, lmx = localBox(prop, prop.WorldPivot)
+		local d = (lmn and lmx) and (lmx.Z - lmn.Z) or bsize.Z * s
+		cz = pmx.Z - d / 2
+	end
+	local at = frame:PointToWorldSpace(Vector3.new(c.X, pmn.Y + h / 2, cz))
+	prop:PivotTo(CFrame.new(at) * frame.Rotation)
+	-- 4. then sit it exactly on the surface under it: a model's box isn't always where its mesh is
+	local wmn, wmx = worldBox(placeholder)
+	settle(prop, placeholder, at, (wmn and wmx) and (wmx - wmn) or psize)
 	for _, d in placeholder:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.Transparency = 1
@@ -204,6 +275,7 @@ local function fit(placeholder: Model, assetId: number)
 	placeholder:SetAttribute("PropSwapped", true)
 	prop.Parent = placeholder
 end
+Props._fit = fit
 
 -- Paintings: a canvas part with an "ArtDecal" attribute (World/Finish) gets the decal's picture
 local textures = {} -- decal asset id -> image content id | false
@@ -260,9 +332,11 @@ local function consider(inst: Instance)
 		return
 	end
 	if inst:IsA("Model") and inst.Name ~= "Prop" and not inst:FindFirstAncestor("Prop") then
-		local id = Props.Models[inst.Name]
-		if id then
-			task.spawn(fit, inst, id)
+		-- (a placement can name its own model: the den's sofa isn't the living room's)
+		local key = inst:GetAttribute("PropKey")
+		local entry = Props.Models[type(key) == "string" and key or inst.Name]
+		if entry then
+			task.spawn(fit, inst, entry)
 		end
 	end
 end

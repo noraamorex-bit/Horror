@@ -171,6 +171,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **13 Oct (v85)**: the owner added `legacy-asset:manage` to the key: models can be downloaded,
+  inspected and rendered before use (`tools/assets/`, README there). v85 swaps the big furniture for
+  checked Creator Store models (sofas, armchairs, bookcases, dining chairs, Dad's office chair, big
+  plants) with a new fitter (facing via WorldPivot + Yaw, Fit width/inside, Back to the wall;
+  props_test). Not swapped: beds, wardrobes, desks, appliances, tables with things on them. The
+  creature is still part-built: free R15 creature rigs were private meshes or carried hidden
+  scripts. Next visual steps: beds with open space under them (check the hiding camera), a better
+  creature (needs a model we can actually load), kitchen appliances.
 - **13 Oct (v84)**: the owner: comments say "bad" / "AI slop", nothing specific. v84: **night variety**
   (NightPlan: first nights pizza+popcorn+windows; repeat nights pizza + 2 of popcorn/windows/fire/
   movie, never last night's pair; logged as Plan) and **acoustics** (room reverb, muffled through
@@ -238,7 +246,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 84).
+  (last published: version 85).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
@@ -252,6 +260,8 @@ keeping goes in the repo.
   delivers only to opted-in 13+, max 1/day). A daily Claude Code routine runs it at ~22:53 UTC (an
   hour before the US-evening peak, 00-04 UTC). The key has `user.user-notification:write`.
 - **Dev products:** POST `https://apis.roblox.com/developer-products/v2/universes/$ROBLOX_UNIVERSE_ID/developer-products`.
+- **Creator Store models:** `tools/assets/` (search → fetch/inspect → preview → Props.Models →
+  stage_dump + stage render; README there). Check every model's facing and look before it goes in.
 - **Reels / renders:** sources per reel in `marketing/reel_source/reelN/` (scene.py → shots, edit.py →
   edit.json, audio.py → music). Shared tools in `marketing/reel_source/tools/`: `film2.mjs` (three.js
   render of the world dump + creature + avatars), `comp_cantplay.mjs` (the #N caption format),

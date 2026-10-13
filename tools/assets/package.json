@@ -1,0 +1,11 @@
+{
+  "name": "asset-tools",
+  "private": true,
+  "type": "module",
+  "description": "Inspect and preview Creator Store models before they go into the game",
+  "dependencies": {
+    "draco3d": "1.5.7",
+    "playwright": "^1.56.1",
+    "three": "^0.160.0"
+  }
+}

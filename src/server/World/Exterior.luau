@@ -358,9 +358,9 @@ function Exterior.build(ctx, root: Instance, refs)
 	il.Brightness = 1.2
 	il.Color = Color3.fromRGB(255, 215, 170)
 	il.Parent = lamp
-	Kit.sofa(nhouse, F(106, 1, -5.5, NZ), 10, Color3.fromRGB(130, 60, 60), Color3.fromRGB(220, 190, 120))
+	Kit.sofa(nhouse, F(106, 1, -5.5, NZ), 10, Color3.fromRGB(130, 60, 60), Color3.fromRGB(220, 190, 120)):SetAttribute("PropKey", "NeighborSofa")
 	Kit.rug(nhouse, F(110, 1, -16, NZ), 18, 12, Color3.fromRGB(150, 110, 60))
-	Kit.armchair(nhouse, F(122, 1, -12, NX), Color3.fromRGB(110, 90, 60))
+	Kit.armchair(nhouse, F(122, 1, -12, NX), Color3.fromRGB(110, 90, 60)):SetAttribute("PropKey", "NeighborArmchair")
 	Kit.bookcase(nhouse, F(128.9, 1, -22, NX), 5, 1.2, 8, 4)
 	Kit.floorLamp(nhouse, F(98, 1, -4, NZ))
 	-- her car in her driveway

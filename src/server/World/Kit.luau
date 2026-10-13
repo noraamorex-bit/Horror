@@ -281,6 +281,7 @@ function Kit.sofa(parent, cf: CFrame, length: number, color: Color3, pillow: Col
 	end
 	Kit.collider(m, cf * CF(0, 1.02, 0), V(length, 2.04, depth))
 	Kit.collider(m, cf * CF(0, 3.0, depth / 2 - 0.45), V(length, 1.9, 0.9))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m
 end
 
@@ -313,6 +314,7 @@ function Kit.chair(parent, cf: CFrame, color: Color3?, cushion: Color3?)
 	end
 	Kit.box(m, "BackRail", back * CF(0, 2.35, 0), V(1.5, 0.14, 0.14), dark, M.Wood)
 	Kit.collider(m, cf * CF(0, 1.1, 0), V(1.9, 2.2, 1.9), "ChairBlock")
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m
 end
 
@@ -348,6 +350,7 @@ function Kit.officeChair(parent, cf: CFrame, color: Color3)
 		Kit.soft(m, "ArmPad", cf * CF(s * 1.02, 2.95, 0), V(0.25, 0.14, 1.1), 0.06, C.Black, M.Plastic)
 	end
 	Kit.collider(m, cf * CF(0, 1.1, 0), V(2, 2.2, 2))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m
 end
 
@@ -376,6 +379,7 @@ function Kit.coffeeTable(parent, cf: CFrame, w: number, d: number, h: number, co
 	end
 	Kit.box(m, "Shelf", cf * CF(0, 0.55, 0), V(w - 0.7, 0.12, d - 0.7), dark, M.Wood)
 	Kit.collider(m, cf * CF(0, h / 2, 0), V(w, h, d))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m, top
 end
 
@@ -392,6 +396,7 @@ function Kit.diningTable(parent, cf: CFrame, w: number, d: number, color: Color3
 		end
 	end
 	Kit.collider(m, cf * CF(0, h / 2, 0), V(w, h, d))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m, h
 end
 
@@ -410,6 +415,7 @@ function Kit.nightstand(parent, cf: CFrame, color: Color3)
 	Kit.box(m, "DrawerPanel", cf * CF(0, 1.88, -1.03), V(1.5, 0.4, 0.04), color, M.Wood)
 	Kit.ball(m, "Knob", (cf * CF(0, 1.88, -1.1)).Position, 0.2, C.Brass, M.Metal)
 	Kit.collider(m, cf * CF(0, 1.2, 0), V(2.3, 2.4, 2.05))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m, drawer, 2.45
 end
 
@@ -437,6 +443,7 @@ function Kit.dresser(parent, cf: CFrame, w: number, color: Color3)
 		end
 	end
 	Kit.collider(m, cf * CF(0, h / 2, 0), V(w, h, d))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m, h
 end
 
@@ -597,6 +604,7 @@ function Kit.bookcase(parent, cf: CFrame, w: number, d: number, h: number, level
 		end
 	end
 	Kit.collider(m, cf * CF(0, h / 2, 0), V(w, h, d))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m
 end
 
@@ -1224,6 +1232,9 @@ function Kit.plant(parent, cf: CFrame, size: number, kind: string?, potColor: Co
 		end
 	end
 	Kit.collider(m, cf * CF(0, 0.4 * s, 0), V(0.9 * s, 0.8 * s, 0.9 * s))
+	-- (Props: big plants get a Creator Store plant of their kind; small ones on sills and counters stay)
+	m:SetAttribute("PropKey", (size >= 1 and "Plant_" or "PlantSmall_") .. (kind or "leafy"))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m
 end
 
@@ -1916,6 +1927,7 @@ function Kit.consoleTable(parent, cf: CFrame, w: number, d: number, color: Color
 	end
 	Kit.box(m, "ConsoleShelf", cf * CF(0, 0.6, 0), V(w - 0.5, 0.1, d - 0.4), dark, M.Wood)
 	Kit.collider(m, cf * CF(0, h / 2, 0), V(w, h, d))
+	m.WorldPivot = cf -- (Props: the front of the furniture is local -Z)
 	return m, h
 end
 
