@@ -35,7 +35,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -62,6 +62,34 @@ local ok, err = pcall(function()
 		x, y = M.pointerFor(cam, vp, RB.Vector3.new(0, 60, -5), false, RB.Vector3.new(500, -900, 5))
 		assert(x and y >= 0.24, "upstairs: up, but below the objective panel")
 		print("objective arrow ok")
+	end
+	-- acoustics: room reverb, and a sound behind a wall loses its highs (eased in and out)
+	do
+		local A = mods.Acoustics
+		local RB = H.roblox
+		assert(A.reverbFor("HallBath", RB.Vector3.new()) == RB.Enum.ReverbType.Bathroom, "bathrooms ring")
+		assert(A.reverbFor("Basement", RB.Vector3.new()) == RB.Enum.ReverbType.StoneRoom, "the basement is stone")
+		assert(A.reverbFor(nil, RB.Vector3.new(0, 20, 0)) == RB.Enum.ReverbType.NoReverb, "outside: none")
+		local part = H.Instance.new("Part", H.workspaceRoot)
+		part.Position = RB.Vector3.new(0, 5, -30)
+		local snd = H.Instance.new("Sound", part)
+		rawset(snd, "IsPlaying", true)
+		A._track(snd)
+		local realCam = H.camera
+		H.camera = { CFrame = RB.CFrame.new(0, 5, 0) }
+		local wall = H.Instance.new("Part", H.workspaceRoot)
+		H.raycast = function() return { Instance = wall, Position = RB.Vector3.new(0, 5, -10) } end
+		local ok3, e3 = pcall(function()
+			for _ = 1, 8 do A._update() end
+		end)
+		assert(ok3, "update runs: " .. tostring(e3))
+		local eq = H.unwrap(snd):FindFirstChild("Occlusion")
+		assert(eq and eq.HighGain < -12, "behind a wall: muffled, got " .. tostring(eq and eq.HighGain))
+		H.raycast = nil
+		for _ = 1, 12 do A._update() end
+		assert(math.abs(eq.HighGain) < 0.5, "in the open again: clear")
+		H.camera = realCam
+		print("acoustics ok")
 	end
 	-- script errors on the device are counted for the logs (5 different at most)
 	do

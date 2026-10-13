@@ -91,6 +91,8 @@ Each has its own line in the truth log, a thought, and a spoken reaction if frie
 ### Music and sound
 A quiet music box in the rain in the lobby ("Eerie Music Box", APM, volume 0.06); soft piano indoors in Act I; no chase or tension music (it used to slam in whenever he chased anyone nearby, even a friend in another room: the hunt is his footsteps, his breathing and your heartbeat); and from Act II the house creaks somewhere near you every 20-50 s.
 
+**Acoustics** (client `Acoustics`, v84). The reverb follows the room you're in (tiled bathrooms ring, the basement, boiler room and garage are stone, halls are halls, the living room and den are soft, the tunnels under the house echo). A sound in the world with something solid between you and it (a wall, a floor, a closed door; not glass) loses its highs and some body, eased in and out, so his footsteps behind a wall sound behind a wall and turn sharp the moment there's nothing between you; shut in a hiding spot, everything outside is muffled. Only sounds placed in the world are touched (not your own footsteps, the UI, the heartbeat or the music). The grandfather clock now ticks (Creator Store "Clock Tick (1 Second Long, Loopable)") and texts buzz like a phone on a table.
+
 ### Hanging out
 The living-room sofa, both armchairs and the den sofa have seats: a **Sit** prompt puts you on the nearest free cushion (walking into them does nothing), jump to get up. Hiding or getting caught pulls you off the seat first.
 
@@ -166,14 +168,18 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 ### Repeat nights
 Every night has the full build-up (a shorter one for repeat groups, `Config.VeteranPace`, is off: the owner found a 7-minute night too fast).
 
+**A different first act** (`Director/NightPlan`, v84). Anyone's first night gets the chores the act was tuned around (pizza, popcorn, the upstairs windows). Every other night keeps the pizza (the delivery man is the act's story) and draws two of four chores: **popcorn**, **the upstairs windows**, **get the fire going** (it went out before anyone arrived: firewood from the pile in the garage, into the fireplace and light it) and **movie night** (the remote is in the couch, then channel 4), never the same two as the server's last night, so at least one chore is new every time and all six pairs come round. A fire nobody lit is lit when Act II starts (it's the living room's light in the blackout). Each night's set is logged (`NightLog_v1.Plan`, e.g. "Fire+Movie"). (Logs, v81: 12 of 60 players who pressed ANOTHER NIGHT left within two minutes of the same chores again.)
+
 **Skip to the blackout.** On the CHOOSE MODE screen such a group also gets a toggle, **⏩ SKIP TO THE BLACKOUT** (with the count, e.g. 1 / 2): if more than half of them want it, the night starts straight at Act III (no first chapter card, intro thoughts or solo texts; the truth log says you skipped ahead) and the power goes 8 s later. The result shows "Skipping to the blackout." (The logs showed a whole group of returning players leaving 40 s into a night they'd already played.)
 
 ### Act I — "Friday Night" (4–7 min)
 *Social and cozy, with something slightly off.*
-- Only three short objectives (`Story.Tasks`) — this is a horror game, not a chore list:
+- Only three short objectives (`Story.Tasks`) — this is a horror game, not a chore list (repeat nights swap two of them, see Repeat nights):
   - **Order pizza:** find the menu on the fridge → call Tony's on the kitchen phone.
   - **Make popcorn:** take a bag from the kitchen cupboard → microwave it.
   - **Close the upstairs windows:** guest room, Lily's room (a storm is coming).
+  - (repeat nights) **Get the fire going:** firewood from the garage → into the fireplace and light it.
+  - (repeat nights) **Movie night:** the remote in the couch → channel 4.
 - **A warm, cozy house.** The night starts as a good night in: the fire is already burning (it's also the light that stays on when the power dies), lamps glow amber, wall sconces light the hall and the TV wall, fairy lights hang along the mantel and in Jamie's and Lily's rooms, strips glow under the kitchen cabinets, candles flicker on the mantel, coffee table, dining table and dresser, knitted throws hang over the sofas and chairs and lie folded on the beds, mugs of cocoa steam next to plates of cookies, baskets of blankets sit by the fire and the den sofa, and family photos climb the stairs. Indoors (ground floor and upstairs, power on) the picture shifts warm and golden and a soft licensed piano track ("Solo Piano - Gentle Rain", APM) plays through the first act. It fades when the pizza car's headlights come up the street. Outside, the basement and the attic stay cold and blue, and when the breaker goes, the warmth drains out of everything.
 - **Outside:** it's November: pumpkins on the porch steps and by the columns, pots of rust and gold mums, fallen leaves over the lawns, woodsmoke drifting off the chimney (the fire is lit), puddles on the drive, and rain splashing on the ground around you.
 - **First visits:** the first time someone walks into a room in Act I they think a line about it (Jamie knows the house; the friends see it for the first time).

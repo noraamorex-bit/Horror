@@ -61,6 +61,8 @@ Story.Objectives = {
 	Popcorn = "Make popcorn (microwave)",
 	Bedtime = "Get ready for bed (upstairs bathroom)",
 	Windows = "Close the upstairs windows before the storm",
+	Fire = "Get the fire going (firewood in the garage)",
+	Movie = "Put a movie on (find the remote)",
 
 	Explore = "Figure out what that noise was",
 
@@ -93,6 +95,15 @@ Story.Tasks = {
 	Windows = { Title = "Close the upstairs windows", Steps = {
 		{ Key = "GuestFront", Text = "Close the window in the guest room", Target = "GuestWindow" },
 		{ Key = "LilyBack", Text = "Close the window in Lily's room", Target = "LilyWindow" },
+	} },
+	-- (repeat nights draw two of Popcorn / Windows / Fire / Movie: Director/NightPlan)
+	Fire = { Title = "Get the fire going", Steps = {
+		{ Key = "Wood", Text = "Grab some firewood from the pile in the garage", Target = "Woodpile" },
+		{ Key = "Light", Text = "Put it in the fireplace and light it", Target = "Fireplace" },
+	} },
+	Movie = { Title = "Movie night", Steps = {
+		{ Key = "Remote", Text = "Find the TV remote (try the couch)", Target = "Couch" },
+		{ Key = "Movie", Text = "Put the movie on: channel 4", Target = "TV" },
 	} },
 	Door = { Title = "Answer the door", Steps = {
 		{ Key = "Answer", Text = "The pizza's here. Answer the front door", Target = "Door_FrontDoor" },
@@ -671,6 +682,8 @@ Story.Thoughts = {
 		Popcorn = "We can't watch a movie without popcorn. There's some in the kitchen cupboard.",
 		LockUp = "Dad always says to lock up at night. The back door and the garage door.",
 		Windows = "The storm's getting worse. Somebody left the windows open upstairs.",
+		Fire = "The fire went out. There's firewood in the garage.",
+		Movie = "Movie night. If I can find the remote.",
 		Door = "The doorbell. That's the pizza. Somebody get the front door.",
 		Investigate = "Someone has to go up there and look. It's probably nothing.",
 		Bedtime = "It's late. Teeth, then bed. Mom would kill me.",

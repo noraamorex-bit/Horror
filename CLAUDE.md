@@ -171,6 +171,15 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **13 Oct (v84)**: the owner: comments say "bad" / "AI slop", nothing specific. v84: **night variety**
+  (NightPlan: first nights pizza+popcorn+windows; repeat nights pizza + 2 of popcorn/windows/fire/
+  movie, never last night's pair; logged as Plan) and **acoustics** (room reverb, muffled through
+  walls and while hiding). The game page description can't be changed through the API: new plain
+  text in `marketing/attic/description.txt` for the owner to paste (old one saved). Visual pass
+  (Creator Store models for the house, a better creature) needs the API key to download assets
+  (the asset delivery API answers "Scope not authorized"): ask the owner to add it, then inspect
+  models with lune before placing them (no flipped/floating props).
+- Owner said NO to skip-to-blackout by default for veterans.
 - **13 Oct (v82)**: rating 9 up / 11 down (45%), 4.8k visits. 17 h of v81 logs (194 nights, 520 lobby
   visits, 399 players): late joins 15 of 354 teleports (lone nights grew to 3-4 and ended in Sirens);
   solo nights 38, 82% abandoned; solo first-nighters 22 of 57 quit before the first task (groups 3-4%);
@@ -229,7 +238,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 83).
+  (last published: version 84).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

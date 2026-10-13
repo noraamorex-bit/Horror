@@ -13,6 +13,8 @@ local Players = game:GetService("Players")
 
 local Events = require(script.Parent.Events)
 local Delivery = require(script.Parent.Delivery)
+local NightPlan = require(script.Parent.NightPlan)
+local lastChores: { string }? = nil -- this server's last night's chores (the next night draws others)
 local Perception = require(script.Parent.Parent.Intruder.Perception)
 
 local Director = {}
@@ -69,6 +71,10 @@ end
 ---------------------------------------------------------------------------
 -- Queries
 ---------------------------------------------------------------------------
+function Director.chores(): { string }
+	return state.Chores or NightPlan.Classic
+end
+
 function Director.getAct(): string
 	return state.Act
 end
@@ -614,7 +620,29 @@ function Director.startAct(name: string, cause: Player?)
 		if ctx.Economy then
 			ctx.Economy.resetNight()
 		end
-		ctx.Objectives.set({ "OrderPizza", "Popcorn", "Windows" })
+		-- tonight's chores: the tuned set on anyone's first night, two from the pool otherwise
+		-- (never the same two as this server's last night)
+		local anyNew = false
+		for _, p in ctx.Util.sessionPlayers() do
+			if (tonumber(p:GetAttribute("StatNights")) or 0) < 1 then
+				anyNew = true
+			end
+		end
+		local chores = NightPlan.choose(anyNew, lastChores)
+		lastChores = chores
+		state.Chores = chores
+		local fire = ctx.World.refs().Fire
+		if fire and fire.douse and fire.relight then
+			if table.find(chores, "Fire") then
+				fire.douse()
+			else
+				fire.relight()
+			end
+		end
+		ctx.Objectives.set(NightPlan.evening(chores))
+		if ctx.Journey and ctx.Journey.plan then
+			ctx.Journey.plan(NightPlan.key(chores))
+		end
 		ctx.Intruder.setMode("Offstage")
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
 		local session = ctx.Util.sessionPlayers()
@@ -649,6 +677,11 @@ function Director.startAct(name: string, cause: Player?)
 		end
 	elseif name == "SmallThings" then
 		ctx.Objectives.set({ "LockUp" })
+		-- (the fire chore left undone: Jamie gets it going. The living room keeps its light for the blackout)
+		local fire = ctx.World.refs().Fire
+		if fire and fire.relight and not fire.Lit then
+			fire.relight()
+		end
 	elseif name == "SomeoneElse" then
 		-- (the new objectives come with the blackout: until then there's nothing to run from)
 		ctx.Objectives.set({})

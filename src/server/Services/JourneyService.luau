@@ -184,6 +184,14 @@ function Journey.act(name: string)
 	table.insert(night.Data.Acts, { since(), name })
 end
 
+-- tonight's first-act chores ("Popcorn+Windows", "Fire+Movie"...: Director/NightPlan)
+function Journey.plan(text: string)
+	if isLobby then
+		return
+	end
+	ensureNight().Data.Plan = text
+end
+
 function Journey.ending(kind: string)
 	if isLobby or not night or not night.Started then
 		return

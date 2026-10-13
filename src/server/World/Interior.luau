@@ -348,15 +348,16 @@ function Interior.build(ctx, root: Instance, refs)
 	fireLight.Shadows = true
 	fireLight.Enabled = false
 	fireLight.Parent = fireSpot
-	local fire = { Lit = false, Logs = false }
+	-- (Parts: logs, kindling and embers, gone when the fire's out; Crackle: its sound; Prompt: light it)
+	local fire: any = { Lit = false, Logs = false, Parts = {}, Crackle = nil, Prompt = nil }
 	refs.Fire = fire
 	local BARK = { Color3.fromRGB(78, 56, 38), Color3.fromRGB(96, 70, 46), Color3.fromRGB(66, 48, 34) }
 	-- a log lying across the grate; lx along the firebox, lz toward the back wall
 	local function log(lx, ly, lz, len, dia, yaw, k)
 		local cf = fireCF * CF(lx, ly, lz) * ANG(0, rad(yaw), 0)
-		Kit.cyl(living, "Log", cf, len, dia, BARK[k % 3 + 1], KM.Wood)
+		table.insert(fire.Parts, Kit.cyl(living, "Log", cf, len, dia, BARK[k % 3 + 1], KM.Wood))
 		for _, e in { -1, 1 } do
-			Kit.cyl(living, "LogEnd", cf * CF(e * (len / 2 + 0.01), 0, 0), 0.04, dia - 0.12, Color3.fromRGB(196, 160, 112), KM.Wood)
+			table.insert(fire.Parts, Kit.cyl(living, "LogEnd", cf * CF(e * (len / 2 + 0.01), 0, 0), 0.04, dia - 0.12, Color3.fromRGB(196, 160, 112), KM.Wood))
 		end
 	end
 	local function stackLogs()
@@ -370,6 +371,7 @@ function Interior.build(ctx, root: Instance, refs)
 		for k = 1, 6 do
 			local stick = Kit.box(living, "Kindling", fireCF * CF(-0.6 + k * 0.2, 2.25 + (k % 2) * 0.1, 0.05) * ANG(0, rad(20 + k * 27), 0), V(1.3, 0.1, 0.1), Color3.fromRGB(150, 118, 80), KM.Wood)
 			stick.CFrame *= ANG(0, 0, rad(k % 2 == 0 and 15 or -12))
+			table.insert(fire.Parts, stick)
 		end
 	end
 	local function lightFire()
@@ -378,9 +380,9 @@ function Interior.build(ctx, root: Instance, refs)
 		flames.Enabled = true
 		fireLight.Enabled = true
 		for k = 0, 5 do
-			Kit.box(living, "Ember", fireCF * CF(-1.4 + k * 0.55, 1.0, 0.05 - (k % 2) * 0.3) * ANG(0, rad(k * 31), 0), V(0.5, 0.12, 0.35), Color3.fromRGB(255, 110, 30), KM.Neon)
+			table.insert(fire.Parts, Kit.box(living, "Ember", fireCF * CF(-1.4 + k * 0.55, 1.0, 0.05 - (k % 2) * 0.3) * ANG(0, rad(k * 31), 0), V(0.5, 0.12, 0.35), Color3.fromRGB(255, 110, 30), KM.Neon))
 		end
-		ctx.Audio.loopOn("FireCrackle", fireSpot, { Caption = false })
+		fire.Crackle = ctx.Audio.loopOn("FireCrackle", fireSpot, { Caption = false })
 		ctx.Power.setStaticLit("Living", true)
 		-- the firelight breathes (client-side flicker)
 		CollectionService:AddTag(fireLight, "Flicker")
@@ -389,10 +391,51 @@ function Interior.build(ctx, root: Instance, refs)
 	-- It's still the light that stays on when the power dies.
 	stackLogs()
 	lightFire()
+	-- (a night whose chores include the fire: it went out before anyone arrived, just ash; the
+	-- prompt to light it is only there while it's out)
+	fire.Prompt = ctx.Interaction.prompt(fireSpot, { Action = "Light the fire", Object = "Fireplace", Hold = 1.5, Distance = 8 }, function(player)
+		if fire.Lit then
+			return
+		end
+		if not ctx.Inventory.take(player, "Firewood") then
+			ctx.Audio.caption("Nothing to burn. The firewood's in the garage.", nil, nil, { player })
+			return
+		end
+		ctx.Audio.playAt("LogDrop", fireSpot.Position, { Caption = false, Volume = 0.4 })
+		fire.relight()
+		ctx.Objectives.step("Fire", "Light")
+	end)
+	fire.Prompt.Enabled = false
+	function fire.douse()
+		for _, part in fire.Parts do
+			part:Destroy()
+		end
+		fire.Parts = {}
+		fireEmitter.Enabled = false
+		flames.Enabled = false
+		fireLight.Enabled = false
+		CollectionService:RemoveTag(fireLight, "Flicker")
+		if fire.Crackle then
+			fire.Crackle:Destroy()
+			fire.Crackle = nil
+		end
+		ctx.Power.setStaticLit("Living", false)
+		fire.Lit = false
+		fire.Logs = false
+		fire.Prompt.Enabled = true
+	end
+	function fire.relight()
+		if not fire.Lit then
+			stackLogs()
+			lightFire()
+		end
+		fire.Prompt.Enabled = false
+	end
 
 	-- the remote is lost in the couch
 	local remoteFound = false
 	local couchSeat = spot(living, "CouchSearch", CF(-24, G + 2.2, -16), V(8, 0.6, 2.6))
+	target("Couch", couchSeat.Position)
 	local couchPrompt
 	couchPrompt = ctx.Interaction.prompt(couchSeat, { Action = "Search the cushions", Object = "Couch", Hold = 1, Distance = 7 }, function(player)
 		if remoteFound then
@@ -402,6 +445,7 @@ function Interior.build(ctx, root: Instance, refs)
 		couchPrompt.Enabled = false
 		ctx.Inventory.give(player, "Remote")
 		ctx.Audio.playAt("Pickup", couchSeat.Position, { Caption = false })
+		ctx.Objectives.step("Movie", "Remote")
 	end)
 
 	local tvState = { Channel = 0, Alert = false, Sound = nil :: Sound?, On = false }
@@ -435,6 +479,9 @@ function Interior.build(ctx, root: Instance, refs)
 		local bg = ch.Screen == "Static" and Color3.fromRGB(90, 90, 90) or (ch.Screen == "News" and Color3.fromRGB(30, 60, 140) or Color3.fromRGB(40, 40, 46))
 		tvShow(ch.Screen or "Static", bg, ch.Sound)
 		ctx.Audio.caption(ch.Line, screen.Position, 30)
+		if ch.Screen == "Movie" then
+			ctx.Objectives.step("Movie", "Movie")
+		end
 		-- Mom said channel 7
 		if ch.Screen == "News" then
 			ctx.Objectives.step("News", "Ch7")
@@ -1085,6 +1132,7 @@ function Interior.build(ctx, root: Instance, refs)
 			end
 			ctx.Audio.playAt("LogDrop", pileSpot.Position, { Caption = false, Volume = 0.4 })
 			ctx.Inventory.give(player, "Firewood")
+			ctx.Objectives.step("Fire", "Wood")
 		end)
 	end
 

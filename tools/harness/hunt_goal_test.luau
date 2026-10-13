@@ -165,7 +165,7 @@ local ok, err = pcall(function()
 	ctx2.Remotes.Objectives.FireAllClients = function(_, l) list2 = l end
 	ctx2.Director.adminStart("Normal")
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("VeteranNight") == true, "a veteran night")
-	assert(list2 and #list2 == 3 and has(list2, "Popcorn"), "the full build-up for veterans too (the owner found it too fast)")
+	assert(list2 and #list2 == 3 and has(list2, "OrderPizza"), "the full build-up for veterans too (the owner found it too fast): pizza and two chores")
 	-- a first-timer joins the group: the full build-up
 	local ctx3 = ctx
 	ctx3.Director.enterLobby()

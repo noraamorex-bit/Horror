@@ -35,7 +35,8 @@ Sounds.Library = {
 	Thunder2 = { Id = "rbxassetid://9120016241", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
 	Thunder3 = { Id = "rbxassetid://9120016256", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
 	ThunderRumble = { Id = "rbxassetid://9120018695", Fallback = ENGINE_THUD, Volume = 0.6 },
-	ClockTick = { Id = "", Volume = 0.25, Looped = true, Range = 30, Note = "grandfather clock tick" },
+	-- Creator Store (public): "Clock Tick (1 Second Long, Loopable)"
+	ClockTick = { Id = "rbxassetid://344101086", Volume = 0.25, Looped = true, Range = 30 },
 	ClockChime = { Id = "rbxassetid://9113816347", Fallback = ENGINE_BEEP, Volume = 0.5, Range = 120, Caption = "[The grandfather clock chimes]" },
 	FridgeHum = { Id = "rbxassetid://9112889082", Volume = 0.06, Looped = true, Range = 20 },
 	FireCrackle = { Id = "rbxassetid://9112780193", Volume = 0.55, Looped = true, Range = 30 },
@@ -109,7 +110,8 @@ Sounds.Library = {
 	ManWhisper = { Id = "rbxassetid://9113585946", Volume = 0.6, Range = 14, Caption = "[A man's breathing, very close]" },
 	-- his breathing, always with him: you hear it only when he's a few steps away
 	IntruderBreath = { Id = "rbxassetid://9113585946", Volume = 0.45, Range = 16, Looped = true },
-	PhoneVibrate = { Id = "", Fallback = ENGINE_BEEP, Volume = 0.3, Pitch = 1.5 },
+	-- Creator Store (public): "Phone Vibrating On Table"
+	PhoneVibrate = { Id = "rbxassetid://121031853982816", Fallback = ENGINE_BEEP, Volume = 0.45 },
 
 	-- Interface / handling (mostly client-side)
 	Pickup = { Id = "rbxassetid://9113849306", Volume = 0.5, Range = 20 },
