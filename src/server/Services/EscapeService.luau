@@ -101,6 +101,21 @@ function Escape.callForHelp(method: string, player: Player?)
 	if ctx.Intruder then
 		ctx.Intruder.onHelpCalled(player)
 	end
+	-- he heard the call: the caller is told to hide, and (Normal) gets a moment to do it
+	if player and (method == "Cell" or method == "Landline") then
+		-- (for the death card's tip, if he gets them in the next half minute)
+		player:SetAttribute("JustCalled", true)
+		task.delay(30, function()
+			player:SetAttribute("JustCalled", nil)
+		end)
+		local grace = if workspace:GetAttribute("Difficulty") == "Hard" then (H.CallerGraceHard or 0) else (H.CallerGrace or 0)
+		if grace > 0 and ctx.Intruder and ctx.Intruder.spare then
+			ctx.Intruder.spare(player, grace)
+		end
+		if ctx.Director and ctx.Director.think then
+			ctx.Director.think(player, "He heard that. He's coming. HIDE. NOW.|hide")
+		end
+	end
 
 	local night = state
 	task.delay(eta, function()

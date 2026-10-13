@@ -66,7 +66,10 @@ local HINTS = {
 	breath = { Key = "Hold Space to hold your breath", Touch = "Hold BREATH to hold your breath", Pad = "Hold A to hold your breath" },
 	struggle = { Key = "Mash Space to struggle", Touch = "Mash STRUGGLE", Pad = "Mash A to struggle" },
 	phone = { Key = "Press P for your phone", Touch = "Tap PHONE at the top right", Pad = "Press D-pad down for your phone" },
+	hide = { Key = "Closets, curtains, under beds: press E to get in", Touch = "Closets, curtains, under beds: tap to get in", Pad = "Closets, curtains, under beds: press X to get in" },
 }
+-- (urgent lines: he's right there. They go next, not after whatever was queued)
+local URGENT = { breath = true, hide = true }
 
 local function hintText(key: string?): string
 	local h = key and HINTS[key]
@@ -138,8 +141,7 @@ function Thoughts.say(text: string, hint: string?)
 		return
 	end
 	local item = { Text = text, Hint = hint, Time = os.clock(), Act = workspace:GetAttribute("Act") }
-	if hint == "breath" then
-		-- (urgent: he's right outside. It goes next, not after whatever was queued)
+	if hint and URGENT[hint] then
 		table.insert(queue, 1, item)
 	else
 		table.insert(queue, item)

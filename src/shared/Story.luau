@@ -847,6 +847,13 @@ Story.Results = {
 	Died = { Title = "YOU DIED", Good = false },
 	Taken = { Title = "YOU WERE TAKEN", Good = false },
 }
+-- the death card's tip: how he got you, and how to get away next time (CaptureService.kill)
+Story.DeathTips = {
+	Open = "He's slower than you. When his footsteps speed up, sprint, break his line of sight, then hide.",
+	Hiding = "When he stops at your hiding spot, press each side as its half reaches the heart. Don't hide where he saw you go.",
+	Call = "Calling 911 is loud and he comes running. The second the call goes through, hide. The shower curtain is right there.",
+	Default = "Listen for his footsteps: the closer he is, the louder they get. Hide before he turns the corner.",
+}
 -- the one line under it when you're out before the night is over (co-op)
 Story.ResultLines = {
 	Burrow = "You climbed out through the grate in the back yard. Your friends are still down there.",

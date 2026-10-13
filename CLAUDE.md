@@ -171,6 +171,16 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **13 Oct (v82)**: rating 9 up / 11 down (45%), 4.8k visits. 17 h of v81 logs (194 nights, 520 lobby
+  visits, 399 players): late joins 15 of 354 teleports (lone nights grew to 3-4 and ended in Sirens);
+  solo nights 38, 82% abandoned; solo first-nighters 22 of 57 quit before the first task (groups 3-4%);
+  first-nighters quit mid-night 38% (was 45%), now mostly in act III (54) and act I (36). 152 of 178
+  captures were in the open, 42 in the upstairs bathroom, most of them 3-12 s after the 911 call
+  (he screams and charges the caller); heartbeat failed 34 of 61 on Normal; 'Again' pressers: 12 of 60
+  quit the next night within 2 min (the same chores again); skip-to-blackout used in 9 of 46
+  all-veteran nights. Fixed in v82: caller grace (6 s Normal) + urgent "HIDE. NOW." thought with the
+  how-to; heartbeat wider/slower; death card TIP (how he got you); script error logging (client
+  Perf.Err, server SErr; pull_stats lists them).
 - **12 Oct (v81)**, from 4.5 h of v78-80 logs (46 nights, 101 lobby visits): new players queue 97%; the
   quit rate per minute is ~7x higher before the first task than after; **solo nights: 14 of 15
   abandoned** (11 in act I), and half of solo phone players never found the pizza menu. Groups of 2
@@ -193,7 +203,8 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
     before the blackout; (4) **MatchService**: lone/short circles join a group night that started
     short (92% of solo nights abandoned, 18/52 in the first minute); alone in the lobby, circles
     start after 20 s.
-- **Next:** `pull_stats.py --logs-only --since=81`: "joined a night in progress" (v78: 1 of 68), solo
+- **Next:** `pull_stats.py --logs-only --since=82`: read the script errors first and fix them; bathroom
+  captures after the call, heartbeat pass rate (want > 60% on Normal), deaths per player. Then: "joined a night in progress" (v78: 1 of 68), solo
   night count and abandonment (v78: 14/15), solo phone players reaching OrderPizza:Menu (v77-80: 20/40),
   night length (should stay ~12-13 min). Phones still quit most (62% vs PC 30%).
 - Daily reminder routine's first send (11 Oct 22:53) failed on the usage limit; it retries daily.
@@ -218,7 +229,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 81).
+  (last published: version 82).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

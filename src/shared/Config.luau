@@ -231,10 +231,12 @@ Config.Difficulty = {
 -- he hears you. (Hard: Config.Difficulty.Hard.Heartbeat overrides.)
 -- (Normal was failed 14 times out of 22 in the first day of logs, and no pass ever counted: it's
 -- meant to be tense, not a wall. Hard keeps the tight version.)
+-- (v81: still failed 34 times out of 61 on Normal; wider and slower again. Normal should be passed
+-- most of the time by anyone who tries.)
 Config.Heartbeat = {
-	Interval = 1.15, -- seconds between beats
-	Travel = 1.1, -- how long a half-heart takes to fly in (easier to read)
-	Window = 0.32, -- seconds either side of arrival that count (forgiving on touch screens)
+	Interval = 1.25, -- seconds between beats
+	Travel = 1.3, -- how long a half-heart takes to fly in (easier to read)
+	Window = 0.42, -- seconds either side of arrival that count (forgiving on touch screens)
 	Lead = 1.4, -- the heart shows this long before the first beat
 	Misses = 3, -- this many misses and he hears you (more and doing nothing could outlast him)
 }
@@ -260,6 +262,11 @@ Config.Help = {
 	CellCallDurationNormal = 10,
 	OkaforCallsAfter = 100, -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
 	OkaforResponse = 80,
+	-- the call goes through and he hears it (he screams and charges the caller): on Normal the caller
+	-- gets this head start to hide (v81 logs: most upstairs-bathroom captures came 3-12 s after the
+	-- call ended, the caller still at the window). Hard: none.
+	CallerGrace = 6,
+	CallerGraceHard = 0,
 	LandlineCallDuration = 6,
 	NeighborWait = 15,
 	JunctionRepair = 10,

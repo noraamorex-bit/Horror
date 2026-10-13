@@ -473,6 +473,7 @@ local function tryGrab(target: Player): boolean
 	if grabFails(target) then
 		return false
 	end
+	target:SetAttribute("CaughtHow", "Open")
 	if ctx.Capture.capture(target) then
 		S.Memory[target] = nil
 		S.HuntTarget = nil
@@ -1413,6 +1414,7 @@ STATES.CheckSpot = function(_, visible)
 	if found and occupant then
 		ctx.Audio.playAt("DoorYank", spot.Position, { CaptionText = "[The door is ripped open]", CaptionRange = 50 })
 		ctx.Hiding.exit(occupant, true)
+		occupant:SetAttribute("CaughtHow", "Hiding")
 		if ctx.Capture.capture(occupant) then
 			afterCapture(occupant)
 		else
@@ -1649,6 +1651,7 @@ local function ripOut(who: Player, spot)
 	end
 	ctx.Audio.playAt("DoorYank", spot.Position, { CaptionText = "[The door is ripped open]", CaptionRange = 50 })
 	ctx.Hiding.exit(who, true)
+	who:SetAttribute("CaughtHow", "Hiding")
 	if ctx.Capture.capture(who) then
 		S.Memory[who] = nil
 		afterCapture(who)

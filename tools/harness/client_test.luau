@@ -63,6 +63,16 @@ local ok, err = pcall(function()
 		assert(x and y >= 0.24, "upstairs: up, but below the objective panel")
 		print("objective arrow ok")
 	end
+	-- script errors on the device are counted for the logs (5 different at most)
+	do
+		local D = H.load("Client/Controllers/Diagnostics")
+		D._onError("attempt to index nil", "Players.X.PlayerScripts.Client.Controllers.HUD:120: function x")
+		D._onError("attempt to index nil", "Players.X.PlayerScripts.Client.Controllers.HUD:120: function x")
+		for i = 1, 8 do D._onError("other " .. i, "") end
+		local errs = D._errors()
+		assert(#errs == 5 and errs[1].N == 2 and string.find(errs[1].M, "HUD:120", 1, true), "errors counted, capped at 5")
+		print("client error log ok")
+	end
 	local R = ctx.Remotes
 	-- the difficulty vote, the role picker, settings
 	R.Vote.OnClientEvent:Fire({ Ends = os.clock() + 10, Normal = 0, Hard = 1, Total = 2 })
@@ -139,7 +149,17 @@ local ok, err = pcall(function()
 	R.Fade.OnClientEvent:Fire(true, 1)
 	R.PlaySound.OnClientEvent:Fire("PhoneVibrate")
 	R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 3 })
+	player:SetAttribute("DeathTip", "Hide before he turns the corner.")
 	R.Result.OnClientEvent:Fire({ Outcome = "Died", Title = "YOU DIED", Good = false, Line = "y", CanSpectate = true, ReturnToLobby = true })
+	do
+		local found = false
+		for _, d in H.unwrap(pg):GetDescendants() do
+			if d:IsA("TextLabel") and string.find(d.Text, "Hide before he turns the corner", 1, true) and string.find(d.Text, "TIP", 1, true) then found = true end
+		end
+		assert(found, "the death card shows how not to die next time")
+		print("death tip ok")
+	end
+	player:SetAttribute("DeathTip", nil)
 	R.Result.OnClientEvent:Fire({ Outcome = "Died", Title = "YOU DIED", Good = false, Line = "y", CanRevive = true, ReviveIn = 12, CanSpectate = false, ReturnToLobby = true })
 	assert(ctx.EndingUI.reviveLabel():find(tostring(ctx.Config.Shop.Revive.Price) .. " R$", 1, true), "revive priced on the card (Config's price until the live one loads)")
 	R.Revived.OnClientEvent:Fire()

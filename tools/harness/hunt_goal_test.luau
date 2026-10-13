@@ -115,6 +115,20 @@ local ok, err = pcall(function()
 	assert(not has(sent, "Neighbor") and not has(sent, "Car"), "the other ways out are gone")
 	H.flush(0.5)
 	assert(prompt.Enabled == false, "the prompt goes once help is called")
+	-- he heard the call: the caller gets a head start to hide (Normal), and the death card would say why
+	local st = ctx.Intruder._state()
+	assert(st.Spared and st.Spared[p] and st.Spared[p] > T, "the caller has a few seconds to hide")
+	assert(p:GetAttribute("JustCalled") == true, "marked for the death card's tip")
+	local victim = mkPlayer("Victim")
+	victim:SetAttribute("JustCalled", true)
+	victim:SetAttribute("CaughtHow", "Open")
+	ctx.Capture.kill(victim)
+	assert(victim:GetAttribute("DeathTip") == ctx.Story.DeathTips.Call, "caught right after calling: the call tip")
+	local hider = mkPlayer("Hider")
+	hider:SetAttribute("CaughtHow", "Hiding")
+	ctx.Capture.kill(hider)
+	assert(hider:GetAttribute("DeathTip") == ctx.Story.DeathTips.Hiding, "pulled out of a hiding spot: the heartbeat tip")
+	print("caller grace + death tip ok")
 
 	-- veteran pacing: a group that has all played before
 	-- titles earned in the house: Scaredy Cat (5 hides while he hunts), Phrogger (his nest),

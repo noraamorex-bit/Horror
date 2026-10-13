@@ -23,6 +23,8 @@ function Capture.reset()
 	end
 	for _, p in game:GetService("Players"):GetPlayers() do
 		p:SetAttribute("Dead", nil)
+		p:SetAttribute("DeathTip", nil)
+		p:SetAttribute("CaughtHow", nil)
 	end
 	slots = {}
 	captives = {}
@@ -158,6 +160,10 @@ function Capture.kill(player: Player): boolean
 	end
 	player:SetAttribute("Dead", true)
 	player:SetAttribute("Captured", true)
+	-- how he got you, and how not to next time (DOORS' guiding-light idea): shown on the death card
+	local how = if player:GetAttribute("JustCalled") then "Call" else player:GetAttribute("CaughtHow")
+	local tips = ctx.Story and ctx.Story.DeathTips
+	player:SetAttribute("DeathTip", tips and (tips[how] or tips.Default) or nil)
 	player:SetAttribute("StruggleProgress", nil)
 	if ctx.Journey then
 		ctx.Journey.event(player, "Dead")

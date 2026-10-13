@@ -266,6 +266,22 @@ def report_nights(nights):
     print("  help called (nights that reached the blackout):", dict(helps.most_common()))
     joined = sum(1 for n in started for p in (n.get("P") or {}).values() if any(ev[1] == "Joined" for ev in p.get("Ev") or []))
     print(f"  late arrivals who joined a night in progress: {joined}")
+    # script errors (v82+): on players' devices (Perf.Err) and on the game servers (SErr)
+    cerr, cwho, serr = Counter(), Counter(), Counter()
+    for n in started:
+        for e in n.get("SErr") or []:
+            serr[e.get("M")] += e.get("N") or 1
+        for p in (n.get("P") or {}).values():
+            for e in ((p.get("Perf") or {}).get("Err") or []):
+                cerr[e.get("M")] += e.get("N") or 1
+                cwho[e.get("M")] += 1
+    if cerr or serr:
+        print("  script errors on devices (count, players):")
+        for m, c in cerr.most_common(10):
+            print(f"    {c:5} x  {cwho[m]:3} players  {m}")
+        print("  script errors on game servers:")
+        for m, c in serr.most_common(10):
+            print(f"    {c:5} x  {m}")
 
 
 def main():

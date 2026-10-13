@@ -206,6 +206,14 @@ local function showCard(opts)
 	task.delay(0.4, function()
 		UI.tween(body, 0.6, { TextTransparency = 0 })
 	end)
+	-- he got you: how, and how not to next time
+	local tipText = not opts.Good and player:GetAttribute("DeathTip") or nil
+	if type(tipText) == "string" and tipText ~= "" then
+		local tip = line({ Text = "<font color=\"#d9b45a\"><b>TIP</b></font>   " .. tipText, Font = UI.Font.Body, TextSize = 16, TextColor3 = UI.Color.Dim, TextTransparency = 1 })
+		task.delay(0.9, function()
+			UI.tween(tip, 0.6, { TextTransparency = 0 })
+		end)
+	end
 	if opts.WinTime then
 		-- a win: your time, for the fastest-wins board in the lobby
 		line({ Text = "YOUR TIME  " .. tostring(opts.WinTime), Font = UI.Font.Bold, TextSize = 20, TextColor3 = UI.Color.Text })

@@ -30,6 +30,7 @@ local isLobby = false
 local night: any = nil -- the night being logged (game servers)
 local nightN = 0
 local perf: { [Player]: any } = {}
+local serverErrors: { any } = {} -- this server's script errors since the last night was written
 local lobby: { [Player]: any } = {}
 local lobbyDone: { any } = {}
 local lobbyN = 0
@@ -78,6 +79,7 @@ local function perfOf(p: Player): any
 		FpsMin = round(s.FpsMin),
 		FpsAvg = s.N > 0 and round(s.FpsSum / s.N) or nil,
 		Last = s.Last and { Mem = math.floor(s.Last.Mem or 0), Fps = round(s.Last.Fps), Ago = math.floor(os.clock() - s.Last.At) } or nil,
+		Err = s.Err,
 	}
 end
 
@@ -252,6 +254,10 @@ function Journey.flush(why: string?)
 	end
 	n.Data.Why = why
 	n.Data.Len = math.floor(os.clock() - n.Clock)
+	if #serverErrors > 0 then
+		n.Data.SErr = serverErrors
+		serverErrors = {}
+	end
 	write(nightStore, n.Key, n.Data)
 end
 
@@ -333,7 +339,27 @@ function Journey.init(c)
 	lobbyStore = ok2 and b or nil
 end
 
+-- script errors on this server (the night log carries them: SErr), 8 different at most
+function Journey.serverError(message: string, trace: string?)
+	local where = type(trace) == "string" and string.match(trace, "([%w_]+:%d+)") or nil
+	local key = string.sub(tostring(message), 1, 160) .. (where and (" @" .. where) or "")
+	for _, e in serverErrors do
+		if e.M == key then
+			e.N += 1
+			return
+		end
+	end
+	if #serverErrors < 8 then
+		table.insert(serverErrors, { M = key, N = 1 })
+	end
+end
+
 function Journey.start()
+	pcall(function()
+		game:GetService("ScriptContext").Error:Connect(function(message, trace)
+			Journey.serverError(message, trace)
+		end)
+	end)
 	ctx.Remotes.ClientInfo.OnServerEvent:Connect(function(p, info)
 		if type(info) ~= "table" then
 			return
@@ -362,6 +388,19 @@ function Journey.start()
 		end
 		if q and q == q then
 			s.Q = math.floor(q)
+		end
+		-- the device's script errors (client Diagnostics): kept small and clean
+		if type(info.Err) == "table" then
+			local list = {}
+			for i, e in info.Err do
+				if i > 5 then
+					break
+				end
+				if type(e) == "table" and type(e.M) == "string" and tonumber(e.N) then
+					table.insert(list, { M = string.sub(e.M, 1, 200), N = math.clamp(math.floor(tonumber(e.N) :: number), 1, 99999) })
+				end
+			end
+			s.Err = #list > 0 and list or nil
 		end
 		s.Last = { Mem = mem, Fps = fps, At = os.clock() }
 	end)
