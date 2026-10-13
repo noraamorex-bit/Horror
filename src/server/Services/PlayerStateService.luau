@@ -486,7 +486,7 @@ function PlayerState.start()
 			return
 		end
 		if not ctx.Inventory.has(player, "Flashlight") then
-			ctx.Director.think(player, "No flashlight. There's one on the mudroom shelf, one in the den drawer.")
+			ctx.Director.think(player, "I don't have a flashlight. There's one on the mudroom shelf, and one in the den drawer.")
 			return
 		end
 		if (player:GetAttribute("Battery") or 0) <= 0 then

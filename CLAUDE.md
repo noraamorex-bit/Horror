@@ -80,20 +80,15 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   hiding spots, heartbeat minigame). Players must **hide**.
 - **Slower than the player's walk speed.** Not too hard (owner worried about rage-quits); after a capture
   he leaves so friends get a rescue window.
-- Before the hunt: no pointless noises in front of you; from act II he shows himself in brief glimpses
-  (end of a hall, then gone; 13 Oct "he's around the whole night"). **He always comes in far from
-  everyone** when the hunt starts (the owner: "why does he spawn upstairs. Spawn him far away").
+- Before the hunt he stays hidden — no pointless noises or knocked-over chairs in front of you.
 - Never stuck on doors/walls (NavGrid survey + navigator).
 - Footsteps clearly audible and louder the closer he is.
 
 **Audio**
 - Lots of small sounds (doors, items, sirens, jumpscares…). **Occasional** sudden loud stingers are
   wanted (the owner liked the door-yank scare) — rare only.
-- **No loud music** at night start/end or in the secret ending. **Tension sound when he's near or
-  chasing is wanted now** (owner, 13 Oct: Doors-style rising drone/heartbeat, a sting when he spots you).
+- **No loud music**: none at night start/end, no chase/tension music, no music in the secret ending.
 - No coughing/grunting breath loop on the player (it sounded like someone saying "hello").
-- The text-message buzz is one short quiet buzz (the 3 s one was "so loud, long and annoying").
-  HUD notes make no sound except "done" and danger.
 
 **World**
 - Warm, cozy, polished interior; real textures; models from anywhere (Creator Store/UGC) when they look
@@ -118,12 +113,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Night streak: another night within 15 min of the last pays +25% / +50%. Groups where everyone has
   finished a night can vote ⏩ SKIP TO THE BLACKOUT. 🔔 Remind me (notification opt-in) on the result
   card. Out early, you can already press ANOTHER NIGHT.
-- **13 Oct, the owner played it and agreed with the "bad / AI slop" comments**: looks cheap/blocky,
-  too much text, boring slow start, not scary, sounds off, writing feels fake. New rules (replacing
-  "~13 min, full build-up"): **scary from minute 1**: one quick task (pizza), the first real scare
-  within ~60 s, he's around the whole night, **nights ~8-10 min**. **Tension sound is allowed when
-  he's near or chasing** (rising drone/heartbeat, a sting when he spots you); still no music at the
-  night's start/end. Act II events take turns (one thing at a time).
+- **Don't rush the night** (owner: a 7-minute night was "too fast"; ~13 min is right). Every night
+  gets the full build-up. Act II events take turns: scares 35 s apart, Mom's texts only when nothing
+  else is going on, the TV alert never during the news, a breather before the blackout.
 - The heartbeat minigame must stay passable (logs: 0/22 passes before the fix); Normal is
   forgiving, Hard is tight.
 - Chat: name tags ★ (supporter) and the equipped title in its colour; no level (the owner asked).
@@ -184,15 +176,6 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
-
-- **13 Oct (v86)**: the owner played and agreed with the comments (looks cheap, too much text, slow
-  start, not scary, sounds off, writing fake). Overhaul in sections; v86 = pacing + text + tension
-  sound + glimpses (GDD "Pacing (13 Oct overhaul)"): pizza only in act I, figure at the window ~50 s,
-  acts 1.5-2.5 / 2-3 / 4-5 min, he lurks from 30 s into act II, rewritten short lines, sound captions
-  opt-in, tension drone (APM Dark Drone 13), short text buzz, he enters far from players. The red
-  figure in the owner's screenshot was their admin X-RAY. **Next section: looks** (lighting, more
-  checked Creator Store props, beds you can hide under, a better creature), then review sounds that
-  "feel off". Check logs for night length (want 8-10 min) and act I quits.
 
 - **13 Oct (v85)**: the owner added `legacy-asset:manage` to the key: models can be downloaded,
   inspected and rendered before use (`tools/assets/`, README there). v85 swaps the big furniture for
@@ -269,7 +252,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 86).
+  (last published: version 85).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

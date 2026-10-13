@@ -22,7 +22,6 @@ local MUSIC = {
 	SadPiano = true,
 	VoteMusic = true,
 	Riser = true,
-	TensionDrone = true,
 }
 local STEPS = { 0, 0.25, 0.5, 0.75, 1 }
 
@@ -31,9 +30,7 @@ local sfxGroup: SoundGroup
 local panel: Frame
 local rows: { [string]: { [number]: TextButton } } = {}
 local shakeButton: TextButton
-local captionButton: TextButton
--- (sound captions like "[Thunder]" are opt-in: 13 Oct, the owner found the game "too much text")
-local current = { Music = 1, Sfx = 1, Shake = true, Captions = false }
+local current = { Music = 1, Sfx = 1, Shake = true }
 
 local function sort(s: Instance)
 	if s:IsA("Sound") and s.SoundGroup == nil then
@@ -58,15 +55,12 @@ local function refresh()
 	shakeButton.Text = current.Shake and "ON" or "OFF"
 	shakeButton.BackgroundColor3 = current.Shake and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(28, 28, 32)
 	shakeButton.TextColor3 = current.Shake and Color3.fromRGB(15, 15, 15) or UI.Color.Text
-	captionButton.Text = current.Captions and "ON" or "OFF"
-	captionButton.BackgroundColor3 = current.Captions and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(28, 28, 32)
-	captionButton.TextColor3 = current.Captions and Color3.fromRGB(15, 15, 15) or UI.Color.Text
 end
 
 local function save()
 	apply()
 	refresh()
-	ctx.Remotes.SaveSettings:FireServer(current.Music, current.Sfx, current.Shake, current.Captions)
+	ctx.Remotes.SaveSettings:FireServer(current.Music, current.Sfx, current.Shake)
 end
 
 -- the saved values, once the server has loaded them
@@ -81,10 +75,6 @@ local function fromAttributes()
 	if type(sh) == "boolean" then
 		current.Shake = sh
 	end
-	local cap = player:GetAttribute("SetCaptions")
-	if type(cap) == "boolean" then
-		current.Captions = cap
-	end
 	apply()
 	if panel then
 		refresh()
@@ -93,11 +83,6 @@ end
 
 function Settings.shakeOn(): boolean
 	return current.Shake
-end
-
--- sound captions ("[Thunder]", "[Footsteps]"): off unless chosen
-function Settings.captionsOn(): boolean
-	return current.Captions
 end
 
 function Settings.open()
@@ -176,12 +161,6 @@ local function build()
 		current.Shake = not current.Shake
 		save()
 	end)
-	local captionRow = row(4, "Sound captions")
-	captionButton = pill(captionRow, "OFF", 1, 90)
-	captionButton.Activated:Connect(function()
-		current.Captions = not current.Captions
-		save()
-	end)
 
 	local done = pill(panel, "DONE", 10, 180)
 	done.Size = UDim2.fromOffset(180, 48)
@@ -209,7 +188,7 @@ function Settings.start()
 	end
 	build()
 	fromAttributes()
-	for _, a in { "SetMusic", "SetSfx", "SetShake", "SetCaptions" } do
+	for _, a in { "SetMusic", "SetSfx", "SetShake" } do
 		player:GetAttributeChangedSignal(a):Connect(fromAttributes)
 	end
 end

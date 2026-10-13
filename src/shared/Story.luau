@@ -46,7 +46,7 @@ Story.Roles = {
 -- Chapter cards
 ---------------------------------------------------------------------------
 Story.Chapters = {
-	Evening = { Title = "I. Friday Night", Sub = "Parents away until Sunday." },
+	Evening = { Title = "I. Friday Night", Sub = "The Whitaker house. Parents out of state until Sunday." },
 	SmallThings = { Title = "II. Small Things", Sub = "The storm is getting worse." },
 	SomeoneElse = { Title = "III. Someone Else", Sub = "Breakers don't flip themselves." },
 	Guest = { Title = "IV. The Guest", Sub = "He knows you found him." },
@@ -70,7 +70,7 @@ Story.Objectives = {
 	Phone = "Call someone for help",
 	Attic = "Find out what's in the attic",
 
-	Call911 = "Call 911 (upstairs bathroom window)",
+	Call911 = "Call 911 - fix the phone line outside, or find a cell signal upstairs",
 	Neighbor = "Get to Mrs. Okafor's house next door",
 	Car = "Find the car keys and drive for help",
 	Trap = "(Optional) Lock him in the basement",
@@ -85,8 +85,8 @@ Story.Objectives = {
 Story.Tasks = {
 	-- Act I
 	OrderPizza = { Title = "Order pizza", Steps = {
-		{ Key = "Menu", Text = "Find the pizza menu (fridge)", Target = "Fridge" },
-		{ Key = "Call", Text = "Call Tony's (kitchen phone)", Target = "Phone" },
+		{ Key = "Menu", Text = "Find the pizza menu on the fridge", Target = "Fridge" },
+		{ Key = "Call", Text = "Call Tony's Pizza on the kitchen phone", Target = "Phone" },
 	} },
 	Popcorn = { Title = "Make popcorn", Steps = {
 		{ Key = "Bag", Text = "Get a bag of popcorn from the kitchen cupboard", Target = "Cupboard" },
@@ -106,12 +106,12 @@ Story.Tasks = {
 		{ Key = "Movie", Text = "Put the movie on: channel 4", Target = "TV" },
 	} },
 	Door = { Title = "Answer the door", Steps = {
-		{ Key = "Answer", Text = "Answer the front door", Target = "Door_FrontDoor" },
+		{ Key = "Answer", Text = "The pizza's here. Answer the front door", Target = "Door_FrontDoor" },
 	} },
 	-- Act II
 	News = { Title = "Watch the news", Steps = {
-		{ Key = "TV", Text = "Turn on the living room TV", Target = "TV" },
-		{ Key = "Ch7", Text = "Channel 7", Target = "TV" },
+		{ Key = "TV", Text = "Turn on the TV in the living room", Target = "TV" },
+		{ Key = "Ch7", Text = "Change to channel 7", Target = "TV" },
 		{ Key = "Watch", Text = "Watch the report", Target = "TV" },
 	} },
 	LockUp = { Title = "Lock up for the night", Steps = {
@@ -121,10 +121,10 @@ Story.Tasks = {
 	-- (after the news: the wait for the blackout used to be 2.5 minutes of nothing; now it sends
 	-- everyone upstairs, past the one bar of signal by the bathroom window, and the lights go there)
 	Bedtime = { Title = "Get ready for bed", Steps = {
-		{ Key = "Teeth", Text = "Brush your teeth (upstairs bathroom)", Target = "BathSink" },
+		{ Key = "Teeth", Text = "Brush your teeth in the upstairs bathroom", Target = "BathSink" },
 	} },
 	Investigate = { Title = "Check upstairs", Steps = {
-		{ Key = "Look", Text = "Check the noise upstairs", Target = "Hatch" },
+		{ Key = "Look", Text = "Find out what made that noise upstairs", Target = "Hatch" },
 	} },
 	-- Act III
 	-- the secret ending (FinaleService)
@@ -138,7 +138,7 @@ Story.Tasks = {
 		{ Key = "Climb", Text = "Push the hatch open, then climb the ladder out", Target = "FinaleLadder" },
 	} },
 	Power = { Title = "Get the power back on", Steps = {
-		{ Key = "Flashlight", Text = "Find a flashlight (drawers, shelves)", Target = { "Flashlight1", "Flashlight2" } },
+		{ Key = "Flashlight", Text = "Find a flashlight (search the drawers and shelves)", Target = { "Flashlight1", "Flashlight2" } },
 		{ Key = "Flip", Text = "Flip the MAIN breaker back on", Target = "Breaker" },
 	} },
 	Phone = { Title = "Call for help", Steps = {
@@ -153,7 +153,7 @@ Story.Tasks = {
 	} },
 	-- Act IV
 	Call911 = { Title = "Call 911", Steps = {
-		{ Key = "Call", Text = "Call from the upstairs bathroom window, or fix the phone line outside", Target = { "SignalSpot", "JunctionBox" } },
+		{ Key = "Call", Text = "Call from the upstairs bathroom window (one bar of signal), or fix the phone line outside", Target = { "SignalSpot", "JunctionBox" } },
 	} },
 	Neighbor = { Title = "Get to Mrs. Okafor's house", Steps = {
 		{ Key = "Knock", Text = "Knock on her door next door, and wait", Target = "NeighborDoor" },
@@ -252,16 +252,19 @@ Story.Documents = {
 -- (They wait for a quiet moment: never on top of a thought line or a conversation.)
 -- sent only on a solo night, a little after it starts
 Story.SoloTexts = {
-	{ From = "Riley", Body = "creek rd is flooded, we had to turn around" },
-	{ From = "Morgan", Body = "sorry!! next weekend" },
+	{ From = "Riley", Body = "creek rd is literally underwater. we had to turn around 😭" },
+	{ From = "Morgan", Body = "so sorry!! next weekend for sure. stay dry, don't get murdered lol" },
 }
 
 Story.Texts = {
 	Evening = {
-		{ At = 60, From = "Hollis Creek Alerts", Body = "FLASH FLOOD WARNING until 6 AM. Creek Rd closed." },
+		{ At = 35, From = "Mom", Body = "Landed! Hotel is nice. Eat something real please. Love you", Role = "Host" },
+		{ At = 150, From = "Dad", Body = "Don't touch the thermostat. And lock the back door, it sticks.", Role = "Host" },
+		{ At = 250, From = "Hollis Creek Alerts", Body = "FLASH FLOOD WARNING in effect until 6 AM. Creek Rd closed. Avoid travel." },
 	},
 	SmallThings = {
-		{ At = 50, From = "Mrs. Okafor (next door)", Body = "Jamie is your dad's friend still staying with you? I saw a man at your side door Tuesday", Role = "Host" },
+		{ At = 60, From = "Mrs. Okafor (next door)", Body = "Hi Jamie honey! Is your dad's friend still staying with you? I saw a man at the side door Tuesday. Stay dry!", Role = "Host" },
+		{ At = 230, From = "Riley's mom", Body = "Roads are bad honey, stay over at Jamie's tonight ok?", Role = "Tinkerer" },
 	},
 }
 
@@ -270,21 +273,30 @@ Story.Texts = {
 ---------------------------------------------------------------------------
 Story.MomNews = {
 	Texts = {
-		"Are you watching the news? Put channel 7 on",
-		"A man has been getting into houses in Hollis Creek. Living in them while the families are away",
+		"Are you watching the news?? Turn on channel 7 right now.",
+		"They're saying a man has been getting into houses here in Hollis Creek. Living in them while the families are out.",
 	},
 	Ask = {
-		"We're fine. Doors are locked",
-		"Mom you're scaring me",
+		"What?? We're fine. The doors are locked.",
+		"Mom you're scaring me. What does he look like?",
 	},
 	Answers = {
-		"Good. Keep them locked. Watch 7",
-		"I'm sorry honey. Just watch 7. Please",
+		"Good. Keep them locked. Watch channel 7, they're showing what they know.",
+		"Tall. They don't have his face. Just watch channel 7, honey. Please.",
 	},
-	After = "Text me after. Love you",
-	-- once the report has been on for a while (one round of replies is enough: 13 Oct, "too much text")
+	After = "Text me after you've watched it. Love you.",
+	-- once the report has been on for a while
 	Thoughts = {
-		"For weeks. And nobody noticed.",
+		"Living inside houses. For weeks. And nobody noticed.",
+		"Mrs. Okafor said she saw a man at our side door on Tuesday...",
+	},
+	AskAfter = {
+		"Watched it. That's really creepy.",
+		"Mrs. Okafor saw a man at our side door this week...",
+	},
+	AnswersAfter = {
+		"I know. Stay together tonight, all of you. Call me if anything feels off.",
+		"WHAT. Okay. Stay together and keep your phone on you. If anything feels wrong, call 911 first, then me.",
 	},
 }
 
@@ -295,85 +307,120 @@ Story.MomNews = {
 -- slot can't be filled are dropped when Optional, otherwise the scene waits for later.
 ---------------------------------------------------------------------------
 Story.Banter = {
-	-- (13 Oct, "the writing feels fake": fewer, shorter lines, said the way people actually talk)
-	Evening = {},
-	SmallThings = {
-		{ At = 40, Lines = {
-			{ 1, "Did you hear that? Upstairs." },
-			{ 2, "It's the storm." },
-			{ 1, "That was footsteps." },
+	Evening = {
+		{ At = 75, Lines = {
+			{ 1, "Okay. Who's picking the movie?" },
+			{ 2, "Not you. Last time we watched two hours about mold." },
+			{ 1, "It was about fungus. It was a thriller." },
 		} },
-		{ At = 140, Lines = {
-			{ 1, "Who's upstairs?" },
-			{ 2, "Nobody. We're all here." },
+		{ At = 130, Lines = {
+			{ 1, "Okay this fire is amazing. I'm never leaving this couch." },
+			{ 2, "You say that every time. Then you eat all the popcorn and fall asleep." },
+			{ 1, "That's called living my best life." },
+		} },
+		{ At = 190, Lines = {
+			{ 1, "How long till the pizza gets here? I'm actually starving." },
+			{ "Host", "Soon. Tony's is always slow when it rains." },
+			{ 2, "Is it just me or is it freezing in here?", Optional = true },
+		} },
+	},
+	SmallThings = {
+		{ At = 110, Lines = {
+			{ 1, "Did you guys lock the back door?" },
+			{ "Host", "I... think so?" },
+			{ 1, "You think so." },
+			{ 2, "Can we please just check." },
+		} },
+		{ At = 40, Lines = {
+			{ 1, "Did anyone else hear that? Upstairs." },
+			{ 2, "It's the storm. Old houses creak." },
+			{ 1, "Houses don't creak in footsteps." },
+		} },
+		{ At = 170, Lines = {
+			{ 1, "Okay, who keeps walking around upstairs?" },
+			{ 2, "Not me." },
+			{ 3, "...Not me either.", Optional = true },
+			{ "Host", "Everyone's down here. Everyone's been down here." },
 		} },
 	},
 	Guest = {
-		{ At = 25, Lines = {
-			{ 1, "He's in the house." },
-			{ 2, "Bathroom window. Call 911." },
+		{ At = 90, Lines = {
+			{ 1, "My phone's at four percent." },
+			{ 2, "Then don't waste it. Upstairs bathroom window, that's where the signal is." },
 		} },
-		{ At = 100, Lines = {
-			{ 1, "Keep your voice down." },
-			{ 2, "He hears everything." },
+		{ At = 25, Lines = {
+			{ 1, "He's in the house. He is actually in the house." },
+			{ 2, "Okay. Nobody panics. We stay together and we get help." },
+			{ 3, "And if he finds us?", Optional = true },
+			{ 2, "Then we run. Different directions." },
+		} },
+		{ At = 150, Lines = {
+			{ 1, "Keep your voice down. He hears everything." },
+			{ 2, "The car. If we get the keys we can just drive." },
 		} },
 	},
 	-- said a few seconds after an event, if two people are standing together
 	React = {
 		PlateCrash = { Lines = {
-			{ 1, "What was that?" },
-			{ 2, "The kitchen. Nobody's in there." },
+			{ 1, "WHAT was that?!" },
+			{ 2, "Kitchen. Something fell in the kitchen." },
+			{ 1, "Nothing just falls." },
 		} },
 		CeilingThud = { Lines = {
-			{ 1, "That was the ceiling." },
-			{ 2, "Don't." },
+			{ 1, "That came from the ceiling." },
+			{ 2, "Raccoons. It's... it's probably raccoons." },
 		} },
 		WindSlam = { Lines = {
-			{ 1, "Jesus." },
-			{ 2, "Just a door. Just the wind." },
+			{ 1, "Jeez! Just the wind. Right?" },
+			{ 2, "Somebody left a window open upstairs." },
 		} },
 		FootstepsUpstairs = { Lines = {
-			{ 1, "Someone's upstairs." },
-			{ 2, "We're all down here." },
+			{ 1, "Did you hear that? Someone's walking upstairs." },
+			{ 2, "Everybody's down here though." },
+			{ 1, "Yeah. That's what I mean." },
 		} },
 		TVAlert = { Lines = {
 			{ 1, "Who touched the TV?" },
-			{ 2, "Nobody." },
+			{ 2, "Nobody. It changed by itself." },
 		} },
 		Flicker = { Lines = {
-			{ 1, "Don't go out. Don't go out." },
+			{ 1, "Please don't go out, please don't go out..." },
+			{ 2, "It's the storm. The lines are swinging." },
 		} },
 		DoorRattle = { Lines = {
 			{ 1, "Someone's trying the door." },
-			{ 2, "It's locked. Right?" },
+			{ 2, "It's locked. It's locked, right?" },
 		} },
 		ChairDrop = { Lines = {
-			{ 1, "You go look." },
-			{ 2, "No way." },
+			{ 1, "What knocked that over?" },
+			{ 2, "I'm not going to look. You look." },
 		} },
 		MusicBox = { Lines = {
-			{ 1, "That's Lily's music box." },
-			{ 2, "Someone has to wind it." },
+			{ 1, "Is that... a music box?" },
+			{ 2, "Lily's. It only plays if someone winds it." },
+			{ 1, "Then who wound it?" },
 		} },
 		ShowerRan = { Lines = {
-			{ 1, "Why is the shower on?" },
-			{ 2, "I'm not going up there." },
+			{ 1, "Why is the shower running?" },
+			{ 2, "I'm not going up there. Nope." },
 		} },
 		LightUpstairs = { Lines = {
-			{ 1, "That light was off." },
+			{ 1, "Look. The light's on upstairs." },
+			{ 2, "That was off. I swear that was off." },
 		} },
 		BackDoorOpen = { Lines = {
-			{ 1, "Who opened the back door?" },
+			{ 1, "Who left the back door open?!" },
 			{ 2, "Those aren't our footprints." },
 		} },
 		WindowBang = { Lines = {
-			{ 1, "Get away from the window." },
+			{ 1, "Something hit the window!" },
+			{ 2, "Get away from the glass." },
 		} },
 	},
 	SomeoneElse = {
-		{ At = 20, Lines = {
-			{ 1, "That wasn't the storm." },
-			{ 2, "Stay close." },
+		{ At = 30, Lines = {
+			{ 1, "The whole house doesn't just go dark on its own. Not like that." },
+			{ 2, "Stay close. Phones out. Nobody goes anywhere alone." },
 		} },
 	},
 }
@@ -383,24 +430,25 @@ Story.Banter = {
 ---------------------------------------------------------------------------
 Story.Calls = {
 	OrderPizza = {
-		"Tony's, hold on...",
-		"Two large, half mushroom, 14 Alder? About an hour with this rain.",
+		"Tony's Pizza, hold please...",
+		"...ok, go ahead.",
+		"Two large, pepperoni and half-mushroom? 14 Alder. Forty-five minutes, maybe an hour with this rain.",
 	},
 	Silent = {
 		"...",
-		"(Nobody speaks. Just breathing. And, faintly, your own TV. Through the line.)",
+		"(Nobody speaks. You can hear breathing, and very faintly - your own TV. Through the line.)",
 		"(Click.)",
 	},
 	Dead = {
-		"(No dial tone. The line's dead.)",
+		"(Nothing. No dial tone. The line is dead.)",
 	},
 	Dispatch = {
 		"911, what's your emergency?",
-		"Someone's in your house. Okay. Can you hide somewhere?",
-		"Officers are on the way. Creek Road's flooded, so it'll be a few minutes. Stay hidden.",
+		"Someone's in your house - okay. Stay on the line. Are you in a safe place?",
+		"Units are on the way to 14 Alder Lane. Creek Road is flooded so they're coming around by Route 9. Stay together. Stay hidden.",
 	},
 	NotYet = {
-		"(And say what? \"I heard a noise\"?)",
+		"(You hold the phone for a second. What would you even say? 'I heard a noise'?)",
 	},
 }
 
@@ -450,36 +498,66 @@ Story.Dialogue = {
 			hello = {
 				Speaker = "Delivery man",
 				Lines = {
-					"Whitaker? Two large. Half mushroom.",
+					"Delivery for... Whitaker.",
+					"Two large. Pepperoni. Half mushroom.",
 				},
 				Choices = {
-					{ Say = "That's us. How much?", Next = "paid" },
+					{ Say = "That's us. How much do we owe you?", Next = "paid" },
 					{ Say = "You're not the usual guy.", Next = "usual" },
 				},
 			},
 			paid = {
 				Speaker = "Delivery man",
 				Lines = {
-					"Your mom paid on the phone.",
-					"He looks past you, down the dark hallway.",
-					"Big house.",
+					"Already paid for. Your mom's card.",
+					"She was very specific. Two large. Half mushroom.",
 				},
-				Narrate = { [2] = true },
-				Next = "alone",
+				Next = "creek",
 			},
 			usual = {
 				Speaker = "Delivery man",
 				Lines = {
-					"Nobody else would drive out here tonight.",
-					"He looks past you, down the dark hallway.",
-					"Big house.",
+					"Tony's nephew. Ray.",
+					"The usual guy doesn't like coming out this far at night. Neither do I.",
+				},
+				Next = "creek",
+			},
+			creek = {
+				Speaker = "Delivery man",
+				Lines = {
+					"Creek Road's going under. I'm the last one getting through tonight.",
+					"He looks past you, into the dark hallway, for a long time.",
+					"Nice house. Big. Lots of places to be.",
+				},
+				Narrate = { [2] = true },
+				Choices = {
+					{ Say = "Uh... thanks. Drive safe.", Next = "safe" },
+					{ Say = "What's that supposed to mean?", Next = "mean" },
+				},
+			},
+			safe = {
+				Speaker = "Delivery man",
+				Lines = {
+					"I always drive safe.",
+					"He holds the box out, and doesn't let go of it right away.",
+					"Is it just you kids in there?",
+				},
+				Narrate = { [2] = true },
+				Next = "alone",
+			},
+			mean = {
+				Speaker = "Delivery man",
+				Lines = {
+					"Nothing. Old houses. They creak. They settle.",
+					"He tilts his head, like he's listening to something upstairs.",
+					"Sometimes it isn't the house. Is it just you kids in there?",
 				},
 				Narrate = { [2] = true },
 				Next = "alone",
 			},
 			alone = {
 				Speaker = "Delivery man",
-				Lines = { "Just you kids in there?" },
+				Lines = { "..." },
 				Choices = {
 					{ Say = "No. My dad's upstairs.", Next = "dad" },
 					{ Say = "...Yeah. Just us.", Next = "justus" },
@@ -488,9 +566,9 @@ Story.Dialogue = {
 			dad = {
 				Speaker = "Delivery man",
 				Lines = {
-					"He looks up at the dark windows.",
+					"His eyes go to the dark windows upstairs, and stay there.",
 					"Sure he is.",
-					"Lock your doors.",
+					"Keep the doors locked. All of them.",
 				},
 				Narrate = { [1] = true },
 				Next = "leave",
@@ -499,14 +577,15 @@ Story.Dialogue = {
 				Speaker = "Delivery man",
 				Lines = {
 					"Huh.",
-					"Lock your doors. All of them.",
+					"Then you should really keep the doors locked. All of them.",
+					"Even the ones you don't use.",
 				},
 				Next = "leave",
 			},
 			leave = {
 				Speaker = "",
 				Lines = {
-					"He backs down the steps, still looking up at the house.",
+					"He hands you the pizza. He backs down the steps without turning around, still smiling, until the rain swallows him.",
 				},
 				End = true,
 			},
@@ -558,89 +637,117 @@ Story.Truths = {
 -- First time someone walks into a room during the first act (one line each, only when quiet).
 -- Host lines are Jamie's own house; Guest lines are a friend visiting.
 Story.RoomThoughts = {
-	-- (empty since 13 Oct: a line for every room was "too much text")
-	Host = {},
-	Guest = {},
+	Host = {
+		Living = "The fire's going. This is the best room in the house on a night like this.",
+		Kitchen = "Mom stocked the fridge like we're getting snowed in for a month.",
+		Den = "Movie night headquarters. Blankets, snacks, the big TV.",
+		Jamie = "My room. Home sweet home.",
+		Lily = "Lily's room. She'd kill me if she knew we were in here.",
+		Master = "Mom and Dad's room. Feels weird being in here without them.",
+		Garage = "Freezing in here. Mom's car, Dad's workbench.",
+		Basement = "The basement. I never come down here if I can help it.",
+		Office = "Dad's office. Everything exactly where he left it.",
+	},
+	Guest = {
+		Living = "Okay, this is cozy. A real fire and everything.",
+		Kitchen = "Jamie's mom definitely bought snacks for an army.",
+		Den = "Perfect movie spot. I'm claiming the beanbag.",
+		Jamie = "Jamie's room. Messier than I expected.",
+		Lily = "Jamie's little sister's room. Better not touch anything.",
+		Master = "This is Jamie's parents' room. I shouldn't really be in here.",
+		Garage = "It's so cold out here.",
+		Basement = "Nope. Basements in storms are how movies start.",
+	},
 }
 
 Story.Thoughts = {
 	Intro = {
 		Host = {
-			"Pizza first. The menu's on the fridge.|journal",
+			"Mom left me a couple of things to do. It's in my journal.|journal",
+			"Parents gone for the weekend, friends over. This is going to be a good night.",
 		},
 		Guest = {
-			"Pizza first. The menu's on the fridge.|journal",
+			"Jamie's mom left us a couple of things to do. I should check the journal.|journal",
+			"Pizza, a movie, no parents. This is going to be a good night.",
 		},
 	},
 	-- a solo night: the friends never make it
 	SoloIntro = {
-		"Pizza first. The menu's on the fridge.|journal",
-		"The others should be here soon.",
+		"Mom left me a couple of things to do. It's in my journal.|journal",
+		"Parents gone for the weekend. Riley and the others should be here any minute.",
 	},
-	SoloFriendsStuck = "They're not coming. It's just me.",
+	SoloFriendsStuck = "They're not coming. It's just me tonight. Just me and the storm.",
 	Objectives = {
-		OrderPizza = "The menu's on the fridge. Then the kitchen phone.",
-		Popcorn = "Popcorn's in the kitchen cupboard.",
-		LockUp = "Back door. Garage door. Lock them.",
-		Windows = "The windows upstairs are open.",
-		Fire = "Firewood's in the garage.",
-		Movie = "Where's the remote?",
-		Door = "The doorbell. Pizza.",
-		Investigate = "Someone has to go up and look.",
-		Bedtime = "Teeth. Then bed.",
-		Power = "The breaker panel's in the garage.",
-		Phone = "The phone's dead. The line outside?",
-		Attic = "What's in the attic?",
-		Call911 = "Call 911. One bar by the upstairs bathroom window.|phone",
-		Neighbor = "Mrs. Okafor's next door.",
-		Car = "Car keys. Then we drive.",
-		Rescue = "He took someone. The boiler room.",
+		OrderPizza = "I'm starving. Mom keeps the pizza menu on the fridge.",
+		Popcorn = "We can't watch a movie without popcorn. There's some in the kitchen cupboard.",
+		LockUp = "Dad always says to lock up at night. The back door and the garage door.",
+		Windows = "The storm's getting worse. Somebody left the windows open upstairs.",
+		Fire = "The fire went out. There's firewood in the garage.",
+		Movie = "Movie night. If I can find the remote.",
+		Door = "The doorbell. That's the pizza. Somebody get the front door.",
+		Investigate = "Someone has to go up there and look. It's probably nothing.",
+		Bedtime = "It's late. Teeth, then bed. Mom would kill me.",
+		Power = "The breaker panel is in the garage. Maybe I can get the power back on.",
+		Phone = "The phone's dead. Did something happen to the line outside?",
+		Attic = "The attic hatch in the upstairs hall... what's actually up there?",
+		Call911 = "We need help. My phone gets one bar by the upstairs bathroom window.|phone",
+		Neighbor = "Mrs. Okafor lives next door. If I can make it to her porch...",
+		Car = "If we find the car keys, we can drive out of here.",
+		Rescue = "He took someone down to the basement. We can't leave them there.",
 	},
 	Acts = {
 		SmallThings = {
-			"That guy was weird.",
+			"That guy was so weird. And if the creek road's closed, nobody's getting in or out tonight.",
+			"It's just the storm. Old houses make noise.",
 		},
 		SomeoneElse = {
-			"The power's out. All of it.",
-			"Only signal's by the upstairs bathroom window.|phone",
+			"The power's out. All of it. That wasn't the storm.",
+			"No signal down here. The only place my phone ever gets a bar is the upstairs bathroom window.|phone",
 		},
 		Guest = {
-			"He's been living up there.",
-			"Get help. If he comes, hide.",
+			"Someone has been living in the attic. And he's still in the house.",
+			"We need to get help. And when we hear him coming, we hide.",
 		},
 	},
 	Events = {
-		FootstepsUpstairs = "Someone's walking upstairs.",
-		DoorAjar = "That door was shut.",
-		CordSwing = "The attic cord's swinging.",
-		FigureWindow = "Someone was at the window.",
-		TVAlert = "The TV changed by itself.",
-		SilentCall = "Someone's just... breathing.",
-		Glimpse = "Someone's at the end of the hall.",
-		WindSlam = "A door. Upstairs.",
-		PlateCrash = "Something broke in the kitchen.",
-		CeilingThud = "That was right above me.",
-		WindowBang = "Get away from the window.",
-		DoorRattle = "Someone's trying the door.",
-		ChairDrop = "That chair just fell over.",
-		MusicBox = "Lily's music box. Lily isn't home.",
-		ShowerRan = "The shower just came on.",
-		LightUpstairs = "Lily's light just came on.",
-		BackDoorOpen = "The back door's open. Footprints.",
-		WallKnock = "Something's knocking. In the wall.",
-		InvestigateDone = "Nothing. Just the attic cord, swinging.",
+		FootstepsUpstairs = "Footsteps... upstairs? But we're all down here.",
+		DoorAjar = "Was that door open before?",
+		CordSwing = "Why is the attic cord swinging on its own?",
+		FigureWindow = "There was someone out there. Right outside the window.",
+		TVAlert = "The TV just changed by itself.",
+		SilentCall = "Who calls and doesn't say anything?",
+		Glimpse = "There's someone at the end of the hall.",
+		WindSlam = "WHAT was that?! ...A door, upstairs. It's those open windows.",
+		PlateCrash = "Something just smashed in the kitchen. Nobody's in there. Nobody should be in there.",
+		CeilingThud = "Something heavy just hit the floor right above me. That's the attic.",
+		WindowBang = "Someone just slammed on the window! Get away from the window!",
+		DoorRattle = "Someone's trying the door. Someone's outside trying to get in.",
+		ChairDrop = "Did a chair just fall over? In an empty room?",
+		MusicBox = "That's Lily's music box. Lily isn't even home.",
+		ShowerRan = "The shower just turned on. Upstairs. Who is in the shower?",
+		LightUpstairs = "The light just came on in Lily's room. We're all down here.",
+		BackDoorOpen = "The back door is wide open. Rain's blowing in... and those are footprints.",
+		WallKnock = "Something is knocking. Inside the wall. Right next to me.",
+		InvestigateDone = "Just the attic hatch. The cord is swinging... it's nothing. It has to be nothing.",
 	},
-	-- only the ones that tell you what an item is for
 	Items = {
-		Flashlight = "A flashlight.|light",
-		PepperSpray = "Pepper spray. Only if he's close.|spray",
-		CarKeys = "The car keys.",
-		ElectricalTape = "Tape. For the phone line.",
-		BasementKey = "The basement key.",
-		Scissors = "Scissors. For zip ties.",
+		Flashlight = "A flashlight. This could save my life tonight.|light",
+		PepperSpray = "Mom's pepper spray. Only if he gets close.|spray",
+		Walkie = "A walkie-talkie. Whoever has the other one can hear me anywhere.",
+		CarKeys = "The car keys! Now I just need to get the garage open.",
+		ElectricalTape = "Electrical tape. That could fix a cut wire.",
+		BasementKey = "A key marked BSMT. The basement door.",
+		Poker = "A fire poker. Heavy enough to break a window.",
+		Scissors = "Scissors. Sharp enough to cut through a zip tie.",
+		Batteries = "Fresh batteries. The flashlight is full again.",
+		Remote = "Found it. In the couch cushions, obviously.",
+		PopcornBag = "Microwave popcorn. Extra butter. Now the microwave.",
+		PopcornBowl = "Smells amazing. The coffee table in the living room.",
+		Firewood = "Heavy. Okay, to the fireplace.",
+		Matches = "Matches. Good to have if the lights go out.",
 	},
-	Hide = "Stay quiet.|breath",
-	Captured = "Tied to a pipe. Get loose, or wait for help.|struggle",
+	Hide = "I have to stay quiet in here.|breath",
+	Captured = "My hands are tied to a pipe. I have to get loose, or wait for the others.|struggle",
 }
 
 ---------------------------------------------------------------------------
@@ -705,25 +812,25 @@ Story.Endings = {
 }
 
 -- shown once, the first night someone plays, when he starts moving around the house
-Story.SurvivalTipsVersion = 4 -- (bump when the tips change: everyone sees them once more)
+Story.SurvivalTipsVersion = 3 -- (bump when the tips change: everyone sees them once more)
 Story.SurvivalTips = {
 	Title = "HE'S IN THE HOUSE",
-	Body = "• CALL 911 from the upstairs bathroom window. Then hide.\n• He hunts by sound. Crouch near him. Never run near him.\n• Floor shaking? He's close. Hide: closets, wardrobes, under beds, the shower.\n• If he stops at your spot, keep your heartbeat steady.",
+	Body = "• The way out: CALL 911. One bar of signal by the upstairs bathroom window: call there, then hide until the police come.\n• He hunts by SOUND. Walk near him and he hears you; run and he hears you across the house. CROUCH and he can't.\n• A noise makes him come to look; a loud one makes him charge. Anything he runs into, he grabs.\n• Floor shaking? He's close. Hide: closets, wardrobes, under beds, the shower.\n• If he stops at your hiding spot, keep your heartbeat steady: press the side each half-heart comes from.\n• His eyes are bad in the dark. Your flashlight isn't.",
 	Button = "GOT IT",
 }
 
 -- The hunt (server/Intruder): what your character thinks when he starts coming
 Story.Hunt = {
 	First = {
-		"He's running. He heard us.",
+		"Footsteps. Running. He knows where we are.",
 	},
-	FirstNotice = "He follows sound. Crouch. Never run near him.",
+	FirstNotice = "He's hunting. He follows sound: crouch, and never run near him.",
 	Wave = {
-		"A door slammed.",
-		"He's coming. Hide.",
-		"Footsteps. Closer.",
+		"A door slammed. He's moving again.",
+		"He's coming. Find somewhere to hide. Now.",
+		"Those footsteps again. Getting closer.",
 	},
-	Seen = "He saw me. Run. Then hide.",
+	Seen = "He saw me. RUN. Get out of his sight and hide.",
 }
 
 -- Evidence: the clue documents that tell you who he is. Read enough of them (between you)
@@ -755,10 +862,10 @@ Story.Results = {
 }
 -- the death card's tip: how he got you, and how to get away next time (CaptureService.kill)
 Story.DeathTips = {
-	Open = "He's slower than you. Run, break his line of sight, then hide.",
-	Hiding = "When he checks your spot, press each side as it reaches the heart.",
-	Call = "The call is loud and he comes running. Hide the second it goes through.",
-	Default = "His footsteps get louder as he gets closer. Hide before he turns the corner.",
+	Open = "He's slower than you. When his footsteps speed up, sprint, break his line of sight, then hide.",
+	Hiding = "When he stops at your hiding spot, press each side as its half reaches the heart. Don't hide where he saw you go.",
+	Call = "Calling 911 is loud and he comes running. The second the call goes through, hide. The shower curtain is right there.",
+	Default = "Listen for his footsteps: the closer he is, the louder they get. Hide before he turns the corner.",
 }
 -- the one line under it when you're out before the night is over (co-op)
 Story.ResultLines = {

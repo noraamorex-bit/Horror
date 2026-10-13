@@ -435,7 +435,7 @@ local function afterCapture(who: Player?)
 	if who then
 		task.delay(6, function()
 			if who.Parent and who:GetAttribute("Captured") and now() < (S.CaptiveGraceUntil or 0) then
-				ctx.Director.think(who, "He's going back upstairs. Struggle. Now.")
+				ctx.Director.think(who, "His footsteps are going back up the stairs. Struggle. NOW.")
 			end
 		end)
 	end
@@ -2128,13 +2128,7 @@ local function enterHouse(onReady: (() -> ())?)
 	end
 	S.Entering = true
 	task.spawn(function()
-		-- he comes in far from everyone (13 Oct, the owner: "why does he spawn upstairs. Spawn him far
-		-- away"): down the garage hatch if nobody's near it, else the shadowy spot farthest from you all
 		local spot = ctx.Layout.Attic.GarageHatchBelow
-		local far = farNode()
-		if minPlayerDistance(spot) < 45 and minPlayerDistance(far) > minPlayerDistance(spot) then
-			spot = far
-		end
 		local t0 = now()
 		ensureModel()
 		-- wait until nobody is around to see him come down
@@ -2148,14 +2142,10 @@ local function enterHouse(onReady: (() -> ())?)
 			S.Entering = false
 			return
 		end
-		local hatch = spot == ctx.Layout.Attic.GarageHatchBelow
-		S.EntrySpot = spot
 		placeAt(spot, spot + V(0, 0, -8))
-		if hatch then
-			ctx.Audio.playAt("HatchCreak", spot + V(0, 8, -3), { CaptionText = "[Something creaks in the garage ceiling]", CaptionRange = 45 })
-		end
+		ctx.Audio.playAt("HatchCreak", spot + V(0, 8, -3), { CaptionText = "[Something creaks in the garage ceiling]", CaptionRange = 45 })
 		S.Entering = false
-		S.JustEntered = hatch and spot or nil -- (the first hunt shows him here: Cutscene.heComesDown)
+		S.JustEntered = spot -- (the first hunt shows him here: Cutscene.heComesDown)
 		S.EnteredAt = now()
 		local cb = S.OnEntered
 		S.OnEntered = nil
@@ -2177,10 +2167,6 @@ function Intruder.setMode(mode: string, cause: Player?)
 		park()
 		setState("Lurk", { Phase = "Hidden", Until = now() + 18 + math.random() * 12 })
 	elseif mode == "Hunt" then
-		-- (caught mid-glimpse close to someone: he slips away and the hunt starts from far off)
-		if S.InHouse and S.State == "Lurk" and minPlayerDistance(pos()) < 45 then
-			park()
-		end
 		enterHouse(function()
 			if S.Mode ~= "Hunt" or S.State == "Trapped" or S.State == "Gone" then
 				return

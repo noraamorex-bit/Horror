@@ -57,10 +57,6 @@ function HUD.caption(text: string, _position: Vector3?)
 		return
 	end
 	local isSound = text:sub(1, 1) == "["
-	-- (sound captions only for those who switched them on in Settings)
-	if isSound and not (ctx.Settings and ctx.Settings.captionsOn and ctx.Settings.captionsOn()) then
-		return
-	end
 	-- sound captions are extras: skip them while something else is being said (spoken lines
 	-- and answers to what you just did always show, once the screen is clear of cards)
 	if isSound and ctx.Pace and not ctx.Pace.tryTake(1.6) then
@@ -186,11 +182,8 @@ end
 showNote = function(text: string, kind: string?)
 	if ctx.Effects then
 		-- each kind of note has its own sound: a tick for progress, a sting for danger
-		-- (only progress and danger make a sound: a blip on every note sounded like a phone game)
-		local snd = ({ done = "ObjectiveDone", danger = "DangerSting" })[kind or ""]
-		if snd then
-			ctx.Effects.playSound(snd, nil, { Caption = false })
-		end
+		local snd = ({ done = "ObjectiveDone", danger = "DangerSting", objective = "NotifyHigh" })[kind or ""] or "NotifyLow"
+		ctx.Effects.playSound(snd, nil, { Caption = false })
 	end
 	local color = KIND_COLOR[kind or "info"] or UI.Color.Text
 	local frame = UI.new("Frame", {

@@ -85,11 +85,6 @@ local ok, err = pcall(function()
 	I.setMode("Hunt")
 	print("placed at", I.position(), "alex", aRoot.Position, ctx.Util.getRoot(a) and ctx.Util.getRoot(a).Position)
 	tick(0.3)
-	-- he comes in far from everyone (the owner: "why does he spawn upstairs. Spawn him far away")
-	local entry = ctx.Intruder._state().EntrySpot
-	local dmin = math.min((entry - aRoot.Position).Magnitude, (entry - bRoot.Position).Magnitude)
-	print("came in at", entry, ("%.0f studs from the nearest"):format(dmin))
-	assert(dmin >= 30, ("he comes in far from everyone (%.0f studs)"):format(dmin))
 	print("captured?", a:GetAttribute("Captured"), b:GetAttribute("Captured"))
 	print("1 state", I.getState(), "inHouse", I.isInHouse())
 	assert(I.getState() == "Prowl", "starts prowling")
@@ -165,20 +160,6 @@ local ok, err = pcall(function()
 	-- client gait attribute
 	local model = H.unwrap(ctx.World.folder()):FindFirstChild("Curtis", true)
 	print("7 gait attr", model and model:GetAttribute("Gait"), "creature", model and model:GetAttribute("Creature"))
-	-- someone standing right under the garage hatch: he comes in somewhere else, far off
-	ctx.Capture.release(a); ctx.Capture.release(b)
-	if a:GetAttribute("Hiding") then ctx.Hiding.exit(a) end
-	if b:GetAttribute("Hiding") then ctx.Hiding.exit(b) end
-	I.setMode("Offstage")
-	local hatch = ctx.Layout.Attic.GarageHatchBelow
-	aRoot.CFrame = R.CFrame.new(hatch + R.Vector3.new(4, 0, 0))
-	bRoot.CFrame = R.CFrame.new(hatch + R.Vector3.new(-4, 0, 6))
-	I.setMode("Hunt")
-	tick(1)
-	local e2 = ctx.Intruder._state().EntrySpot
-	local d2 = math.min((e2 - aRoot.Position).Magnitude, (e2 - bRoot.Position).Magnitude)
-	print("11 with them at the hatch he came in at", e2, ("%.0f studs away"):format(d2))
-	assert(e2 ~= hatch and d2 >= 45, "not down the hatch on top of them")
 end)
 print(ok and "HUNT OK" or ("HUNT FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

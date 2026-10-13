@@ -102,7 +102,7 @@ function Capture.release(player: Player, by: Player?)
 		ctx.Intruder.spare(player, grace)
 		task.delay(3.5, function()
 			if ctx.Director and player.Parent and not player:GetAttribute("Captured") and not player:GetAttribute("Dead") then
-				ctx.Director.think(player, "Out of the basement. Quietly. Then hide.")
+				ctx.Director.think(player, "Get out of the basement. Quietly. Find somewhere to hide.")
 			end
 		end)
 	end

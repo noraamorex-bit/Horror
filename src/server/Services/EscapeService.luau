@@ -375,7 +375,7 @@ function Escape.useLandline(player: Player)
 	local act = ctx.Director.getAct()
 	if act == "Evening" and not ctx.Objectives.isDone("OrderPizza") then
 		if not ctx.Objectives.isStepDone("OrderPizza", "Menu") then
-			ctx.Director.think(player, "I don't know Tony's number. The menu's on the fridge.")
+			ctx.Director.think(player, "I don't know Tony's number by heart. Mom keeps the menu on the fridge.")
 			return
 		end
 		ctx.Audio.playAt("DialTone", pos, { Caption = false })
