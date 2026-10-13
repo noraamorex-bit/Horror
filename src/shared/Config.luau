@@ -172,6 +172,8 @@ Config.Intruder = {
 	StunTime = 7,
 	RetreatAfterStun = 30,
 	RetreatAfterCapture = 14, -- after a capture he walks off somewhere far from the boiler room
+	RetreatBlind = 4, -- ...ignoring everyone only this long; then whoever he sees close, he chases
+	RetreatBlindStun = 10, -- (pepper-sprayed: a longer head start)
 	CaptiveGrace = 45, -- and for this long ignores the basement (struggling, rescues): the rescue window
 	FreedGrace = 40, -- just got free (yourself or a friend): he can't see, hear or grab you for this long
 	-- patrolling (nobody to sense): he sweeps the rooms you were last in, listening

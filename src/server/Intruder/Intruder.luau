@@ -401,8 +401,10 @@ local function follow(target: Vector3, speed: number)
 	end
 end
 
-local function retreat(from: Vector3?, duration: number?, goal: Vector3?)
-	setState("Retreat", { Goal = goal or farNode(), Duration = duration or 20, From = from })
+local function retreat(from: Vector3?, duration: number?, goal: Vector3?, blind: number?)
+	-- (blind: only for the first few seconds does he walk past people. 13 Oct, the owner, standing
+	-- right in front of him while he walked off: "why isn't he chasing me, I'm so close")
+	setState("Retreat", { Goal = goal or farNode(), Duration = duration or 20, From = from, BlindUntil = now() + (blind or tune().RetreatBlind or 4) })
 	S.Nav:goTo(S.Data.Goal, { Speed = tune().ChargeSpeed, Tolerance = 3, Hurry = true })
 end
 
@@ -1865,8 +1867,18 @@ local function listenForBreath(dt: number): boolean
 	return false
 end
 
-STATES.Retreat = function()
+STATES.Retreat = function(_, visible)
 	local d = S.Data
+	if now() >= (d.BlindUntil or 0) then
+		for _, p in visible do
+			local r = rootOf(p)
+			-- (measured from his eyes, like the sighting itself)
+			if r and (r.Position - (S.Head and S.Head.Position or pos())).Magnitude < tune().WithdrawNotice then
+				startChase(p)
+				return
+			end
+		end
+	end
 	local t = now() - S.StateStart
 	if t >= d.Duration and (S.Nav.Arrived or S.Nav:isStuck() or t > d.Duration + 20) then
 		resume()
@@ -1877,7 +1889,7 @@ STATES.Stunned = function()
 	local d = S.Data
 	if now() - S.StateStart >= tune().StunTime then
 		S.Humanoid.WalkSpeed = tune().WalkSpeed
-		retreat(d.From, tune().RetreatAfterStun)
+		retreat(d.From, tune().RetreatAfterStun, nil, tune().RetreatBlindStun or 10)
 	end
 end
 

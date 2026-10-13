@@ -136,6 +136,34 @@ local ok, err = pcall(function()
 		if a:GetAttribute("Captured") then break end
 	end
 	print("8 grabbed when close:", a:GetAttribute("Captured"), I.getState())
+	-- walking off after the capture: he ignores people only for a few seconds, then anyone he
+	-- sees close gets chased (the owner stood in front of him while he walked away)
+	if a:GetAttribute("Captured") then
+		assert(I.getState() == "Retreat", "after a capture he walks off")
+		local function standInFront()
+			local head = ctx.Intruder.getHead()
+			local hp = head.Position
+			local look = head.CFrame.LookVector
+			local at = R.Vector3.new(hp.X + look.X * 9, hp.Y - 1.5, hp.Z + look.Z * 9)
+			bRoot.CFrame = R.CFrame.new(at)
+			bHead.CFrame = R.CFrame.new(at + R.Vector3.new(0, 1.5, 0))
+		end
+		b:SetAttribute("FlashlightOn", true)
+		standInFront()
+		tick(1)
+		assert(I.getState() == "Retreat", "the first seconds: he walks on")
+		local chased = false
+		for _ = 1, 80 do
+			standInFront()
+			tick(0.1)
+			if I.getState() == "Chase" then chased = true break end
+		end
+		print("8b seen close while walking off:", I.getState())
+		assert(chased, "seen close while walking off: he comes for you")
+		b:SetAttribute("FlashlightOn", nil)
+		bRoot.CFrame = R.CFrame.new(-30, 22, 20)
+		bHead.CFrame = R.CFrame.new(-30, 23.5, 20)
+	end
 	-- seen getting into a hiding spot: he opens that one
 	ctx.Capture.release(a)
 	aRoot.CFrame = R.CFrame.new(60, 4, 60)
