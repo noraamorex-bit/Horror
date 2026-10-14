@@ -657,6 +657,9 @@ local function update()
 			end
 		end
 		lastEtaSecond = whole
+	elseif workspace:GetAttribute("OpenNight") and player:GetAttribute("InGame") then
+		-- a night that started short: others can still join it (MatchService)
+		etaLabel.Text = "Others can join your night · " .. tostring(workspace:GetAttribute("OpenNight"))
 	else
 		etaLabel.Text = ""
 	end

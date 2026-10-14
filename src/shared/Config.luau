@@ -25,7 +25,8 @@ Config.Lobby = {
 	-- first two acts, until bedtime, and never past this many seconds. (v78 logs: 150 s caught 1 of 68
 	-- teleports, while 44 of 57 lone departures had someone else leave the lobby within 8 minutes.)
 	JoinOpenFor = 420,
-	ArrivalTimeout = 30, -- game server: start without stragglers after this long
+	ArrivalTimeout = 20, -- game server: start without stragglers after this long (v87: 21 players left a
+	-- server whose night never started, within 2-17 s of arriving; latecomers can still join the night)
 	ReturnDelay = 35, -- game server: seconds on the ending screen before the next night starts (LOBBY to leave)
 }
 
@@ -180,6 +181,8 @@ Config.Intruder = {
 	PatrolSpeed = 7.5,
 	PatrolPause = { 1.5, 3 },
 	PatrolCheckChance = 0.25, -- at each stop: tear open a hiding spot nearby
+	DriftAfter = 60, -- nobody has met him this long: his patrols lean toward people out in the open
+	DriftWeight = 14,
 	PatrolCaptiveCheck = 90, -- with someone tied up: back past the boiler room this often
 	RescueNoise = 45, -- cutting a friend free: he hears it this far away
 	StuckRelocate = 20, -- no real progress this long (nobody watching): he moves through the walls
@@ -221,7 +224,7 @@ Config.Difficulty = {
 			InvestigateSpeed = 8.5,
 			InspectNearChance = 0.5,
 		},
-		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22, Travel = 0.9, Lead = 1.2 },
+		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22, Travel = 0.9, Lead = 1.2, ForgiveWrong = false },
 		BatteryMultiplier = 0.7, -- flashlights die faster
 		PoliceMultiplier = 1.25, -- help takes longer to arrive
 		LastChance = 30,
@@ -241,6 +244,11 @@ Config.Heartbeat = {
 	Window = 0.42, -- seconds either side of arrival that count (forgiving on touch screens)
 	Lead = 1.4, -- the heart shows this long before the first beat
 	Misses = 3, -- this many misses and he hears you (more and doing nothing could outlast him)
+	-- (v87 logs: passed only 15 times out of 50 on Normal, and that failure was most of the upstairs
+	-- bathroom captures. The side buttons now show on every device, not just touch (PC players had
+	-- only Q / E to go on), and on Normal the first wrong-side press on a beat is forgiven: press
+	-- the other side in time and it still counts. Doing nothing still fails. Hard: no forgiveness.)
+	ForgiveWrong = true,
 }
 
 Config.Hiding = {
@@ -267,7 +275,7 @@ Config.Help = {
 	-- the call goes through and he hears it (he screams and charges the caller): on Normal the caller
 	-- gets this head start to hide (v81 logs: most upstairs-bathroom captures came 3-12 s after the
 	-- call ended, the caller still at the window). Hard: none.
-	CallerGrace = 6,
+	CallerGrace = 10, -- (v87: 6 s ran out just as he arrived; most bathroom captures followed a call)
 	CallerGraceHard = 0,
 	LandlineCallDuration = 6,
 	NeighborWait = 15,

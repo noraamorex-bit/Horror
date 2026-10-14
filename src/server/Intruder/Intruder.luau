@@ -594,6 +594,7 @@ local function huntTarget(): (Player?, Vector3?)
 end
 
 local function startChase(target: Player)
+	S.LastContact = now()
 	setState("Chase", { Target = target, LastSeen = now() })
 	S.HuntTarget = target
 	ctx.Director.addTension(20)
@@ -660,6 +661,7 @@ local function startHunt()
 		return
 	end
 	S.LastHuntAt = now()
+	S.LastContact = S.LastContact or now()
 	S.Waves += 1
 	local justEntered = S.JustEntered
 	S.JustEntered = nil
@@ -751,6 +753,15 @@ patrolRoute = function(): { Vector3 }
 		end
 	end
 	local floors = playerFloors()
+	local drift = {}
+	if now() - (S.LastContact or now()) > (I.DriftAfter or 60) then
+		for _, p in ctx.Util.activePlayers() do
+			local r = valid(p) and not p:GetAttribute("Hiding") and rootOf(p)
+			if r then
+				table.insert(drift, r.Position)
+			end
+		end
+	end
 	local grace = inCaptiveGrace()
 	local checkCaptives = not grace and ctx.Capture.captiveCount() > 0 and now() - S.LastCaptiveCheck > I.PatrolCaptiveCheck
 	local candidates = {}
@@ -772,6 +783,13 @@ patrolRoute = function(): { Vector3 }
 		end
 		if (n.Pos - pos()).Magnitude < 8 then
 			w *= 0.2
+		end
+		-- nobody's run into him for a while: he drifts toward whoever is out and about (v87 logs:
+		-- 42 of 48 who quit in the dark never got help called, and 27 of them never saw him)
+		for _, at in drift do
+			if (at - n.Pos).Magnitude < 22 then
+				w += I.DriftWeight or 6
+			end
 		end
 		table.insert(candidates, { n, w })
 	end
@@ -1504,6 +1522,7 @@ charge = function(at: Vector3, who: Player?)
 		return
 	end
 	setState("Charge", { Pos = at, Source = who })
+	S.LastContact = now()
 	S.HuntTarget = who
 	if who then
 		S.LastFelt[who] = at
@@ -1534,9 +1553,11 @@ STATES.Charge = function(_, visible)
 		local off = d.Pos - pos()
 		local arrived = V(off.X, 0, off.Z).Magnitude < 3.5 and math.abs(off.Y) < 6
 		if arrived or (S.Nav.Arrived and off.Magnitude < 9) or S.Nav:isStuck() or now() - S.StateStart > 25 then
-			-- whoever made it is hiding right here: he heard them get in
+			-- whoever made it is hiding right here: he heard them get in. (Not a caller still in their
+			-- head start: they were told "HIDE. NOW." and did, and he went straight to the shower they
+			-- picked. v87 logs: 29 of 50 captures came within 25 s of a 911 call, in that bathroom.)
 			local src = d.Source
-			local spot = src and ctx.Hiding.spotOf(src)
+			local spot = src and not spared(src) and ctx.Hiding.spotOf(src)
 			if spot and (spot.Position - pos()).Magnitude < 12 then
 				inspect(spot)
 				return
@@ -2140,7 +2161,13 @@ local function enterHouse(onReady: (() -> ())?)
 	end
 	S.Entering = true
 	task.spawn(function()
+		-- he comes in far from everyone (13 Oct, the owner: "why does he spawn upstairs. Spawn him far
+		-- away"): down the garage hatch if nobody's near it, else the shadowy spot farthest from you all
 		local spot = ctx.Layout.Attic.GarageHatchBelow
+		local far = farNode()
+		if minPlayerDistance(spot) < 45 and minPlayerDistance(far) > minPlayerDistance(spot) then
+			spot = far
+		end
 		local t0 = now()
 		ensureModel()
 		-- wait until nobody is around to see him come down
@@ -2154,10 +2181,14 @@ local function enterHouse(onReady: (() -> ())?)
 			S.Entering = false
 			return
 		end
+		local hatch = spot == ctx.Layout.Attic.GarageHatchBelow
+		S.EntrySpot = spot
 		placeAt(spot, spot + V(0, 0, -8))
-		ctx.Audio.playAt("HatchCreak", spot + V(0, 8, -3), { CaptionText = "[Something creaks in the garage ceiling]", CaptionRange = 45 })
+		if hatch then
+			ctx.Audio.playAt("HatchCreak", spot + V(0, 8, -3), { CaptionText = "[Something creaks in the garage ceiling]", CaptionRange = 45 })
+		end
 		S.Entering = false
-		S.JustEntered = spot -- (the first hunt shows him here: Cutscene.heComesDown)
+		S.JustEntered = hatch and spot or nil -- (the first hunt shows him here: Cutscene.heComesDown)
 		S.EnteredAt = now()
 		local cb = S.OnEntered
 		S.OnEntered = nil
@@ -2179,6 +2210,10 @@ function Intruder.setMode(mode: string, cause: Player?)
 		park()
 		setState("Lurk", { Phase = "Hidden", Until = now() + 18 + math.random() * 12 })
 	elseif mode == "Hunt" then
+		-- (caught mid-glimpse close to someone: he slips away and the hunt starts from far off)
+		if S.InHouse and S.State == "Lurk" and minPlayerDistance(pos()) < 45 then
+			park()
+		end
 		enterHouse(function()
 			if S.Mode ~= "Hunt" or S.State == "Trapped" or S.State == "Gone" then
 				return
@@ -2311,6 +2346,12 @@ end
 
 function Intruder._state()
 	return S
+end
+Intruder._charge = function(at: Vector3, who: Player?) -- (tests)
+	charge(at, who)
+end
+Intruder._patrolRoute = function() -- (tests)
+	return patrolRoute()
 end
 
 -- out in the house, hunting (as opposed to hiding in the walls)

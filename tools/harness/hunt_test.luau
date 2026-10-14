@@ -85,6 +85,11 @@ local ok, err = pcall(function()
 	I.setMode("Hunt")
 	print("placed at", I.position(), "alex", aRoot.Position, ctx.Util.getRoot(a) and ctx.Util.getRoot(a).Position)
 	tick(0.3)
+	-- he comes in far from everyone (the owner: "why does he spawn upstairs. Spawn him far away")
+	local entry = ctx.Intruder._state().EntrySpot
+	local dmin = math.min((entry - aRoot.Position).Magnitude, (entry - bRoot.Position).Magnitude)
+	print("came in at", entry, ("%.0f studs from the nearest"):format(dmin))
+	assert(dmin >= 30, ("he comes in far from everyone (%.0f studs)"):format(dmin))
 	print("captured?", a:GetAttribute("Captured"), b:GetAttribute("Captured"))
 	print("1 state", I.getState(), "inHouse", I.isInHouse())
 	assert(I.getState() == "Prowl", "starts prowling")
@@ -148,6 +153,10 @@ local ok, err = pcall(function()
 			bRoot.CFrame = R.CFrame.new(at)
 			bHead.CFrame = R.CFrame.new(at + R.Vector3.new(0, 1.5, 0))
 		end
+		if b:GetAttribute("Captured") then ctx.Capture.release(b) end -- (Bo may have been caught earlier on)
+		local spared = ctx.Intruder._state().Spared
+		if spared then spared[b] = nil end -- (and then freed: the just-freed grace isn't what this checks)
+		if b:GetAttribute("Hiding") then ctx.Hiding.exit(b) end
 		b:SetAttribute("FlashlightOn", true)
 		standInFront()
 		tick(1)
@@ -188,6 +197,77 @@ local ok, err = pcall(function()
 	-- client gait attribute
 	local model = H.unwrap(ctx.World.folder()):FindFirstChild("Curtis", true)
 	print("7 gait attr", model and model:GetAttribute("Gait"), "creature", model and model:GetAttribute("Creature"))
+	-- a 911 caller does as told and hides in the spot right by the phone: while their head start
+	-- lasts he charges at the call but doesn't go straight to their spot (v87: the bathroom trap)
+	do
+		ctx.Capture.release(a)
+		if a:GetAttribute("Hiding") then ctx.Hiding.exit(a) end
+		local spared = ctx.Intruder._state().Spared
+		local hs = ctx.Hiding.spotsNear(R.Vector3.new(35, 18, -11), 14)[1]
+		ctx.Hiding.enter(a, hs)
+		local hrp = H.unwrap(ctx.World.folder()):FindFirstChild("Curtis", true):FindFirstChild("HumanoidRootPart")
+		local function arrive()
+			I._charge(hs.Exit.Position, a)
+			for _ = 1, 30 do
+				hrp.CFrame = R.CFrame.new(hs.Exit.Position + R.Vector3.new(0, 2.5, 0))
+				tick(0.1)
+				if I.getState() ~= "Charge" or ctx.Intruder._state().Data.Searching then break end
+			end
+			return I.getState()
+		end
+		ctx.Intruder.spare(a, 10)
+		local s1 = arrive()
+		assert(s1 == "Charge" and ctx.Intruder._state().Data.Searching, "in the head start: he arrives and searches around, not straight to their spot (" .. s1 .. ")")
+		spared[a] = nil
+		I.setMode("Hunt")
+		local s2 = arrive()
+		print("12 caller in the shower: head start", s1, "/ none", s2)
+		assert(s2 == "Inspect", "no head start: he heard them get in (" .. s2 .. ")")
+		ctx.Hiding.exit(a)
+	end
+	-- a quiet minute with nobody running into him: his patrols lean toward whoever's out and about
+	do
+		local st = ctx.Intruder._state()
+		if a:GetAttribute("Hiding") then ctx.Hiding.exit(a) end
+		if b:GetAttribute("Hiding") then ctx.Hiding.exit(b) end
+		ctx.Capture.release(a); ctx.Capture.release(b)
+		st.Spared[a] = nil
+		st.Spared[b] = nil
+		local spot = R.Vector3.new(-30, 4, 24) -- (downstairs, one corner)
+		aRoot.CFrame = R.CFrame.new(spot)
+		bRoot.CFrame = R.CFrame.new(spot + R.Vector3.new(2, 0, 0))
+		table.clear(st.LastFelt)
+		table.clear(st.Noises)
+		local function nearShare(): number
+			local hits = 0
+			for _ = 1, 200 do
+				for _, at in I._patrolRoute() do
+					if (at - spot).Magnitude < 22 then hits += 1 break end
+				end
+			end
+			return hits / 200
+		end
+		st.LastContact = T
+		local fresh = nearShare()
+		st.LastContact = T - 120
+		local quiet = nearShare()
+		print(("13 patrols passing them: just met him %.2f, a quiet two minutes %.2f"):format(fresh, quiet))
+		assert(quiet > fresh + 0.15, "after a quiet while he drifts toward them")
+	end
+	-- someone standing right under the garage hatch: he comes in somewhere else, far off
+	ctx.Capture.release(a); ctx.Capture.release(b)
+	if a:GetAttribute("Hiding") then ctx.Hiding.exit(a) end
+	if b:GetAttribute("Hiding") then ctx.Hiding.exit(b) end
+	I.setMode("Offstage")
+	local hatch = ctx.Layout.Attic.GarageHatchBelow
+	aRoot.CFrame = R.CFrame.new(hatch + R.Vector3.new(4, 0, 0))
+	bRoot.CFrame = R.CFrame.new(hatch + R.Vector3.new(-4, 0, 6))
+	I.setMode("Hunt")
+	tick(1)
+	local e2 = ctx.Intruder._state().EntrySpot
+	local d2 = math.min((e2 - aRoot.Position).Magnitude, (e2 - bRoot.Position).Magnitude)
+	print("11 with them at the hatch he came in at", e2, ("%.0f studs away"):format(d2))
+	assert(e2 ~= hatch and d2 >= 45, "not down the hatch on top of them")
 end)
 print(ok and "HUNT OK" or ("HUNT FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

@@ -39,6 +39,7 @@ local ok, err = pcall(function()
 	Match._set("night-A", 2, 1)
 	Match._publish()
 	assert(store["night-A"] and store["night-A"].n == 1 and store["night-A"].cap == MAX, "listed with 1 of " .. MAX)
+	assert(H.unwrap(H.workspaceRoot):GetAttribute("OpenNight") == "1/" .. MAX, "on screen: others can join (1/" .. MAX .. ")")
 	-- a circle of 4 that started with two
 	Match._set("night-B", 4, 2)
 	players = { "B1", "B2" }
@@ -74,6 +75,7 @@ local ok, err = pcall(function()
 	bedtime = true
 	Match._publish()
 	assert(store["night-C"] == nil, "closed once it's bedtime (the blackout is near)")
+	assert(H.unwrap(H.workspaceRoot):GetAttribute("OpenNight") == nil, "and the line goes")
 	bedtime = false
 	Match._publish()
 	assert(store["night-C"], "open again")

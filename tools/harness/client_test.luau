@@ -211,6 +211,22 @@ local ok, err = pcall(function()
 	S.RunService.RenderStepped:Fire(0.1)
 	R.Heartbeat.OnClientEvent:Fire({ Id = 7, Result = "Pass" })
 	assert(not ctx.HeartbeatUI.isActive(), "heartbeat game closed")
+	-- Normal forgives the first wrong side on a beat; the other side in time still counts
+	do
+		local got = {}
+		local realFire = R.HeartbeatInput.FireServer
+		R.HeartbeatInput.FireServer = function(_, id, i, hit) table.insert(got, { id, i, hit }) end
+		R.Heartbeat.OnClientEvent:Fire({ Id = 8, Start = os.clock() - 1.0, Beats = { { T = 1.0, Side = "L" }, { T = 3.0, Side = "R" } }, Travel = 1.3, Window = 0.42, Misses = 3, Forgive = true })
+		ctx.HeartbeatUI._press("R")
+		assert(#got == 0, "a wrong side is forgiven once")
+		ctx.HeartbeatUI._press("L")
+		assert(#got == 1 and got[1][3] == true, "then the right side counts")
+		R.Heartbeat.OnClientEvent:Fire({ Id = 9, Start = os.clock() - 1.0, Beats = { { T = 1.0, Side = "L" } }, Travel = 1.3, Window = 0.42, Misses = 3 })
+		ctx.HeartbeatUI._press("R")
+		assert(#got == 2 and got[2][3] == false, "Hard (no forgiveness): a wrong side is a miss")
+		R.Heartbeat.OnClientEvent:Fire({ Id = 9, Result = "Stop" })
+		R.HeartbeatInput.FireServer = realFire
+	end
 	player:SetAttribute("Hiding", nil)
 	print("heartbeat ui ok")
 	-- a prompt appears

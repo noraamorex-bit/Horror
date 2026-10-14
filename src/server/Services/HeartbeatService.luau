@@ -101,6 +101,7 @@ function Heartbeat.begin(player: Player, seconds: number, onFail: () -> ())
 		Travel = cfg.Travel,
 		Window = cfg.Window,
 		Misses = cfg.Misses,
+		Forgive = cfg.ForgiveWrong == true or nil,
 	})
 	-- beats nobody answered for count as misses; the whole thing ends when he walks off
 	task.spawn(function()

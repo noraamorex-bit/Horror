@@ -86,6 +86,9 @@ local function publish()
 		return
 	end
 	local open, n = Match.isOpen()
+	-- (on screen: "others can still join your night". v87 logs: alone in a group circle's night,
+	-- 23 of 52 left within 45 s, while another group teleported within a minute half the time)
+	workspace:SetAttribute("OpenNight", open and string.format("%d/%d", n, ctx.Config.MaxPlayers) or nil)
 	if open then
 		-- (places a lobby just claimed stay taken until those players arrive)
 		listed = pcall(function()

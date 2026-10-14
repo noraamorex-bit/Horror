@@ -111,7 +111,8 @@ Sounds.Library = {
 	-- his breathing, always with him: you hear it only when he's a few steps away
 	IntruderBreath = { Id = "rbxassetid://9113585946", Volume = 0.45, Range = 16, Looped = true },
 	-- Creator Store (public): "Phone Vibrating On Table"
-	PhoneVibrate = { Id = "rbxassetid://121031853982816", Fallback = ENGINE_BEEP, Volume = 0.45 },
+	-- (the file buzzes for 3 s: the owner found it "so loud, long and annoying". One short, quiet buzz)
+	PhoneVibrate = { Id = "rbxassetid://121031853982816", Fallback = ENGINE_BEEP, Volume = 0.16, Length = 0.55 },
 
 	-- Interface / handling (mostly client-side)
 	Pickup = { Id = "rbxassetid://9113849306", Volume = 0.5, Range = 20 },

@@ -53,6 +53,16 @@ function Effects.playSound(name: string, position: Vector3?, opts)
 		end
 		s:Play()
 		Debris:AddItem(att or s, 10)
+		-- (Length: only the first part of a long file, faded out at the end)
+		local def = ctx.Sounds.get(name)
+		local len = opts.Length or (def and def.Length)
+		if len then
+			task.delay(len, function()
+				if s.Parent then
+					ctx.UI.tween(s, 0.15, { Volume = 0 })
+				end
+			end)
+		end
 	elseif att then
 		att:Destroy()
 	end

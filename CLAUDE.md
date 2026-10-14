@@ -81,6 +81,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **Slower than the player's walk speed.** Not too hard (owner worried about rage-quits); after a capture
   he leaves so friends get a rescue window.
 - Before the hunt he stays hidden — no pointless noises or knocked-over chairs in front of you.
+- **He enters the house far from everyone** when the hunt starts (the owner: "why does he spawn
+  upstairs. Spawn him far away").
 - Never stuck on doors/walls (NavGrid survey + navigator).
 - Footsteps clearly audible and louder the closer he is.
 
@@ -89,6 +91,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   wanted (the owner liked the door-yank scare) — rare only.
 - **No loud music**: none at night start/end, no chase/tension music, no music in the secret ending.
 - No coughing/grunting breath loop on the player (it sounded like someone saying "hello").
+- The text-message buzz is one short quiet buzz (the 3 s one was "so loud, long and annoying").
 
 **World**
 - Warm, cozy, polished interior; real textures; models from anywhere (Creator Store/UGC) when they look
@@ -177,6 +180,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **14 Oct (v88)**: spawn-far + short text buzz back (the owner wanted them). Deep stats pass (v87:
+  224 nights, 443 players, rating 10 up / 15 down, 5,744 visits): solo nights 84% no ending (23 of
+  52 lone players left within 45 s; another group teleported within 60 s half the time, but only 9
+  joins); heartbeat passed 15 / 50 on Normal; 29 of 50 captures came within 25 s of a 911 call in
+  the bathroom (he charged and went straight to the caller's shower); 42 of 48 act III quitters never
+  got help called and 27 never saw him (he patrolled empty rooms); 21 players left a game server
+  whose night never started. Fixed: heartbeat buttons on every device (PC had only Q/E), A/D + d-pad,
+  Normal forgives the first wrong side per beat (not more misses: doing nothing would pass); caller grace 10 s and no beeline to the caller's spot while it lasts;
+  "Others can join your night · 1/4" line (MatchService OpenNight); ArrivalTimeout 20 s; drift
+  (after 60 s without contact his patrols lean toward players out in the open). Night length kept.
+  Next: re-check these numbers with `--since=88`.
+
 - **13 Oct (v87)**: v86 (pizza-only act I, 8-10 min nights, rewritten short text, tension drone, glimpses
   in act II, he enters far from players, short text buzz) was **"way too short… literally undo that
   entire update"**: v87 reverts all of v86. **Don't shorten the night again.** The owner also said
@@ -259,7 +274,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 87).
+  (last published: version 88).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

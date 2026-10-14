@@ -86,7 +86,16 @@ local function press(side: string)
 	if not best or bestD > s.Window then
 		return -- (nothing arriving right now: a stray press doesn't count either way)
 	end
-	report(best, s.Beats[best].Side == side)
+	local right = s.Beats[best].Side == side
+	-- (Normal: the first wrong side on a beat is forgiven; the other side in time still counts)
+	if not right and s.Forgive and not s.Wrong[best] then
+		s.Wrong[best] = true
+		if ctx.Effects then
+			ctx.Effects.shake(0.15, 0.15)
+		end
+		return
+	end
+	report(best, right)
 end
 
 local function close(result: string?)
@@ -119,6 +128,8 @@ local function open(payload)
 		Window = payload.Window or 0.22,
 		Limit = payload.Misses or 3,
 		Misses = 0,
+		Forgive = payload.Forgive == true,
+		Wrong = {},
 		Done = {},
 		Pieces = {},
 	}
@@ -127,13 +138,18 @@ local function open(payload)
 	local touch = ctx.UI.isTouch()
 	hint.Text = touch and "He's listening. Tap LEFT or RIGHT as each half reaches the heart."
 		or (ctx.UI.isGamepad() and "He's listening. Press LB / RB as each half reaches the heart."
-			or "He's listening. Press Q / E as each half reaches the heart.")
-	touchL.Visible = touch
-	touchR.Visible = touch
+			or "He's listening. Click LEFT / RIGHT (or Q / E) as each half reaches the heart.")
+	-- (the buttons on every device: with only Q / E named, most PC players never pressed anything)
+	touchL.Visible = true
+	touchR.Visible = true
 	root.Visible = true
 	if ctx.Effects then
 		ctx.Effects.playSound("GaspDeep", nil, { Caption = false, Volume = 0.5 })
 	end
+end
+
+HeartbeatGame._press = function(side: string) -- (tests)
+	press(side)
 end
 
 function HeartbeatGame.init(c)
@@ -205,9 +221,9 @@ function HeartbeatGame.start()
 			return
 		end
 		local k = io.KeyCode
-		if k == Enum.KeyCode.Q or k == Enum.KeyCode.ButtonL1 or k == Enum.KeyCode.Left then
+		if k == Enum.KeyCode.Q or k == Enum.KeyCode.A or k == Enum.KeyCode.ButtonL1 or k == Enum.KeyCode.ButtonL2 or k == Enum.KeyCode.Left or k == Enum.KeyCode.DPadLeft then
 			press("L")
-		elseif k == Enum.KeyCode.E or k == Enum.KeyCode.ButtonR1 or k == Enum.KeyCode.Right then
+		elseif k == Enum.KeyCode.E or k == Enum.KeyCode.D or k == Enum.KeyCode.ButtonR1 or k == Enum.KeyCode.ButtonR2 or k == Enum.KeyCode.Right or k == Enum.KeyCode.DPadRight then
 			press("R")
 		end
 	end)
