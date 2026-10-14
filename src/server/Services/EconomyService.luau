@@ -720,6 +720,13 @@ function Economy.nightRewards(player: Player, info): any
 		table.insert(lines, { Text = (player:GetAttribute("Boost_Lucky") and "Lucky charm" or "Hard mode") .. " bonus", Amount = bonus })
 		total += bonus
 	end
+	-- pass perks: VIP +50% (or Supporter +20%) on the night's pay
+	local passBonus = player:GetAttribute("Pass_VIP") and 0.5 or (player:GetAttribute("Pass_Supporter") and 0.2 or 0)
+	if passBonus > 0 and total > 0 then
+		local bonus = math.floor(total * passBonus + 0.5)
+		table.insert(lines, { Text = (player:GetAttribute("Pass_VIP") and "VIP" or "Supporter") .. " bonus", Amount = bonus })
+		total += bonus
+	end
 	local d = docs[player.UserId]
 	local before = d and Cat.levelOf(d.Earned) or 1
 	if total > 0 then

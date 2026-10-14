@@ -63,6 +63,7 @@ local HINTS = {
 	journal = { Key = "Press Tab to open your journal", Touch = "Tap JOURNAL at the top right", Pad = "Press D-pad left to open your journal" },
 	light = { Key = "Press F to turn it on", Touch = "Tap LIGHT to turn it on", Pad = "Press D-pad up to turn it on" },
 	spray = { Key = "Press G to spray", Touch = "Tap SPRAY to use it", Pad = "Press D-pad right to spray" },
+	taser = { Key = "Aim with the camera, then click (or T) to fire", Touch = "Aim with the camera, then tap TASER", Pad = "Aim, then R2 to fire" },
 	breath = { Key = "Hold Space to hold your breath", Touch = "Hold BREATH to hold your breath", Pad = "Hold A to hold your breath" },
 	struggle = { Key = "Mash Space to struggle", Touch = "Mash STRUGGLE", Pad = "Mash A to struggle" },
 	phone = { Key = "Press P for your phone", Touch = "Tap PHONE at the top right", Pad = "Press D-pad down for your phone" },

@@ -104,6 +104,8 @@ Sounds.Library = {
 	-- the heartbeat minigame: a beat you hit, and the one he hears
 	HeartHit = { Id = "rbxassetid://9120316945", Volume = 0.8, Pitch = 0.7 },
 	Cough = { Id = "rbxassetid://9113948412", Fallback = ENGINE_THUD, Volume = 1, Range = 60, Caption = "[A man coughing and choking]" },
+	-- ProSoundEffects "Electric Zaps 6": the taser
+	TaserZap = { Id = "rbxassetid://9114277402", Volume = 0.9, Range = 70 },
 	Spray = { Id = "rbxassetid://9113044265", Fallback = ENGINE_SPLASH, Volume = 0.8, Range = 30, Caption = "[Pssshhht]" },
 	ZipTie = { Id = "rbxassetid://9118047781", Fallback = ENGINE_THUD, Volume = 0.6, Range = 25, Caption = "[Zip ties ratchet]" },
 	Struggle = { Id = "rbxassetid://9113535436", Fallback = ENGINE_THUD, Volume = 0.7, Range = 35, Caption = "[Muffled struggling]" },

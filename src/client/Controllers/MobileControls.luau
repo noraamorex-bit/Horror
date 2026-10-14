@@ -32,6 +32,9 @@ local DEFS = {
 	Crouch = { Label = "CROUCH", Icon = "▼", Kind = "press" },
 	Flashlight = { Label = "LIGHT", Icon = "◉", Kind = "press" },
 	Spray = { Label = "SPRAY", Icon = "✱", Kind = "press" },
+	Taser = { Label = "TASER", Icon = "⚡", Kind = "press" },
+	Lunge = { Label = "LUNGE", Icon = "»", Kind = "press", Big = true },
+	Search = { Label = "SEARCH", Icon = "◎", Kind = "press" },
 	Breath = { Label = "BREATH", Icon = "◌", Kind = "hold", Big = true },
 	ExitHide = { Label = "LEAVE", Icon = "⇱", Kind = "press" },
 	Struggle = { Label = "STRUGGLE", Icon = "✊", Kind = "press", Big = true },
@@ -56,6 +59,10 @@ local function currentSet(): { string }
 	if player:GetAttribute("Dead") then
 		return {}
 	end
+	-- "Become him": you're him now (MonsterService)
+	if player:GetAttribute("Monster") then
+		return { "Lunge", "Search" }
+	end
 	if player:GetAttribute("Captured") then
 		return { "Struggle" }
 	end
@@ -68,6 +75,9 @@ local function currentSet(): { string }
 	end
 	if player:GetAttribute("Item_PepperSpray") then
 		table.insert(set, "Spray")
+	end
+	if player:GetAttribute("Item_Taser") then
+		table.insert(set, "Taser")
 	end
 	return set
 end
@@ -298,7 +308,7 @@ function MobileControls.start()
 	pill("JOURNAL", "Journal", 1)
 	pill("PHONE", "Phone", 2)
 
-	for _, attr in { "InGame", "Hiding", "Captured", "Escaped", "Dead", "Item_Flashlight", "Item_PepperSpray" } do
+	for _, attr in { "InGame", "Hiding", "Captured", "Escaped", "Dead", "Item_Flashlight", "Item_PepperSpray", "Item_Taser", "Monster" } do
 		player:GetAttributeChangedSignal(attr):Connect(function()
 			if gui.Enabled then
 				layout()

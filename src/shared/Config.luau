@@ -339,19 +339,26 @@ Config.Badges = {
 ]]
 Config.Shop = {
 	Passes = {
-		{ Key = "Supporter", Id = 2008280313, Price = 10, Name = "Supporter", Desc = "A SUPPORTER tag in the lobby, a gold flashlight and a star on the donation board." },
+		-- (14 Oct: the owner wants Robux for all-ages access. Every pass does more now, the pepper spray
+		-- pass is a taser, and VIP bundles the perks)
+		{ Key = "VIP", Id = 2036510399, Price = 99, Name = "VIP", Desc = "Everything in one: +50% coins every night, a VIP tag, every flashlight colour, Marathon stamina and a battery that never dies." },
+		{ Key = "PepperSpray", Id = 2006030307, Price = 49, Name = "Taser", Desc = "Start every night with a taser: 3 shots. A hit stuns him, then slows him right down." },
+		{ Key = "Supporter", Id = 2008280313, Price = 10, Name = "Supporter", Desc = "+20% coins every night, a SUPPORTER tag, a gold flashlight and a star on the donation board." },
 		{ Key = "Colours", Id = 2005832310, Price = 15, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
 		{ Key = "ChooseRole", Id = 2006193593, Price = 15, Name = "Pick your role", Desc = "Choose who you play each night: Jamie, Riley, Morgan or Casey." },
-		{ Key = "Marathon", Id = 2005053525, Price = 20, Name = "Marathon", Desc = "Sprint for longer: your stamina drains much slower." },
-		{ Key = "Battery", Id = 2005388315, Price = 25, Name = "Long-life battery", Desc = "Your flashlight battery lasts twice as long." },
-		{ Key = "HeadStart", Id = 2006721483, Price = 25, Name = "Head start", Desc = "Start every night with a flashlight in your pocket." },
-		{ Key = "PepperSpray", Id = 2006030307, Price = 35, Name = "Pepper spray", Desc = "Start every night with a can of pepper spray (one use)." },
+		{ Key = "Marathon", Id = 2005053525, Price = 20, Name = "Marathon", Desc = "Sprint for longer and get your breath back twice as fast." },
+		{ Key = "Battery", Id = 2005388315, Price = 25, Name = "Long-life battery", Desc = "Your flashlight never runs out." },
+		{ Key = "HeadStart", Id = 2006721483, Price = 25, Name = "Head start", Desc = "Start every night with a flashlight and a can of pepper spray." },
 	},
 	-- bought on the spot after you die: back into this night, somewhere away from him
 	-- (Price: the default the product is set to on Roblox, shown until the live price loads; the card
 	-- shows each player's own price. 25 R$ sold 0 of 35 deaths; DOORS sells its death-screen revive for
 	-- 40 R$ with a far bigger brand. 10 R$ = the cheapest pass, an impulse buy for a leftover balance)
 	Revive = { Id = 3716706476, Price = 10, Window = 15, Grace = 10 },
+	-- co-op only, bought again every night: you become him for the rest of the night (MonsterService)
+	BecomeHim = { Id = 3718593338, Price = 50 },
+	-- the passes VIP includes (it sets their attributes too)
+	VIPIncludes = { "Colours", "Marathon", "Battery" },
 	Donations = {
 		{ Id = 3716700047, Amount = 5 },
 		{ Id = 3715928524, Amount = 10 },
@@ -402,6 +409,33 @@ Config.Finale = {
 	ClimbHold = 1.2,
 	Bars = 2, -- planks to bar the cellar door with
 	BarHolds = 18, -- each bar holds him this long
+}
+
+-- "Become him" (MonsterService): a player drives Curtis for the rest of the night. A little under a
+-- survivor's walk (10), like him; LUNGE is the burst that makes it a game
+Config.Monster = {
+	MinPlayers = 2, -- survivors in the night (it's co-op only)
+	WalkSpeed = 9.5,
+	LungeSpeed = 17,
+	LungeTime = 1.4,
+	LungeCooldown = 9,
+	GrabRange = 4.5,
+	GrabCooldown = 6, -- after a catch (so a group isn't wiped in a second)
+	SearchRange = 7,
+	SearchCooldown = 2,
+	ListenTime = 6, -- the heartbeat minigame for whoever's inside
+	TaserStun = 6,
+}
+
+-- the taser (the old pepper spray pass): aim and shoot. A hit stuns him, then he limps after you slowly
+Config.Taser = {
+	Charges = 3,
+	Range = 45,
+	AimCone = 9, -- degrees either side of where you're looking (aim assist on a phone)
+	Stun = 4,
+	Slow = 14, -- seconds he moves at SlowFactor afterwards
+	SlowFactor = 0.55,
+	Cooldown = 1.2,
 }
 
 Config.PepperSpray = {

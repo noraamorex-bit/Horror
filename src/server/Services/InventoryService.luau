@@ -13,6 +13,7 @@ Inventory.Display = {
 	Flashlight = "Flashlight",
 	Walkie = "Walkie-talkie",
 	PepperSpray = "Pepper spray",
+	Taser = "Taser",
 	HouseKeys = "House keys",
 	CarKeys = "Car keys",
 	BasementKey = "Basement key",

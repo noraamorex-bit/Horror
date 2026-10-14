@@ -245,6 +245,10 @@ end
 ---------------------------------------------------------------------------
 local function resultFor(p: Player, kind: string, bad: boolean)
 	local R = ctx.Story.Results
+	-- ("Become him": the one who was him tonight)
+	if p:GetAttribute("Monster") then
+		return R.Monster
+	end
 	if p:GetAttribute("Escaped") then
 		return R.Escaped
 	elseif p:GetAttribute("Dead") then

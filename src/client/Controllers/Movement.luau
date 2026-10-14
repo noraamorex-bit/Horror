@@ -127,6 +127,23 @@ function Movement.start()
 			ctx.Remotes.UseItem:FireServer("PepperSpray")
 		end
 	end)
+	-- the taser: shoots where the camera is looking (T, R2, the TASER button, or a left click)
+	local function shoot()
+		local cam = workspace.CurrentCamera
+		if cam and player:GetAttribute("Item_Taser") and player:GetAttribute("InGame") and not player:GetAttribute("Hiding") then
+			ctx.Remotes.UseItem:FireServer("Taser", cam.CFrame.LookVector)
+		end
+	end
+	ctx.Input.on("Taser", function(began)
+		if began then
+			shoot()
+		end
+	end)
+	game:GetService("UserInputService").InputBegan:Connect(function(io, processed)
+		if not processed and io.UserInputType == Enum.UserInputType.MouseButton1 and player:GetAttribute("Item_Taser") then
+			shoot()
+		end
+	end)
 	for _, attr in { "Hiding", "Captured", "InGame", "Escaped" } do
 		player:GetAttributeChangedSignal(attr):Connect(function()
 			if blocked() then

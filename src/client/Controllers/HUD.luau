@@ -20,11 +20,12 @@ local journalList: Frame
 local journalOpen = false
 local objectives = {}
 
-local ITEM_ORDER = { "Flashlight", "PepperSpray", "Walkie", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors", "Remote", "PopcornBag", "PopcornBowl", "Firewood", "Matches" }
+local ITEM_ORDER = { "Flashlight", "Taser", "PepperSpray", "Walkie", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors", "Remote", "PopcornBag", "PopcornBowl", "Firewood", "Matches" }
 local ITEM_NAMES = {
 	Flashlight = "Flashlight",
 	Walkie = "Walkie-talkie",
 	PepperSpray = "Pepper spray",
+	Taser = "Taser",
 	HouseKeys = "House keys",
 	CarKeys = "Car keys",
 	BasementKey = "Basement key",
@@ -415,6 +416,7 @@ local function build()
 		Parent = root,
 	})
 	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = leftCol })
+	HUD.LeftColumn = leftCol -- (other controllers add small things under the inventory: Monster's buy button)
 	local clock = UI.box({ LayoutOrder = 1, Parent = leftCol }, { 6, 10 })
 	UI.new("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder, Parent = clock })
 	clockLabel = UI.fitLabel({ Text = "", Font = UI.Font.Bold, TextSize = 21, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 1, Parent = clock }, 240)
@@ -592,7 +594,7 @@ local function updateInventory()
 				if player:GetAttribute("FlashlightOn") then
 					line ..= "  (on)"
 				end
-			elseif id == "PepperSpray" then
+			elseif id == "PepperSpray" or id == "Taser" then
 				line ..= " ×" .. n
 			end
 			table.insert(lines, line)

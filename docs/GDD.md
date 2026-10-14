@@ -170,6 +170,11 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 
 **Others can join your night.** A night that started short (a group circle that left with fewer players than it was for) shows a slim line at the top while late arrivals can still come in: "Others can join your night · 1/4" (`MatchService` sets `OpenNight`; v87 logs: alone in such a night, 23 of 52 players left within 45 s, while another group teleported within a minute half of the time).
 
+### Monetization (v89)
+- **Taser** (the old pepper-spray pass, 49 R$): 3 shots a night (`Config.Taser`), fired where the camera looks (T, a left click, R2 or the TASER button), with a little aim assist (9°) up to 45 studs. A hit: stunned 4 s, then every one of his speeds at 55% for 14 s (`Intruder` tune() while `SlowUntil`). Everyone sees the blue bolt (Remotes.Zap) and the yellow-and-black taser in your right hand while it has shots.
+- **VIP** (99 R$): +50% night coins, a ★ VIP tag (lobby and chat), every flashlight colour (Gold too), Marathon, endless battery. **Supporter** now also +20% coins; **Marathon** regains breath twice as fast; **Long-life battery** never runs out; **Head start** adds a can of pepper spray.
+- **Become him** (developer product, 50 R$, bought again every night; `MonsterService`, client `Monster`): co-op only (2+ survivors). A small 😈 BECOME HIM button under the inventory while it's on sale. Bought before the blackout, you become him when the hunt starts; during the hunt, at once. Your character is parked out of sight; your controls steer him through the puppet (a little under a survivor's walk), LUNGE (Shift / button: 17 for 1.4 s, every 9 s), SEARCH (E / button: the hiding spot in front of you; whoever's inside gets the heartbeat minigame). Anyone in the open you touch is caught (6 s cooldown). Every survivor noise shows as a red ping. A taser or spray stuns you. Survivors are told "X has become HIM". Your card says YOU WERE HIM. If it can't happen (someone else already is, you're out), it's saved as a free credit for another night. The secret ending is off on such a night.
+
 ### Repeat nights
 Every night has the full build-up (a shorter one for repeat groups, `Config.VeteranPace`, is off: the owner found a 7-minute night too fast).
 

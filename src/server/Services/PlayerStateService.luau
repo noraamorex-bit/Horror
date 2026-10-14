@@ -107,7 +107,59 @@ local function setupCharacter(player: Player, char: Model)
 	end
 end
 
+-- the taser in your right hand while it has shots left (everyone sees it: a yellow-and-black stun gun)
+local function syncTaser(player: Player)
+	local char = player.Character
+	if not char then
+		return
+	end
+	local hand = (char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")) :: BasePart?
+	local old = char:FindFirstChild("TaserModel")
+	local want = (tonumber(player:GetAttribute("Item_Taser")) or 0) > 0 and hand ~= nil
+	if not want then
+		if old then
+			old:Destroy()
+		end
+		return
+	end
+	if old or not hand then
+		return
+	end
+	local m = Instance.new("Model")
+	m.Name = "TaserModel"
+	local r15 = hand.Name == "RightHand"
+	local grip = r15 and CFrame.new(0, -0.15, -0.1) or CFrame.new(0, -1, -0.1)
+	local function piece(name: string, size: Vector3, offset: CFrame, color: Color3, mat: Enum.Material?)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = size
+		p.Color = color
+		p.Material = mat or Enum.Material.SmoothPlastic
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.Massless = true
+		p.CastShadow = false
+		p.CFrame = hand.CFrame * grip * offset
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = hand
+		w.Part1 = p
+		w.Parent = p
+		p.Parent = m
+		return p
+	end
+	piece("Grip", Vector3.new(0.28, 0.55, 0.3), CFrame.new(0, 0, 0), Color3.fromRGB(26, 26, 30))
+	piece("Body", Vector3.new(0.32, 0.38, 0.95), CFrame.new(0, 0.32, -0.32), Color3.fromRGB(250, 200, 30))
+	piece("Muzzle", Vector3.new(0.3, 0.3, 0.14), CFrame.new(0, 0.32, -0.84), Color3.fromRGB(30, 30, 34))
+	piece("Light", Vector3.new(0.08, 0.06, 0.2), CFrame.new(0, 0.53, -0.1), Color3.fromRGB(120, 200, 255), Enum.Material.Neon)
+	m.Parent = char
+end
+PlayerState.syncTaser = syncTaser
+
 local function onPlayerAdded(player: Player)
+	player:GetAttributeChangedSignal("Item_Taser"):Connect(function()
+		syncTaser(player)
+	end)
 	player:SetAttribute("Nerve", ctx.Config.Nerve.Max)
 	player:SetAttribute("Stamina", ctx.Config.Movement.StaminaMax)
 	player:SetAttribute("Battery", 100)
@@ -116,6 +168,7 @@ local function onPlayerAdded(player: Player)
 	stepClock[player] = 0
 	player.CharacterAdded:Connect(function(char)
 		setupCharacter(player, char)
+		task.delay(1, syncTaser, player)
 	end)
 	if player.Character then
 		task.spawn(setupCharacter, player, player.Character)
@@ -191,13 +244,20 @@ function PlayerState.assignRoles(players: { Player })
 		for item, n in role.Items do
 			ctx.Inventory.give(p, item, n)
 		end
-		-- the pepper spray pass: a can of your own, one spray
+		-- the taser pass (it was pepper spray: whoever bought that has the taser now): 3 shots a night
 		if p:GetAttribute("Pass_PepperSpray") then
-			ctx.Inventory.give(p, "PepperSpray", 1)
+			ctx.Inventory.give(p, "Taser", ctx.Config.Taser.Charges)
+			-- (a reminder it's there, once the night's first lines are out of the way)
+			task.delay(40, function()
+				if p.Parent and ctx.Inventory.has(p, "Taser") and ctx.Director and ctx.Director.thinkOnce then
+					ctx.Director.thinkOnce(p, "Item_Taser", ctx.Story.Thoughts.Items.Taser)
+				end
+			end)
 		end
-		-- the head start pass: a flashlight in your pocket from the first minute
+		-- the head start pass: a flashlight in your pocket from the first minute, and a can of pepper spray
 		if p:GetAttribute("Pass_HeadStart") then
 			ctx.Inventory.give(p, "Flashlight", 1)
+			ctx.Inventory.give(p, "PepperSpray", 1)
 		end
 		-- gear bought with coins in the lobby (one of each, used up)
 		if ctx.Economy then
@@ -329,7 +389,9 @@ local function tick(dt: number)
 			end
 			stamina = math.max(0, stamina - drain * dt)
 		else
-			stamina = math.min(M.StaminaMax, stamina + M.StaminaRegen * dt * (moving and 0.6 or 1))
+			-- (the marathon pass: you get your breath back twice as fast too)
+			local regen = M.StaminaRegen * (player:GetAttribute("Pass_Marathon") and 2 or 1)
+			stamina = math.min(M.StaminaMax, stamina + regen * dt * (moving and 0.6 or 1))
 		end
 		player:SetAttribute("Stamina", stamina)
 		player:SetAttribute("Crouching", crouch or nil)
@@ -360,8 +422,8 @@ local function slowTick(dt: number)
 
 		-- flashlight battery
 		if player:GetAttribute("FlashlightOn") then
-			-- (the long-life battery pass: twice as long)
-			local life = ctx.Config.Flashlight.BatterySeconds * (player:GetAttribute("Pass_Battery") and 2 or 1)
+			-- (the long-life battery pass: it never runs down)
+			local life = ctx.Config.Flashlight.BatterySeconds * (player:GetAttribute("Pass_Battery") and math.huge or 1)
 			-- (hard nights: the batteries are older)
 			if workspace:GetAttribute("Difficulty") == "Hard" then
 				life *= ctx.Config.Difficulty.Hard.BatteryMultiplier
@@ -496,7 +558,7 @@ function PlayerState.start()
 		PlayerState.setFlashlight(player, not player:GetAttribute("FlashlightOn"))
 	end)
 
-	ctx.Remotes.UseItem.OnServerEvent:Connect(function(player, item)
+	ctx.Remotes.UseItem.OnServerEvent:Connect(function(player, item, aim)
 		if typeof(item) ~= "string" or not player:GetAttribute("InGame") then
 			return
 		end
@@ -505,6 +567,8 @@ function PlayerState.start()
 		end
 		if item == "PepperSpray" and ctx.Inventory.has(player, "PepperSpray") then
 			ctx.Intruder.onPepperSpray(player)
+		elseif item == "Taser" and ctx.Inventory.has(player, "Taser") and typeof(aim) == "Vector3" and aim.Magnitude > 0.5 then
+			ctx.Intruder.onTaser(player, aim.Unit)
 		end
 	end)
 

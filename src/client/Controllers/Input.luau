@@ -19,6 +19,7 @@ Input.Bindings = {
 	Crouch = { Keys = { K.C, K.LeftControl }, Pad = { K.ButtonB }, Label = "C" },
 	Flashlight = { Keys = { K.F }, Pad = { K.DPadUp }, Label = "F" },
 	Spray = { Keys = { K.G }, Pad = { K.DPadRight }, Label = "G" },
+	Taser = { Keys = { K.T }, Pad = { K.ButtonR2 }, Label = "T" },
 	Journal = { Keys = { K.Tab, K.J }, Pad = { K.DPadLeft }, Label = "Tab" },
 	Phone = { Keys = { K.P }, Pad = { K.DPadDown }, Label = "P" },
 	Breath = { Keys = { K.Space }, Pad = { K.ButtonA }, Label = "Space" },

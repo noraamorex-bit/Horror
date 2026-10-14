@@ -35,7 +35,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Monster", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -229,6 +229,41 @@ local ok, err = pcall(function()
 	end
 	player:SetAttribute("Hiding", nil)
 	print("heartbeat ui ok")
+	-- "Become him": the small button while it's on sale; the bar once you're him
+	do
+		local ws = H.unwrap(H.workspaceRoot)
+		local wasIn = player:GetAttribute("InGame")
+		local refresh = ctx.MonsterUI._refresh -- (the harness doesn't fire these attribute signals)
+		ws:SetAttribute("BecomeHimOpen", true)
+		player:SetAttribute("InGame", true)
+		refresh()
+		local btn = H.unwrap(pg):FindFirstChild("BecomeHim", true)
+		assert(btn and btn.Visible, "BECOME HIM button shows in co-op")
+		assert(string.find(btn.Text, "R$", 1, true), "with its price: " .. btn.Text)
+		player:SetAttribute("MonsterCredits", 1)
+		refresh()
+		assert(string.find(btn.Text, "free", 1, true), "a saved one: free")
+		player:SetAttribute("MonsterCredits", nil)
+		player:SetAttribute("Captured", true)
+		refresh()
+		assert(not btn.Visible, "not while you're tied up")
+		player:SetAttribute("Captured", nil)
+		ws:SetAttribute("BecomeHimOpen", nil)
+		refresh()
+		assert(not btn.Visible, "gone when it's not on sale")
+		local cr = H.Instance.new("Model", H.workspaceRoot)
+		H.Instance.new("Humanoid", cr)
+		R.Monster.OnClientEvent:Fire({ Active = true, Captures = 2, Model = cr })
+		local bar = H.unwrap(pg):FindFirstChild("MonsterBar", true)
+		assert(bar and bar.Visible, "the monster bar")
+		assert(ctx.MonsterUI.isActive(), "active")
+		R.Monster.OnClientEvent:Fire({ Ping = roblox.Vector3.new(1, 2, 3), Radius = 10 })
+		R.Monster.OnClientEvent:Fire(nil)
+		assert(not bar.Visible and not ctx.MonsterUI.isActive(), "and off again")
+		cr:Destroy()
+		player:SetAttribute("InGame", wasIn)
+		print("become him ui ok")
+	end
 	-- a prompt appears
 	local part = H.Instance.new("Part")
 	local prompt = H.Instance.new("ProximityPrompt", part)

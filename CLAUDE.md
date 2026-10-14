@@ -135,6 +135,16 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   climb into the attic, Pizza Lover, Scaredy Cat, Survivor, Night Owl, Phrogger, The Quiet One,
   Legend of Alder Lane, levels). Old crate titles stay with whoever has them.
 - Admin COINS tab (lobby + game) for the owner.
+- **14 Oct (v89), the owner: "I want Robux, I need 1000 to make the game available to all ages."**
+  The pepper spray pass (id 2006030307) is a **Taser** now (49 R$; owners keep it): 3 shots a night,
+  aim with the camera (T / click / TASER button), a hit stuns him 4 s then slows him to 55% for 14 s;
+  a yellow-and-black taser shows in your hand. **VIP** pass (2036510399, 99 R$): +50% coins, VIP tag,
+  all colours, Marathon, endless battery. Supporter +20% coins; Marathon also regains breath 2x;
+  Battery never runs out; Head start adds a pepper spray. **Become him** (dev product 3718593338,
+  50 R$, bought again every night, co-op only): the buyer drives Curtis (MonsterService, the
+  puppet): before the blackout it waits for the hunt; LUNGE / SEARCH; survivors' noises ping for
+  them; a taser stuns them; survivors are told; it can't be used → saved as a free credit
+  (MonsterCredits). Icons + `update_passes.sh` in `marketing/passes/`.
 
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
@@ -184,6 +194,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **14 Oct (v89)**: monetization pass (see Economy: Taser, VIP, Become him, better passes). Next: the
+  looks pass (Creator Store models for the stove, toilet, washer, lamps, stools, workbench...;
+  swapped furniture casts shadows). The free creature models found all carry the same hidden
+  ScreenGui/RemoteFunction/Script bundle (a backdoor pattern): not used.
 
 - **14 Oct (v88)**: spawn-far + short text buzz back (the owner wanted them). Deep stats pass (v87:
   224 nights, 443 players, rating 10 up / 15 down, 5,744 visits): solo nights 84% no ending (23 of
@@ -279,7 +294,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 88).
+  (last published: version 89).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

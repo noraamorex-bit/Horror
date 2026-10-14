@@ -45,7 +45,7 @@ local function beamUnlocked(b, owned): (boolean, string)
 		return owned[b.Id] == true, "Found in crates"
 	end
 	if b.Pass then
-		return player:GetAttribute("Pass_" .. b.Pass) == true, b.PassName
+		return player:GetAttribute("Pass_" .. b.Pass) == true or player:GetAttribute("Pass_VIP") == true, b.PassName
 	end
 	local n = tonumber(player:GetAttribute("StatReferrals")) or 0
 	local ok = player:GetAttribute("Pass_Colours") == true or n >= b.Need or (b.Need == 1 and player:GetAttribute("StatReferred") == true)
@@ -175,7 +175,7 @@ function Locker.start()
 			end
 		end
 	end
-	for _, a in { "Eco", "StatBeam", "StatReferrals", "StatReferred", "Pass_Colours", "Pass_Supporter" } do
+	for _, a in { "Eco", "StatBeam", "StatReferrals", "StatReferred", "Pass_Colours", "Pass_Supporter", "Pass_VIP" } do
 		player:GetAttributeChangedSignal(a):Connect(function()
 			if P.Frame.Visible then
 				refresh()

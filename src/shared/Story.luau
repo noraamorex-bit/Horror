@@ -733,6 +733,7 @@ Story.Thoughts = {
 	Items = {
 		Flashlight = "A flashlight. This could save my life tonight.|light",
 		PepperSpray = "Mom's pepper spray. Only if he gets close.|spray",
+		Taser = "My taser. Three shots. Make them count.|taser",
 		Walkie = "A walkie-talkie. Whoever has the other one can hear me anywhere.",
 		CarKeys = "The car keys! Now I just need to get the garage open.",
 		ElectricalTape = "Electrical tape. That could fix a cut wire.",
@@ -859,6 +860,7 @@ Story.Results = {
 	Escaped = { Title = "YOU ESCAPED", Good = true },
 	Died = { Title = "YOU DIED", Good = false },
 	Taken = { Title = "YOU WERE TAKEN", Good = false },
+	Monster = { Title = "YOU WERE HIM", Good = true },
 }
 -- the death card's tip: how he got you, and how to get away next time (CaptureService.kill)
 Story.DeathTips = {

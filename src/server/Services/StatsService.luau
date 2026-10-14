@@ -29,7 +29,7 @@ end
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, MonsterCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
 end
 
 --[[
@@ -65,7 +65,7 @@ local function beamUnlocked(d, id: string, player: Player?): boolean
 			end
 			if b.Pass then
 				-- (each pass colour is its own: Gold is the supporters')
-				return player ~= nil and player:GetAttribute("Pass_" .. b.Pass) == true
+				return player ~= nil and (player:GetAttribute("Pass_" .. b.Pass) == true or player:GetAttribute("Pass_VIP") == true)
 			end
 			return colours or d.Referrals >= b.Need or (b.Need == 1 and d.Referred)
 		end
@@ -109,6 +109,7 @@ local function mirror(player: Player)
 	player:SetAttribute("StatBest", d.Best > 0 and d.Best or nil)
 	player:SetAttribute("StatTips", d.Tips)
 	player:SetAttribute("ReviveCredits", d.ReviveCredits > 0 and d.ReviveCredits or nil)
+	player:SetAttribute("MonsterCredits", (d.MonsterCredits or 0) > 0 and d.MonsterCredits or nil)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
@@ -137,6 +138,7 @@ local function load(player: Player)
 			d.Beam = type(data.Beam) == "string" and data.Beam or "Classic"
 			d.Best = validBest(data.Best)
 			d.ReviveCredits = math.max(0, math.floor(tonumber(data.ReviveCredits) or 0))
+			d.MonsterCredits = math.max(0, math.floor(tonumber(data.MonsterCredits) or 0))
 			d.Tips = math.max(0, math.floor(tonumber(data.Tips) or 0))
 			local set = type(data.Settings) == "table" and data.Settings or {}
 			d.Settings = {
@@ -187,6 +189,7 @@ local function save(userId: number)
 					end)(),
 					Settings = d.Settings,
 					ReviveCredits = d.ReviveCredits,
+					MonsterCredits = d.MonsterCredits,
 					Tips = math.max(tonumber(old.Tips) or 0, d.Tips),
 				}
 			end)
@@ -384,6 +387,29 @@ function Stats.addReviveCredit(player: Player): boolean
 		return false
 	end
 	d.ReviveCredits += 1
+	mirror(player)
+	save(player.UserId)
+	return true
+end
+
+-- "Become him" bought when it couldn't be used (someone else already was): kept for a later night
+function Stats.addMonsterCredit(player: Player): boolean
+	local d = cache[player.UserId]
+	if not d then
+		return false
+	end
+	d.MonsterCredits = (d.MonsterCredits or 0) + 1
+	mirror(player)
+	save(player.UserId)
+	return true
+end
+
+function Stats.spendMonsterCredit(player: Player): boolean
+	local d = cache[player.UserId]
+	if not d or (d.MonsterCredits or 0) <= 0 then
+		return false
+	end
+	d.MonsterCredits -= 1
 	mirror(player)
 	save(player.UserId)
 	return true

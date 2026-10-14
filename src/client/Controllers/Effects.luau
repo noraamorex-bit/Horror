@@ -72,6 +72,61 @@ function Effects.playSound(name: string, position: Vector3?, opts)
 	end
 end
 
+-- a taser shot: a jagged blue bolt from the muzzle to where it landed, a flash of light there
+function Effects.zap(from: Vector3, to: Vector3, hit: boolean)
+	local folder = Instance.new("Folder")
+	folder.Name = "Zap"
+	local d = to - from
+	local n = math.clamp(math.floor(d.Magnitude / 2.5), 3, 18)
+	local prev = from
+	local side = d.Magnitude > 0.1 and d.Unit:Cross(Vector3.yAxis) or Vector3.xAxis
+	if side.Magnitude < 0.1 then
+		side = Vector3.xAxis
+	end
+	side = side.Unit
+	for i = 1, n do
+		local k = i / n
+		local p = from + d * k
+		if i < n then
+			p += side * (math.random() - 0.5) * 0.9 + Vector3.yAxis * (math.random() - 0.5) * 0.9
+		end
+		local seg = Instance.new("Part")
+		seg.Anchored = true
+		seg.CanCollide = false
+		seg.CanQuery = false
+		seg.CanTouch = false
+		seg.CastShadow = false
+		seg.Material = Enum.Material.Neon
+		seg.Color = Color3.fromRGB(150, 210, 255)
+		local len = (p - prev).Magnitude
+		seg.Size = Vector3.new(0.12, 0.12, len)
+		seg.CFrame = CFrame.lookAt((prev + p) / 2, p)
+		seg.Parent = folder
+		prev = p
+	end
+	local glow = Instance.new("Part")
+	glow.Anchored = true
+	glow.CanCollide = false
+	glow.CanQuery = false
+	glow.Transparency = 1
+	glow.Size = Vector3.one * 0.2
+	glow.Position = to
+	glow.Parent = folder
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(150, 210, 255)
+	light.Range = hit and 22 or 12
+	light.Brightness = hit and 6 or 3
+	light.Parent = glow
+	folder.Parent = workspace
+	for _, c in folder:GetChildren() do
+		if c:IsA("BasePart") and c ~= glow then
+			ctx.UI.tween(c, 0.22, { Transparency = 1 })
+		end
+	end
+	ctx.UI.tween(light, 0.3, { Brightness = 0 })
+	Debris:AddItem(folder, 0.4)
+end
+
 function Effects.fade(toBlack: boolean, duration: number)
 	ctx.UI.tween(fadeFrame, duration or 0.5, { BackgroundTransparency = toBlack and 0 or 1 })
 end
@@ -230,6 +285,11 @@ function Effects.start()
 	end)
 	ctx.Remotes.Figure.OnClientEvent:Connect(Effects.figure)
 	ctx.Remotes.PlaySound.OnClientEvent:Connect(Effects.playSound)
+	ctx.Remotes.Zap.OnClientEvent:Connect(function(from, to, hit)
+		if typeof(from) == "Vector3" and typeof(to) == "Vector3" then
+			Effects.zap(from, to, hit == true)
+		end
+	end)
 	-- shoved off your feet: fall, slide back a little, get up
 	ctx.Remotes.Knockdown.OnClientEvent:Connect(function(dir: Vector3)
 		local char = game:GetService("Players").LocalPlayer.Character

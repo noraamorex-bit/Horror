@@ -56,7 +56,8 @@ end
 function Util.activePlayers(): { Player }
 	local list = {}
 	for _, p in Players:GetPlayers() do
-		if p:GetAttribute("InGame") and not p:GetAttribute("Captured") and not p:GetAttribute("Escaped") and Util.isAlive(p) then
+		-- (whoever bought "Become him" is him now, not a survivor: MonsterService)
+		if p:GetAttribute("InGame") and not p:GetAttribute("Captured") and not p:GetAttribute("Escaped") and not p:GetAttribute("Monster") and Util.isAlive(p) then
 			table.insert(list, p)
 		end
 	end
@@ -66,7 +67,7 @@ end
 function Util.sessionPlayers(): { Player }
 	local list = {}
 	for _, p in Players:GetPlayers() do
-		if p:GetAttribute("InGame") then
+		if p:GetAttribute("InGame") and not p:GetAttribute("Monster") then
 			table.insert(list, p)
 		end
 	end

@@ -34,6 +34,8 @@ local NAMES = {
 	"Puzzle", -- ({Id, Kind, Data} | {Id, Result}) a puzzle at the electrics (PuzzleService)
 	"EconomyResult", -- ({Kind = "Crate"|"Buy"|"Daily"|"Quest"|"Error", ...}) coins: what just happened
 	"Finale", -- ({Phase, ...}) the secret ending's state for the HUD (FinaleService)
+	"Zap", -- (from, to, hit) a taser shot, for everyone to see
+	"Monster", -- (state | nil) "Become him": you're him now ({Active, Captures, GrabReady, ...})
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})
@@ -64,6 +66,7 @@ local NAMES = {
 	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily"
 	"PlayAgain", -- () from a result card: stay with this group for another night
 	"ClientInfo", -- ({Dev, Mem, Fps, Q}) the device and how well it's running (JourneyService)
+	"MonsterAction", -- (action, arg) as him: "Grab" | "Search" | "Lunge"
 }
 
 local Remotes = {}

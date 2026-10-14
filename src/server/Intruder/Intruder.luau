@@ -92,6 +92,7 @@ end
 
 -- Config.Intruder, with the night's difficulty laid over it (Config.Difficulty.<name>.Intruder)
 local tuned, tunedFor = nil, nil
+local slowed, slowedFor = nil, nil
 tune = function(): any
 	local d = workspace:GetAttribute("Difficulty") or "Normal"
 	if tunedFor ~= d or not tuned then
@@ -101,6 +102,19 @@ tune = function(): any
 		for k, v in (diff and diff.Intruder) or {} do
 			tuned[k] = v
 		end
+	end
+	-- tasered: every speed of his at SlowFactor for a while
+	if S.SlowUntil and os.clock() < S.SlowUntil then
+		if slowedFor ~= tuned then
+			slowedFor = tuned
+			slowed = table.clone(tuned)
+			for k, v in slowed do
+				if type(v) == "number" and string.sub(k, -5) == "Speed" then
+					slowed[k] = v * ctx.Config.Taser.SlowFactor
+				end
+			end
+		end
+		return slowed
 	end
 	return tuned
 end
@@ -1908,6 +1922,23 @@ end
 
 STATES.Stunned = function()
 	local d = S.Data
+	-- (tasered: a shorter stun, then he limps after you slowly instead of backing off)
+	if d.Taser then
+		if now() - S.StateStart >= ctx.Config.Taser.Stun then
+			S.SlowUntil = now() + ctx.Config.Taser.Slow
+			S.Humanoid.WalkSpeed = tune().WalkSpeed
+			if S.Model then
+				S.Model:SetAttribute("Slowed", true)
+				task.delay(ctx.Config.Taser.Slow, function()
+					if S.Model and now() >= (S.SlowUntil or 0) then
+						S.Model:SetAttribute("Slowed", nil)
+					end
+				end)
+			end
+			resume()
+		end
+		return
+	end
 	if now() - S.StateStart >= tune().StunTime then
 		S.Humanoid.WalkSpeed = tune().WalkSpeed
 		retreat(d.From, tune().RetreatAfterStun, nil, tune().RetreatBlindStun or 10)
@@ -2199,6 +2230,16 @@ local function enterHouse(onReady: (() -> ())?)
 end
 
 function Intruder.setMode(mode: string, cause: Player?)
+	-- "Become him": the hunt starting is the moment the buyer takes over; while a player drives him,
+	-- the AI's modes wait (the night ending stops him either way)
+	if ctx.Monster then
+		if mode == "Hunt" and ctx.Monster.pending() and ctx.Monster.takeOver() then
+			return
+		end
+		if ctx.Monster.active() and (mode == "Hunt" or mode == "Lurk") then
+			return
+		end
+	end
 	S.Mode = mode
 	if mode == "Offstage" then
 		ensureModel()
@@ -2469,6 +2510,9 @@ end
 -- help is coming: he knows he's out of time. Shorter breaks between hunts, and he comes
 -- straight for whoever made the call.
 function Intruder.onHelpCalled(caller: Player?)
+	if ctx.Monster and ctx.Monster.active() then
+		return -- (a player is him: they heard the call through the noise pings)
+	end
 	if S.Mode == "Offstage" or S.Mode == "Stopped" or S.State == "Trapped" or S.State == "Gone" then
 		return
 	end
@@ -2498,6 +2542,9 @@ end
 
 -- someone is trying the doors and windows: he hears it
 function Intruder.onExitAttempt(position: Vector3, player: Player)
+	if ctx.Monster and ctx.Monster.active() then
+		return
+	end
 	if S.Mode ~= "Hunt" or not S.InHouse then
 		return
 	end
@@ -2526,6 +2573,9 @@ end
 
 -- someone's cutting a friend free in the boiler room: zip ties, whispering, a struggle. He hears it.
 function Intruder.onRescueAttempt(position: Vector3, rescuer: Player)
+	if ctx.Monster and ctx.Monster.active() then
+		return
+	end
 	if S.Mode ~= "Hunt" or not S.InHouse or not S.Root then
 		return
 	end
@@ -2555,6 +2605,9 @@ end
 
 -- he saw you get in (or heard it right next to him): he's coming to that exact spot
 function Intruder.onPlayerHid(player: Player, spot)
+	if ctx.Monster and ctx.Monster.active() then
+		return
+	end
 	if not S.InHouse or not S.Root then
 		return
 	end
@@ -2596,6 +2649,69 @@ function Intruder.isVisibleTo(player: Player): boolean
 	return Perception.playerSees(player, S.Head.Position, S.Model)
 end
 
+-- the taser pass: aimed where the player is looking (a little aim assist), up to Range. A hit
+-- stuns him for Taser.Stun, then he moves at SlowFactor for Taser.Slow. Everyone sees the bolt.
+local lastShot: { [Player]: number } = {}
+function Intruder.onTaser(player: Player, aim: Vector3)
+	local T = ctx.Config.Taser
+	if now() - (lastShot[player] or -1e9) < T.Cooldown then
+		return
+	end
+	local r = rootOf(player)
+	local char = player.Character
+	local head = char and char:FindFirstChild("Head") :: BasePart?
+	if not r or not head or not ctx.Inventory.take(player, "Taser") then
+		return
+	end
+	lastShot[player] = now()
+	local from = head.Position + V(0, -0.6, 0) + aim * 1.5
+	local left = ctx.Inventory.count(player, "Taser")
+	ctx.Audio.playAt("TaserZap", from, { Caption = false })
+	ctx.Noise.emit(r.Position, 24, "Taser", player)
+	local hit = false
+	local to = from + aim * T.Range
+	if S.InHouse and S.Head and S.State ~= "Trapped" and S.State ~= "Gone" then
+		local toHim = S.Head.Position + V(0, -1.2, 0) - from
+		local d = toHim.Magnitude
+		if d <= T.Range and aim:Dot(toHim.Unit) >= math.cos(math.rad(T.AimCone))
+			and Perception.clear(from, S.Head.Position, { char :: Instance }, S.Model) then
+			hit = true
+			to = from + toHim
+		end
+	end
+	if not hit then
+		-- (a miss still flies to whatever's in the way)
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { char :: Instance }
+		local res = workspace:Raycast(from, aim * T.Range, params)
+		if res then
+			to = res.Position
+		end
+	end
+	ctx.Remotes.Zap:FireAllClients(from, to, hit)
+	ctx.Audio.caption(left > 0 and ("Taser: " .. left .. " left") or "Taser: empty.", nil, nil, { player })
+	if not hit then
+		return
+	end
+	if ctx.Monster and ctx.Monster.active() then
+		ctx.Monster.stun(ctx.Config.Monster.TaserStun)
+	elseif S.State ~= "Stunned" then
+		S.Nav:stop()
+		S.Humanoid.WalkSpeed = 0
+		setState("Stunned", { From = r.Position, Taser = true })
+	else
+		S.StateStart = now() -- (another hit while he's down: the stun starts over)
+	end
+	ctx.Audio.playAt("Roar", S.Head.Position, { Caption = false })
+	ctx.Remotes.Shake:FireClient(player, 0.3, 0.3)
+	ctx.Director.logTruthRaw((player:GetAttribute("RoleName") or player.Name) .. " tasered Curtis.")
+	ctx.Remotes.Notify:FireClient(player, "Direct hit. He's down. RUN.", "objective")
+	if ctx.Journey then
+		ctx.Journey.event(player, "Tase", "Hit")
+	end
+end
+
 function Intruder.onPepperSpray(player: Player)
 	if not ctx.Inventory.take(player, "PepperSpray") then
 		return
@@ -2624,6 +2740,12 @@ function Intruder.onPepperSpray(player: Player)
 		return
 	end
 	if S.State == "Stunned" or S.State == "Trapped" or S.State == "Gone" then
+		return
+	end
+	if ctx.Monster and ctx.Monster.active() then
+		ctx.Monster.stun(ctx.Config.Monster.TaserStun)
+		ctx.Audio.playAt("Cough", S.Head.Position)
+		ctx.Remotes.Notify:FireClient(player, "Direct hit. RUN.", "objective")
 		return
 	end
 	S.Nav:stop()

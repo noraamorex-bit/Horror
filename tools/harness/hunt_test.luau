@@ -225,6 +225,41 @@ local ok, err = pcall(function()
 		assert(s2 == "Inspect", "no head start: he heard them get in (" .. s2 .. ")")
 		ctx.Hiding.exit(a)
 	end
+	-- the taser: a shot where you're looking stuns him, then he moves slowly for a while; a miss doesn't
+	do
+		local st = ctx.Intruder._state()
+		if b:GetAttribute("Hiding") then ctx.Hiding.exit(b) end
+		ctx.Capture.release(b)
+		st.Spared[b] = nil
+		I.setMode("Hunt")
+		tick(0.5)
+		ctx.Inventory.give(b, "Taser", ctx.Config.Taser.Charges)
+		local head = ctx.Intruder.getHead()
+		local at = head.Position + head.CFrame.LookVector * 10 + R.Vector3.new(0, -1.5, 0)
+		bRoot.CFrame = R.CFrame.new(at)
+		bHead.CFrame = R.CFrame.new(at + R.Vector3.new(0, 1.5, 0))
+		local away = (bHead.Position - head.Position).Unit
+		ctx.Intruder.onTaser(b, away) -- (pointing the wrong way)
+		assert(I.getState() ~= "Stunned", "a miss doesn't stun")
+		assert(ctx.Inventory.count(b, "Taser") == ctx.Config.Taser.Charges - 1, "a miss still uses a shot")
+		T += ctx.Config.Taser.Cooldown + 0.1
+		local aim = (head.Position + R.Vector3.new(0, -1.2, 0) - (bHead.Position + R.Vector3.new(0, -0.6, 0))).Unit
+		local normalChase = ctx.Intruder._tune().ChaseSpeed
+		ctx.Intruder.onTaser(b, aim)
+		print("14 tasered:", I.getState(), "shots left", ctx.Inventory.count(b, "Taser"))
+		assert(I.getState() == "Stunned" and st.Data.Taser, "a hit stuns him")
+		ctx.Intruder.onTaser(b, aim)
+		assert(ctx.Inventory.count(b, "Taser") == ctx.Config.Taser.Charges - 2, "the cooldown: no double shot")
+		tick(ctx.Config.Taser.Stun + 0.5)
+		assert(I.getState() ~= "Stunned", "back up after the stun (" .. I.getState() .. ")")
+		local slowChase = ctx.Intruder._tune().ChaseSpeed
+		print("   chase speed while slowed", slowChase, "normal", normalChase)
+		assert(slowChase < normalChase * 0.7, "slowed afterwards")
+		tick(ctx.Config.Taser.Slow + 0.5)
+		assert(ctx.Intruder._tune().ChaseSpeed == normalChase, "and back to normal later")
+		bRoot.CFrame = R.CFrame.new(-30, 22, 20)
+		bHead.CFrame = R.CFrame.new(-30, 23.5, 20)
+	end
 	-- a quiet minute with nobody running into him: his patrols lean toward whoever's out and about
 	do
 		local st = ctx.Intruder._state()

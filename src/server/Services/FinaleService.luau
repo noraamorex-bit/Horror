@@ -112,6 +112,10 @@ function Finale.eligible(): boolean
 	if not c or not c.Enabled or S or ctx.Ending.isOver() then
 		return false
 	end
+	-- (a player is him tonight: the dinner under the house is his AI's, not theirs)
+	if ctx.Monster and (ctx.Monster.active() or ctx.Monster.pending()) then
+		return false
+	end
 	local act = ctx.Director.getAct()
 	if act ~= "SomeoneElse" and act ~= "Guest" then
 		return false

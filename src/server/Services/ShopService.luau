@@ -59,7 +59,7 @@ end
 -- The supporter tag (lobby only: in the house you're just a kid in the dark)
 ---------------------------------------------------------------------------
 local function tag(player: Player)
-	if workspace:GetAttribute("Mode") ~= "Lobby" or not Shop.owns(player, "Supporter") then
+	if workspace:GetAttribute("Mode") ~= "Lobby" or not (Shop.owns(player, "Supporter") or Shop.owns(player, "VIP")) then
 		return
 	end
 	local char = player.Character
@@ -78,7 +78,7 @@ local function tag(player: Player)
 	l.BackgroundTransparency = 1
 	l.Font = Enum.Font.GothamBlack
 	l.TextScaled = true
-	l.Text = "★ SUPPORTER"
+	l.Text = Shop.owns(player, "VIP") and "★ VIP" or "★ SUPPORTER"
 	l.TextColor3 = Color3.fromRGB(255, 214, 120)
 	l.TextStrokeTransparency = 0.4
 	l.Parent = bb
@@ -90,6 +90,17 @@ local function grant(player: Player, pass, fresh: boolean)
 		return
 	end
 	player:SetAttribute("Pass_" .. pass.Key, true)
+	-- (VIP switches on the perks it bundles)
+	if pass.Key == "VIP" then
+		for _, k in ctx.Config.Shop.VIPIncludes or {} do
+			player:SetAttribute("Pass_" .. k, true)
+		end
+		local head = player.Character and player.Character:FindFirstChild("Head")
+		local old = head and head:FindFirstChild("SupporterTag")
+		if old then
+			old:Destroy()
+		end
+	end
 	if ctx.Stats and ctx.Stats.refresh then
 		ctx.Stats.refresh(player)
 	end
@@ -178,6 +189,19 @@ local function onReceipt(info)
 		local player = Players:GetPlayerByUserId(info.PlayerId)
 		if player and ctx.Stats and ctx.Stats.addReviveCredit(player) then
 			ctx.Remotes.Notify:FireClient(player, "Revive saved. It'll be offered the next time you die.", "info")
+			return Enum.ProductPurchaseDecision.PurchaseGranted
+		end
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	-- "Become him" (co-op, this night): the game server makes it happen; anywhere else it's saved
+	local him = ctx.Config.Shop.BecomeHim
+	if him and info.ProductId == him.Id then
+		if ctx.Monster then
+			return ctx.Monster.onReceipt(info)
+		end
+		local player = Players:GetPlayerByUserId(info.PlayerId)
+		if player and ctx.Stats and ctx.Stats.addMonsterCredit and ctx.Stats.addMonsterCredit(player) then
+			ctx.Remotes.Notify:FireClient(player, "Saved: BECOME HIM is free on your next night with friends.", "info")
 			return Enum.ProductPurchaseDecision.PurchaseGranted
 		end
 		return Enum.ProductPurchaseDecision.NotProcessedYet

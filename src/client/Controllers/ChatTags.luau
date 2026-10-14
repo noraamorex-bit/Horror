@@ -34,7 +34,9 @@ end
 -- the tags for one player, as rich text ("" when they have none)
 function ChatTags.prefixFor(p: Player): string
 	local parts = {}
-	if p:GetAttribute("Pass_Supporter") == true then
+	if p:GetAttribute("Pass_VIP") == true then
+		table.insert(parts, "<font color=\"" .. GOLD .. "\">★ VIP</font>")
+	elseif p:GetAttribute("Pass_Supporter") == true then
 		table.insert(parts, "<font color=\"" .. GOLD .. "\">★</font>")
 	end
 	local title = p:GetAttribute("TitleText")
