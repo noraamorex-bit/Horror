@@ -329,6 +329,7 @@ function Kit.stool(parent, cf: CFrame, color: Color3)
 	end
 	Kit.ring(m, "FootRing", cf * CF(0, 1.1, 0), 0.52, 0.08, 0.08, 10, C.Black, M.Metal)
 	Kit.collider(m, cf * CF(0, 1.7, 0), V(1.3, 3.4, 1.3))
+	m.WorldPivot = cf -- (Props: the front is local -Z)
 	return m
 end
 
@@ -636,6 +637,7 @@ function Kit.floorLamp(parent, cf: CFrame, shadeColor: Color3?)
 	Kit.ball(m, "Finial", (cf * CF(0, 7.1, 0)).Position, 0.18, C.Brass, M.Metal)
 	local bulb, light = bulbLight(m, (cf * CF(0, 5.8, 0)).Position, 22, 1.35)
 	Kit.collider(m, cf * CF(0, 3.5, 0), V(0.6, 7, 0.6))
+	m.WorldPivot = cf -- (Props: the front is local -Z)
 	return m, bulb, light
 end
 
@@ -1331,6 +1333,7 @@ function Kit.washer(parent, cf: CFrame, dryer: boolean?)
 	Kit.box(m, "Display", cf * CF(-0.5, 3.7, -1.69), V(0.8, 0.22, 0.02), Color3.fromRGB(40, 160, 200), M.Neon)
 	Kit.cyl(m, "DoorRing", cf * CF(0, 1.9, -1.66) * ANG(0, rad(90), 0), 0.1, 2.3, C.Chrome, M.Metal)
 	Kit.cyl(m, "DoorGlass", cf * CF(0, 1.9, -1.72) * ANG(0, rad(90), 0), 0.04, 1.8, Color3.fromRGB(40, 50, 60), M.Glass, { Transparency = 0.2 })
+	m.WorldPivot = cf -- (Props: the front is local -Z)
 	return m, body
 end
 
@@ -1375,6 +1378,7 @@ function Kit.guitar(parent, cf: CFrame)
 	for k = -1, 1 do
 		Kit.box(m, "String", g * CF(k * 0.06, 3.1, -0.1), V(0.015, 3.9, 0.015), C.Chrome, M.Metal)
 	end
+	m.WorldPivot = cf -- (Props: the front is local -Z)
 	return m
 end
 
@@ -1984,6 +1988,7 @@ function Kit.waterHeater(parent, cf: CFrame)
 		Kit.vcyl(m, "HeaterPipe", cf * CF(s * 0.8, 9.0, 0), 4.2, 0.35, Color3.fromRGB(184, 115, 70), M.Metal)
 	end
 	Kit.collider(m, cf * CF(0, 3.4, 0), V(3.4, 6.8, 3.4))
+	m.WorldPivot = cf -- (Props: the front is local -Z)
 	return m
 end
 

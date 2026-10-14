@@ -36,6 +36,13 @@ Props.Models = {
 	Plant_tree = { Id = 8704290264, Yaw = 0 }, -- a palm in a clay pot
 	Plant_leafy = { Id = 14278794019, Yaw = 0 }, -- a monstera on a wooden stand
 	Plant_snake = { Id = 10508319719, Yaw = 0 }, -- a spiky dracaena in a tall white pot
+	-- (v90, the looks pass: checked with preview.mjs, inspected for scripts and private meshes)
+	Washer = { Id = 2106113027, Yaw = 0 }, -- "Wash Machine" (StarModelX): white front-loader, round glass door
+	Dryer = { Id = 2106113027, Yaw = 0 }, -- (the same, as its pair)
+	FloorLamp = { Id = 4128475322, Yaw = 0 }, -- "Old Floor Lamp (Mesh)": brass stand, pleated shade
+	Stool = { Id = 13001590550, Yaw = 0 }, -- "Bar Chair Stool": black seat on a chrome stem
+	WaterHeater = { Id = 1037614531, Yaw = 0 }, -- "Electric Water Heater": white tank, copper pipes
+	Guitar = { Id = 1491240459, Yaw = 0 }, -- "Acoustic Guitar Mesh"
 }
 
 -- flat things are fitted by their width only (a scattered heap of shards is only a few
@@ -220,6 +227,15 @@ local function fit(placeholder: Model, raw: any)
 	local psize = pmx - pmn
 	local prop = tpl:Clone()
 	prop.Name = "Prop"
+	-- furniture casts shadows like the house around it (the small things on tables don't need to:
+	-- without them, a sofa looked pasted on under the Future lighting)
+	if type(raw) == "table" then
+		for _, d in prop:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.CastShadow = true
+			end
+		end
+	end
 	-- 1. turn it about its own centre so its front faces -Z
 	local bmn, bmx = worldBox(prop)
 	if not bmn or not bmx then
