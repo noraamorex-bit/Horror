@@ -165,6 +165,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   lines pop with the track's four pops after the drop, the scare on #2's 22.15 s hit, the glitch on
   RUN. Story: hiding under the dining table, he drops in upside down. The renders now include the
   Creator Store furniture (film2 `spec.props`, world = a stage.json).
+  **Part 3** (`reel25`, `peak_horror_game_friends_3.mp4`; the owner: Part 2 "did really well, more
+  like that"): same format and #2's track, new story: hiding in the upstairs linen closet, watching
+  him through the crack (film2 `door` rig swings one wardrobe leaf), he leans to the gap, backs off,
+  then the door is torn open on the 22.15 s hit; RUN: he comes up the stairs. Glitch "he's listening".
+  (film2 now renders twice after a light-rig change: the first frame of every shot came out dark.)
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**

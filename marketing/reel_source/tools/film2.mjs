@@ -196,6 +196,7 @@ for (const fr of spec.frames) {
     // per-shot light rig (built once per shot so shaders don't recompile every frame)
     if (window.SHOT !== fr.shot) {
       window.SHOT = fr.shot;
+      window.FRESH = true; // (a new light rig: the first render after it came out dark, so it renders twice)
       for (const l of (window.RIG || [])) scene.remove(l);
       const rig = window.RIG = [];
       const add = (o) => { scene.add(o); rig.push(o); return o; };
@@ -256,6 +257,7 @@ for (const fr of spec.frames) {
     cam.position.set(...fr.cam.pos); cam.lookAt(new T.Vector3(...fr.cam.look));
     if (fr.cam.roll) cam.rotateZ(fr.cam.roll);
     window.R.render(scene, cam);
+    if (window.FRESH) { window.FRESH = false; window.R.render(scene, cam); }
   }, [fr, spec.shots[fr.shot], crFrame]);
   const buf = await page.screenshot({ type: 'png' });
   fs.writeFileSync(`${outDir}/${String(fr.f).padStart(4, '0')}.png`, buf);
