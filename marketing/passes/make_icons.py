@@ -64,4 +64,45 @@ d.text(((512 - w) / 2, 125), "VIP", font=f, fill=(255, 205, 70))
 d.polygon([(256, 50), (270, 90), (312, 90), (278, 114), (291, 154), (256, 130), (221, 154), (234, 114), (200, 90), (242, 90)], fill=(255, 225, 120))
 label(im, "ALL PERKS", 60, (255, 225, 140))
 im.save("vip.png")
+
+# --- rocket launcher: an olive tube on the shoulder, a rocket leaving it in a fireball
+def launcher(im, flame=True):
+    d = ImageDraw.Draw(im)
+    a = -0.42
+    c, s_ = math.cos(a), math.sin(a)
+    cx, cy = 206, 300  # the tube's centre
+    def P(u, v):  # u along the tube, v across it
+        return (cx + u * c - v * s_, cy + u * s_ + v * c)
+    def poly(pts, col):
+        d.polygon([P(u, v) for u, v in pts], fill=col)
+    glow = Image.new("RGBA", (512, 512), (0, 0, 0, 0)); g = ImageDraw.Draw(glow)
+    if flame:
+        x, y = P(250, 0)
+        g.ellipse([x - 70, y - 70, x + 70, y + 70], fill=(255, 150, 30, 230))
+        g.ellipse([x - 40, y - 40, x + 40, y + 40], fill=(255, 235, 140, 255))
+    x, y = P(-215, 0)
+    g.ellipse([x - 70, y - 40, x + 50, y + 40], fill=(200, 200, 200, 120))
+    blur = glow.filter(ImageFilter.GaussianBlur(14))
+    im.paste(blur, (0, 0), blur)
+    poly([(-185, -32), (185, -32), (185, 32), (-185, 32)], (78, 92, 52))
+    poly([(-185, -32), (185, -32), (185, -16), (-185, -16)], (110, 128, 74))
+    poly([(185, -40), (215, -40), (215, 40), (185, 40)], (40, 44, 30))
+    poly([(-215, -38), (-185, -38), (-185, 38), (-215, 38)], (40, 44, 30))
+    poly([(-55, 32), (-23, 32), (-33, 112), (-65, 112)], (30, 30, 30))
+    poly([(35, 32), (61, 32), (55, 90), (29, 90)], (30, 30, 30))
+    poly([(-25, -48), (45, -48), (45, -32), (-25, -32)], (30, 30, 30))
+    if flame:
+        # the rocket, just out of the tube
+        poly([(232, -11), (288, -11), (312, 0), (288, 11), (232, 11)], (225, 225, 230))
+        poly([(288, -11), (312, 0), (288, 11)], (210, 40, 30))
+        poly([(232, -11), (244, -11), (236, -22), (226, -22)], (180, 180, 185))
+        poly([(232, 11), (244, 11), (236, 22), (226, 22)], (180, 180, 185))
+im = base((24, 6, 0), (150, 60, 10))
+launcher(im)
+label(im, "ROCKET LAUNCHER", 56, (255, 230, 200))
+im.save("rocket.png")
+im = base((24, 6, 0), (150, 60, 10))
+launcher(im)
+label(im, "1 ROCKET · TONIGHT", 52, (255, 230, 200))
+im.save("rocket_tonight.png")
 print("ok")

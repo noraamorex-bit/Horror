@@ -1783,6 +1783,25 @@ local function onNoise(ev)
 	if spared(who) then
 		return
 	end
+	-- a firecracker: whatever he was doing (short of chasing someone he can see, or being down), he
+	-- goes to the bang. Listening at a hiding spot, he leaves it: a friend's way to save you
+	if ev.Kind == "Firecracker" then
+		if st == "Retreat" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" or st == "Chase" or st == "Puppet" then
+			return
+		end
+		if st == "Inspect" and S.Data then
+			local occ = S.Data.Occupant
+			if occ and ctx.Heartbeat and ctx.Heartbeat.isActive(occ) then
+				ctx.Heartbeat.stop(occ)
+				ctx.Remotes.Notify:FireClient(occ, "The bang pulled him away. Stay hidden.", "info")
+			end
+			if S.Data.Spot then
+				S.SpotCooldown[S.Data.Spot] = now() + 20
+			end
+		end
+		charge(ev.Position, nil)
+		return
+	end
 	if figure() then
 		-- busy: listening at a hiding spot, carrying someone off, stunned, trapped, or he can see you
 		if st == "Inspect" or st == "Retreat" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" or st == "Chase" or st == "CheckSpot" then
@@ -1942,6 +1961,23 @@ STATES.Stunned = function()
 				end)
 			end
 			resume()
+		end
+		return
+	end
+	-- (a rocket: down for longer, then he limps away slowly)
+	if d.Rocket then
+		if now() - S.StateStart >= ctx.Config.Rocket.Stun then
+			S.SlowUntil = now() + ctx.Config.Rocket.Slow
+			S.Humanoid.WalkSpeed = tune().WalkSpeed
+			if S.Model then
+				S.Model:SetAttribute("Slowed", true)
+				task.delay(ctx.Config.Rocket.Slow, function()
+					if S.Model and now() >= (S.SlowUntil or 0) then
+						S.Model:SetAttribute("Slowed", nil)
+					end
+				end)
+			end
+			retreat(d.From, tune().RetreatAfterStun, nil, tune().RetreatBlindStun or 10)
 		end
 		return
 	end
@@ -2716,6 +2752,108 @@ function Intruder.onTaser(player: Player, aim: Vector3)
 	if ctx.Journey then
 		ctx.Journey.event(player, "Tase", "Hit")
 	end
+end
+
+--[[
+	The rocket launcher: the rocket flies where you aim (a little help toward him), and goes off
+	where it hits. He's knocked flat if the blast reaches him, then he limps away; a miss is the
+	loudest thing in the house, and he comes to see. The blast never hurts anyone else.
+]]
+local lastRocket: { [Player]: number } = {}
+function Intruder.onRocket(player: Player, aim: Vector3)
+	local Rk = ctx.Config.Rocket
+	if now() - (lastRocket[player] or -1e9) < Rk.Cooldown then
+		return
+	end
+	local r = rootOf(player)
+	local char = player.Character
+	local head = char and char:FindFirstChild("Head") :: BasePart?
+	if not r or not head or not ctx.Inventory.take(player, "Rocket") then
+		return
+	end
+	lastRocket[player] = now()
+	local from = head.Position + V(0, -0.3, 0) + aim * 2.5
+	local left = ctx.Inventory.count(player, "Rocket")
+	ctx.Audio.playAt("RocketLaunch", from, { Caption = false })
+	-- where it ends up: him, if he's (about) where you aimed and nothing's in the way; else the first wall
+	local to = from + aim * Rk.Range
+	-- (only while he's hunting, or someone's become him: not a glimpse before the hunt)
+	local hunting = S.Mode == "Hunt" or (ctx.Monster ~= nil and ctx.Monster.active())
+	local targetable = hunting and S.InHouse and S.Head and S.State ~= "Trapped" and S.State ~= "Gone"
+	local aimedAtHim = false
+	if targetable then
+		local chest = S.Head.Position + V(0, -1.6, 0)
+		local toHim = chest - from
+		if toHim.Magnitude <= Rk.Range and aim:Dot(toHim.Unit) >= math.cos(math.rad(Rk.AimCone))
+			and Perception.clear(from, chest, { char :: Instance }, S.Model) then
+			aimedAtHim = true
+			to = chest
+		end
+	end
+	if not aimedAtHim then
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { char :: Instance }
+		local res = workspace:Raycast(from, aim * Rk.Range, params)
+		if res then
+			to = res.Position + res.Normal * 0.5
+		end
+	end
+	local flight = (to - from).Magnitude / Rk.Speed
+	ctx.Remotes.Rocket:FireAllClients(from, to, flight)
+	ctx.Audio.caption(left > 0 and ("Rocket launcher: " .. left .. " left") or "Rocket launcher: empty.", nil, nil, { player })
+	if ctx.Journey then
+		ctx.Journey.event(player, "Rocket")
+	end
+	task.delay(flight, function()
+		Intruder._explode(to, player)
+	end)
+end
+
+-- the blast (also used by the tests)
+function Intruder._explode(at: Vector3, player: Player?)
+	local Rk = ctx.Config.Rocket
+	local boom = Instance.new("Explosion")
+	boom.Position = at
+	boom.BlastRadius = Rk.Blast
+	boom.BlastPressure = 0 -- (nobody and nothing is thrown about or broken)
+	boom.DestroyJointRadiusPercent = 0
+	boom.ExplosionType = Enum.ExplosionType.NoCraters
+	boom.Parent = workspace
+	ctx.Audio.playAt("RocketBoom", at)
+	for _, p in ctx.Util.activePlayers() do
+		local pr = rootOf(p)
+		if pr and (pr.Position - at).Magnitude < 60 then
+			ctx.Remotes.Shake:FireClient(p, 0.9, 0.6)
+		end
+	end
+	local name = player and (player:GetAttribute("RoleName") or player.DisplayName) or "Someone"
+	local hunting = S.Mode == "Hunt" or (ctx.Monster ~= nil and ctx.Monster.active())
+	local hit = hunting and S.InHouse and S.Head and S.State ~= "Trapped" and S.State ~= "Gone"
+		and (S.Head.Position + V(0, -1.6, 0) - at).Magnitude <= Rk.Blast
+	if not hit then
+		-- the loudest thing in the house: he comes to see
+		ctx.Noise.emit(at, Rk.Noise, "Explosion", player)
+		return false
+	end
+	if ctx.Monster and ctx.Monster.active() then
+		ctx.Monster.stun(Rk.MonsterStun)
+	else
+		S.Nav:stop()
+		S.Humanoid.WalkSpeed = 0
+		local from = player and rootOf(player)
+		setState("Stunned", { From = from and from.Position or at, Rocket = true })
+	end
+	ctx.Audio.playAt("Roar", S.Head.Position, { Caption = false })
+	ctx.Director.logTruthRaw(name .. " hit Curtis with a rocket.")
+	if player then
+		ctx.Remotes.Notify:FireClient(player, "BOOM. Direct hit. He's down. RUN.", "objective")
+		ctx.Remotes.Rocket:FireAllClients(nil, at, 0, true, player.DisplayName)
+		if ctx.Journey then
+			ctx.Journey.event(player, "Rocket", "Hit")
+		end
+	end
+	return true
 end
 
 function Intruder.onPepperSpray(player: Player)

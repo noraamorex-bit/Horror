@@ -11,3 +11,9 @@ api 2008280313 -F "description=+20% coins every night, a SUPPORTER tag, a gold f
 api 2005053525 -F "description=Sprint for longer and get your breath back twice as fast."
 api 2005388315 -F "description=Your flashlight never runs out."
 api 2006721483 -F "description=Start every night with a flashlight and a can of pepper spray."
+# v92 (15 Oct): the rocket launcher on sale; roles start with items, so picking one is worth more;
+# VIP includes picking your role; Head Start's old description came back filtered ("####")
+api 2039534472 -F "isForSale=true"
+api 2006193593 -F "price=25" -F "description=Choose who you play every night, and what you start with: Jamie's flashlight, Riley's toolkit, Morgan's energy drinks or Casey's firecrackers."
+api 2036510399 -F "description=Everything in one: +50% coins every night, a VIP tag, pick your role, every flashlight colour, Marathon stamina and a battery that never dies."
+api 2006721483 -F "description=Start every night with a flashlight in your pocket, plus a spray can to keep him back." # ("pepper spray" comes back filtered)

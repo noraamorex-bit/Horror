@@ -35,6 +35,8 @@ local NAMES = {
 	"EconomyResult", -- ({Kind = "Crate"|"Buy"|"Daily"|"Quest"|"Error", ...}) coins: what just happened
 	"Finale", -- ({Phase, ...}) the secret ending's state for the HUD (FinaleService)
 	"Zap", -- (from, to, hit) a taser shot, for everyone to see
+	"Rocket", -- (from, to, seconds, hit, shooterName) a rocket in flight, then the blast
+	"Throw", -- (from, to, fuse) a firecracker flying through the air
 	"Monster", -- (state | nil) "Become him": you're him now ({Active, Captures, GrabReady, ...})
 
 	-- client -> server

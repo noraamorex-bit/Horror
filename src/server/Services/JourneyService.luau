@@ -120,6 +120,18 @@ local function entry(p: Player): any
 		n.Data.P[k] = e
 		e.ArrClock = os.clock()
 	end
+	-- (v92) the passes they own, for what sells and who buys (checked again until they've loaded)
+	if not e.Pass and ctx.Config and ctx.Config.Shop then
+		local owned = {}
+		for _, pass in ctx.Config.Shop.Passes do
+			if p:GetAttribute("Pass_" .. pass.Key) then
+				table.insert(owned, pass.Key)
+			end
+		end
+		if #owned > 0 then
+			e.Pass = owned
+		end
+	end
 	return e
 end
 

@@ -217,6 +217,24 @@ local ok, err = pcall(function()
 	ctx.Noise.emit(here + R.Vector3.new(12, 0, 0), 16, "Footsteps", b)
 	assert(S.State == "Charge", "after the grace their footsteps count again, got " .. S.State)
 	print("freed grace ok")
+	-- 9) a friend's firecracker pulls him off a hiding spot he's listening at (Casey's role item)
+	S.Spared[b] = nil
+	S.SpotCooldown = {}
+	patrolling()
+	S.Root.CFrame = R.CFrame.new(spot.Exit.Position + R.Vector3.new(0, 0, 3))
+	ctx.Hiding.enter(b, spot)
+	S.Root.CFrame = R.CFrame.new(spot.Exit.Position)
+	for _ = 1, 140 do
+		tick(0.1)
+		if S.State == "Inspect" and S.Data.Phase == "Listen" then break end
+	end
+	assert(S.Data.Phase == "Listen" and ctx.Heartbeat.isActive(b), "listening at b's spot, the minigame on")
+	local bang = spot.Exit.Position + R.Vector3.new(30, 0, 0)
+	ctx.Noise.emit(bang, ctx.Config.Firecracker.Noise, "Firecracker", nil)
+	assert(S.State == "Charge", "the bang: he goes, got " .. S.State)
+	assert(not ctx.Heartbeat.isActive(b) and not b:GetAttribute("Captured"), "and whoever was inside is off the hook")
+	ctx.Hiding.exit(b)
+	print("firecracker pulls him away ok")
 end)
 print(ok and "FIGURE OK" or ("FIGURE FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

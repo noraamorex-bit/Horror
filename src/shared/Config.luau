@@ -343,14 +343,15 @@ Config.Shop = {
 	Passes = {
 		-- (14 Oct: the owner wants Robux for all-ages access. Every pass does more now, the pepper spray
 		-- pass is a taser, and VIP bundles the perks)
-		{ Key = "VIP", Id = 2036510399, Price = 99, Name = "VIP", Desc = "Everything in one: +50% coins every night, a VIP tag, every flashlight colour, Marathon stamina and a battery that never dies." },
+		{ Key = "Rocket", Id = 2039534472, Price = 99, Name = "Rocket Launcher", Desc = "Start every night with a rocket launcher: 2 rockets. A hit blows him off his feet, then he limps away." },
+		{ Key = "VIP", Id = 2036510399, Price = 99, Name = "VIP", Desc = "Everything in one: +50% coins every night, a VIP tag, pick your role, every flashlight colour, Marathon stamina and a battery that never dies." },
 		{ Key = "PepperSpray", Id = 2006030307, Price = 49, Name = "Taser", Desc = "Start every night with a taser: 3 shots. A hit stuns him, then slows him right down." },
 		{ Key = "Supporter", Id = 2008280313, Price = 10, Name = "Supporter", Desc = "+20% coins every night, a SUPPORTER tag, a gold flashlight and a star on the donation board." },
 		{ Key = "Colours", Id = 2005832310, Price = 15, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
-		{ Key = "ChooseRole", Id = 2006193593, Price = 15, Name = "Pick your role", Desc = "Choose who you play each night: Jamie, Riley, Morgan or Casey." },
+		{ Key = "ChooseRole", Id = 2006193593, Price = 25, Name = "Pick your role", Desc = "Choose who you play every night, and what you start with: Jamie's flashlight, Riley's toolkit, Morgan's energy drinks or Casey's firecrackers." },
 		{ Key = "Marathon", Id = 2005053525, Price = 20, Name = "Marathon", Desc = "Sprint for longer and get your breath back twice as fast." },
 		{ Key = "Battery", Id = 2005388315, Price = 25, Name = "Long-life battery", Desc = "Your flashlight never runs out." },
-		{ Key = "HeadStart", Id = 2006721483, Price = 25, Name = "Head start", Desc = "Start every night with a flashlight and a can of pepper spray." },
+		{ Key = "HeadStart", Id = 2006721483, Price = 25, Name = "Head start", Desc = "Start every night with a flashlight in your pocket, plus a spray can to keep him back." },
 	},
 	-- bought on the spot after you die: back into this night, somewhere away from him
 	-- (Price: the default the product is set to on Roblox, shown until the live price loads; the card
@@ -359,8 +360,10 @@ Config.Shop = {
 	Revive = { Id = 3716706476, Price = 10, Window = 15, Grace = 10 },
 	-- co-op only, bought again every night: you become him for the rest of the night (MonsterService)
 	BecomeHim = { Id = 3718593338, Price = 50 },
+	-- one rocket for this night only (the hunt): for anyone without the pass, bought on the spot
+	RocketNight = { Id = 3718739690, Price = 25 },
 	-- the passes VIP includes (it sets their attributes too)
-	VIPIncludes = { "Colours", "Marathon", "Battery" },
+	VIPIncludes = { "Colours", "Marathon", "Battery", "ChooseRole" },
 	Donations = {
 		{ Id = 3716700047, Amount = 5 },
 		{ Id = 3715928524, Amount = 10 },
@@ -444,6 +447,33 @@ Config.PepperSpray = {
 	Uses = 2,
 	Range = 12,
 	ConeDegrees = 35,
+}
+
+-- the rocket launcher (pass: 2 rockets a night; "Rocket (tonight)": 1). The rocket flies where you
+-- aim; anywhere within Blast of him when it goes off knocks him flat, then he limps away slowly.
+-- It's loud: a miss brings him to the bang (the explosion never hurts anyone else)
+Config.Rocket = {
+	Charges = 2,
+	Range = 160,
+	Speed = 120, -- studs per second
+	AimCone = 7, -- degrees: aim assist toward him
+	Blast = 12, -- studs
+	Stun = 7,
+	Slow = 20,
+	Cooldown = 2.5,
+	Noise = 90,
+	MonsterStun = 8, -- a player who's become him
+}
+
+-- the role items (Story.Roles): Morgan's energy drinks and Casey's firecrackers
+Config.EnergyDrink = {
+	Time = 10, -- seconds: sprint without tiring, a little faster
+	Sprint = 19,
+}
+Config.Firecracker = {
+	Range = 34, -- how far you can throw one
+	Fuse = 1.4,
+	Noise = 75, -- the bang: he goes to see (and leaves whoever he was listening for)
 }
 
 if Config.Debug then

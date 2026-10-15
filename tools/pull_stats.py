@@ -284,6 +284,27 @@ def report_nights(nights):
             print(f"    {c:5} x  {m}")
 
 
+def report_sales():
+    # (v92+) passes and products sold per UTC day: Sales_v1 "YYYYMMDD" -> {Key: [count, robux]}
+    try:
+        days = sorted(keys("Sales_v1"))
+    except Exception as e:  # (no read access yet, or nothing sold)
+        print(f"\n== SALES: couldn't read Sales_v1 ({e})")
+        return
+    if not days:
+        print("\n== SALES: nothing logged yet")
+        return
+    print("\n== SALES (per UTC day: count x, Robux spent)")
+    total = Counter()
+    for day in days:
+        d = entry("Sales_v1", day)["data"] or {}
+        row = ", ".join(f"{k} {v[0]}x {v[1]}R$" for k, v in sorted(d.items(), key=lambda kv: -kv[1][1]))
+        print(f"  {day}: {row}")
+        for k, v in d.items():
+            total[k] += v[1]
+    print(f"  total: {sum(total.values())} R$  " + ", ".join(f"{k} {v}" for k, v in total.most_common()))
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     flags = {a for a in sys.argv[1:] if a.startswith("--")}
@@ -309,6 +330,7 @@ def main():
         print(f"(only logs from version {since} on)")
     report_lobby(lobby)
     report_nights(nights)
+    report_sales()
     if "--logs-only" in flags:
         return
     print("\n== PLAYER RECORDS")

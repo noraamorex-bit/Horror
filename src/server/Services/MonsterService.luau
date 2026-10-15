@@ -276,6 +276,21 @@ function Monster.reset()
 	release(false)
 end
 
+-- (the owner's admin panel) stop being him: the AI takes over again and you're back in the house
+function Monster.adminRelease(): boolean
+	local p = S.Buyer
+	if not p then
+		return false
+	end
+	release(true)
+	if p.Parent then
+		pcall(function()
+			p:LoadCharacter()
+		end)
+	end
+	return true
+end
+
 -- a survivor out in the open, close enough to grab
 local function tryGrab(pos: Vector3)
 	if now() < S.GrabReadyAt then

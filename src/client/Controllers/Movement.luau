@@ -144,6 +144,29 @@ function Movement.start()
 			shoot()
 		end
 	end)
+	-- the rocket launcher (R, L2, the ROCKET button), Morgan's energy drink (X, R1, DRINK) and Casey's
+	-- firecrackers (V, Y, THROW: thrown where the camera looks)
+	local function free(): boolean
+		return player:GetAttribute("InGame") == true and not player:GetAttribute("Hiding") and not player:GetAttribute("Captured")
+			and not (ctx.Dialogue and ctx.Dialogue.blocksControls and ctx.Dialogue.blocksControls())
+	end
+	ctx.Input.on("Rocket", function(began)
+		local cam = workspace.CurrentCamera
+		if began and cam and player:GetAttribute("Item_Rocket") and free() then
+			ctx.Remotes.UseItem:FireServer("Rocket", cam.CFrame.LookVector)
+		end
+	end)
+	ctx.Input.on("Drink", function(began)
+		if began and player:GetAttribute("Item_EnergyDrink") and free() then
+			ctx.Remotes.UseItem:FireServer("EnergyDrink")
+		end
+	end)
+	ctx.Input.on("Throw", function(began)
+		local cam = workspace.CurrentCamera
+		if began and cam and player:GetAttribute("Item_Firecracker") and free() then
+			ctx.Remotes.UseItem:FireServer("Firecracker", cam.CFrame.LookVector)
+		end
+	end)
 	for _, attr in { "Hiding", "Captured", "InGame", "Escaped" } do
 		player:GetAttributeChangedSignal(attr):Connect(function()
 			if blocked() then

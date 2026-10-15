@@ -146,6 +146,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   them; a taser stuns them; survivors are told; it can't be used → saved as a free credit
   (MonsterCredits). Icons + `update_passes.sh` in `marketing/passes/`.
 
+- **15 Oct (v92)**, the owner: 240/250 highly engaged, 300 of 1,000 R$: "capitalize more", roles
+  were "so useless", "add a rocket launcher or something people will buy", everything in the admin
+  panel. **Rocket Launcher** pass (2039534472, 99 R$: 2 rockets a night, knocked flat 7 s then slowed
+  20 s; a miss is a big noise) and **Rocket (tonight)** product (3718739690, 25 R$, a button during
+  the hunt). **Roles start with items** (Jamie flashlight+keys, Riley multitool+tape, Morgan 2 energy
+  drinks, Casey 2 firecrackers that lure him); Pick your role 25 R$, in VIP. Sales logged in
+  `Sales_v1` (pull_stats prints them). Admin SHOP tab. Head Start's description had been filtered ("pepper spray" gets hashed on the pass page).
+
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
 alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
@@ -195,6 +203,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **15 Oct (v92)**: monetization pass 2 (see Economy: rocket launcher, Rocket (tonight), role items,
+  sales log, admin SHOP tab). Next: `pull_stats.py` (no --logs-only needed for sales) to see what
+  sells (`== SALES`), then tune prices; check rocket hits/misses in the logs (events Rocket, Tase,
+  Drink, Firecracker).
 - **15 Oct (v91)**, stats pass on v88-90 (216 nights, 568 lobby visits, 411 players-in-a-night;
   no script errors). Better than v87: heartbeat Normal 28/60 passed (was 15/50), joins in progress
   37 of 387 teleports (was 9), solo nights 74% abandoned (was 84%). Found: (1) the longest dead time
@@ -310,7 +322,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 91).
+  (last published: version 93).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

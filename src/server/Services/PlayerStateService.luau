@@ -22,6 +22,7 @@ local ctx
 local intents = {} -- player -> {Sprint, Crouch}
 local stepClock = {} -- player -> seconds since last footstep noise
 local seenIntruder = {} -- player -> bool (was visible last tick)
+local rushUntil = {} -- player -> os.clock() an energy drink wears off
 local spawnResolver = nil
 
 function PlayerState.init(c)
@@ -108,25 +109,26 @@ local function setupCharacter(player: Player, char: Model)
 end
 
 -- the taser in your right hand while it has shots left (everyone sees it: a yellow-and-black stun gun)
+-- what's in your hand: the rocket launcher if you have one (it's the big thing), else the taser
 local function syncTaser(player: Player)
 	local char = player.Character
 	if not char then
 		return
 	end
 	local hand = (char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")) :: BasePart?
-	local old = char:FindFirstChild("TaserModel")
-	local want = (tonumber(player:GetAttribute("Item_Taser")) or 0) > 0 and hand ~= nil
-	if not want then
-		if old then
+	local rocket = (tonumber(player:GetAttribute("Item_Rocket")) or 0) > 0
+	local taser = not rocket and (tonumber(player:GetAttribute("Item_Taser")) or 0) > 0
+	for name, want in { TaserModel = taser, RocketModel = rocket } do
+		local old = char:FindFirstChild(name)
+		if old and not (want and hand) then
 			old:Destroy()
 		end
-		return
 	end
-	if old or not hand then
+	if not hand or (not rocket and not taser) or char:FindFirstChild(rocket and "RocketModel" or "TaserModel") then
 		return
 	end
 	local m = Instance.new("Model")
-	m.Name = "TaserModel"
+	m.Name = rocket and "RocketModel" or "TaserModel"
 	local r15 = hand.Name == "RightHand"
 	local grip = r15 and CFrame.new(0, -0.15, -0.1) or CFrame.new(0, -1, -0.1)
 	local function piece(name: string, size: Vector3, offset: CFrame, color: Color3, mat: Enum.Material?)
@@ -148,18 +150,32 @@ local function syncTaser(player: Player)
 		p.Parent = m
 		return p
 	end
-	piece("Grip", Vector3.new(0.28, 0.55, 0.3), CFrame.new(0, 0, 0), Color3.fromRGB(26, 26, 30))
-	piece("Body", Vector3.new(0.32, 0.38, 0.95), CFrame.new(0, 0.32, -0.32), Color3.fromRGB(250, 200, 30))
-	piece("Muzzle", Vector3.new(0.3, 0.3, 0.14), CFrame.new(0, 0.32, -0.84), Color3.fromRGB(30, 30, 34))
-	piece("Light", Vector3.new(0.08, 0.06, 0.2), CFrame.new(0, 0.53, -0.1), Color3.fromRGB(120, 200, 255), Enum.Material.Neon)
+	if rocket then
+		-- an olive tube held at the grip, pointing where you face, a red-tipped rocket in the front
+		local olive = Color3.fromRGB(84, 98, 56)
+		local dark = Color3.fromRGB(36, 40, 28)
+		piece("Grip", Vector3.new(0.26, 0.6, 0.3), CFrame.new(0, 0, 0), dark)
+		piece("Tube", Vector3.new(0.62, 0.62, 3.6), CFrame.new(0, 0.55, -0.5), olive, Enum.Material.Metal)
+		piece("Front", Vector3.new(0.74, 0.74, 0.3), CFrame.new(0, 0.55, -2.35), dark)
+		piece("Back", Vector3.new(0.74, 0.74, 0.3), CFrame.new(0, 0.55, 1.35), dark)
+		piece("Sight", Vector3.new(0.12, 0.28, 0.4), CFrame.new(-0.36, 0.88, -0.6), dark)
+		piece("Warhead", Vector3.new(0.4, 0.4, 0.5), CFrame.new(0, 0.55, -2.65), Color3.fromRGB(190, 40, 30))
+	else
+		piece("Grip", Vector3.new(0.28, 0.55, 0.3), CFrame.new(0, 0, 0), Color3.fromRGB(26, 26, 30))
+		piece("Body", Vector3.new(0.32, 0.38, 0.95), CFrame.new(0, 0.32, -0.32), Color3.fromRGB(250, 200, 30))
+		piece("Muzzle", Vector3.new(0.3, 0.3, 0.14), CFrame.new(0, 0.32, -0.84), Color3.fromRGB(30, 30, 34))
+		piece("Light", Vector3.new(0.08, 0.06, 0.2), CFrame.new(0, 0.53, -0.1), Color3.fromRGB(120, 200, 255), Enum.Material.Neon)
+	end
 	m.Parent = char
 end
 PlayerState.syncTaser = syncTaser
 
 local function onPlayerAdded(player: Player)
-	player:GetAttributeChangedSignal("Item_Taser"):Connect(function()
-		syncTaser(player)
-	end)
+	for _, a in { "Item_Taser", "Item_Rocket" } do
+		player:GetAttributeChangedSignal(a):Connect(function()
+			syncTaser(player)
+		end)
+	end
 	player:SetAttribute("Nerve", ctx.Config.Nerve.Max)
 	player:SetAttribute("Stamina", ctx.Config.Movement.StaminaMax)
 	player:SetAttribute("Battery", 100)
@@ -176,7 +192,8 @@ local function onPlayerAdded(player: Player)
 end
 
 function PlayerState.resetPlayer(player: Player)
-	for _, attr in { "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead", "WinTime", "NewBest", "Revives", "NightCounted" } do
+	rushUntil[player] = nil
+	for _, attr in { "Rush", "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead", "WinTime", "NewBest", "Revives", "NightCounted" } do
 		player:SetAttribute(attr, nil)
 	end
 	-- (last night's coin boosts, clues read and the secret ending's state)
@@ -244,6 +261,27 @@ function PlayerState.assignRoles(players: { Player })
 		for item, n in role.Items do
 			ctx.Inventory.give(p, item, n)
 		end
+		-- who you are and what you start with (it used to be a name and nothing else)
+		if role.Start then
+			task.delay(3, function()
+				if p.Parent and p:GetAttribute("Role") == role.Id and p:GetAttribute("InGame") then
+					ctx.Remotes.Notify:FireClient(p, "You're " .. role.Name .. ". You start with " .. role.Start .. ".", "info")
+				end
+			end)
+		end
+		-- the rocket launcher pass: 2 rockets a night (and any "Rocket (tonight)" bought when it couldn't be used)
+		local rockets = (p:GetAttribute("Pass_Rocket") and ctx.Config.Rocket.Charges or 0)
+		if ctx.Stats and ctx.Stats.spendRocketCredits then
+			rockets += ctx.Stats.spendRocketCredits(p)
+		end
+		if rockets > 0 then
+			ctx.Inventory.give(p, "Rocket", rockets)
+			task.delay(55, function()
+				if p.Parent and ctx.Inventory.has(p, "Rocket") and ctx.Director and ctx.Director.thinkOnce then
+					ctx.Director.thinkOnce(p, "Item_Rocket", ctx.Story.Thoughts.Items.Rocket)
+				end
+			end)
+		end
 		-- the taser pass (it was pepper spray: whoever bought that has the taser now): 3 shots a night
 		if p:GetAttribute("Pass_PepperSpray") then
 			ctx.Inventory.give(p, "Taser", ctx.Config.Taser.Charges)
@@ -256,7 +294,9 @@ function PlayerState.assignRoles(players: { Player })
 		end
 		-- the head start pass: a flashlight in your pocket from the first minute, and a can of pepper spray
 		if p:GetAttribute("Pass_HeadStart") then
-			ctx.Inventory.give(p, "Flashlight", 1)
+			if not ctx.Inventory.has(p, "Flashlight") then
+				ctx.Inventory.give(p, "Flashlight", 1)
+			end
 			ctx.Inventory.give(p, "PepperSpray", 1)
 		end
 		-- gear bought with coins in the lobby (one of each, used up)
@@ -264,6 +304,62 @@ function PlayerState.assignRoles(players: { Player })
 			ctx.Economy.applyLoadout(p)
 		end
 	end
+end
+
+-- Morgan's energy drink: a few seconds of sprinting that never tires you, a little faster
+function PlayerState.drink(player: Player): boolean
+	if not ctx.Inventory.take(player, "EnergyDrink") then
+		return false
+	end
+	local E = ctx.Config.EnergyDrink
+	rushUntil[player] = os.clock() + E.Time
+	player:SetAttribute("Rush", true)
+	player:SetAttribute("Stamina", ctx.Config.Movement.StaminaMax)
+	local root = ctx.Util.getRoot(player)
+	if root then
+		ctx.Audio.playAt("Gulp", root.Position, { Caption = false })
+	end
+	local left = ctx.Inventory.count(player, "EnergyDrink")
+	ctx.Audio.caption("Energy drink! Sprint." .. (left > 0 and (" (" .. left .. " left)") or ""), nil, nil, { player })
+	if ctx.Journey then
+		ctx.Journey.event(player, "Drink")
+	end
+	return true
+end
+
+-- Casey's firecrackers: thrown where you look; a moment later the bang, and he goes to see
+-- (Intruder: a firecracker even pulls him off a hiding spot he's listening at)
+function PlayerState.throwFirecracker(player: Player, aim: Vector3): Vector3?
+	local char = player.Character
+	local head = char and char:FindFirstChild("Head") :: BasePart?
+	if not head or not ctx.Inventory.take(player, "Firecracker") then
+		return nil
+	end
+	local F = ctx.Config.Firecracker
+	local from = head.Position + aim * 1.5
+	-- (thrown a little upward; it lands where it hits, or falls to the floor at the end of its flight)
+	local dir = (aim + Vector3.new(0, 0.18, 0)).Unit
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { char :: Instance }
+	local hit = workspace:Raycast(from, dir * F.Range, params)
+	local land = hit and (hit.Position + hit.Normal * 0.4) or (from + dir * F.Range)
+	local down = workspace:Raycast(land, Vector3.new(0, -40, 0), params)
+	if down then
+		land = down.Position + Vector3.new(0, 0.25, 0)
+	end
+	ctx.Remotes.Throw:FireAllClients(from, land, F.Fuse)
+	ctx.Audio.playAt("Matches", from, { Caption = false })
+	local left = ctx.Inventory.count(player, "Firecracker")
+	ctx.Audio.caption("Firecracker thrown." .. (left > 0 and (" (" .. left .. " left)") or ""), nil, nil, { player })
+	task.delay(F.Fuse, function()
+		ctx.Audio.playAt("Firecracker", land, { CaptionText = "[Firecrackers! A string of loud bangs]", CaptionRange = 120 })
+		ctx.Noise.emit(land, F.Noise, "Firecracker", nil)
+	end)
+	if ctx.Journey then
+		ctx.Journey.event(player, "Firecracker")
+	end
+	return land
 end
 
 function PlayerState.addNerve(player: Player, delta: number)
@@ -378,7 +474,14 @@ local function tick(dt: number)
 		local role = player:GetAttribute("Role")
 		local nerve = player:GetAttribute("Nerve") or 100
 
-		if sprint then
+		local rush = (rushUntil[player] or 0) > os.clock()
+		if not rush and player:GetAttribute("Rush") then
+			player:SetAttribute("Rush", nil)
+		end
+		if rush then
+			-- (an energy drink: no tiring at all for a few seconds)
+			stamina = M.StaminaMax
+		elseif sprint then
 			local drain = M.StaminaDrain * (role == "Runner" and M.RunnerDrainMultiplier or 1)
 			-- (the marathon pass: much slower)
 			if player:GetAttribute("Pass_Marathon") or player:GetAttribute("Boost_Energy") then
@@ -397,7 +500,7 @@ local function tick(dt: number)
 		player:SetAttribute("Crouching", crouch or nil)
 		player:SetAttribute("Sprinting", sprint or nil)
 
-		hum.WalkSpeed = crouch and M.Crouch or (sprint and M.Sprint or M.Walk)
+		hum.WalkSpeed = crouch and M.Crouch or (sprint and (rush and ctx.Config.EnergyDrink.Sprint or M.Sprint) or M.Walk)
 
 		-- footstep noise
 		stepClock[player] = (stepClock[player] or 0) + dt
@@ -506,6 +609,7 @@ function PlayerState.start()
 		intents[p] = nil
 		stepClock[p] = nil
 		seenIntruder[p] = nil
+		rushUntil[p] = nil
 	end)
 
 	-- wedged somewhere: back to the nearest open spot on your floor (not while hidden or tied up)
@@ -565,10 +669,17 @@ function PlayerState.start()
 		if player:GetAttribute("Captured") or player:GetAttribute("Hiding") then
 			return
 		end
+		local aimed = typeof(aim) == "Vector3" and aim.Magnitude > 0.5 and aim.Magnitude < 2
 		if item == "PepperSpray" and ctx.Inventory.has(player, "PepperSpray") then
 			ctx.Intruder.onPepperSpray(player)
-		elseif item == "Taser" and ctx.Inventory.has(player, "Taser") and typeof(aim) == "Vector3" and aim.Magnitude > 0.5 then
+		elseif item == "Taser" and ctx.Inventory.has(player, "Taser") and aimed then
 			ctx.Intruder.onTaser(player, aim.Unit)
+		elseif item == "Rocket" and ctx.Inventory.has(player, "Rocket") and aimed then
+			ctx.Intruder.onRocket(player, aim.Unit)
+		elseif item == "EnergyDrink" and ctx.Inventory.has(player, "EnergyDrink") then
+			PlayerState.drink(player)
+		elseif item == "Firecracker" and ctx.Inventory.has(player, "Firecracker") and aimed then
+			PlayerState.throwFirecracker(player, aim.Unit)
 		end
 	end)
 

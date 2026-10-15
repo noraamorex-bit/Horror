@@ -127,6 +127,106 @@ function Effects.zap(from: Vector3, to: Vector3, hit: boolean)
 	Debris:AddItem(folder, 0.4)
 end
 
+local function fxPart(parent: Instance, size: Vector3, color: Color3, mat: Enum.Material?): Part
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Size = size
+	p.Color = color
+	p.Material = mat or Enum.Material.SmoothPlastic
+	p.Parent = parent
+	return p
+end
+
+-- a rocket in flight: a red-tipped rocket with a smoke trail and a glow, from the tube to where it
+-- goes off (the server makes the explosion itself, which everyone sees)
+function Effects.rocket(from: Vector3, to: Vector3, seconds: number)
+	local folder = Instance.new("Folder")
+	folder.Name = "RocketFx"
+	local body = fxPart(folder, Vector3.new(0.45, 0.45, 1.6), Color3.fromRGB(215, 215, 220))
+	local tip = fxPart(folder, Vector3.new(0.4, 0.4, 0.4), Color3.fromRGB(200, 40, 30))
+	local flame = fxPart(folder, Vector3.new(0.35, 0.35, 0.5), Color3.fromRGB(255, 170, 60), Enum.Material.Neon)
+	local a0 = Instance.new("Attachment")
+	a0.Position = Vector3.new(0, 0.2, 0.8)
+	a0.Parent = body
+	local a1 = Instance.new("Attachment")
+	a1.Position = Vector3.new(0, -0.2, 0.8)
+	a1.Parent = body
+	local trail = Instance.new("Trail")
+	trail.Attachment0 = a0
+	trail.Attachment1 = a1
+	trail.Lifetime = 0.8
+	trail.Color = ColorSequence.new(Color3.fromRGB(230, 225, 215))
+	trail.Transparency = NumberSequence.new(0.2, 1)
+	trail.WidthScale = NumberSequence.new(1, 3)
+	trail.Parent = body
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 160, 70)
+	light.Range = 14
+	light.Brightness = 4
+	light.Parent = flame
+	folder.Parent = workspace
+	local dir = (to - from)
+	local look = dir.Magnitude > 0.01 and dir.Unit or Vector3.zAxis
+	local t0 = os.clock()
+	local conn
+	conn = RunService.Heartbeat:Connect(function()
+		local k = seconds > 0 and math.clamp((os.clock() - t0) / seconds, 0, 1) or 1
+		local p = from + dir * k
+		local cf = CFrame.lookAt(p, p + look)
+		body.CFrame = cf
+		tip.CFrame = cf * CFrame.new(0, 0, -1)
+		flame.CFrame = cf * CFrame.new(0, 0, 1.05)
+		if k >= 1 then
+			conn:Disconnect()
+			body.Transparency, tip.Transparency, flame.Transparency = 1, 1, 1
+			light.Range = 30
+			light.Brightness = 8
+			ctx.UI.tween(light, 0.6, { Brightness = 0 })
+			Debris:AddItem(folder, 1)
+		end
+	end)
+end
+
+-- a firecracker: a red stick arcs to where it lands, fizzes with sparks, then a burst of light
+function Effects.firecracker(from: Vector3, to: Vector3, fuse: number)
+	local folder = Instance.new("Folder")
+	folder.Name = "FirecrackerFx"
+	local stick = fxPart(folder, Vector3.new(0.25, 0.25, 0.9), Color3.fromRGB(200, 30, 30))
+	local spark = Instance.new("Sparkles")
+	spark.SparkleColor = Color3.fromRGB(255, 210, 120)
+	spark.Parent = stick
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 200, 120)
+	light.Range = 8
+	light.Brightness = 2
+	light.Parent = stick
+	folder.Parent = workspace
+	local flight = math.min(0.7, fuse * 0.6)
+	local t0 = os.clock()
+	local conn
+	conn = RunService.Heartbeat:Connect(function()
+		local t = os.clock() - t0
+		local k = math.clamp(t / flight, 0, 1)
+		local p = from:Lerp(to, k) + Vector3.new(0, math.sin(k * math.pi) * 3, 0)
+		stick.CFrame = CFrame.new(p) * CFrame.Angles(t * 9, t * 5, 0)
+		light.Brightness = 1.5 + math.random() * 1.5
+		if t >= fuse then
+			conn:Disconnect()
+			spark.Enabled = false
+			stick.Transparency = 1
+			light.Range = 26
+			light.Brightness = 7
+			light.Color = Color3.fromRGB(255, 240, 200)
+			ctx.UI.tween(light, 0.5, { Brightness = 0 })
+			Debris:AddItem(folder, 0.8)
+		end
+	end)
+end
+
 function Effects.fade(toBlack: boolean, duration: number)
 	ctx.UI.tween(fadeFrame, duration or 0.5, { BackgroundTransparency = toBlack and 0 or 1 })
 end
@@ -288,6 +388,19 @@ function Effects.start()
 	ctx.Remotes.Zap.OnClientEvent:Connect(function(from, to, hit)
 		if typeof(from) == "Vector3" and typeof(to) == "Vector3" then
 			Effects.zap(from, to, hit == true)
+		end
+	end)
+	ctx.Remotes.Rocket.OnClientEvent:Connect(function(from, to, seconds, hit, shooter)
+		if typeof(from) == "Vector3" and typeof(to) == "Vector3" then
+			Effects.rocket(from, to, tonumber(seconds) or 0.5)
+		elseif hit == true and type(shooter) == "string" and ctx.Offers and ctx.Offers.rocketHit then
+			-- someone knocked him flat: everyone hears about it (and can get one)
+			ctx.Offers.rocketHit(shooter)
+		end
+	end)
+	ctx.Remotes.Throw.OnClientEvent:Connect(function(from, to, fuse)
+		if typeof(from) == "Vector3" and typeof(to) == "Vector3" then
+			Effects.firecracker(from, to, tonumber(fuse) or 1.4)
 		end
 	end)
 	-- shoved off your feet: fall, slide back a little, get up

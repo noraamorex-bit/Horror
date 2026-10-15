@@ -5,6 +5,7 @@ local ok, err = pcall(function()
 	local S = H.services
 	local player = H.wrap(roblox.Instance.new("Player"))
 	player.Name = "Tester"
+	player:SetAttribute("IsAdmin", true) -- (the owner's panel gets built too: its SHOP tab is checked below)
 	local pg = H.wrap(roblox.Instance.new("PlayerGui"))
 	pg.Parent = player
 	S.Players.LocalPlayer = player
@@ -35,7 +36,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Monster", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Monster", "Offers", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -108,6 +109,17 @@ local ok, err = pcall(function()
 	local top = H.unwrap(pg):FindFirstChild("HomeAloneTop")
 	local vote = top and top:FindFirstChild("Vote")
 	assert(vote and vote.Visible, "vote screen opens")
+	-- the four roles, each with what it starts with, shown to everyone (locked without the pass)
+	do
+		local cards = 0
+		for _, d in vote:GetDescendants() do
+			if d:IsA("TextButton") and string.find(d.Text, "firecrackers", 1, true) then
+				cards += 1
+				assert(string.find(d.Text, "🔒", 1, true), "locked without the pass: " .. d.Text)
+			end
+		end
+		assert(cards == 1, "Casey's card says what she starts with")
+	end
 	player:SetAttribute("Pass_ChooseRole", true)
 	R.Vote.OnClientEvent:Fire({ Result = "Hard", Normal = 0, Hard = 2, Total = 2 })
 	ctx.Settings.open()
@@ -263,6 +275,66 @@ local ok, err = pcall(function()
 		cr:Destroy()
 		player:SetAttribute("InGame", wasIn)
 		print("become him ui ok")
+	end
+	-- the one-night rocket: a small button during the hunt, for anyone without a rocket in hand
+	do
+		local ws = H.unwrap(H.workspaceRoot)
+		local wasAct, wasIn = ws:GetAttribute("Act"), player:GetAttribute("InGame")
+		local refresh = ctx.Offers._refresh
+		player:SetAttribute("InGame", true)
+		ws:SetAttribute("Act", "SmallThings")
+		refresh()
+		local btn = H.unwrap(pg):FindFirstChild("RocketOffer", true)
+		assert(btn and not btn.Visible, "not before the hunt")
+		ws:SetAttribute("Act", "SomeoneElse")
+		refresh()
+		assert(btn.Visible and string.find(btn.Text, "R$", 1, true), "during the hunt, with its price: " .. btn.Text)
+		player:SetAttribute("Item_Rocket", 1)
+		refresh()
+		assert(not btn.Visible, "not while you have one")
+		player:SetAttribute("Item_Rocket", nil)
+		ctx.Offers.rocketHit("Someone")
+		player:SetAttribute("Dead", true)
+		refresh()
+		assert(not btn.Visible, "not once you're out")
+		player:SetAttribute("Dead", nil)
+		ws:SetAttribute("Act", wasAct)
+		player:SetAttribute("InGame", wasIn)
+		refresh()
+		-- the effects don't fall over
+		R.Rocket.OnClientEvent:Fire(roblox.Vector3.new(0, 5, 0), roblox.Vector3.new(30, 5, 0), 0.25)
+		R.Throw.OnClientEvent:Fire(roblox.Vector3.new(0, 5, 0), roblox.Vector3.new(10, 1, 0), 1.4)
+		for _ = 1, 30 do S.RunService.Heartbeat:Fire(0.1) end
+		print("rocket offer ui ok")
+	end
+	-- the owner's panel: a SHOP tab with every pass, the paid gear and become him
+	do
+		local function click(inst)
+			local w = H.wrap(inst)
+			local sigs = rawget(w, "__signals")
+			assert(sigs and sigs.Activated, "clickable: " .. inst.Name)
+			sigs.Activated:Fire()
+		end
+		local pill = H.unwrap(pg):FindFirstChild("AdminPill", true)
+		assert(pill, "the admin pill (owner)")
+		click(pill)
+		local panel = H.unwrap(pg):FindFirstChild("AdminPanel", true)
+		assert(panel and panel.Visible, "the panel opens")
+		local shopTab = nil
+		for _, d in panel:GetDescendants() do
+			if d:IsA("TextButton") and d.Text == "SHOP" then shopTab = d end
+		end
+		assert(shopTab, "a SHOP tab")
+		click(shopTab)
+		local texts = {}
+		for _, d in panel:GetDescendants() do
+			if d:IsA("TextButton") then table.insert(texts, d.Text) end
+		end
+		local all = table.concat(texts, " | ")
+		for _, want in { "Rocket Launcher", "VIP", "Taser", "Pick your role", "Rocket launcher ×2", "Energy drink", "Firecracker", "Become him" } do
+			assert(string.find(all, want, 1, true), "the SHOP tab lists " .. want)
+		end
+		print("admin shop tab ok")
 	end
 	-- a prompt appears
 	local part = H.Instance.new("Part")

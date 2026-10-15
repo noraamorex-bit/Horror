@@ -2,8 +2,8 @@
 	Vote — the CHOOSE MODE screen before the night: NORMAL or HARD, everyone votes, the counts
 	update live, a countdown runs. More votes for HARD makes it a hard night (a tie stays normal).
 
-	Owners of the "pick your role" pass also choose who they play tonight here; everyone else
-	sees a small button that offers the pass.
+	The four roles and what each starts with show here for everyone (Story.Roles Gear); owners of
+	the "pick your role" pass tap one to play it tonight, anyone else gets the pass offered.
 
 	When everyone here has finished a night before, a toggle offers to SKIP TO THE BLACKOUT (the
 	cozy part they've already seen); more than half of them must want it.
@@ -24,7 +24,7 @@ local footer: TextLabel
 local boxes: { [string]: { Frame: TextButton, Stroke: UIStroke, Count: TextLabel, Color: Color3 } } = {}
 local roleRow: Frame
 local roleButtons: { [string]: TextButton } = {}
-local roleOffer: TextButton
+local roleHint: TextLabel
 local skipButton: TextButton
 local mySkip = false
 local ends = 0
@@ -49,15 +49,22 @@ end
 
 local function refreshRoles()
 	local owns = player:GetAttribute("Pass_ChooseRole") == true
-	roleOffer.Visible = not owns and passId("ChooseRole") > 0
-	for _, b in roleButtons do
-		b.Visible = owns
+	local price = 25
+	for _, p in ctx.Config.Shop.Passes do
+		if p.Key == "ChooseRole" then
+			price = p.Price
+		end
 	end
+	roleHint.Text = owns and "WHO DO YOU PLAY TONIGHT? (what you start with)"
+		or string.format("Your role is random tonight · tap one to choose yours (R$ %d)", price)
 	local want = player:GetAttribute("WantRole")
 	for id, b in roleButtons do
-		local on = want == id
+		local on = owns and want == id
 		b.BackgroundColor3 = on and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(28, 28, 32)
 		b.TextColor3 = on and Color3.fromRGB(15, 15, 15) or Color3.fromRGB(232, 228, 218)
+		local first = tostring(b:GetAttribute("First") or "")
+		local gear = tostring(b:GetAttribute("Gear") or "")
+		b.Text = string.format("%s%s\n<font size=\"14\">%s</font>", owns and "" or "🔒 ", first, gear)
 	end
 end
 
@@ -102,6 +109,7 @@ local function show()
 	end
 	timer.Visible = true
 	roleRow.Visible = true
+	roleHint.Visible = true
 	refreshRoles()
 	screen.Visible = true
 	screen.BackgroundTransparency = 1
@@ -116,6 +124,7 @@ local function close(result: string?, skip: boolean?)
 	end
 	timer.Visible = false
 	roleRow.Visible = false
+	roleHint.Visible = false
 	skipButton.Visible = false
 	if result then
 		-- the winning mode, big, for a moment
@@ -204,52 +213,44 @@ local function build()
 	timer = UI.label({ Size = UDim2.new(1, 0, 0, 44), Text = "(12)", Font = Enum.Font.Arcade, TextSize = 40, LayoutOrder = 4, ZIndex = 5, Parent = col })
 	UI.new("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0), Parent = timer })
 
-	-- pick your role (pass)
-	roleRow = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 46), BackgroundTransparency = 1, LayoutOrder = 5, ZIndex = 5, Parent = col })
-	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = roleRow })
+	-- who you play, and what each one starts with: everyone sees it; the pass lets you pick
+	roleHint = UI.label({ Size = UDim2.new(1, 0, 0, 20), Text = "", TextSize = 16, TextColor3 = UI.Color.Dim, LayoutOrder = 5, ZIndex = 5, Parent = col })
+	roleRow = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 60), BackgroundTransparency = 1, LayoutOrder = 6, ZIndex = 5, Parent = col })
+	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = roleRow })
 	for i, r in ctx.Story.Roles do
 		local first = string.match(r.Name, "^(%S+)") or r.Name
 		local b = UI.new("TextButton", {
-			Size = UDim2.fromOffset(150, 44),
-			Text = first,
+			Size = UDim2.fromOffset(172, 58),
+			Text = "",
+			RichText = true,
 			Font = UI.Font.Bold,
-			TextSize = 20,
+			TextSize = 18,
+			LineHeight = 1.05,
 			BackgroundColor3 = Color3.fromRGB(28, 28, 32),
 			TextColor3 = UI.Color.Text,
 			LayoutOrder = i,
-			Visible = false,
 			ZIndex = 5,
 			Parent = roleRow,
 		})
+		b:SetAttribute("First", first)
+		b:SetAttribute("Gear", r.Gear or "")
 		UI.corner(b, 10)
 		UI.stroke(b, Color3.new(1, 1, 1), 1.5, 0.6)
 		b.Activated:Connect(function()
-			ctx.Remotes.PickRole:FireServer(r.Id)
+			if player:GetAttribute("Pass_ChooseRole") then
+				ctx.Remotes.PickRole:FireServer(r.Id)
+				ctx.Effects.playSound("UISelect", nil, { Caption = false })
+			else
+				local id = passId("ChooseRole")
+				if id > 0 then
+					MarketplaceService:PromptGamePassPurchase(player, id)
+				end
+			end
 		end)
 		roleButtons[r.Id] = b
 	end
-	roleOffer = UI.new("TextButton", {
-		Size = UDim2.fromOffset(320, 44),
-		Text = "🎭  Pick your role tonight",
-		Font = UI.Font.Bold,
-		TextSize = 19,
-		BackgroundColor3 = Color3.fromRGB(28, 28, 32),
-		TextColor3 = UI.Color.Text,
-		LayoutOrder = 10,
-		Visible = false,
-		ZIndex = 5,
-		Parent = roleRow,
-	})
-	UI.corner(roleOffer, 10)
-	UI.stroke(roleOffer, Color3.new(1, 1, 1), 1.5, 0.6)
-	roleOffer.Activated:Connect(function()
-		local id = passId("ChooseRole")
-		if id > 0 then
-			MarketplaceService:PromptGamePassPurchase(player, id)
-		end
-	end)
 
-	footer = UI.label({ Size = UDim2.new(1, 0, 0, 26), Text = "", TextSize = 18, TextColor3 = UI.Color.Dim, LayoutOrder = 6, ZIndex = 5, Parent = col })
+	footer = UI.label({ Size = UDim2.new(1, 0, 0, 26), Text = "", TextSize = 18, TextColor3 = UI.Color.Dim, LayoutOrder = 7, ZIndex = 5, Parent = col })
 
 	-- skip the cozy part (repeat groups)
 	skipButton = UI.new("TextButton", {

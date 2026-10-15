@@ -20,12 +20,15 @@ local journalList: Frame
 local journalOpen = false
 local objectives = {}
 
-local ITEM_ORDER = { "Flashlight", "Taser", "PepperSpray", "Walkie", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors", "Remote", "PopcornBag", "PopcornBowl", "Firewood", "Matches" }
+local ITEM_ORDER = { "Flashlight", "Rocket", "Taser", "PepperSpray", "EnergyDrink", "Firecracker", "Walkie", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors", "Remote", "PopcornBag", "PopcornBowl", "Firewood", "Matches" }
 local ITEM_NAMES = {
 	Flashlight = "Flashlight",
 	Walkie = "Walkie-talkie",
 	PepperSpray = "Pepper spray",
 	Taser = "Taser",
+	Rocket = "Rocket launcher",
+	EnergyDrink = "Energy drink",
+	Firecracker = "Firecracker",
 	HouseKeys = "House keys",
 	CarKeys = "Car keys",
 	BasementKey = "Basement key",
@@ -594,8 +597,13 @@ local function updateInventory()
 				if player:GetAttribute("FlashlightOn") then
 					line ..= "  (on)"
 				end
-			elseif id == "PepperSpray" or id == "Taser" then
+			elseif id == "PepperSpray" or id == "Taser" or id == "Rocket" or id == "EnergyDrink" or id == "Firecracker" then
 				line ..= " ×" .. n
+				-- (the key, on a keyboard: the touch buttons say what they are)
+				local key = ({ Rocket = "Rocket", EnergyDrink = "Drink", Firecracker = "Throw" })[id]
+				if key and not UI.isTouch() and ctx.Input then
+					line ..= "  <font color=\"#9a968c\">[" .. ctx.Input.keyFor(key) .. "]</font>"
+				end
 			end
 			table.insert(lines, line)
 		end

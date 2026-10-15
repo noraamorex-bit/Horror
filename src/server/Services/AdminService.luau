@@ -1,6 +1,7 @@
 --[[
 	AdminService — the owner's test panel. Skip and replay acts, fire any event or ending, call
-	help, boss the intruder around, teleport, give yourself items, become invisible to him.
+	help, boss the intruder around, teleport, give yourself items, become invisible to him, and the
+	shop: any pass on/off, the paid gear, become him, saved rockets/revives (SHOP tab).
 
 	Only for the people in Config.Admins (and the experience's owner, and anyone in Studio).
 	Every command is checked here, on the server, against the player's UserId: the client panel
@@ -32,6 +33,8 @@ function Admin.isAdmin(player: Player): boolean
 end
 
 local ITEMS = { "Flashlight", "Walkie", "PepperSpray", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors", "Batteries" }
+-- the shop's things, for the SHOP tab: how many of each a "give" hands over
+local GEAR = { Rocket = 2, Taser = 3, PepperSpray = 2, EnergyDrink = 2, Firecracker = 2, Flashlight = 1 }
 
 local function reply(player: Player, text: string)
 	ctx.Remotes.AdminReply:FireClient(player, text)
@@ -187,6 +190,11 @@ COMMANDS.me = function(player, arg)
 		return "Only during a night you're in."
 	end
 	if arg == "items" then
+		for item, n in GEAR do
+			if not ctx.Inventory.has(player, item) then
+				ctx.Inventory.give(player, item, n)
+			end
+		end
 		for _, item in ITEMS do
 			if not ctx.Inventory.has(player, item) then
 				ctx.Inventory.give(player, item, 1)
@@ -257,6 +265,78 @@ COMMANDS.coins = function(player, arg)
 		return "Couldn't change your coins (still loading?)."
 	end
 	return string.format("%s%d coins. You have %d.", n >= 0 and "+" or "", n, E.coins(player))
+end
+
+-- the shop (SHOP tab): switch any pass on or off for yourself (this server only, nothing is bought
+-- or saved), hand yourself the paid gear, become him, a saved revive
+COMMANDS.pass = function(player, arg)
+	local pass = nil
+	for _, p in ctx.Config.Shop.Passes do
+		if p.Key == arg then
+			pass = p
+		end
+	end
+	if not pass then
+		return "Unknown pass."
+	end
+	local on = not player:GetAttribute("Pass_" .. pass.Key)
+	player:SetAttribute("Pass_" .. pass.Key, on or nil)
+	if pass.Key == "VIP" then
+		for _, k in ctx.Config.Shop.VIPIncludes or {} do
+			player:SetAttribute("Pass_" .. k, on or nil)
+		end
+	end
+	if ctx.Stats and ctx.Stats.refresh then
+		ctx.Stats.refresh(player)
+	end
+	-- (in a night, the pass's gear right away, as if it had been bought mid-night)
+	if on and ctx.Inventory and player:GetAttribute("InGame") and inNight() then
+		if pass.Key == "Rocket" and not ctx.Inventory.has(player, "Rocket") then
+			ctx.Inventory.give(player, "Rocket", ctx.Config.Rocket.Charges)
+		elseif pass.Key == "PepperSpray" and not ctx.Inventory.has(player, "Taser") then
+			ctx.Inventory.give(player, "Taser", ctx.Config.Taser.Charges)
+		elseif pass.Key == "HeadStart" then
+			ctx.Inventory.give(player, "PepperSpray", 1)
+		end
+	end
+	return pass.Name .. (on and ": ON (this server, not saved)" or ": OFF")
+end
+COMMANDS.give = function(player, arg)
+	local n = GEAR[arg]
+	if not n then
+		return "Unknown item."
+	end
+	if not inNight() or not player:GetAttribute("InGame") then
+		return "Only during a night you're in."
+	end
+	ctx.Inventory.give(player, arg, n)
+	return "+" .. n .. " " .. (ctx.Inventory.Display[arg] or arg)
+end
+COMMANDS.becomehim = function(player)
+	if not ctx.Monster then
+		return "Not here."
+	end
+	if player:GetAttribute("Monster") or player:GetAttribute("MonsterPending") then
+		ctx.Monster.adminRelease()
+		return "You're you again. He hunts on his own."
+	end
+	local ok, why = ctx.Monster.canBuy(player)
+	if not ok then
+		return "Can't: " .. tostring(why)
+	end
+	return ctx.Monster.grant(player) and "You'll become him (now, or when the lights go)." or "Couldn't."
+end
+COMMANDS.rocketcredit = function(player)
+	if ctx.Stats and ctx.Stats.addRocketCredit and ctx.Stats.addRocketCredit(player) then
+		return "A saved rocket: it comes with your next night."
+	end
+	return "Couldn't (stats not loaded?)."
+end
+COMMANDS.revivecredit = function(player)
+	if ctx.Stats and ctx.Stats.addReviveCredit(player) then
+		return "A saved revive: offered the next time you die."
+	end
+	return "Couldn't (stats not loaded?)."
 end
 
 COMMANDS.events = function()

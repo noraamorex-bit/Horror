@@ -29,7 +29,7 @@ end
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, MonsterCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, MonsterCredits = 0, RocketCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true } }
 end
 
 --[[
@@ -110,6 +110,7 @@ local function mirror(player: Player)
 	player:SetAttribute("StatTips", d.Tips)
 	player:SetAttribute("ReviveCredits", d.ReviveCredits > 0 and d.ReviveCredits or nil)
 	player:SetAttribute("MonsterCredits", (d.MonsterCredits or 0) > 0 and d.MonsterCredits or nil)
+	player:SetAttribute("RocketCredits", (d.RocketCredits or 0) > 0 and d.RocketCredits or nil)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
@@ -139,6 +140,7 @@ local function load(player: Player)
 			d.Best = validBest(data.Best)
 			d.ReviveCredits = math.max(0, math.floor(tonumber(data.ReviveCredits) or 0))
 			d.MonsterCredits = math.max(0, math.floor(tonumber(data.MonsterCredits) or 0))
+			d.RocketCredits = math.max(0, math.floor(tonumber(data.RocketCredits) or 0))
 			d.Tips = math.max(0, math.floor(tonumber(data.Tips) or 0))
 			local set = type(data.Settings) == "table" and data.Settings or {}
 			d.Settings = {
@@ -190,6 +192,7 @@ local function save(userId: number)
 					Settings = d.Settings,
 					ReviveCredits = d.ReviveCredits,
 					MonsterCredits = d.MonsterCredits,
+					RocketCredits = d.RocketCredits,
 					Tips = math.max(tonumber(old.Tips) or 0, d.Tips),
 				}
 			end)
@@ -413,6 +416,31 @@ function Stats.spendMonsterCredit(player: Player): boolean
 	mirror(player)
 	save(player.UserId)
 	return true
+end
+
+-- "Rocket (tonight)" bought when it couldn't be used (the night was over): it comes with your next night
+function Stats.addRocketCredit(player: Player): boolean
+	local d = cache[player.UserId]
+	if not d then
+		return false
+	end
+	d.RocketCredits = (d.RocketCredits or 0) + 1
+	mirror(player)
+	save(player.UserId)
+	return true
+end
+
+-- all of them at once, as rockets for tonight (PlayerState.assignRoles)
+function Stats.spendRocketCredits(player: Player): number
+	local d = cache[player.UserId]
+	local n = d and (d.RocketCredits or 0) or 0
+	if n <= 0 then
+		return 0
+	end
+	d.RocketCredits = 0
+	mirror(player)
+	save(player.UserId)
+	return n
 end
 
 function Stats.spendReviveCredit(player: Player): boolean

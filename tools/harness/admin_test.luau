@@ -124,6 +124,65 @@ local ok, err = pcall(function()
 	cmd(owner, "coins", "-99999"); assert(bank[owner] == 0, "taking back never goes below 0")
 	cmd(owner, "coins"); assert(bank[owner] == 1000, "default +1000: " .. tostring(lastReply(owner)))
 	print("coins:", lastReply(owner))
+	-- the SHOP tab: passes on/off (this server), the paid gear, saved credits; never for strangers
+	cmd(rando, "pass", "Rocket"); assert(not rando:GetAttribute("Pass_Rocket"), "a stranger can't switch passes on")
+	cmd(rando, "give", "Rocket"); assert(not rando:GetAttribute("Item_Rocket"), "nor get rockets")
+	owner:SetAttribute("Item_Rocket", nil)
+	ctx.Inventory.take(owner, "Rocket", 99)
+	cmd(owner, "pass", "Rocket")
+	assert(owner:GetAttribute("Pass_Rocket") == true and ctx.Inventory.count(owner, "Rocket") == ctx.Config.Rocket.Charges, "rocket pass on: its rockets now")
+	cmd(owner, "pass", "Rocket"); assert(not owner:GetAttribute("Pass_Rocket"), "and off again")
+	cmd(owner, "pass", "VIP"); assert(owner:GetAttribute("Pass_ChooseRole") and owner:GetAttribute("Pass_Battery"), "VIP switches its perks on")
+	cmd(owner, "pass", "Nope"); assert(lastReply(owner) == "Unknown pass.")
+	for _, item in { "Taser", "EnergyDrink", "Firecracker", "PepperSpray" } do
+		local before = ctx.Inventory.count(owner, item)
+		cmd(owner, "give", item)
+		assert(ctx.Inventory.count(owner, item) > before, "give " .. item)
+	end
+	cmd(owner, "becomehim"); print("become him (alone):", lastReply(owner))
+	assert(not owner:GetAttribute("Monster"), "not without a friend in the night")
+	print("shop tab ok")
+	-- roles: each starts with its own item, and is told so
+	ctx.Economy.applyLoadout = function() return {} end
+	owner:SetAttribute("Role", nil); rando:SetAttribute("Role", nil) -- (so every role is free)
+	local Roles = ctx.Story.Roles
+	for _, role in Roles do
+		local p = mkPlayer("Role" .. role.Id, 5000 + #role.Id)
+		p:SetAttribute("Pass_ChooseRole", true)
+		p:SetAttribute("WantRole", role.Id)
+		ctx.PlayerState.assignRoles({ p })
+		assert(p:GetAttribute("Role") == role.Id, "picked " .. role.Id)
+		for item, n in role.Items do
+			assert(ctx.Inventory.count(p, item) >= n, role.Id .. " starts with " .. item)
+		end
+		assert(role.Gear and role.Start, role.Id .. " says what it starts with")
+	end
+	local said = false
+	H.flush(4)
+	for _, f in fired do if f[1] == "Notify" and type(f[3]) == "string" and f[3]:find("You start with") then said = true end end
+	assert(said, "the night tells you who you are and what you start with")
+	print("role items ok")
+	-- Morgan's energy drink: sprint without tiring for a while
+	local runner = mkPlayer("Runner", 7001)
+	ctx.Inventory.give(runner, "EnergyDrink", 2)
+	runner:SetAttribute("Stamina", 10)
+	assert(ctx.PlayerState.drink(runner), "drank one")
+	assert(runner:GetAttribute("Rush") == true and runner:GetAttribute("Stamina") == ctx.Config.Movement.StaminaMax, "rush: stamina full")
+	assert(ctx.Inventory.count(runner, "EnergyDrink") == 1, "one used")
+	-- Casey's firecracker: thrown, then the bang is a big noise where it landed
+	local thrower = mkPlayer("Thrower", 7002)
+	local head = H.Instance.new("Part", thrower.Character)
+	head.Name = "Head"
+	head.CFrame = H.roblox.CFrame.new(-20, 6, 0)
+	ctx.Inventory.give(thrower, "Firecracker", 2)
+	local bangs = {}
+	ctx.Noise.listen(function(ev) if ev.Kind == "Firecracker" then table.insert(bangs, ev) end end)
+	local land = ctx.PlayerState.throwFirecracker(thrower, H.roblox.Vector3.new(1, 0, 0))
+	assert(land and ctx.Inventory.count(thrower, "Firecracker") == 1, "thrown")
+	assert(#bangs == 0, "not yet: the fuse")
+	H.flush(ctx.Config.Firecracker.Fuse + 0.2)
+	assert(#bangs == 1 and bangs[1].Radius == ctx.Config.Firecracker.Noise and (bangs[1].Position - land).Magnitude < 0.1, "bang, where it landed")
+	print("drink + firecracker ok")
 	cmd(owner, "ending", "Sirens"); assert(ctx.Ending.isOver(), "ending")
 	print("admin ok")
 end)

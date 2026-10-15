@@ -112,6 +112,27 @@ local ok, err = pcall(function()
 	-- stats save keeps invites and the beam
 	print("saved:", kv.PlayerStats_v1 and kv.PlayerStats_v1.u2 and kv.PlayerStats_v1.u2.Beam)
 	assert(H.workspaceRoot:GetAttribute("TopDonors") ~= nil)
+	-- every sale is counted per UTC day (Sales_v1), passes at their price, products at what was spent
+	local day = kv.Sales_v1 and kv.Sales_v1[os.date("!%Y%m%d")]
+	print("sales today:", day and day.Colours and day.Colours[1], day and day.Donate100 and day.Donate100[1])
+	local colours = 0
+	for _, p in ctx.Config.Shop.Passes do if p.Key == "Colours" then colours = p.Price end end
+	assert(day and day.Colours and day.Colours[1] == 1 and day.Colours[2] == colours, "a pass sale is logged at its price")
+	assert(day.Donate100 and day.Donate100[1] == 1, "a donation is logged once (the repeat receipt isn't)")
+	assert(day.Supporter == nil, "a cancelled purchase isn't")
+	-- "Rocket (tonight)" bought in the lobby: saved, it comes with the next night
+	local RID = ctx.Config.Shop.RocketNight.Id
+	local r5 = MSr.ProcessReceipt({ ProductId = RID, PlayerId = 2, PurchaseId = "p5", CurrencySpent = 25 })
+	print("rocket in the lobby:", r5, "credits", b:GetAttribute("RocketCredits"))
+	assert(tostring(r5):find("PurchaseGranted") and b:GetAttribute("RocketCredits") == 1, "saved for the next night")
+	assert(kv.Sales_v1[os.date("!%Y%m%d")].RocketNight[2] == 25, "and logged with its price")
+	assert(Stats.spendRocketCredits(b) == 1 and Stats.spendRocketCredits(b) == 0, "used once, all at once")
+	-- the rocket launcher pass, bought: the pass is theirs
+	finished:Fire(a, PID.Rocket, true)
+	assert(a:GetAttribute("Pass_Rocket") == true, "rocket launcher granted")
+	-- VIP brings pick-your-role with it now
+	finished:Fire(a, PID.VIP, true)
+	assert(a:GetAttribute("Pass_ChooseRole") == true, "VIP includes picking your role")
 	for _, n in notes do print("  note", n) end
 end)
 print(ok and "SHOP OK" or ("SHOP FAIL: " .. tostring(err)))

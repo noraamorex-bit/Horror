@@ -79,7 +79,8 @@ function Audio.playAt(name: string, position: Vector3, opts)
 	if s.SoundId ~= "" then
 		s:Play()
 	end
-	Debris:AddItem(att, opts.Duration or 10)
+	-- (Length: only the start of a long file, e.g. the firecrackers)
+	Debris:AddItem(att, opts.Duration or (def and def.Length) or 10)
 	if opts.Caption ~= false then
 		Audio.caption(opts.CaptionText or def.Caption, position, opts.CaptionRange or s.RollOffMaxDistance * 0.75, opts.Only)
 	end

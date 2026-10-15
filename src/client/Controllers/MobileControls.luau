@@ -33,6 +33,9 @@ local DEFS = {
 	Flashlight = { Label = "LIGHT", Icon = "◉", Kind = "press" },
 	Spray = { Label = "SPRAY", Icon = "✱", Kind = "press" },
 	Taser = { Label = "TASER", Icon = "⚡", Kind = "press" },
+	Rocket = { Label = "ROCKET", Icon = "🚀", Kind = "press" },
+	Drink = { Label = "DRINK", Icon = "🥤", Kind = "press" },
+	Throw = { Label = "THROW", Icon = "🧨", Kind = "press" },
 	Lunge = { Label = "LUNGE", Icon = "»", Kind = "press", Big = true },
 	Search = { Label = "SEARCH", Icon = "◎", Kind = "press" },
 	Breath = { Label = "BREATH", Icon = "◌", Kind = "hold", Big = true },
@@ -78,6 +81,15 @@ local function currentSet(): { string }
 	end
 	if player:GetAttribute("Item_Taser") then
 		table.insert(set, "Taser")
+	end
+	if player:GetAttribute("Item_Rocket") then
+		table.insert(set, "Rocket")
+	end
+	if player:GetAttribute("Item_EnergyDrink") then
+		table.insert(set, "Drink")
+	end
+	if player:GetAttribute("Item_Firecracker") then
+		table.insert(set, "Throw")
 	end
 	return set
 end
@@ -184,8 +196,9 @@ local function layout()
 	local radius = jumpSize / 2 + size / 2 + (small and 20 or 26)
 	local set = currentSet()
 	-- arc from left of the jump button (180 deg) up to above it (90 deg), then a second ring
-	local angles = { 180, 135, 90, 157.5, 112.5 }
-	local ring2 = { false, false, false, true, true }
+	-- (up to 8: sprint, crouch and six items, the second ring 22.5 deg apart so they never touch)
+	local angles = { 180, 135, 90, 157.5, 112.5, 180, 90, 135 }
+	local ring2 = { false, false, false, true, true, true, true, true }
 	local big = false
 	for _, name in set do
 		if DEFS[name].Big then
@@ -308,7 +321,7 @@ function MobileControls.start()
 	pill("JOURNAL", "Journal", 1)
 	pill("PHONE", "Phone", 2)
 
-	for _, attr in { "InGame", "Hiding", "Captured", "Escaped", "Dead", "Item_Flashlight", "Item_PepperSpray", "Item_Taser", "Monster" } do
+	for _, attr in { "InGame", "Hiding", "Captured", "Escaped", "Dead", "Item_Flashlight", "Item_PepperSpray", "Item_Taser", "Item_Rocket", "Item_EnergyDrink", "Item_Firecracker", "Monster" } do
 		player:GetAttributeChangedSignal(attr):Connect(function()
 			if gui.Enabled then
 				layout()

@@ -175,7 +175,89 @@ local function refreshTop()
 	end
 end
 
-local function onReceipt(info)
+---------------------------------------------------------------------------
+-- Sales (v92): every pass and product sold, counted per UTC day in Sales_v1 ("20261015" ->
+-- { Rocket = { n, robux }, ... }), so tools/pull_stats.py can say what sells. Best-effort.
+---------------------------------------------------------------------------
+local sales = nil
+local loggedReceipts: { [string]: boolean } = {}
+function Shop.logSale(key: string, robux: number?)
+	if not sales then
+		return
+	end
+	task.spawn(function()
+		pcall(function()
+			sales:UpdateAsync(os.date("!%Y%m%d"), function(old)
+				local t = type(old) == "table" and old or {}
+				local row = type(t[key]) == "table" and t[key] or { 0, 0 }
+				row[1] = (tonumber(row[1]) or 0) + 1
+				row[2] = (tonumber(row[2]) or 0) + (tonumber(robux) or 0)
+				t[key] = row
+				return t
+			end)
+		end)
+	end)
+end
+
+local function productKey(id: number): string
+	local S = ctx.Config.Shop
+	if S.Revive and id == S.Revive.Id then
+		return "Revive"
+	elseif S.BecomeHim and id == S.BecomeHim.Id then
+		return "BecomeHim"
+	elseif S.RocketNight and id == S.RocketNight.Id then
+		return "RocketNight"
+	end
+	local d = donationById(id)
+	if d then
+		return "Donate" .. d.Amount
+	end
+	if ctx.Economy and ctx.Economy.isPack and ctx.Economy.isPack(id) then
+		return "Coins" .. tostring(id)
+	end
+	return "Product" .. tostring(id)
+end
+
+-- "Rocket (tonight)": a rocket launcher with one rocket, now, in this night; anywhere else (the
+-- lobby, a night that's over) it waits for the next night
+local function rocketReceipt(info)
+	local player = Players:GetPlayerByUserId(info.PlayerId)
+	if not player then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	local act = workspace:GetAttribute("Act")
+	local live = ctx.Director ~= nil and act ~= nil and act ~= "Lobby" and not workspace:GetAttribute("EndingActive")
+		and player:GetAttribute("InGame") and not player:GetAttribute("Dead") and not player:GetAttribute("Escaped")
+	if live then
+		ctx.Inventory.give(player, "Rocket", 1)
+		ctx.Remotes.Notify:FireClient(player, "Rocket launcher ready: aim, then ROCKET (R). A hit knocks him flat.", "done")
+		return Enum.ProductPurchaseDecision.PurchaseGranted
+	end
+	if ctx.Stats and ctx.Stats.addRocketCredit and ctx.Stats.addRocketCredit(player) then
+		ctx.Remotes.Notify:FireClient(player, "Saved: your rocket comes with your next night.", "info")
+		return Enum.ProductPurchaseDecision.PurchaseGranted
+	end
+	return Enum.ProductPurchaseDecision.NotProcessedYet
+end
+
+local onReceipt
+local function receipt(info)
+	local decision = onReceipt(info)
+	if decision == Enum.ProductPurchaseDecision.PurchaseGranted then
+		local key = tostring(info.PurchaseId)
+		if not loggedReceipts[key] then
+			loggedReceipts[key] = true
+			Shop.logSale(productKey(info.ProductId), info.CurrencySpent)
+		end
+	end
+	return decision
+end
+
+function onReceipt(info)
+	local rocket = ctx.Config.Shop.RocketNight
+	if rocket and rocket.Id > 0 and info.ProductId == rocket.Id then
+		return rocketReceipt(info)
+	end
 	-- coin packs (EconomyService keeps its own receipts with the coins)
 	if ctx.Economy and ctx.Economy.isPack(info.ProductId) then
 		return ctx.Economy.onReceipt(info)
@@ -330,11 +412,22 @@ function Shop.start()
 		receipts = DataStoreService:GetDataStore("DonationReceipts_v1")
 		totals = DataStoreService:GetOrderedDataStore("Donations_v1")
 	end)
-	MarketplaceService.ProcessReceipt = onReceipt
+	pcall(function()
+		sales = DataStoreService:GetDataStore("Sales_v1")
+	end)
+	MarketplaceService.ProcessReceipt = receipt
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
 		local pass = passById(passId)
 		if purchased and pass then
+			if not player:GetAttribute("Pass_" .. pass.Key) then
+				Shop.logSale(pass.Key, pass.Price)
+			end
 			grant(player, pass, true)
+			-- (the rocket launcher bought mid-night: its rockets now, not tomorrow)
+			if pass.Key == "Rocket" and ctx.Inventory and player:GetAttribute("InGame") and not player:GetAttribute("Dead")
+				and not player:GetAttribute("Escaped") and not ctx.Inventory.has(player, "Rocket") then
+				ctx.Inventory.give(player, "Rocket", ctx.Config.Rocket.Charges)
+			end
 		end
 	end)
 	local function added(player: Player)
@@ -360,5 +453,6 @@ function Shop.start()
 end
 
 Shop._passByKey = passByKey -- (tests)
+Shop._receipt = function(info) return receipt(info) end -- (tests)
 
 return Shop

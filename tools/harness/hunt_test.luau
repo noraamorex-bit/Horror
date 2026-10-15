@@ -260,6 +260,63 @@ local ok, err = pcall(function()
 		bRoot.CFrame = R.CFrame.new(-30, 22, 20)
 		bHead.CFrame = R.CFrame.new(-30, 23.5, 20)
 	end
+	-- the rocket launcher: a rocket uses a charge; the blast knocks him flat if it reaches him, then he
+	-- limps away slowly; a blast far from him is a big noise, not a stun
+	do
+		local st = ctx.Intruder._state()
+		if b:GetAttribute("Hiding") then ctx.Hiding.exit(b) end
+		ctx.Capture.release(b)
+		st.Spared[b] = nil
+		I.setMode("Hunt")
+		tick(0.5)
+		ctx.Inventory.give(b, "Rocket", ctx.Config.Rocket.Charges)
+		local head = ctx.Intruder.getHead()
+		local at = head.Position + head.CFrame.LookVector * 20 + R.Vector3.new(0, -1.5, 0)
+		bRoot.CFrame = R.CFrame.new(at)
+		bHead.CFrame = R.CFrame.new(at + R.Vector3.new(0, 1.5, 0))
+		local chest = head.Position + R.Vector3.new(0, -1.6, 0)
+		ctx.Intruder.onRocket(b, (chest - bHead.Position).Unit)
+		assert(ctx.Inventory.count(b, "Rocket") == ctx.Config.Rocket.Charges - 1, "a rocket uses a charge")
+		ctx.Intruder.onRocket(b, (chest - bHead.Position).Unit)
+		assert(ctx.Inventory.count(b, "Rocket") == ctx.Config.Rocket.Charges - 1, "the reload: no double shot")
+		-- (the harness never runs delays: the blast, as it lands next to him)
+		local normalChase = ctx.Intruder._tune().ChaseSpeed
+		local hit = ctx.Intruder._explode(chest + R.Vector3.new(4, 0, 0), b)
+		print("15 rocket:", hit, I.getState())
+		assert(hit and I.getState() == "Stunned" and st.Data.Rocket, "the blast knocks him flat")
+		tick(ctx.Config.Rocket.Stun - 1)
+		assert(I.getState() == "Stunned", "down for a good while (longer than a taser)")
+		tick(1.5)
+		assert(I.getState() ~= "Stunned", "then up (" .. I.getState() .. ")")
+		assert(ctx.Intruder._tune().ChaseSpeed < normalChase * 0.7, "and slow afterwards")
+		tick(ctx.Config.Rocket.Slow + 0.5)
+		I.setMode("Hunt")
+		tick(0.3)
+		local h2 = ctx.Intruder.getHead()
+		local heard = {}
+		ctx.Noise.listen(function(ev) if ev.Kind == "Explosion" then table.insert(heard, ev) end end)
+		local miss = ctx.Intruder._explode(h2.Position + R.Vector3.new(60, 0, 0), b)
+		assert(not miss and I.getState() ~= "Stunned", "far from him: no stun")
+		assert(#heard == 1 and heard[1].Radius == ctx.Config.Rocket.Noise, "but the whole house hears it")
+		bRoot.CFrame = R.CFrame.new(-30, 22, 20)
+		bHead.CFrame = R.CFrame.new(-30, 23.5, 20)
+	end
+	-- a firecracker: he goes to the bang, even from a hiding spot he's listening at
+	do
+		local st = ctx.Intruder._state()
+		I.setMode("Hunt")
+		for _ = 1, 120 do
+			if I.getState() ~= "Retreat" then break end
+			tick(0.5)
+		end
+		tick(0.3)
+		local bang = ctx.Intruder.position() + R.Vector3.new(0, 0, 25)
+		ctx.Noise.emit(bang, ctx.Config.Firecracker.Noise, "Firecracker", nil)
+		local s1 = I.getState()
+		print("16 firecracker: he", s1)
+		assert(s1 == "Charge" or s1 == "Investigate", "he goes to the bang, got " .. s1)
+		assert(st.Data.Pos and (st.Data.Pos - bang).Magnitude < 1, "to where it went off")
+	end
 	-- a quiet minute with nobody running into him: his patrols lean toward whoever's out and about
 	do
 		local st = ctx.Intruder._state()

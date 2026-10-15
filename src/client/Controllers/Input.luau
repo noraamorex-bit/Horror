@@ -5,8 +5,8 @@
 	Input.fire(action, began)               used by on-screen (touch) buttons
 	Input.keyFor(action) -> "Shift"          label for hints
 
-	Actions: Sprint (hold), Crouch, Flashlight, Spray, Journal, Phone, Breath (hold),
-	         Struggle, ExitHide, Close
+	Actions: Sprint (hold), Crouch, Flashlight, Spray, Taser, Rocket, Drink, Throw, Journal, Phone,
+	         Breath (hold), Struggle, ExitHide, Close
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -20,6 +20,9 @@ Input.Bindings = {
 	Flashlight = { Keys = { K.F }, Pad = { K.DPadUp }, Label = "F" },
 	Spray = { Keys = { K.G }, Pad = { K.DPadRight }, Label = "G" },
 	Taser = { Keys = { K.T }, Pad = { K.ButtonR2 }, Label = "T" },
+	Rocket = { Keys = { K.R }, Pad = { K.ButtonL2 }, Label = "R" },
+	Drink = { Keys = { K.X }, Pad = { K.ButtonR1 }, Label = "X" },
+	Throw = { Keys = { K.V }, Pad = { K.ButtonY }, Label = "V" },
 	Journal = { Keys = { K.Tab, K.J }, Pad = { K.DPadLeft }, Label = "Tab" },
 	Phone = { Keys = { K.P }, Pad = { K.DPadDown }, Label = "P" },
 	Breath = { Keys = { K.Space }, Pad = { K.ButtonA }, Label = "Space" },

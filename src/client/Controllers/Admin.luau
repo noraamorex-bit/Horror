@@ -8,6 +8,8 @@
 		HIM       hunt / hunt me / lurk / offstage / appear / freeze / bring him to me / trap,
 		          X-ray (see him through walls)
 		ME        invisible to him, all items, battery, nerve, free, revive, teleport to a room
+		SHOP      every pass on/off for you (this server, not saved), the paid gear (rocket, taser,
+		          spray, energy drinks, firecrackers), become him, saved rocket / revive
 		EVENTS    fire any scripted event
 		ENDINGS   trigger any ending
 		COINS     give yourself coins (saved like any others); the only tab in the lobby
@@ -203,6 +205,35 @@ RENDER.COINS = function()
 	end)
 	status.Text = "You have " .. fmt(tonumber(player:GetAttribute("Coins")) or 0) .. " coins."
 end
+-- the shop: every pass on/off for you (this server only), the paid gear, become him, saved credits
+RENDER.SHOP = function()
+	section("PASSES (on/off for you, this server only, not saved)", 1)
+	local r = row(2)
+	for _, p in ctx.Config.Shop.Passes do
+		local b = btn(r, "", function() send("pass", p.Key) end)
+		local function label()
+			local on = player:GetAttribute("Pass_" .. p.Key) == true
+			b.Text = (on and "✓ " or "") .. p.Name .. "  (" .. p.Price .. " R$)"
+			b.TextColor3 = on and Color3.fromRGB(150, 235, 150) or ctx.UI.Color.Text
+		end
+		label()
+		player:GetAttributeChangedSignal("Pass_" .. p.Key):Connect(label)
+	end
+	section("GEAR (in a night)", 3)
+	local r2 = row(4)
+	btn(r2, "🚀 Rocket launcher ×2", function() send("give", "Rocket") end)
+	btn(r2, "⚡ Taser ×3", function() send("give", "Taser") end)
+	btn(r2, "✱ Pepper spray ×2", function() send("give", "PepperSpray") end)
+	btn(r2, "🥤 Energy drink ×2", function() send("give", "EnergyDrink") end)
+	btn(r2, "🧨 Firecracker ×2", function() send("give", "Firecracker") end)
+	btn(r2, "🔦 Flashlight", function() send("give", "Flashlight") end)
+	section("PRODUCTS (free for you)", 5)
+	local r3 = row(6)
+	btn(r3, "😈 Become him / stop", function() send("becomehim") end, true)
+	btn(r3, "Saved rocket (next night)", function() send("rocketcredit") end)
+	btn(r3, "Saved revive", function() send("revivecredit") end)
+	btn(r3, "Revive me now", function() send("me", "revive") end)
+end
 RENDER.ENDINGS = function()
 	local r = row(1)
 	for _, k in info.Endings do
@@ -283,8 +314,8 @@ local function build()
 		current = "COINS"
 		debugLine.Visible = false
 	end
-	for i, name in (lobby and { "COINS" } or { "NIGHT", "HIM", "ME", "EVENTS", "ENDINGS", "COINS" }) do
-		local b = UI.new("TextButton", { Size = UDim2.fromOffset(80, 32), Text = name, Font = UI.Font.Bold, TextSize = 13, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
+	for i, name in (lobby and { "COINS" } or { "NIGHT", "HIM", "ME", "SHOP", "EVENTS", "ENDINGS", "COINS" }) do
+		local b = UI.new("TextButton", { Size = UDim2.fromOffset(67, 32), Text = name, Font = UI.Font.Bold, TextSize = 12, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
 		UI.corner(b, 8)
 		b.Activated:Connect(function()
 			show(name)

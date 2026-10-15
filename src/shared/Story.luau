@@ -12,33 +12,42 @@ Story.Address = "14 Alder Lane, Hollis Creek"
 -- Roles (dealt in this order, so a Host always exists)
 ---------------------------------------------------------------------------
 Story.Roles = {
+	-- (each starts with its own item: the vote screen shows them, the night opens with yours)
 	{
 		Id = "Host",
 		Name = "Jamie Whitaker",
 		Blurb = "It's your house. Your parents trusted you with it for the weekend. You know where everything is.",
 		Perk = "Carries the house keys (dad's office, the basement lock). Sees room names.",
-		Items = { HouseKeys = 1 },
+		Items = { HouseKeys = 1, Flashlight = 1 },
+		Gear = "🔦 Flashlight + keys",
+		Start = "Dad's flashlight and the house keys (F: light)",
 	},
 	{
 		Id = "Tinkerer",
 		Name = "Riley Chen",
 		Blurb = "If it's broken, you can fix it. You never go anywhere without your multitool.",
-		Perk = "Starts with a multitool. Repairs and frees friends twice as fast.",
-		Items = { Multitool = 1 },
+		Perk = "Starts with a multitool and tape. Repairs and frees friends twice as fast.",
+		Items = { Multitool = 1, ElectricalTape = 1 },
+		Gear = "🔧 Multitool + tape",
+		Start = "a multitool and tape: fix things and cut friends free twice as fast",
 	},
 	{
 		Id = "Runner",
 		Name = "Morgan Hale",
 		Blurb = "Varsity cross-country. You came for the pizza and you're staying for the pizza.",
-		Perk = "More stamina. Sprinting is quieter.",
-		Items = {},
+		Perk = "More stamina, quieter sprint, and 2 energy drinks.",
+		Items = { EnergyDrink = 2 },
+		Gear = "🥤 2 energy drinks",
+		Start = "2 energy drinks: 10 s of sprinting that never tires you (X)",
 	},
 	{
 		Id = "Observer",
 		Name = "Casey Brooks",
 		Blurb = "You notice things. The problem has always been getting anyone to listen.",
-		Perk = "Hears sounds from farther away. Notices extra details on clues.",
-		Items = {},
+		Perk = "Hears sounds from farther away, and brought 2 firecrackers.",
+		Items = { Firecracker = 2 },
+		Gear = "🧨 2 firecrackers",
+		Start = "2 firecrackers: throw one and the bang draws him away (V)",
 	},
 }
 
@@ -736,6 +745,7 @@ Story.Thoughts = {
 		Flashlight = "A flashlight. This could save my life tonight.|light",
 		PepperSpray = "Mom's pepper spray. Only if he gets close.|spray",
 		Taser = "My taser. Three shots. Make them count.|taser",
+		Rocket = "A rocket launcher. If he comes for us tonight, he's in for a surprise.|rocket",
 		Walkie = "A walkie-talkie. Whoever has the other one can hear me anywhere.",
 		CarKeys = "The car keys! Now I just need to get the garage open.",
 		ElectricalTape = "Electrical tape. That could fix a cut wire.",
