@@ -33,5 +33,5 @@ for n in [105, 120, 72, 33, 90, 60, 60, 60, 75, 30, 180]:
     cuts.append(round(t / FPS, 3)); t += n
 assert [s["n"] for s in shots] == [105, 120, 72, 33, 90, 60, 60, 60, 75, 30], "the clips keep #2's lengths"
 print("cuts", cuts)
-json.dump({"frames": out, "cuts": cuts, "text": {"part": "(Part 4)", "glitch": "he heard you breathe", "hookTimes": [0.25, 0.7, 1.15, 1.6, 2.05, 2.6]}},
+json.dump({"frames": out, "cuts": cuts, "text": {"part": "(Part 4)", "glitch": "he can hear you", "hookTimes": [0.25, 0.7, 1.15, 1.6, 2.05, 2.6]}},
           open("edit.json", "w"))

@@ -188,6 +188,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   him through the crack (film2 `door` rig swings one wardrobe leaf), he leans to the gap, backs off,
   then the door is torn open on the 22.15 s hit; RUN: he comes up the stairs. Glitch "he's listening".
   (film2 now renders twice after a light-rig change: the first frame of every shot came out dark.)
+  **Part 4** (`reel26`, `peak_horror_game_friends_4.mp4`): same format and track; hiding under the
+  master bed, the room seen through the slit between frame and floor: the bedroom door swings open
+  (film2 `door` rig on the door), his legs cross the room to the bed, walk off round the side, and on
+  the 22.15 s hit the bed is torn up off you (the rig tilts the whole bed around z: film2 rigs take
+  axis x / y / z). Card shot: the living-room fire; the far shot: him on the front lawn in a
+  lightning flash, from the bedroom window. RUN: him coming down the stairs. Glitch "he can hear you"
+  (longer lines run off the screen).
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
