@@ -48,8 +48,18 @@ local ok, err = pcall(function()
 	ctx.Objectives.set({ "OrderPizza" })
 	local Delivery = H.load("Server/Director/Delivery")
 	local done = false
+	local doneWhile = nil
 	local co = coroutine.create(function()
-		Delivery.run(ctx, ctx.Director, function() done = true end)
+		Delivery.run(ctx, ctx.Director, function()
+			done = true
+			-- (act II starts as he turns to go: is he still out there, the house still quiet?)
+			local folder = H.unwrap(ctx.World.folder()):FindFirstChild("PizzaDelivery")
+			local man = false
+			for _, c in folder and folder:GetChildren() or {} do
+				if c:IsA("Model") and c.Name ~= "DeliveryCar" then man = true end
+			end
+			doneWhile = man and H.unwrap(H.workspaceRoot):GetAttribute("Delivery") == true
+		end)
 	end)
 	H.ours[co] = true
 	local world = H.unwrap(ctx.World.folder())
@@ -89,6 +99,8 @@ local ok, err = pcall(function()
 	local pizza = false
 	for _, e in earned do if e[1] == p and e[2] == "Title_Pizza" then pizza = true end end
 	assert(pizza, "whoever answers the door earns Pizza Lover")
+	assert(done and doneWhile == true, "act II starts while he walks back to his car (no 78 s wait), got " .. tostring(doneWhile))
+	assert(H.unwrap(H.workspaceRoot):GetAttribute("Delivery") == nil, "and the house is back to normal once he's gone")
 	for k, l in lines do
 		if l then print(" ", l.IsPlayer and "YOU" or (l.Speaker == "" and "*" or l.Speaker), "|", l.Text, l.Choices and ("[" .. table.concat(l.Choices, " / ") .. "]") or "") else print("  <close>") end
 	end

@@ -165,7 +165,7 @@ end
 -- Inner monologue
 ---------------------------------------------------------------------------
 -- players: a list, a single Player, or nil for everyone in the night
-function Director.think(players, line: string?)
+function Director.think(players, line: string?, alongside: boolean?)
 	if not line then
 		return
 	end
@@ -184,8 +184,9 @@ function Director.think(players, line: string?)
 			sent = true
 		end
 	end
-	if sent then
+	if sent and not alongside then
 		-- each line holds the screen for a while; texts and banter wait for it to clear
+		-- (alongside: a different line shown to the others at the same moment)
 		state.ThinkBusyUntil = math.max(state.ThinkBusyUntil or 0, os.clock()) + ctx.Config.Thoughts.Duration + 0.5
 	end
 end
@@ -601,7 +602,8 @@ function Director.startAct(name: string, cause: Player?)
 
 	state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint + 10
 	local actLines = ctx.Story.Thoughts.Acts[name]
-	if actLines and not skipping then
+	-- (act III's lines come with the blackout itself: lightsOut below)
+	if actLines and not skipping and name ~= "SomeoneElse" then
 		-- act II waits for the pizza place's call; the others start right after the chapter card
 		task.delay(name == "SmallThings" and 5 or 7, function()
 			for _, line in actLines do
@@ -705,6 +707,34 @@ function Director.startAct(name: string, cause: Player?)
 			if not ctx.Escape.helpCalled() then
 				ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Attic", "Power" }, { Neighbor = true, Car = true, Attic = true, Power = true })
 				checkHeldItems()
+			end
+			-- what to do, the moment it's dark (these used to start before the lights went, under the
+			-- cutscene; v88-90 logs: 48 of 328 players left between the blackout and the call, the
+			-- call came a minute in, and most nights the lights go while they're at the bathroom
+			-- window brushing their teeth, one bar of signal right there)
+			local lines = ctx.Story.Thoughts.Acts.SomeoneElse
+			if ctx.Escape.helpCalled() then
+				Director.think(nil, lines[1])
+			else
+				-- (at the window: one line, straight to the point, before the first-timers' tips card)
+				local spot = ctx.Phone and ctx.Phone.signalSpot and ctx.Phone.signalSpot()
+				local near, far = {}, {}
+				for _, p in ctx.Util.sessionPlayers() do
+					local root = ctx.Util.getRoot(p)
+					local close = (tonumber(p:GetAttribute("Signal")) or 0) > 0
+						or (spot ~= nil and root ~= nil and (root.Position - spot).Magnitude < 16)
+					table.insert(close and near or far, p)
+				end
+				if #near > 0 then
+					Director.think(near, ctx.Story.Thoughts.CallHere)
+				end
+				if #far > 0 then
+					Director.think(far, lines[1], #near > 0)
+					Director.think(far, lines[2])
+				end
+				-- (so the idle reminder names the exact step next time)
+				state.Hinted = state.Hinted or {}
+				state.Hinted.Call911 = true
 			end
 			local refs = ctx.World.refs()
 			if refs.openGarageHatch then

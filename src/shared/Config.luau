@@ -134,7 +134,7 @@ Config.Intruder = {
 	InvestigateSpeed = 8,
 	ChargeSearchTime = 5, -- thrashing about where the noise was, after a charge
 	InvestigateSearchTime = 6,
-	InspectTime = { 6, 9 }, -- standing at your hiding spot, listening
+	InspectTime = { 7, 10 }, -- standing at your hiding spot, listening (v91: +1 s for the heartbeat's longer lead-in)
 	InspectNearChance = 0.25, -- walking right past an occupied spot (not holding breath): he stops
 	WalkSpeed = 7, -- lying low between hunts
 	SneakSpeed = 5,
@@ -242,7 +242,7 @@ Config.Heartbeat = {
 	Interval = 1.25, -- seconds between beats
 	Travel = 1.3, -- how long a half-heart takes to fly in (easier to read)
 	Window = 0.42, -- seconds either side of arrival that count (forgiving on touch screens)
-	Lead = 1.4, -- the heart shows this long before the first beat
+	Lead = 2.4, -- the heart shows this long before the first beat (time to read it: v88-90 Normal passed 28 of 60)
 	Misses = 3, -- this many misses and he hears you (more and doing nothing could outlast him)
 	-- (v87 logs: passed only 15 times out of 50 on Normal, and that failure was most of the upstairs
 	-- bathroom captures. The side buttons now show on every device, not just touch (PC players had
@@ -265,7 +265,9 @@ Config.Capture = {
 }
 
 Config.Help = {
-	PhoneResponse = 150,
+	-- (v88-90 logs: once help was called only 7 of 200 players left before the police came, while the
+	-- hunt is the game; nights ran ~11 min against the ~13 the owner wants: a longer hold-out)
+	PhoneResponse = 200,
 	NeighborResponse = 120,
 	CarResponse = 60,
 	CellCallDuration = 15, -- (Hard)
@@ -423,7 +425,7 @@ Config.Monster = {
 	GrabCooldown = 6, -- after a catch (so a group isn't wiped in a second)
 	SearchRange = 7,
 	SearchCooldown = 2,
-	ListenTime = 6, -- the heartbeat minigame for whoever's inside
+	ListenTime = 7, -- the heartbeat minigame for whoever's inside
 	TaserStun = 6,
 }
 

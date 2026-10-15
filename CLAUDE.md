@@ -195,6 +195,19 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **15 Oct (v91)**, stats pass on v88-90 (216 nights, 568 lobby visits, 411 players-in-a-night;
+  no script errors). Better than v87: heartbeat Normal 28/60 passed (was 15/50), joins in progress
+  37 of 387 teleports (was 9), solo nights 74% abandoned (was 84%). Found: (1) the longest dead time
+  of nearly every night was pizza delivered → act II, median 78 s (the man walking back and driving
+  off), with a run of act I quits there → act II starts as he turns to go; (2) only 7 of 200 players
+  quit while waiting for the police, but 48 of 328 between the blackout and the call (1 min median);
+  act III's thoughts started under the cutscene ("the power's out" with the lights on) → they come
+  with the dark, and whoever's at the bathroom window (bedtime) is told to call right there; police
+  150 → 200 s (nights ran ~11 min, not ~13); (3) 43 of 70 lone nights had another night start within
+  a minute → the lobby lists a short group's house at once (`Match.listNew`) and the game server
+  stays listed while players arrive/vote; (4) heartbeat lead-in 1.4 → 2.4 s, listen 7-10 s, the last beat always counts. Still open: phones quit
+  52% (solo phones 22 of 24), 43 captures in the upstairs bathroom (most 10-50 s after the call).
+  Monetization since v89: 2 Become Him, 1 revive, 0 taser uses logged. Next: `--since=91`.
 - **14 Oct (v90)**: looks pass: Creator Store washer/dryer, water heater, floor lamps, bar stools,
   guitar (Kit pieces record their frame as WorldPivot); swapped furniture casts shadows. Skipped on
   purpose: stove/fridge/TV/beds (used or hidden in), the car (only script-carrying or union models).
@@ -297,7 +310,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 90).
+  (last published: version 91).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

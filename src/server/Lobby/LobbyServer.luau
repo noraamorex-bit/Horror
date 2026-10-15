@@ -623,6 +623,10 @@ local function teleportGroup(pad, group: { Player }, joinCode: string?)
 				-- (Code and Cap let the game server offer its empty places to the next lobby: MatchService)
 				options:SetTeleportData({ PartySize = #here, Mode = "Game", Code = code, Cap = pad.Size })
 				TeleportService:TeleportAsync(placeId, here, options)
+				-- (a short group to a fresh house: the next lone circle can join them from the start)
+				if not joinCode and pad.Size > 1 and #here < pad.Size and ctx.Match and ctx.Match.listNew then
+					task.spawn(ctx.Match.listNew, code, #here)
+				end
 			end)
 			if ok or RunService:IsStudio() then
 				break

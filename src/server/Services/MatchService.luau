@@ -11,6 +11,8 @@
 	  MaxPlayers. PLAY SOLO nights (circle of 1) and nights that started full are never listed.
 	• Lobby: every group circle, full or not, looks for such a night when its countdown runs out and,
 	  if there's room for all of them, sends its players there instead ("You made it just in time").
+	  A short group sent to a fresh house is listed by the lobby at once (Match.listNew), and the
+	  game server keeps it listed while its players arrive and vote, then through acts I-II.
 ]]
 
 local MemoryStoreService = game:GetService("MemoryStoreService")
@@ -74,7 +76,14 @@ function Match.isOpen(): (boolean, number)
 	end
 	-- (a night that started full is a group that wanted to be together: never offered)
 	local startedShort = party == nil or party < cap
-	local early = if D.lateJoinOpen then D.lateJoinOpen() else D.getAct() == "Evening"
+	-- (and before it starts, while its players arrive and vote, anyone who comes is there from the
+	-- very beginning: v88-90 logs, 43 of 70 lone nights had another night start within a minute,
+	-- mostly in that gap before a fresh night first listed itself)
+	local waiting = D.getAct() == "Lobby"
+	if waiting then
+		n = #Players:GetPlayers()
+	end
+	local early = waiting or (if D.lateJoinOpen then D.lateJoinOpen() else D.getAct() == "Evening")
 	local open = startedShort and early and D.elapsedSeconds() < (L.JoinOpenFor or 420) and not (D.isSkipping and D.isSkipping())
 		and n >= 1 and n < ctx.Config.MaxPlayers
 	return open, n
@@ -115,9 +124,10 @@ function Match.startGame()
 	end
 	Players.PlayerAdded:Connect(readJoin)
 	task.spawn(function()
+		task.wait(2)
 		while true do
-			task.wait(8)
 			publish()
+			task.wait(8)
 		end
 	end)
 	game:BindToClose(function()
@@ -126,6 +136,19 @@ function Match.startGame()
 				map:RemoveAsync(code)
 			end)
 		end
+	end)
+end
+
+-- (lobby) a group circle just sent fewer players than it holds to a fresh house: list it straight
+-- away, so the next lone circle (here or in another lobby) joins them instead of starting alone.
+-- The game server keeps the entry fresh once its players are in.
+function Match.listNew(accessCode: string, count: number)
+	local m = getMap()
+	if not m or count >= ctx.Config.MaxPlayers then
+		return
+	end
+	pcall(function()
+		m:SetAsync(accessCode, { n = count, cap = ctx.Config.MaxPlayers, at = os.time(), claimed = os.time() }, TTL)
 	end)
 end
 

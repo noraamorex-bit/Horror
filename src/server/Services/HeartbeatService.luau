@@ -68,6 +68,20 @@ local function record(s, i: number, hit: boolean)
 	end
 end
 
+-- beats that have arrived and gone unanswered for `grace` seconds past their window are misses
+-- (at the end, a short grace: the last beat must count too, or doing nothing could outlast him)
+local function sweep(s, grace: number)
+	local now = os.clock() - s.Start
+	for i, b in s.Beats do
+		if sessions[s.Player] ~= s then
+			return
+		end
+		if s.Results[i] == nil and now > b.T + s.Window + grace then
+			record(s, i, false)
+		end
+	end
+end
+
 function Heartbeat.isActive(player: Player): boolean
 	return sessions[player] ~= nil
 end
@@ -77,7 +91,8 @@ function Heartbeat.begin(player: Player, seconds: number, onFail: () -> ())
 	local cfg = settings()
 	local beats = {}
 	local t = cfg.Lead
-	while t <= seconds - 0.3 do
+	-- (the last one lands at least 1.2 s before he gives up, so its press is in before he decides)
+	while t <= seconds - 1.2 do
 		table.insert(beats, { T = t, Side = math.random() < 0.5 and "L" or "R" })
 		t += cfg.Interval * (0.9 + math.random() * 0.25)
 	end
@@ -108,16 +123,15 @@ function Heartbeat.begin(player: Player, seconds: number, onFail: () -> ())
 		while sessions[player] == s do
 			task.wait(0.2)
 			local now = os.clock() - s.Start
-			for i, b in beats do
-				if s.Results[i] == nil and now > b.T + cfg.Window + 1.5 then
-					record(s, i, false)
-				end
-			end
+			sweep(s, 1.5)
 			if sessions[player] ~= s then
 				return
 			end
 			if now > seconds + 0.5 then
-				finish(s, "Pass")
+				sweep(s, 0.5)
+				if sessions[player] == s then
+					finish(s, "Pass")
+				end
 			end
 		end
 	end)
@@ -128,7 +142,10 @@ end
 -- used to come a moment before the session's own end and was counted as a plain stop)
 function Heartbeat.pass(player: Player)
 	local s = sessions[player]
-	if s and s.Misses < s.Limit then
+	if s then
+		sweep(s, 0.5)
+	end
+	if s and sessions[player] == s and s.Misses < s.Limit then
 		finish(s, "Pass")
 	end
 end

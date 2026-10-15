@@ -1761,6 +1761,12 @@ STATES.Inspect = function(_, visible)
 		-- nothing. He turns away and goes somewhere else
 		if who and ctx.Heartbeat and ctx.Heartbeat.pass then
 			ctx.Heartbeat.pass(who)
+			-- (the last beat went unanswered: that was the one he heard)
+			if d.Heard then
+				d.Occupant = nil
+				ripOut(who, spot)
+				return
+			end
 		end
 		S.SpotCooldown[spot] = now() + 40
 		patrol()

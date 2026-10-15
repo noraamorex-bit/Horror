@@ -106,6 +106,23 @@ local ok, err = pcall(function()
 	players = { "S" }
 	Match._publish()
 	assert(store["night-solo"] == nil, "PLAY SOLO nights are never offered")
+	-- before the night starts (players still arriving, the difficulty vote): open too, counting
+	-- everyone on the server (nobody is in the night yet)
+	act, elapsed = "Lobby", 0
+	players = {}
+	H.services.Players.GetPlayers = function() return { "W" } end
+	Match._set("night-W", 2, 1)
+	Match._publish()
+	assert(store["night-W"] and store["night-W"].n == 1, "listed while its players arrive")
+	Match._set("night-WF", 2, 2)
+	Match._publish()
+	assert(store["night-WF"] == nil, "a full circle's night still isn't")
+	act, elapsed = "Evening", 20
+	-- the lobby lists a short group's fresh house the moment it sends them
+	Match.listNew("night-L", 1)
+	assert(store["night-L"] and store["night-L"].n == 1 and store["night-L"].cap == MAX and store["night-L"].claimed, "listed at once by the lobby")
+	Match.listNew("night-LF", MAX)
+	assert(store["night-LF"] == nil, "never a full one")
 	Match._set(nil, nil)
 	Match._publish()
 	print("closed cases ok")

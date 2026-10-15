@@ -348,14 +348,21 @@ function Delivery.run(ctx, D, onDone)
 	local folder = Instance.new("Folder")
 	folder.Name = "PizzaDelivery"
 	folder.Parent = world
-	local finished = false
+	local finished, released = false, false
 	-- the house goes quiet when the headlights come up the street (the piano fades out)
 	workspace:SetAttribute("Delivery", true)
+	-- (the night moves on; the house stays quiet until his car has gone)
+	local function release()
+		if not released then
+			released = true
+			onDone()
+		end
+	end
 	local function finish()
 		if not finished then
 			finished = true
 			workspace:SetAttribute("Delivery", nil)
-			onDone()
+			release()
 		end
 	end
 
@@ -526,6 +533,9 @@ function Delivery.run(ctx, D, onDone)
 		D.think(nil, "The pizza guy gave up. He left the boxes on the porch.")
 	end
 	D.logTruth("PizzaGuy")
+	-- act II starts now, while he walks back to his car (v88-90 logs: the walk back and the drive
+	-- off were 78 s with nothing to do, the longest wait of the whole night, and a run of act I quits)
+	release()
 
 	local back = {}
 	for i = #ROUTE, 1, -1 do

@@ -161,6 +161,16 @@ function Phone.setupSignalSpot(part: BasePart)
 	signalPrompt = prompt
 end
 
+-- where the bar of signal is (act III's first thoughts: who's standing right there)
+function Phone.signalSpot(): Vector3?
+	local prompt = signalPrompt
+	local part = prompt and prompt.Parent
+	if part and part:IsA("BasePart") then
+		return part.Position
+	end
+	return nil
+end
+
 function Phone.start()
 	ctx.Remotes.Phone.OnServerEvent:Connect(function(player, action)
 		if not player:GetAttribute("InGame") or player:GetAttribute("Captured") then

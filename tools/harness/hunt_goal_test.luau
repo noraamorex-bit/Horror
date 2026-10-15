@@ -63,12 +63,26 @@ local ok, err = pcall(function()
 	local sent = nil
 	ctx.Remotes.Objectives.FireAllClients = function(_, list) sent = list end
 
+	-- (brushing their teeth at the bathroom window when the lights go, as most nights)
+	local signalSpot = ctx.Phone.signalSpot()
+	assert(signalSpot, "the signal spot is known")
+	root.CFrame = R.CFrame.new(signalSpot)
+	local thoughts = {}
+	ctx.Remotes.Thought.FireClient = function(_, who, text) table.insert(thoughts, { who, text, ctx.Power.isOn() }) end
 	-- the act starts: nothing to run from yet, so no objectives
 	ctx.Director.startAct("SomeoneElse")
 	assert(sent and #sent == 0, "no objectives before the blackout")
 	-- the breaker drops (8 s after the chapter card): the ways out
 	H.flush(10)
 	assert(not ctx.Power.isOn(), "the power is off")
+	-- what to do comes once it's dark, never before ("the power's out" with the lights still on)
+	local callHere = ctx.Story.Thoughts.CallHere:match("^(.-)|") or ctx.Story.Thoughts.CallHere
+	local toldHere = false
+	for _, t in thoughts do
+		assert(t[3] == false, "a blackout line while the lights were on: " .. tostring(t[2]))
+		if t[1] == p and t[2] == callHere then toldHere = true end
+	end
+	assert(toldHere, "at the window: told to call right there")
 	local call = has(sent, "Call911")
 	assert(call and not call.Optional, "Call 911 is the main goal")
 	for _, id in { "Neighbor", "Car", "Attic", "Power" } do

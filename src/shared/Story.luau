@@ -695,14 +695,16 @@ Story.Thoughts = {
 		Car = "If we find the car keys, we can drive out of here.",
 		Rescue = "He took someone down to the basement. We can't leave them there.",
 	},
+	-- act III, for whoever is at the bathroom window when the lights go (they usually are: bedtime)
+	CallHere = "The power's dead. My phone has one bar, right here at the window. Call 911. NOW.|phone",
 	Acts = {
 		SmallThings = {
-			"That guy was so weird. And if the creek road's closed, nobody's getting in or out tonight.",
+			"If the creek road's closed, nobody's getting in or out tonight.",
 			"It's just the storm. Old houses make noise.",
 		},
 		SomeoneElse = {
 			"The power's out. All of it. That wasn't the storm.",
-			"No signal down here. The only place my phone ever gets a bar is the upstairs bathroom window.|phone",
+			"No signal here. The only place my phone ever gets a bar is the upstairs bathroom window.|phone",
 		},
 		Guest = {
 			"Someone has been living in the attic. And he's still in the house.",
