@@ -43,6 +43,10 @@ local function sync(player: Player, item: string)
 	local bag = bags[player]
 	local n = bag and bag[item] or 0
 	player:SetAttribute("Item_" .. item, n > 0 and n or nil)
+	-- (the usable ones are tools in the hotbar: ToolService)
+	if ctx and ctx.Tools then
+		ctx.Tools.refresh(player, item)
+	end
 end
 
 function Inventory.give(player: Player, item: string, count: number?)
@@ -85,12 +89,12 @@ end
 
 function Inventory.clear(player: Player)
 	local bag = bags[player]
+	bags[player] = {}
 	if bag then
 		for item in bag do
-			player:SetAttribute("Item_" .. item, nil)
+			sync(player, item)
 		end
 	end
-	bags[player] = {}
 end
 
 -- Anyone in the session holding an item?

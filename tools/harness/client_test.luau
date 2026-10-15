@@ -36,7 +36,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Monster", "Offers", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -306,6 +306,29 @@ local ok, err = pcall(function()
 		R.Throw.OnClientEvent:Fire(roblox.Vector3.new(0, 5, 0), roblox.Vector3.new(10, 1, 0), 1.4)
 		for _ = 1, 30 do S.RunService.Heartbeat:Fire(0.1) end
 		print("rocket offer ui ok")
+	end
+	-- the hotbar (client Gear): shown in the night, hidden while hiding; a tool's click uses it, aimed
+	do
+		local wasIn = player:GetAttribute("InGame")
+		player:SetAttribute("InGame", true)
+		ctx.Gear._refresh()
+		assert(ctx.Gear.isShown(), "the hotbar shows in the night")
+		player:SetAttribute("Hiding", true)
+		ctx.Gear._refresh()
+		assert(not ctx.Gear.isShown(), "hidden while hiding")
+		player:SetAttribute("Hiding", nil)
+		ctx.Gear._refresh()
+		local used = nil
+		local realFire = R.UseItem.FireServer
+		R.UseItem.FireServer = function(_, item, aim) used = { item, aim } end
+		local t = H.Instance.new("Tool")
+		t:SetAttribute("ItemId", "Taser")
+		ctx.Gear.use(t)
+		assert(used and used[1] == "Taser", "a click on the taser asks the server to fire it")
+		R.UseItem.FireServer = realFire
+		player:SetAttribute("InGame", wasIn)
+		ctx.Gear._refresh()
+		print("hotbar ok")
 	end
 	-- the owner's panel: a SHOP tab with every pass, the paid gear and become him
 	do

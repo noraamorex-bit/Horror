@@ -102,6 +102,7 @@ ctx.Audio = require(Services.AudioService)
 ctx.Noise = require(Services.NoiseService)
 ctx.Interaction = require(Services.InteractionService)
 ctx.Inventory = require(Services.InventoryService)
+ctx.Tools = require(Services.ToolService)
 ctx.Power = require(Services.PowerService)
 ctx.Doors = require(Services.DoorService)
 ctx.PlayerState = require(Services.PlayerStateService)
@@ -127,7 +128,7 @@ ctx.Director = require(script.Director.Director)
 ctx.Intruder = require(script.Intruder.Intruder)
 
 local ORDER = {
-	"Audio", "Noise", "Interaction", "Inventory", "Power", "Doors", "PlayerState", "Hiding", "Capture",
+	"Audio", "Noise", "Interaction", "Inventory", "Tools", "Power", "Doors", "PlayerState", "Hiding", "Capture",
 	"Objectives", "Dialogue", "Phone", "Escape", "Chat", "Ending", "Revive", "Admin", "Cutscene", "Heartbeat", "Puzzle", "Finale", "Monster", "World", "Director", "Intruder",
 }
 

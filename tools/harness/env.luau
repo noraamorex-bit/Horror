@@ -58,6 +58,7 @@ local SIGNALS = {
 	Changed = true, Completed = true, Activated = true, InputBegan = true, InputEnded = true, InputChanged = true,
 	AncestryChanged = true, MouseButton1Click = true, Touched = true, OnServerEvent = true, OnClientEvent = true,
 	LastInputTypeChanged = true, AttributeChanged = true, CharacterAdded = true, DescendantAdded = true, PromptShown = true, PromptHidden = true,
+	Equipped = true, Unequipped = true, Destroying = true,
 }
 
 local wrap, unwrap

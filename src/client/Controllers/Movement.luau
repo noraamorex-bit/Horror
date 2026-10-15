@@ -117,56 +117,7 @@ function Movement.start()
 		end
 		send()
 	end)
-	ctx.Input.on("Flashlight", function(began)
-		if began and player:GetAttribute("InGame") then
-			ctx.Remotes.Flashlight:FireServer()
-		end
-	end)
-	ctx.Input.on("Spray", function(began)
-		if began and player:GetAttribute("Item_PepperSpray") then
-			ctx.Remotes.UseItem:FireServer("PepperSpray")
-		end
-	end)
-	-- the taser: shoots where the camera is looking (T, R2, the TASER button, or a left click)
-	local function shoot()
-		local cam = workspace.CurrentCamera
-		if cam and player:GetAttribute("Item_Taser") and player:GetAttribute("InGame") and not player:GetAttribute("Hiding") then
-			ctx.Remotes.UseItem:FireServer("Taser", cam.CFrame.LookVector)
-		end
-	end
-	ctx.Input.on("Taser", function(began)
-		if began then
-			shoot()
-		end
-	end)
-	game:GetService("UserInputService").InputBegan:Connect(function(io, processed)
-		if not processed and io.UserInputType == Enum.UserInputType.MouseButton1 and player:GetAttribute("Item_Taser") then
-			shoot()
-		end
-	end)
-	-- the rocket launcher (R, L2, the ROCKET button), Morgan's energy drink (X, R1, DRINK) and Casey's
-	-- firecrackers (V, Y, THROW: thrown where the camera looks)
-	local function free(): boolean
-		return player:GetAttribute("InGame") == true and not player:GetAttribute("Hiding") and not player:GetAttribute("Captured")
-			and not (ctx.Dialogue and ctx.Dialogue.blocksControls and ctx.Dialogue.blocksControls())
-	end
-	ctx.Input.on("Rocket", function(began)
-		local cam = workspace.CurrentCamera
-		if began and cam and player:GetAttribute("Item_Rocket") and free() then
-			ctx.Remotes.UseItem:FireServer("Rocket", cam.CFrame.LookVector)
-		end
-	end)
-	ctx.Input.on("Drink", function(began)
-		if began and player:GetAttribute("Item_EnergyDrink") and free() then
-			ctx.Remotes.UseItem:FireServer("EnergyDrink")
-		end
-	end)
-	ctx.Input.on("Throw", function(began)
-		local cam = workspace.CurrentCamera
-		if began and cam and player:GetAttribute("Item_Firecracker") and free() then
-			ctx.Remotes.UseItem:FireServer("Firecracker", cam.CFrame.LookVector)
-		end
-	end)
+	-- (the flashlight, the spray, the taser and the rest are tools in the hotbar now: client Gear)
 	for _, attr in { "Hiding", "Captured", "InGame", "Escaped" } do
 		player:GetAttributeChangedSignal(attr):Connect(function()
 			if blocked() then

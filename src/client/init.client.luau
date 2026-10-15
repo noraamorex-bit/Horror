@@ -30,7 +30,7 @@ ctx.Mode = mode
 local ORDER = if mode == "Lobby"
 	then { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "LobbyHub", "Admin", "Diagnostics", "ChatTags" }
 	else {
-		"UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Settings", "Atmosphere", "Acoustics", "Movement", "Prompts", "HUD", "Monster", "Offers",
+		"UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Settings", "Atmosphere", "Acoustics", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear",
 		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Diagnostics", "ChatTags",
 	}
 
@@ -54,9 +54,12 @@ for _, name in ORDER do
 	end
 end
 
--- Core UI: no backpack or health bar, and no reset (it would break captures and hiding)
+-- Core UI: no health bar and no reset (it would break captures and hiding). The backpack (hotbar)
+-- is only for the house, where client Gear shows it while you can use your items
 task.spawn(function()
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+	if mode == "Lobby" then
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+	end
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, mode == "Lobby")
 	for _ = 1, 20 do

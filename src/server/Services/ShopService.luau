@@ -230,7 +230,7 @@ local function rocketReceipt(info)
 		and player:GetAttribute("InGame") and not player:GetAttribute("Dead") and not player:GetAttribute("Escaped")
 	if live then
 		ctx.Inventory.give(player, "Rocket", 1)
-		ctx.Remotes.Notify:FireClient(player, "Rocket launcher ready: aim, then ROCKET (R). A hit knocks him flat.", "done")
+		ctx.Remotes.Notify:FireClient(player, "Rocket launcher ready: pick it in your items, then click or tap on him. A hit knocks him flat.", "done")
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
 	if ctx.Stats and ctx.Stats.addRocketCredit and ctx.Stats.addRocketCredit(player) then

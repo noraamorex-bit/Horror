@@ -2694,6 +2694,46 @@ end
 -- the taser pass: aimed where the player is looking (a little aim assist), up to Range. A hit
 -- stuns him for Taser.Stun, then he moves at SlowFactor for Taser.Slow. Everyone sees the bolt.
 local lastShot: { [Player]: number } = {}
+-- is there anything to use a weapon on? (him, hunting in the house, or a player who's become him)
+local function huntable(): boolean
+	return (S.Mode == "Hunt" and S.InHouse == true) or (ctx.Monster ~= nil and ctx.Monster.active())
+end
+
+-- blue sparks crawling over him and a flickering light, for as long as he's down
+local function zapFx(seconds: number)
+	local root = S.Root
+	if not root then
+		return
+	end
+	local old = root:FindFirstChild("ZapFx")
+	if old then
+		old:Destroy()
+	end
+	local holder = Instance.new("Attachment")
+	holder.Name = "ZapFx"
+	holder.Position = V(0, 1.5, 0)
+	holder.Parent = root
+	local sparks = Instance.new("Sparkles")
+	sparks.SparkleColor = Color3.fromRGB(140, 200, 255)
+	sparks.Parent = root
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(140, 200, 255)
+	light.Range = 14
+	light.Brightness = 3
+	light.Parent = holder
+	for k = 1, math.floor(seconds / 0.1) do
+		task.delay(k * 0.1, function()
+			if holder.Parent then
+				light.Brightness = 1 + math.random() * 4
+			end
+		end)
+	end
+	task.delay(seconds, function()
+		sparks:Destroy()
+		holder:Destroy()
+	end)
+end
+
 function Intruder.onTaser(player: Player, aim: Vector3)
 	local T = ctx.Config.Taser
 	if now() - (lastShot[player] or -1e9) < T.Cooldown then
@@ -2702,9 +2742,15 @@ function Intruder.onTaser(player: Player, aim: Vector3)
 	local r = rootOf(player)
 	local char = player.Character
 	local head = char and char:FindFirstChild("Head") :: BasePart?
-	if not r or not head or not ctx.Inventory.take(player, "Taser") then
+	if not r or not head or not ctx.Inventory.has(player, "Taser") then
 		return
 	end
+	-- (nothing to shoot yet: no shot wasted, and they know why)
+	if not huntable() then
+		ctx.Audio.caption("Save your shots for him.", nil, nil, { player })
+		return
+	end
+	ctx.Inventory.take(player, "Taser")
 	lastShot[player] = now()
 	local from = head.Position + V(0, -0.6, 0) + aim * 1.5
 	local left = ctx.Inventory.count(player, "Taser")
@@ -2732,10 +2778,12 @@ function Intruder.onTaser(player: Player, aim: Vector3)
 		end
 	end
 	ctx.Remotes.Zap:FireAllClients(from, to, hit)
-	ctx.Audio.caption(left > 0 and ("Taser: " .. left .. " left") or "Taser: empty.", nil, nil, { player })
 	if not hit then
+		ctx.Audio.caption("Missed! " .. (left > 0 and (left .. " left. Get him in front of you.") or "That was the last one."), nil, nil, { player })
 		return
 	end
+	ctx.Audio.caption(left > 0 and ("Taser: " .. left .. " left") or "Taser: empty.", nil, nil, { player })
+	zapFx(ctx.Config.Taser.Stun)
 	if ctx.Monster and ctx.Monster.active() then
 		ctx.Monster.stun(ctx.Config.Monster.TaserStun)
 	elseif S.State ~= "Stunned" then
@@ -2768,9 +2816,14 @@ function Intruder.onRocket(player: Player, aim: Vector3)
 	local r = rootOf(player)
 	local char = player.Character
 	local head = char and char:FindFirstChild("Head") :: BasePart?
-	if not r or not head or not ctx.Inventory.take(player, "Rocket") then
+	if not r or not head or not ctx.Inventory.has(player, "Rocket") then
 		return
 	end
+	if not huntable() then
+		ctx.Audio.caption("Save it for him.", nil, nil, { player })
+		return
+	end
+	ctx.Inventory.take(player, "Rocket")
 	lastRocket[player] = now()
 	local from = head.Position + V(0, -0.3, 0) + aim * 2.5
 	local left = ctx.Inventory.count(player, "Rocket")
@@ -2856,7 +2909,7 @@ function Intruder._explode(at: Vector3, player: Player?)
 	return true
 end
 
-function Intruder.onPepperSpray(player: Player)
+function Intruder.onPepperSpray(player: Player, aim: Vector3?)
 	if not ctx.Inventory.take(player, "PepperSpray") then
 		return
 	end
@@ -2866,6 +2919,9 @@ function Intruder.onPepperSpray(player: Player)
 	end
 	ctx.Audio.playAt("Spray", r.Position + r.CFrame.LookVector * 2)
 	ctx.Noise.emit(r.Position, 20, "Spray", player)
+	-- (a cloud of it, for everyone to see)
+	local sd = aim and V(aim.X, 0, aim.Z) or r.CFrame.LookVector
+	ctx.Remotes.SprayFx:FireAllClients(r.Position + V(0, 1.2, 0), sd.Magnitude > 0.1 and sd.Unit or r.CFrame.LookVector)
 	local left = ctx.Inventory.count(player, "PepperSpray")
 	ctx.Audio.caption(left > 0 and ("Pepper spray: " .. left .. " left") or "The can sputters. Empty.", nil, nil, { player })
 	if not S.InHouse or not S.Head then
@@ -2877,7 +2933,11 @@ function Intruder.onPepperSpray(player: Player)
 		return
 	end
 	local flat = V(to.X, 0, to.Z)
-	if flat.Magnitude > 0.1 and r.CFrame.LookVector:Dot(flat.Unit) < math.cos(math.rad(P.ConeDegrees)) then
+	local dir = aim and V(aim.X, 0, aim.Z) or r.CFrame.LookVector
+	if dir.Magnitude < 0.1 then
+		dir = r.CFrame.LookVector
+	end
+	if flat.Magnitude > 0.1 and dir.Unit:Dot(flat.Unit) < math.cos(math.rad(P.ConeDegrees)) then
 		return
 	end
 	if not Perception.clear(r.Position + V(0, 1.5, 0), S.Head.Position, { player.Character :: Instance }, S.Model) then

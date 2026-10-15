@@ -72,26 +72,9 @@ local function currentSet(): { string }
 	if player:GetAttribute("Hiding") then
 		return { "Breath", "ExitHide" }
 	end
-	local set = { "Sprint", "Crouch" }
-	if player:GetAttribute("Item_Flashlight") then
-		table.insert(set, "Flashlight")
-	end
-	if player:GetAttribute("Item_PepperSpray") then
-		table.insert(set, "Spray")
-	end
-	if player:GetAttribute("Item_Taser") then
-		table.insert(set, "Taser")
-	end
-	if player:GetAttribute("Item_Rocket") then
-		table.insert(set, "Rocket")
-	end
-	if player:GetAttribute("Item_EnergyDrink") then
-		table.insert(set, "Drink")
-	end
-	if player:GetAttribute("Item_Firecracker") then
-		table.insert(set, "Throw")
-	end
-	return set
+	-- (everything else you carry is a tool in the Roblox hotbar: pick it, tap to use. The owner found
+	-- eight round buttons "so crowded")
+	return { "Sprint", "Crouch" }
 end
 
 local function isActive(name: string): boolean

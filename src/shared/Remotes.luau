@@ -37,6 +37,7 @@ local NAMES = {
 	"Zap", -- (from, to, hit) a taser shot, for everyone to see
 	"Rocket", -- (from, to, seconds, hit, shooterName) a rocket in flight, then the blast
 	"Throw", -- (from, to, fuse) a firecracker flying through the air
+	"SprayFx", -- (from, dir) a cloud of pepper spray
 	"Monster", -- (state | nil) "Become him": you're him now ({Active, Captures, GrabReady, ...})
 
 	-- client -> server

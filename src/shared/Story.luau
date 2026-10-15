@@ -20,7 +20,7 @@ Story.Roles = {
 		Perk = "Carries the house keys (dad's office, the basement lock). Sees room names.",
 		Items = { HouseKeys = 1, Flashlight = 1 },
 		Gear = "🔦 Flashlight + keys",
-		Start = "Dad's flashlight and the house keys (F: light)",
+		Start = "Dad's flashlight and the house keys",
 	},
 	{
 		Id = "Tinkerer",
@@ -38,7 +38,7 @@ Story.Roles = {
 		Perk = "More stamina, quieter sprint, and 2 energy drinks.",
 		Items = { EnergyDrink = 2 },
 		Gear = "🥤 2 energy drinks",
-		Start = "2 energy drinks: 10 s of sprinting that never tires you (X)",
+		Start = "2 energy drinks: 10 s of sprinting that never tires you",
 	},
 	{
 		Id = "Observer",
@@ -47,7 +47,7 @@ Story.Roles = {
 		Perk = "Hears sounds from farther away, and brought 2 firecrackers.",
 		Items = { Firecracker = 2 },
 		Gear = "🧨 2 firecrackers",
-		Start = "2 firecrackers: throw one and the bang draws him away (V)",
+		Start = "2 firecrackers: throw one and the bang draws him away",
 	},
 }
 
@@ -161,7 +161,7 @@ Story.Tasks = {
 		{ Key = "Search", Text = "Climb up and search the attic", Target = "Nest" },
 	} },
 	-- Act IV
-	Call911 = { Title = "Call 911", Steps = {
+	Call911 = { Title = "Call 911: he's in the house", Steps = {
 		{ Key = "Call", Text = "Call from the upstairs bathroom window (one bar of signal), or fix the phone line outside", Target = { "SignalSpot", "JunctionBox" } },
 	} },
 	Neighbor = { Title = "Get to Mrs. Okafor's house", Steps = {
@@ -705,15 +705,15 @@ Story.Thoughts = {
 		Rescue = "He took someone down to the basement. We can't leave them there.",
 	},
 	-- act III, for whoever is at the bathroom window when the lights go (they usually are: bedtime)
-	CallHere = "The power's dead. My phone has one bar, right here at the window. Call 911. NOW.|phone",
+	CallHere = "Those footsteps... the man from the news is IN the house. One bar, right here: call 911. NOW.|phone",
 	Acts = {
 		SmallThings = {
 			"If the creek road's closed, nobody's getting in or out tonight.",
 			"It's just the storm. Old houses make noise.",
 		},
 		SomeoneElse = {
-			"The power's out. All of it. That wasn't the storm.",
-			"No signal here. The only place my phone ever gets a bar is the upstairs bathroom window.|phone",
+			"Someone switched the power off. And those footsteps... the man from the news. He's IN the house.",
+			"Call 911! My phone only gets a bar at the upstairs bathroom window.|phone",
 		},
 		Guest = {
 			"Someone has been living in the attic. And he's still in the house.",

@@ -62,6 +62,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Onboarding: one notice with OK, then the character **thinks out loud** (big text, ~5 s each) to say
   what to do. Objective panel top-right ("OBJECTIVE"), multi-step tasks, "!" markers where to go.
 - Roblox's standard ProximityPrompts for interactions.
+- **Usable items are Roblox tools in the default hotbar** (equip, click / tap to use; v94, the owner).
+  Touch buttons are only SPRINT and CROUCH (plus BREATH/LEAVE/STRUGGLE in context).
 - Secret-ending HUD is one slim bar at the top (it was "way too big" before).
 
 **Pacing / story**
@@ -210,6 +212,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **15 Oct (v94)**, the owner (after reel 26): "make the game more fun", police too long, less time
+  before the blackout, the 911 call felt random, "I don't even think taser works", the item
+  buttons "so crowded: use the Roblox inventory". Done: items → Roblox tools (ToolService / client
+  Gear); taser aim assist 24°, sparks, no shots wasted before the hunt; spray aimed + cloud; police
+  120 s; bedtime/blackout gaps shorter; at the blackout a door slams + footsteps far from everyone,
+  then "the man from the news is in the house: call 911". Can't see the real hotbar here: check
+  the tools' grip/orientation and the HUD lift on a phone.
 - **15 Oct (v92)**: monetization pass 2 (see Economy: rocket launcher, Rocket (tonight), role items,
   sales log, admin SHOP tab). Next: `pull_stats.py` (no --logs-only needed for sales) to see what
   sells (`== SALES`), then tune prices; check rocket hits/misses in the logs (events Rocket, Tase,
@@ -329,7 +338,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 93).
+  (last published: version 94).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

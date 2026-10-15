@@ -227,6 +227,29 @@ function Effects.firecracker(from: Vector3, to: Vector3, fuse: number)
 	end)
 end
 
+-- pepper spray: a cone of orange-tinted mist puffing out in front of you
+function Effects.spray(from: Vector3, dir: Vector3)
+	local folder = Instance.new("Folder")
+	folder.Name = "SprayFx"
+	folder.Parent = workspace
+	for k = 1, 9 do
+		local puff = fxPart(folder, Vector3.one * 0.6, Color3.fromRGB(245, 200, 150), Enum.Material.SmoothPlastic)
+		puff.Shape = Enum.PartType.Ball
+		puff.Transparency = 0.45
+		local side = Vector3.new(-dir.Z, 0, dir.X)
+		local to = from + dir * (6 + k * 1.1) + side * (math.random() - 0.5) * k * 0.6 + Vector3.new(0, (math.random() - 0.5) * 1.2, 0)
+		puff.Position = from + dir * 1.2
+		local t = 0.35 + k * 0.04
+		ctx.UI.tween(puff, t, { Position = to, Size = Vector3.one * (1.6 + k * 0.35) })
+		task.delay(t * 0.5, function()
+			if puff.Parent then
+				ctx.UI.tween(puff, 0.6, { Transparency = 1 })
+			end
+		end)
+	end
+	Debris:AddItem(folder, 1.6)
+end
+
 function Effects.fade(toBlack: boolean, duration: number)
 	ctx.UI.tween(fadeFrame, duration or 0.5, { BackgroundTransparency = toBlack and 0 or 1 })
 end
@@ -396,6 +419,11 @@ function Effects.start()
 		elseif hit == true and type(shooter) == "string" and ctx.Offers and ctx.Offers.rocketHit then
 			-- someone knocked him flat: everyone hears about it (and can get one)
 			ctx.Offers.rocketHit(shooter)
+		end
+	end)
+	ctx.Remotes.SprayFx.OnClientEvent:Connect(function(from, dir)
+		if typeof(from) == "Vector3" and typeof(dir) == "Vector3" and dir.Magnitude > 0.1 then
+			Effects.spray(from, dir.Unit)
 		end
 	end)
 	ctx.Remotes.Throw.OnClientEvent:Connect(function(from, to, fuse)

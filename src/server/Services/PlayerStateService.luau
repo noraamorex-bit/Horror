@@ -109,73 +109,8 @@ local function setupCharacter(player: Player, char: Model)
 end
 
 -- the taser in your right hand while it has shots left (everyone sees it: a yellow-and-black stun gun)
--- what's in your hand: the rocket launcher if you have one (it's the big thing), else the taser
-local function syncTaser(player: Player)
-	local char = player.Character
-	if not char then
-		return
-	end
-	local hand = (char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")) :: BasePart?
-	local rocket = (tonumber(player:GetAttribute("Item_Rocket")) or 0) > 0
-	local taser = not rocket and (tonumber(player:GetAttribute("Item_Taser")) or 0) > 0
-	for name, want in { TaserModel = taser, RocketModel = rocket } do
-		local old = char:FindFirstChild(name)
-		if old and not (want and hand) then
-			old:Destroy()
-		end
-	end
-	if not hand or (not rocket and not taser) or char:FindFirstChild(rocket and "RocketModel" or "TaserModel") then
-		return
-	end
-	local m = Instance.new("Model")
-	m.Name = rocket and "RocketModel" or "TaserModel"
-	local r15 = hand.Name == "RightHand"
-	local grip = r15 and CFrame.new(0, -0.15, -0.1) or CFrame.new(0, -1, -0.1)
-	local function piece(name: string, size: Vector3, offset: CFrame, color: Color3, mat: Enum.Material?)
-		local p = Instance.new("Part")
-		p.Name = name
-		p.Size = size
-		p.Color = color
-		p.Material = mat or Enum.Material.SmoothPlastic
-		p.CanCollide = false
-		p.CanQuery = false
-		p.CanTouch = false
-		p.Massless = true
-		p.CastShadow = false
-		p.CFrame = hand.CFrame * grip * offset
-		local w = Instance.new("WeldConstraint")
-		w.Part0 = hand
-		w.Part1 = p
-		w.Parent = p
-		p.Parent = m
-		return p
-	end
-	if rocket then
-		-- an olive tube held at the grip, pointing where you face, a red-tipped rocket in the front
-		local olive = Color3.fromRGB(84, 98, 56)
-		local dark = Color3.fromRGB(36, 40, 28)
-		piece("Grip", Vector3.new(0.26, 0.6, 0.3), CFrame.new(0, 0, 0), dark)
-		piece("Tube", Vector3.new(0.62, 0.62, 3.6), CFrame.new(0, 0.55, -0.5), olive, Enum.Material.Metal)
-		piece("Front", Vector3.new(0.74, 0.74, 0.3), CFrame.new(0, 0.55, -2.35), dark)
-		piece("Back", Vector3.new(0.74, 0.74, 0.3), CFrame.new(0, 0.55, 1.35), dark)
-		piece("Sight", Vector3.new(0.12, 0.28, 0.4), CFrame.new(-0.36, 0.88, -0.6), dark)
-		piece("Warhead", Vector3.new(0.4, 0.4, 0.5), CFrame.new(0, 0.55, -2.65), Color3.fromRGB(190, 40, 30))
-	else
-		piece("Grip", Vector3.new(0.28, 0.55, 0.3), CFrame.new(0, 0, 0), Color3.fromRGB(26, 26, 30))
-		piece("Body", Vector3.new(0.32, 0.38, 0.95), CFrame.new(0, 0.32, -0.32), Color3.fromRGB(250, 200, 30))
-		piece("Muzzle", Vector3.new(0.3, 0.3, 0.14), CFrame.new(0, 0.32, -0.84), Color3.fromRGB(30, 30, 34))
-		piece("Light", Vector3.new(0.08, 0.06, 0.2), CFrame.new(0, 0.53, -0.1), Color3.fromRGB(120, 200, 255), Enum.Material.Neon)
-	end
-	m.Parent = char
-end
-PlayerState.syncTaser = syncTaser
 
 local function onPlayerAdded(player: Player)
-	for _, a in { "Item_Taser", "Item_Rocket" } do
-		player:GetAttributeChangedSignal(a):Connect(function()
-			syncTaser(player)
-		end)
-	end
 	player:SetAttribute("Nerve", ctx.Config.Nerve.Max)
 	player:SetAttribute("Stamina", ctx.Config.Movement.StaminaMax)
 	player:SetAttribute("Battery", 100)
@@ -184,7 +119,6 @@ local function onPlayerAdded(player: Player)
 	stepClock[player] = 0
 	player.CharacterAdded:Connect(function(char)
 		setupCharacter(player, char)
-		task.delay(1, syncTaser, player)
 	end)
 	if player.Character then
 		task.spawn(setupCharacter, player, player.Character)
@@ -265,7 +199,7 @@ function PlayerState.assignRoles(players: { Player })
 		if role.Start then
 			task.delay(3, function()
 				if p.Parent and p:GetAttribute("Role") == role.Id and p:GetAttribute("InGame") then
-					ctx.Remotes.Notify:FireClient(p, "You're " .. role.Name .. ". You start with " .. role.Start .. ".", "info")
+					ctx.Remotes.Notify:FireClient(p, "You're " .. role.Name .. ". You start with " .. role.Start .. ". (Your items: pick one, then click or tap to use it.)", "info")
 				end
 			end)
 		end
@@ -670,8 +604,15 @@ function PlayerState.start()
 			return
 		end
 		local aimed = typeof(aim) == "Vector3" and aim.Magnitude > 0.5 and aim.Magnitude < 2
-		if item == "PepperSpray" and ctx.Inventory.has(player, "PepperSpray") then
-			ctx.Intruder.onPepperSpray(player)
+		if item == "Flashlight" and ctx.Inventory.has(player, "Flashlight") then
+			-- (in your hand: click switches it off and on)
+			if (player:GetAttribute("Battery") or 0) <= 0 then
+				ctx.Audio.caption("Click. Click. The batteries are dead.", nil, nil, { player })
+			else
+				PlayerState.setFlashlight(player, not player:GetAttribute("FlashlightOn"))
+			end
+		elseif item == "PepperSpray" and ctx.Inventory.has(player, "PepperSpray") then
+			ctx.Intruder.onPepperSpray(player, aimed and aim.Unit or nil)
 		elseif item == "Taser" and ctx.Inventory.has(player, "Taser") and aimed then
 			ctx.Intruder.onTaser(player, aim.Unit)
 		elseif item == "Rocket" and ctx.Inventory.has(player, "Rocket") and aimed then

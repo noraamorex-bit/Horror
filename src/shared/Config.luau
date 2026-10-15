@@ -267,7 +267,7 @@ Config.Capture = {
 Config.Help = {
 	-- (v88-90 logs: once help was called only 7 of 200 players left before the police came, while the
 	-- hunt is the game; nights ran ~11 min against the ~13 the owner wants: a longer hold-out)
-	PhoneResponse = 200,
+	PhoneResponse = 120, -- (v94: 200 was "too long", the owner; 150 before that)
 	NeighborResponse = 120,
 	CarResponse = 60,
 	CellCallDuration = 15, -- (Hard)
@@ -297,9 +297,9 @@ Config.Director = {
 	Lightning = { 20, 50 },
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
 	BeatSpacing = 35, -- a scripted scare waits this long after the last one (one thing at a time)
-	AfterNews = 40, -- act II ends this long after the news was watched at the soonest...
-	BedtimeAfterNews = 8, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
-	AfterBedtime = 12,
+	AfterNews = 28, -- act II ends this long after the news was watched at the soonest...
+	BedtimeAfterNews = 4, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
+	AfterBedtime = 5, -- (v94: 12; the owner wanted less waiting before the blackout)
 	BedtimeMinAct = 150, -- (but act II still runs at least this long: its scares need room)
 	AfterScare = 30, -- ...and this long after the last scare
 }
@@ -435,9 +435,9 @@ Config.Monster = {
 -- the taser (the old pepper spray pass): aim and shoot. A hit stuns him, then he limps after you slowly
 Config.Taser = {
 	Charges = 3,
-	Range = 45,
-	AimCone = 9, -- degrees either side of where you're looking (aim assist on a phone)
-	Stun = 4,
+	Range = 50,
+	AimCone = 24, -- degrees either side of where you aim (v94: 9 felt like it didn't work at all)
+	Stun = 5,
 	Slow = 14, -- seconds he moves at SlowFactor afterwards
 	SlowFactor = 0.55,
 	Cooldown = 1.2,
@@ -445,8 +445,8 @@ Config.Taser = {
 
 Config.PepperSpray = {
 	Uses = 2,
-	Range = 12,
-	ConeDegrees = 35,
+	Range = 15,
+	ConeDegrees = 45,
 }
 
 -- the rocket launcher (pass: 2 rockets a night; "Rocket (tonight)": 1). The rocket flies where you
@@ -456,7 +456,7 @@ Config.Rocket = {
 	Charges = 2,
 	Range = 160,
 	Speed = 120, -- studs per second
-	AimCone = 7, -- degrees: aim assist toward him
+	AimCone = 15, -- degrees: aim assist toward him
 	Blast = 12, -- studs
 	Stun = 7,
 	Slow = 20,

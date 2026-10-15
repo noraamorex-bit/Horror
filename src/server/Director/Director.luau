@@ -708,10 +708,45 @@ function Director.startAct(name: string, cause: Player?)
 				ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Attic", "Power" }, { Neighbor = true, Car = true, Attic = true, Power = true })
 				checkHeldItems()
 			end
-			-- what to do, the moment it's dark (these used to start before the lights went, under the
-			-- cutscene; v88-90 logs: 48 of 328 players left between the blackout and the call, the
-			-- call came a minute in, and most nights the lights go while they're at the bathroom
-			-- window brushing their teeth, one bar of signal right there)
+			-- why call 911 (the owner: "it seems we're just randomly calling the police when the
+			-- electricity goes out"): in the dark, a door slams somewhere downstairs, far from all of
+			-- them, and heavy footsteps cross the floor. Then the thought puts it together with the
+			-- news: someone switched the power off, and he's in the house
+			do
+				local far, best = nil, -1
+				for _, id in { "BackDoor", "FrontDoor", "GarageSide" } do
+					local door = ctx.Doors.get(id)
+					if door and door.Position then
+						local d = math.huge
+						for _, p in ctx.Util.sessionPlayers() do
+							local root = ctx.Util.getRoot(p)
+							if root then
+								d = math.min(d, (root.Position - door.Position).Magnitude)
+							end
+						end
+						if d > best then
+							far, best = door.Position, d
+						end
+					end
+				end
+				if far then
+					local at = far :: Vector3
+					task.wait(1.2)
+					ctx.Audio.playAt("DoorSlam", at, { CaptionText = "[A door slams downstairs]", CaptionRange = 400 })
+					local inward = Vector3.new(-at.X, 0, -at.Z)
+					inward = inward.Magnitude > 0.1 and inward.Unit or Vector3.zAxis
+					for k = 1, 4 do
+						task.wait(0.75)
+						ctx.Audio.playAt("Footstep", at + inward * (3 * k) + Vector3.new(0, 1, 0),
+							{ Volume = 1, CaptionText = k == 1 and "[Heavy footsteps. Someone is walking around downstairs]" or nil, Caption = k == 1, CaptionRange = 400 })
+					end
+					task.wait(0.4)
+				end
+			end
+			-- what to do (these used to start before the lights went, under the cutscene; v88-90
+			-- logs: 48 of 328 players left between the blackout and the call, the call came a minute
+			-- in, and most nights the lights go while they're at the bathroom window brushing their
+			-- teeth, one bar of signal right there)
 			local lines = ctx.Story.Thoughts.Acts.SomeoneElse
 			if ctx.Escape.helpCalled() then
 				Director.think(nil, lines[1])
@@ -743,7 +778,7 @@ function Director.startAct(name: string, cause: Player?)
 			if refs.Footprints then
 				refs.Footprints.show()
 			end
-			task.wait(4)
+			task.wait(2)
 			ctx.Intruder.setMode("Lurk")
 			-- how to survive him: once (and once more whenever the tips change)
 			local version = ctx.Story.SurvivalTipsVersion or 1
@@ -758,7 +793,7 @@ function Director.startAct(name: string, cause: Player?)
 				end
 			end
 			task.wait(6)
-			ctx.Remotes.Notify:FireAllClients("That wasn't the storm. Something flipped the main breaker.", "danger")
+			ctx.Remotes.Notify:FireAllClients("Someone flipped the main breaker. He's in the house.", "danger")
 			-- a glimpse or two of him in the dark, then the hunt begins
 			local myState = state
 			task.wait(ctx.Config.Director.HuntDelay or 35)
@@ -767,8 +802,9 @@ function Director.startAct(name: string, cause: Player?)
 				Director.addTension(30)
 			end
 		end
-		-- (from across the street: the house, lit, then all of it gone at once; after the chapter card)
-		task.delay(8, function()
+		-- (from across the street: the house, lit, then all of it gone at once; after the chapter card.
+		-- v94: 8 s -> 5, the owner wanted less waiting between act II and the blackout)
+		task.delay(5, function()
 			if state ~= myNight or state.Act ~= "SomeoneElse" then
 				return
 			end

@@ -21,6 +21,7 @@ local journalOpen = false
 local objectives = {}
 
 local ITEM_ORDER = { "Flashlight", "Rocket", "Taser", "PepperSpray", "EnergyDrink", "Firecracker", "Walkie", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors", "Remote", "PopcornBag", "PopcornBowl", "Firewood", "Matches" }
+local TOOL_ITEMS = { Flashlight = true, Taser = true, PepperSpray = true, Rocket = true, EnergyDrink = true, Firecracker = true }
 local ITEM_NAMES = {
 	Flashlight = "Flashlight",
 	Walkie = "Walkie-talkie",
@@ -589,6 +590,10 @@ local function updateInventory()
 	local lines = {}
 	for _, id in ITEM_ORDER do
 		local n = player:GetAttribute("Item_" .. id)
+		-- (the usable ones are in the hotbar; the battery shows here while you have the flashlight)
+		if n and TOOL_ITEMS[id] and id ~= "Flashlight" then
+			continue
+		end
 		if n then
 			local line = ITEM_NAMES[id]
 			if id == "Flashlight" then
@@ -597,18 +602,21 @@ local function updateInventory()
 				if player:GetAttribute("FlashlightOn") then
 					line ..= "  (on)"
 				end
-			elseif id == "PepperSpray" or id == "Taser" or id == "Rocket" or id == "EnergyDrink" or id == "Firecracker" then
-				line ..= " ×" .. n
-				-- (the key, on a keyboard: the touch buttons say what they are)
-				local key = ({ Rocket = "Rocket", EnergyDrink = "Drink", Firecracker = "Throw" })[id]
-				if key and not UI.isTouch() and ctx.Input then
-					line ..= "  <font color=\"#9a968c\">[" .. ctx.Input.keyFor(key) .. "]</font>"
-				end
 			end
 			table.insert(lines, line)
 		end
 	end
 	inventoryLabel.Text = table.concat(lines, "\n")
+end
+
+-- (client Gear) lift the bottom-centre bits clear of the Roblox hotbar while it's showing
+function HUD.setBottomLift(lift: number)
+	if not staminaBar then
+		return
+	end
+	staminaBar.Position = UDim2.new(0.5, 0, 1, -28 - lift)
+	meterFrame.Position = UDim2.new(0.5, 0, 1, -60 - lift)
+	hintBox.Position = UDim2.new(0.5, 0, 1, -6 - lift)
 end
 
 local function hintText(): string
