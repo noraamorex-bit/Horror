@@ -211,6 +211,16 @@ for (const fr of spec.frames) {
       window.XL = (shotCfg.lights || []).map(e => { const pl = add(new T.PointLight(new T.Color(e.col), 0, e.r, e.decay ?? 1.4)); pl.position.set(...e.p); pl.userData.b = e.b; return pl; });
       const cpos = new T.Vector3(...c), r = shotCfg.radius || 1e9;
       scene.traverse(o => { if (o.isMesh && o.userData.pos) o.visible = o.userData.pos.distanceTo(cpos) < r && !(shotCfg.hide || []).some(h => typeof h === 'string' ? o.userData.name === h : Math.hypot(o.userData.pos.x - h.near[0], o.userData.pos.z - h.near[1]) < h.r); });
+      // see-through parts for this shot (a shower curtain he's a shape behind): { names, near, r, opacity }
+      scene.traverse(o => {
+        if (!o.isMesh || !o.userData.pos) return;
+        const tl = shotCfg.translucent;
+        const hit = tl && (tl.names || []).includes(o.userData.name) && o.userData.pos.distanceTo(new T.Vector3(...tl.near)) < tl.r;
+        if (hit) {
+          if (!o.userData.mat0) { o.userData.mat0 = o.material; o.material = o.material.clone(); }
+          o.material.transparent = true; o.material.opacity = tl.opacity; o.material.depthWrite = false;
+        } else if (o.userData.mat0) { o.material = o.userData.mat0; o.userData.mat0 = null; }
+      });
       window.DOOR = [];
       if (shotCfg.door) {
         const dc = new T.Vector3(...shotCfg.door.near);
