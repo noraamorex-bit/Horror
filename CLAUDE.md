@@ -197,6 +197,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   axis x / y / z). Card shot: the living-room fire; the far shot: him on the front lawn in a
   lightning flash, from the bedroom window. RUN: him coming down the stairs. Glitch "he can hear you"
   (longer lines run off the screen).
+  **Part 5** (`reel27`, `peak_horror_game_friends_5.mp4`): the game's own big moment: the bathroom
+  window with the one bar (rain on the glass), him at the bottom of the stairs in a lightning flash,
+  hiding in the shower: his shape and glowing mask through the curtain (film2 `translucent` parts
+  per shot), the curtain ripped open on the hit (curtain rig), RUN: he bursts out of the bathroom
+  after you. Glitch "stay quiet".
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
