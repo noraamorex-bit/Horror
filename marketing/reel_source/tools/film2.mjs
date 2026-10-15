@@ -235,7 +235,7 @@ for (const fr of spec.frames) {
     } else window.FLASH.intensity = 0;
     if (window.DOOR && window.DOOR.length) {
       const h = shotCfg.door.hinge, a = fr.door || 0;
-      const R = shotCfg.door.axis === 'x' ? new T.Matrix4().makeRotationX(a) : new T.Matrix4().makeRotationY(a);
+      const R = shotCfg.door.axis === 'x' ? new T.Matrix4().makeRotationX(a) : shotCfg.door.axis === 'z' ? new T.Matrix4().makeRotationZ(a) : new T.Matrix4().makeRotationY(a);
       const M = new T.Matrix4().makeTranslation(h[0], h[1] || 0, h[2]).multiply(R).multiply(new T.Matrix4().makeTranslation(-h[0], -(h[1] || 0), -h[2]));
       for (const o of window.DOOR) o.matrix.copy(M.clone().multiply(o.userData.m0));
     }
