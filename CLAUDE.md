@@ -202,6 +202,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   hiding in the shower: his shape and glowing mask through the curtain (film2 `translucent` parts
   per shot), the curtain ripped open on the hit (curtain rig), RUN: he bursts out of the bathroom
   after you. Glitch "stay quiet".
+  **Part 6** (`reel28`, `peak_horror_game_friends_6.mp4`): the game's name, the attic: the hatch open
+  with the ladder down (film2 `door` rig on HatchPanel, axis x; ladder + boxes as `extras`), the climb
+  looking up through the hole, his nest in his lantern's light (sleeping bag, bottles), the tally
+  marks, his photos of the family and the scratched portrait, his head rising through the hatch,
+  hiding behind a box while he goes to his photo wall, the lunge on the hit, RUN: he slides down
+  the ladder after you. Glitch "don't go up". (He's taller than the attic's roof ties: stand him
+  between them, x = -36 + 3.79n.)
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
