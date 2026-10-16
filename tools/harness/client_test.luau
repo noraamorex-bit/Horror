@@ -298,6 +298,23 @@ local ok, err = pcall(function()
 		refresh()
 		assert(not btn.Visible, "not once you're out")
 		player:SetAttribute("Dead", nil)
+		-- ➕ INVITE A FRIEND while the night can take them, with this house's code in the invite
+		local inv = H.unwrap(pg):FindFirstChild("InviteOffer", true)
+		assert(inv and not inv.Visible, "no invite button while the night is closed")
+		ws:SetAttribute("NightCode", "abc123")
+		ws:SetAttribute("InviteOpen", true)
+		refresh()
+		assert(inv.Visible, "invite button while friends can still come in")
+		local wasMode = ctx.Mode
+		ctx.Mode = "Game"
+		assert(ctx.Social.inviteData() == "night:abc123", "the invite carries the night's code")
+		ctx.Mode = "Lobby"
+		assert(ctx.Social.inviteData() == nil, "from the lobby: a plain invite")
+		ctx.Mode = wasMode
+		ws:SetAttribute("InviteOpen", nil)
+		ws:SetAttribute("NightCode", nil)
+		refresh()
+		assert(not inv.Visible, "gone once the night closes")
 		ws:SetAttribute("Act", wasAct)
 		player:SetAttribute("InGame", wasIn)
 		refresh()

@@ -40,6 +40,14 @@ local ok, err = pcall(function()
 	Match._publish()
 	assert(store["night-A"] and store["night-A"].n == 1 and store["night-A"].cap == MAX, "listed with 1 of " .. MAX)
 	assert(H.unwrap(H.workspaceRoot):GetAttribute("OpenNight") == "1/" .. MAX, "on screen: others can join (1/" .. MAX .. ")")
+	-- the invite button: any night with a code, while it can still take players
+	assert(H.unwrap(H.workspaceRoot):GetAttribute("InviteOpen") == true, "friends can be invited in")
+	act = "SomeoneElse"
+	Match._publish()
+	assert(H.unwrap(H.workspaceRoot):GetAttribute("InviteOpen") == nil, "not after the blackout")
+	act = "Evening"
+	Match._set("night-A", 2, 1)
+	Match._publish()
 	-- a circle of 4 that started with two
 	Match._set("night-B", 4, 2)
 	players = { "B1", "B2" }

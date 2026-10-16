@@ -68,19 +68,19 @@ local ok, err = pcall(function()
 	-- the story items are not tools
 	ctx.Inventory.give(p, "HouseKeys", 1)
 	assert(tool("HouseKeys") == nil and not ctx.Tools.isTool("HouseKeys"), "keys stay in the list")
-	-- the flashlight: on in your hand, off when you put it away
+	-- the flashlight: in your hand it stays dark until you click (v95), off when you put it away
 	local fl = H.wrap(tool("Flashlight"))
 	p:SetAttribute("Battery", 80)
 	rawget(fl, "__signals").Equipped:Fire()
-	assert(p:GetAttribute("FlashlightOn") == true, "in your hand: on")
-	rawget(fl, "__signals").Unequipped:Fire()
-	assert(not p:GetAttribute("FlashlightOn"), "put away: off")
-	-- a click with it in your hand switches it
-	rawget(fl, "__signals").Equipped:Fire()
+	assert(not p:GetAttribute("FlashlightOn"), "in your hand: still off")
+	ctx.Remotes.UseItem.OnServerEvent:Fire(p, "Flashlight")
+	assert(p:GetAttribute("FlashlightOn") == true, "click: on")
 	ctx.Remotes.UseItem.OnServerEvent:Fire(p, "Flashlight")
 	assert(not p:GetAttribute("FlashlightOn"), "click: off")
 	ctx.Remotes.UseItem.OnServerEvent:Fire(p, "Flashlight")
-	assert(p:GetAttribute("FlashlightOn") == true, "click: on")
+	assert(p:GetAttribute("FlashlightOn") == true, "click: on again")
+	rawget(fl, "__signals").Unequipped:Fire()
+	assert(not p:GetAttribute("FlashlightOn"), "put away: off")
 	-- the taser before he's hunting: no shot wasted, and a reason
 	ctx.Inventory.give(p, "Taser", 3)
 	ctx.Remotes.UseItem.OnServerEvent:Fire(p, "Taser", R.Vector3.new(0, 0, -1))

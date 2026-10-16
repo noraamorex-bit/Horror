@@ -16,6 +16,16 @@ local ctx
 local player = Players.LocalPlayer
 local favoritePrompted = false
 
+-- (in the house, the invite carries this night's server code: the lobby sends whoever accepts
+-- straight here, into the same house, instead of into a night of their own)
+function Social.inviteData(): string?
+	local code = workspace:GetAttribute("NightCode")
+	if ctx.Mode ~= "Lobby" and type(code) == "string" and #code > 0 then
+		return "night:" .. code
+	end
+	return nil
+end
+
 function Social.invite()
 	task.spawn(function()
 		local ok, can = pcall(function()
@@ -24,7 +34,11 @@ function Social.invite()
 		if ok and can then
 			pcall(function()
 				local options = Instance.new("ExperienceInviteOptions")
-				options.PromptMessage = "Survive the night at 14 Alder Lane with me"
+				local launch = Social.inviteData()
+				options.PromptMessage = launch and "He's in the house. Come hide with me, right now" or "Survive the night at 14 Alder Lane with me"
+				if launch then
+					options.LaunchData = launch
+				end
 				SocialService:PromptGameInvite(player, options)
 			end)
 		elseif ctx.Notice then

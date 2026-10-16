@@ -5,8 +5,8 @@
 	• Flashlight, Taser, Pepper spray, Rocket launcher, Energy drink, Firecracker: each is a Tool in the
 	  Backpack while InventoryService says you have one (Inventory.sync calls Tools.refresh), named
 	  with what's left ("Taser (3)"), with a small model in the hand.
-	• Using one: the client sends the use with where you're aiming (Remotes.UseItem, client Gear); the
-	  flashlight is on while it's in your hand.
+	• Using one: the client sends the use with where you're aiming (Remotes.UseItem, client Gear); a
+	  click switches the flashlight on and off (put away, it goes off).
 	• Hiding, tied up, dead, out of the house or being him: nothing in your hands.
 	Keys, tape, the remote and the other story items stay in the HUD's list: you don't use those by hand.
 ]]
@@ -23,7 +23,7 @@ for _, k in Tools.Items do
 end
 
 local INFO = {
-	Flashlight = { Name = "Flashlight", Tip = "In your hand, it's on. Click to switch it off and on." },
+	Flashlight = { Name = "Flashlight", Tip = "Click to switch it on and off. A lit flashlight shows him where you are." },
 	Taser = { Name = "Taser", Tip = "Click where he is: stuns him, then he can only limp after you." },
 	PepperSpray = { Name = "Pepper spray", Tip = "Click when he's close: he can't see, and backs off." },
 	Rocket = { Name = "Rocket launcher", Tip = "Click where he is: knocks him flat. It's LOUD." },
@@ -135,7 +135,8 @@ local function find(p: Player, item: string): Tool?
 end
 Tools.find = find
 
--- the flashlight is on while it's in your hand
+-- the flashlight goes off when it goes back in your pocket (a click switches it on: v95; on by
+-- itself the moment it was in your hand, everyone walked around lit up for him to see)
 local function wire(p: Player, tool: Tool, item: string)
 	tool.Equipped:Connect(function()
 		if blocked(p) then
@@ -146,9 +147,6 @@ local function wire(p: Player, tool: Tool, item: string)
 				end
 			end)
 			return
-		end
-		if item == "Flashlight" and (p:GetAttribute("Battery") or 0) > 0 then
-			ctx.PlayerState.setFlashlight(p, true)
 		end
 	end)
 	tool.Unequipped:Connect(function()

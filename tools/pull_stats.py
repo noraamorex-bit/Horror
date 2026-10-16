@@ -265,7 +265,9 @@ def report_nights(nights):
                     if any(a == "SomeoneElse" for _, a in n.get("Acts") or []))
     print("  help called (nights that reached the blackout):", dict(helps.most_common()))
     joined = sum(1 for n in started for p in (n.get("P") or {}).values() if any(ev[1] == "Joined" for ev in p.get("Ev") or []))
-    print(f"  late arrivals who joined a night in progress: {joined}")
+    invited = sum(1 for n in started for p in (n.get("P") or {}).values()
+                  if any(ev[1] == "Joined" and len(ev) > 2 and ev[2] == "invite" for ev in p.get("Ev") or []))
+    print(f"  late arrivals who joined a night in progress: {joined} (brought by a friend's invite: {invited})")
     # script errors (v82+): on players' devices (Perf.Err) and on the game servers (SErr)
     cerr, cwho, serr = Counter(), Counter(), Counter()
     for n in started:

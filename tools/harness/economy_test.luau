@@ -184,7 +184,12 @@ local ok, err = pcall(function()
 	E.resetNight()
 	local cBefore = E.coins(p)
 	local r1 = E.nightRewards(p, { Seconds = 600, Survived = true })
-	assert(r1.Total > 0 and E.coins(p) == cBefore + r1.Total, "night paid " .. r1.Total)
+	-- (on some days the earlier quests leave the player just under a level: its pay comes on top)
+	local levelPay = 0
+	for l = r1.LevelBefore + 1, r1.Level do
+		levelPay += l * Cat.LevelCoins
+	end
+	assert(r1.Total > 0 and E.coins(p) == cBefore + r1.Total + levelPay, "night paid " .. r1.Total .. " before " .. cBefore .. " after " .. E.coins(p))
 	local r2 = E.nightRewards(p, { Seconds = 600, Survived = true })
 	assert(r2.Total == 0, "not twice")
 	local r3 = E.nightRewards(p, { NewEnding = true })

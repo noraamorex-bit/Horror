@@ -4,7 +4,7 @@
 	  where you're aiming (the point under the mouse or your finger; the camera's centre otherwise).
 	• The hotbar shows only while you can use things: not hiding, tied up, dead, being him, in a
 	  cutscene, a conversation or the heartbeat minigame.
-	• F (or D-pad up) takes the flashlight out, or puts it away.
+	• F (or D-pad up) takes the flashlight out and switches it on, or puts it away.
 ]]
 
 local Players = game:GetService("Players")
@@ -135,6 +135,10 @@ function Gear.toggleFlashlight()
 	for _, t in backpack and backpack:GetChildren() or {} do
 		if t:IsA("Tool") and t:GetAttribute("ItemId") == "Flashlight" then
 			hum:EquipTool(t)
+			-- (F means "light": out and on in one press)
+			if not player:GetAttribute("FlashlightOn") then
+				ctx.Remotes.UseItem:FireServer("Flashlight")
+			end
 			return
 		end
 	end

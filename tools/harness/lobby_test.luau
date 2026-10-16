@@ -42,7 +42,7 @@ local ok, err = pcall(function()
 	ctx.Mode = { gamePlaceId = function() return 123 end }
 	local fired = {}
 	ctx.Remotes = setmetatable({}, { __index = function(t, k)
-		local r = { FireClient = function(_, p, payload) table.insert(fired, k .. ":" .. (payload and (payload.Status .. " " .. payload.Count .. "/" .. payload.Size) or "nil")) end, OnServerEvent = H.signal() }
+		local r = { FireClient = function(_, p, payload) table.insert(fired, k .. ":" .. (type(payload) == "string" and payload or payload and (payload.Status .. " " .. payload.Count .. "/" .. payload.Size) or "nil")) end, OnServerEvent = H.signal() }
 		rawset(t, k, r)
 		return r
 	end })
@@ -139,6 +139,21 @@ local ok, err = pcall(function()
 	hb:Fire(0.3)
 	assert(asked == nil and #teleports == 6, "solo: straight to its own house")
 	print("full circles look too, solo never ok")
+	-- invited from inside a friend's night: straight into that house (Social.invite carries its code)
+	local inv = makePlayer("Invited")
+	rawset(inv, "GetJoinData", function() return { LaunchData = "night:abc123" } end)
+	local before = #teleports
+	Lobby._invited(inv)
+	assert(#teleports == before + 1 and teleports[#teleports][2] == 1, "the invited friend goes at once")
+	local td = lastOptions and lastOptions.Data
+	assert(lastOptions.ReservedServerAccessCode == "abc123" and td and td.Code == "abc123" and td.Invited and td.PartySize == 1,
+		"into the friend's own server")
+	-- a referral link (ref:...) or nothing: the lobby as usual
+	local other = makePlayer("Other")
+	rawset(other, "GetJoinData", function() return { LaunchData = "ref:1" } end)
+	Lobby._invited(other)
+	assert(#teleports == before + 1, "not an invite: stays in the lobby")
+	print("invites ok")
 end)
 print(ok and "LOBBY OK" or ("LOBBY FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

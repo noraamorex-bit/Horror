@@ -2,6 +2,8 @@
 	Offers — things you can buy on the spot, in the night.
 	• 🚀 ROCKET (R$ 25, "Rocket (tonight)"): during the hunt, for anyone without a rocket in hand. A
 	  small button under the inventory (never in the middle of the screen).
+	• ➕ INVITE A FRIEND while your night can still take players (acts I-II, room left): the invite
+	  brings them straight into this house (Social.invite carries the night's code; the lobby routes them).
 	• When someone knocks him flat with a rocket, everyone hears about it ("Sam knocked him flat with a
 	  ROCKET LAUNCHER!") and the button pulses for a moment.
 ]]
@@ -14,6 +16,7 @@ local ctx
 local player = Players.LocalPlayer
 
 local rocketButton: TextButton
+local inviteButton: TextButton
 
 local HUNT = { SomeoneElse = true, Guest = true }
 
@@ -27,6 +30,10 @@ local function refresh()
 	local hunt = HUNT[workspace:GetAttribute("Act") or ""] == true and not workspace:GetAttribute("EndingActive")
 	rocketButton.Visible = p ~= nil and p.Id > 0 and canAct and hunt and not player:GetAttribute("Item_Rocket")
 	rocketButton.Text = "🚀 ROCKET  R$ " .. tostring(p and p.Price or 25)
+	-- while this night can still take players: bring a friend straight into it (Social.invite)
+	if inviteButton then
+		inviteButton.Visible = canAct and workspace:GetAttribute("InviteOpen") == true and workspace:GetAttribute("NightCode") ~= nil
+	end
 end
 
 Offers._refresh = refresh -- (tests)
@@ -82,6 +89,28 @@ function Offers.start()
 			end)
 		end
 	end)
+	inviteButton = UI.new("TextButton", {
+		Name = "InviteOffer",
+		Size = UDim2.fromOffset(190, 34),
+		Text = "➕ INVITE A FRIEND",
+		Font = UI.Font.Bold,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(235, 232, 226),
+		BackgroundColor3 = Color3.fromRGB(20, 20, 24),
+		BackgroundTransparency = 0.15,
+		AutoButtonColor = true,
+		LayoutOrder = 7,
+		Visible = false,
+		Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
+	})
+	UI.corner(inviteButton, 8)
+	UI.stroke(inviteButton, Color3.new(1, 1, 1), 1, 0.6)
+	inviteButton.Activated:Connect(function()
+		if ctx.Social then
+			ctx.Social.invite()
+		end
+	end)
+	workspace:GetAttributeChangedSignal("InviteOpen"):Connect(refresh)
 	for _, a in { "InGame", "Captured", "Dead", "Escaped", "Monster", "Item_Rocket" } do
 		player:GetAttributeChangedSignal(a):Connect(refresh)
 	end

@@ -73,7 +73,9 @@ local function buildLocalFlashlight()
 	localBeam.Angle = 55
 	localBeam.Brightness = 3.2
 	localBeam.Color = Color3.fromRGB(255, 244, 222)
-	localBeam.Shadows = true
+	-- shadow-casting lights are the heaviest thing we draw: phones never get them, and a PC drops
+	-- them when the frame rate sinks (v94 logs: PC nights under 30 fps 18 of 55, was 7 of 70)
+	localBeam.Shadows = not game:GetService("UserInputService").TouchEnabled
 	localBeam.Enabled = false
 	localBeam.Parent = beamPart
 	-- a little spill so the edges of the beam aren't pitch black
@@ -128,7 +130,21 @@ function Movement.start()
 		end)
 	end
 
+	local slowSeconds, fpsClock, frames = 0, 0, 0
 	RunService.RenderStepped:Connect(function(dt)
+		-- frame rate once a second: three slow seconds in a row with the light on → no more shadows
+		fpsClock += dt
+		frames += 1
+		if fpsClock >= 1 then
+			local fps = frames / fpsClock
+			fpsClock, frames = 0, 0
+			if localBeam.Shadows and localBeam.Enabled then
+				slowSeconds = fps < 40 and slowSeconds + 1 or 0
+				if slowSeconds >= 3 then
+					localBeam.Shadows = false
+				end
+			end
+		end
 		local char = player.Character
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
 		local cam = workspace.CurrentCamera

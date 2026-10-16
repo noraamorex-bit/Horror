@@ -61,7 +61,7 @@ local tip: TextLabel
 
 local HINTS = {
 	journal = { Key = "Press Tab to open your journal", Touch = "Tap JOURNAL at the top right", Pad = "Press D-pad left to open your journal" },
-	light = { Key = "It's in your items: pick it (or press F)", Touch = "It's in your items: tap it to hold it", Pad = "Press D-pad up to take it out" },
+	light = { Key = "Press F (or pick it in your items and click)", Touch = "Tap it in your items, then tap to switch it on", Pad = "Press D-pad up to switch it on" },
 	spray = { Key = "Pick it in your items, then click when he's close", Touch = "Tap it in your items, then tap when he's close", Pad = "Pick it in your items, then press R2" },
 	taser = { Key = "Pick it in your items, then click on him", Touch = "Tap it in your items, then tap on him", Pad = "Pick it in your items, aim, then R2" },
 	rocket = { Key = "Pick it in your items, then click on him", Touch = "Tap it in your items, then tap on him", Pad = "Pick it in your items, aim, then R2" },

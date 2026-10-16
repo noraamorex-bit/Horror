@@ -56,6 +56,8 @@ local function readJoin(p: Player)
 	if type(td) == "table" then
 		if type(td.Code) == "string" and not code then
 			code = td.Code
+			-- (the night's own invite link: a friend invited from here comes straight to this house)
+			workspace:SetAttribute("NightCode", code)
 		end
 		if tonumber(td.Cap) and not cap then
 			cap = tonumber(td.Cap)
@@ -90,6 +92,11 @@ function Match.isOpen(): (boolean, number)
 end
 
 local function publish()
+	-- (an invited friend can come in, even to a PLAY SOLO night, while late arrivals still join it)
+	local D = ctx.Director
+	local inviteOpen = code ~= nil and D ~= nil and (D.getAct() == "Lobby" or (D.lateJoinOpen ~= nil and D.lateJoinOpen()))
+		and #Players:GetPlayers() < ctx.Config.MaxPlayers
+	workspace:SetAttribute("InviteOpen", inviteOpen or nil)
 	local m = getMap()
 	if not m or not code then
 		return

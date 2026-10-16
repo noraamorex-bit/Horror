@@ -217,6 +217,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **16 Oct (v95)**, the owner: "players have reduced more than 5x". Numbers: daily visits 981 (12 Oct,
+  after reel #2-style posts) → 422 → 513 → 371; returning visits 135 → 5; rating 14 up / 17 down
+  (45%), 7.0k visits. Traffic comes only in bursts after a reel, so no reel = no players: post
+  Parts 4/5, schedule posts (~20:00 and ~01:00 UTC), spread over the accounts. In the game (v94 logs):
+  solo nights 82% abandoned vs 30% with two, but only 1 of 124 teleports joined a night in progress,
+  and the old invite dropped friends in the lobby. Done: **invite straight into your night**
+  (NightCode / InviteOpen, LaunchData "night:<code>", lobby `invited`, ➕ INVITE A FRIEND button,
+  solo nudge at 14 s); the flashlight no longer switches on when taken out (click / F); own beam
+  shadows off on phones and on slow PCs (PC fps < 30 nights 18/55 in v94, was 7/70). Next:
+  `--since=95`: invites used (`Invited` arrivals in the logs), solo abandonment, FpsMin on PC.
+
 - **15 Oct (v94)**, the owner (after reel 26): "make the game more fun", police too long, less time
   before the blackout, the 911 call felt random, "I don't even think taser works", the item
   buttons "so crowded: use the Roblox inventory". Done: items → Roblox tools (ToolService / client
@@ -343,7 +354,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 94).
+  (last published: version 95).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

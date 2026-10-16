@@ -882,10 +882,52 @@ function LobbyServer.run(c)
 			end)
 		end)
 	end
+	-- invited into a friend's night (the invite carries their house's server code: Social.invite):
+	-- straight there, no circles
+	local function invited(player: Player)
+		local ok, data = pcall(function()
+			return player:GetJoinData()
+		end)
+		local launch = ok and data and data.LaunchData
+		local code = type(launch) == "string" and string.match(launch, "^night:(.+)$")
+		if not code then
+			return
+		end
+		teleporting[player] = true
+		ctx.Remotes.Notify:FireClient(player, "Joining your friend's night...", "info")
+		if ctx.Journey then
+			ctx.Journey.lobbyTeleport(player, true)
+		end
+		task.spawn(function()
+			local done = false
+			for _ = 1, 2 do
+				done = pcall(function()
+					if RunService:IsStudio() then
+						error("no teleports in Studio")
+					end
+					local options = Instance.new("TeleportOptions")
+					options.ReservedServerAccessCode = code
+					options:SetTeleportData({ PartySize = 1, Mode = "Game", Code = code, Invited = true })
+					TeleportService:TeleportAsync(ctx.Mode.gamePlaceId(), { player }, options)
+				end)
+				if done then
+					break
+				end
+				task.wait(2)
+			end
+			if not done and player.Parent then
+				teleporting[player] = nil
+				ctx.Remotes.Notify:FireClient(player, "That night has ended. Step into a circle to start your own.", "info")
+			end
+		end)
+	end
+	LobbyServer._invited = invited -- (tests)
 	for _, p in Players:GetPlayers() do
 		setup(p)
+		task.spawn(invited, p)
 	end
 	Players.PlayerAdded:Connect(setup)
+	Players.PlayerAdded:Connect(invited)
 	Players.PlayerRemoving:Connect(function(p)
 		teleporting[p] = nil
 		lastSent[p] = nil

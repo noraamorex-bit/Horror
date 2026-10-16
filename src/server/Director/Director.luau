@@ -660,6 +660,15 @@ function Director.startAct(name: string, cause: Player?)
 		-- come, and never come at all once someone has
 		if solo and not skipping then
 			local myState = state
+			-- (v95: 82% of solo nights are abandoned, 27-30% of nights with two or more: a friend
+			-- invited now comes straight into this house: Social.invite / LobbyServer)
+			task.delay(14, function()
+				if state == myState and state.Act == "Evening" and #ctx.Util.sessionPlayers() == 1 then
+					for _, p in ctx.Util.sessionPlayers() do
+						ctx.Remotes.Notify:FireClient(p, "Scared alone? ➕ INVITE A FRIEND (left): they come straight into your house.", "info")
+					end
+				end
+			end)
 			task.delay(24, function()
 				while ctx.Match and ctx.Match.isOpen() and state == myState and #ctx.Util.sessionPlayers() == 1 do
 					task.wait(3)
@@ -1690,7 +1699,12 @@ function Director.start()
 				end
 			end
 			if ctx.Journey then
-				ctx.Journey.event(p, "Joined")
+				-- (logged with "invite" when a friend's invite brought them: v95)
+				local ok, data = pcall(function()
+					return p:GetJoinData()
+				end)
+				local td = ok and data and data.TeleportData
+				ctx.Journey.event(p, "Joined", (type(td) == "table" and td.Invited) and "invite" or nil)
 			end
 		elseif state.Act ~= "Lobby" then
 			ctx.Remotes.Notify:FireClient(p, "A night is already under way. You'll join the next one.", "info")
