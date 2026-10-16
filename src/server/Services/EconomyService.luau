@@ -34,6 +34,7 @@ local lastAction: { [Player]: number } = {}
 local granted: { [Player]: boolean } = {} -- this night's coins already paid
 local chainPaid: { [Player]: boolean } = {} -- this night's streak already counted
 local achievedNight: { [Player]: boolean } = {} -- this night's titles already checked
+local candyNight: { [Player]: number } = {} -- Halloween candy found this night
 Economy.MaxStack = 5
 
 local function fresh()
@@ -50,11 +51,12 @@ local function fresh()
 		Welcomed = false,
 		LevelPaid = -1, -- the highest level whose rewards were given (-1: never counted yet)
 		Chain = { At = 0, N = 0 }, -- the night streak: when the last night ended (unix), how many in a row
+		Candy = 0, -- Halloween 2026 candy found (Cat.Halloween)
 	}
 end
 
 local function freshPending()
-	return { Coins = 0, Items = {}, Earned = 0, Crates = 0 }
+	return { Coins = 0, Items = {}, Earned = 0, Crates = 0, Candy = 0 }
 end
 
 -- a saved document, cleaned up (anything odd in it is dropped)
@@ -111,6 +113,7 @@ local function clean(data): any
 	if type(data.Chain) == "table" then
 		d.Chain = { At = math.max(0, math.floor(tonumber(data.Chain.At) or 0)), N = math.max(0, math.floor(tonumber(data.Chain.N) or 0)) }
 	end
+	d.Candy = math.max(0, math.floor(tonumber(data.Candy) or 0))
 	return d
 end
 
@@ -176,6 +179,7 @@ local function mirror(player: Player)
 	player:SetAttribute("TitleText", title and title.Name or nil)
 	player:SetAttribute("TitleColor", title and title.Color or nil)
 	player:SetAttribute("TrailId", d.Equip.Trail)
+	player:SetAttribute("Candy", d.Candy)
 end
 
 ---------------------------------------------------------------------------
@@ -227,6 +231,8 @@ local function merge(old, d, pend)
 	new.LevelPaid = math.max(old.LevelPaid, d.LevelPaid)
 	-- the night streak: whichever copy ended a night most recently
 	new.Chain = (d.Chain.At >= old.Chain.At) and table.clone(d.Chain) or old.Chain
+	-- candy only ever goes up: what was saved plus what this server found
+	new.Candy = old.Candy + (pend.Candy or 0)
 	return new
 end
 
@@ -238,7 +244,7 @@ local function save(userId: number)
 	if not store then
 		return -- (no DataStore: Studio without API access; everything stays in memory)
 	end
-	local snap = { Coins = pend.Coins, Items = table.clone(pend.Items), Earned = pend.Earned, Crates = pend.Crates }
+	local snap = { Coins = pend.Coins, Items = table.clone(pend.Items), Earned = pend.Earned, Crates = pend.Crates, Candy = pend.Candy }
 	local result
 	local ok, err = pcall(function()
 		result = store:UpdateAsync("u" .. userId, function(old)
@@ -254,6 +260,7 @@ local function save(userId: number)
 	pend.Coins -= snap.Coins
 	pend.Earned -= snap.Earned
 	pend.Crates -= snap.Crates
+	pend.Candy -= snap.Candy
 	for k, v in snap.Items do
 		pend.Items[k] = (pend.Items[k] or 0) - v
 		if pend.Items[k] == 0 then
@@ -275,6 +282,7 @@ local function save(userId: number)
 			d.Owned[k] = true
 		end
 		d.Receipts = r.Receipts
+		d.Candy = r.Candy + pend.Candy
 		if r.Chain.At > d.Chain.At then
 			d.Chain = r.Chain
 		end
@@ -407,6 +415,47 @@ end
 function Economy.owns(player: Player, cosmeticId: string): boolean
 	local d = docs[player.UserId]
 	return d ~= nil and d.Owned[cosmeticId] == true
+end
+
+-- Halloween candy (HalloweenService): found in the house, kept for good; reaching 5 / 15 / 30 unlocks
+-- that Halloween reward (only while the event runs). Returns the new total.
+function Economy.addCandy(player: Player, n: number): number
+	local d, pend = docs[player.UserId], pending[player.UserId]
+	n = math.floor(n)
+	if not d or not pend or n <= 0 then
+		return d and d.Candy or 0
+	end
+	d.Candy += n
+	pend.Candy += n
+	candyNight[player] = (candyNight[player] or 0) + n
+	if Cat.halloweenLive() then
+		for _, id in Cat.Halloween.Steps do
+			local c = Cat.cosmetic(id)
+			if c and d.Candy >= c.Candy and not d.Owned[id] then
+				Economy.grantCosmetic(player, id)
+				ctx.Remotes.Notify:FireClient(player, "🎃 " .. c.Name .. " unlocked! (" .. string.lower(c.Kind == "Beam" and "flashlight colour" or c.Kind) .. ", in the lobby LOCKER)", "done")
+				if ctx.Telemetry then
+					ctx.Telemetry.custom(player, "TitleEarned", 1, id)
+				end
+				if id == Cat.Halloween.Steps[1] and ctx.Badges then
+					ctx.Badges.award(player, "Halloween2026")
+				end
+			end
+		end
+	end
+	mirror(player)
+	queueSave(player.UserId)
+	return d.Candy
+end
+
+local function candyView(total: number, tonight: number): any
+	local nxt = Cat.nextCandyReward(total)
+	return { Tonight = tonight, Total = total, Next = nxt and nxt.Name or nil, NextAt = nxt and nxt.Candy or nil, NextKind = nxt and nxt.Kind or nil }
+end
+
+function Economy.candy(player: Player): number
+	local d = docs[player.UserId]
+	return d and d.Candy or 0
 end
 
 local function result(player: Player, payload)
@@ -669,6 +718,10 @@ function Economy.nightRewards(player: Player, info): any
 		if info.Secret then
 			add("The secret ending", N.Secret)
 		end
+		-- Halloween: surviving the night is worth candy too
+		if info.Survived and Cat.halloweenLive() and docs[player.UserId] then
+			Economy.addCandy(player, Cat.Halloween.Survive)
+		end
 	end
 	local total = 0
 	for _, l in lines do
@@ -749,6 +802,8 @@ function Economy.nightRewards(player: Player, info): any
 		Total = total, Lines = lines, Balance = Economy.coins(player), LevelBefore = before, Level = level, XP = into, XPNext = need,
 		-- (the card: "another night now: +25% coins")
 		Chain = chain, NextBonus = math.floor(Cat.chainBonus(chain + 1) * 100), ChainMinutes = math.floor(N.ChainWindow / 60),
+		-- (the card's Halloween line: candy tonight, in all, and the next reward)
+		Candy = Cat.halloweenLive() and d and candyView(d.Candy, candyNight[player] or 0) or nil,
 	}
 end
 
@@ -777,6 +832,7 @@ function Economy.resetNight()
 	granted = {}
 	chainPaid = {}
 	achievedNight = {}
+	candyNight = {}
 end
 
 ---------------------------------------------------------------------------

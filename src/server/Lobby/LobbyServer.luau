@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 
 local Kit = require(script.Parent.Parent.World.Kit)
+local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
 
 local LobbyServer = {}
 
@@ -346,6 +347,10 @@ local function build(root: Folder)
 	local toStreet = CFrame.Angles(0, math.pi, 0)
 	for _, p in { { -6.5, 1.5, -35.2, 1.3 }, { -7.7, 1.5, -35.8, 0.8 }, { 6.8, 1.5, -35.3, 1.1 }, { -3.4, 1.5, -32.4, 0.8 }, { 3.4, 1.5, -32.5, 0.9 }, { -3.4, 1.0, -31.3, 0.7 } } do
 		Kit.pumpkin(root, CFrame.new(ORIGIN + V(p[1], p[2], p[3])) * toStreet * CFrame.Angles(0, p[4] * 2, 0), p[4])
+		-- Halloween (until 2 Nov): the bigger ones carved and lit, grinning at the queue circles
+		if p[4] >= 1 and Cat.halloweenLive() then
+			Kit.jackFace(root, CFrame.new(ORIGIN + V(p[1], p[2], p[3])), p[4], V(0, 0, 1))
+		end
 	end
 	Kit.mums(root, CFrame.new(ORIGIN + V(8.4, 1.5, -37.6)), 1.3, Color3.fromRGB(200, 90, 40))
 	Kit.mums(root, CFrame.new(ORIGIN + V(-8.4, 1.5, -37.6)), 1.3, Color3.fromRGB(230, 180, 60))

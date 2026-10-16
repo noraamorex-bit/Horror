@@ -108,12 +108,29 @@ function Exterior.build(ctx, root: Instance, refs)
 	Kit.plant(f, F(7.6, 1, -31.6, NZ), 1.2, "leafy", Color3.fromRGB(60, 60, 64))
 	box("HouseNumber", 5, 8.5, -30.62, 6.6, 9.3, -30.55, Color3.fromRGB(40, 40, 40), M.Metal, { CanCollide = false })
 	-- autumn on the porch: pumpkins on the steps and by the columns, pots of mums
-	Kit.pumpkin(f, F(-0.45, 1.0, -38.5, NZ), 1.1)
-	Kit.pumpkin(f, F(4.45, 1.0, -38.55, NZ) * ANG(0, 0.7, 0), 0.8, Color3.fromRGB(236, 150, 60))
-	Kit.pumpkin(f, F(-0.5, 0.5, -39.5, NZ) * ANG(0, 1.3, 0), 0.7)
-	Kit.pumpkin(f, F(-4.2, 1, -37.2, NZ), 1.4)
-	Kit.pumpkin(f, F(-3.3, 1, -37.5, NZ) * ANG(0, 0.4, 0), 0.8, Color3.fromRGB(236, 226, 206))
-	Kit.pumpkin(f, F(8.4, 1, -37.3, NZ) * ANG(0, 2.1, 0), 1.2)
+	-- (Halloween, until 2 Nov: the big ones are carved and lit, and two more light the front walk.
+	-- A carved one keeps our own round pumpkin, PropKey "JackOLantern": the Creator Store pumpkin
+	-- that replaces the plain ones is a different shape, and its face would end up inside it)
+	local halloween = ctx.Halloween ~= nil and ctx.Halloween.live()
+	local pumpkins = {
+		{ F(-0.45, 1.0, -38.5, NZ), 1.1, nil, true },
+		{ F(4.45, 1.0, -38.55, NZ) * ANG(0, 0.7, 0), 0.8, Color3.fromRGB(236, 150, 60) },
+		{ F(-0.5, 0.5, -39.5, NZ) * ANG(0, 1.3, 0), 0.7 },
+		{ F(-4.2, 1, -37.2, NZ), 1.4, nil, true },
+		{ F(-3.3, 1, -37.5, NZ) * ANG(0, 0.4, 0), 0.8, Color3.fromRGB(236, 226, 206) },
+		{ F(8.4, 1, -37.3, NZ) * ANG(0, 2.1, 0), 1.2, nil, true },
+	}
+	if halloween then
+		table.insert(pumpkins, { F(-1.0, 0.5, -49, NZ), 1.0, nil, true, PX })
+		table.insert(pumpkins, { F(5.0, 0.5, -55, NZ), 1.0, nil, true, NX })
+	end
+	for _, pk in pumpkins do
+		local m = Kit.pumpkin(f, pk[1], pk[2], pk[3])
+		if pk[4] and halloween then
+			m:SetAttribute("PropKey", "JackOLantern")
+			Kit.jackFace(m, pk[1], pk[2], pk[5] or NZ)
+		end
+	end
 	Kit.mums(f, F(-4.2, 1, -34.6, NZ), 1.3, Color3.fromRGB(200, 90, 40))
 	Kit.mums(f, F(8.4, 1, -34.6, NZ), 1.3, Color3.fromRGB(230, 180, 60))
 	-- the fire's lit: woodsmoke drifts off the chimney into the rain

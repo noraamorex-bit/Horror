@@ -224,6 +224,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **16 Oct (v96)**, the owner: "these reels are losing their effect. 0 ccu". Logs: traffic only in
+  reel spikes (150-250 visits in ~2 h each: 13 Oct 20:00, 14 Oct 16:00, 15 Oct 01:00 UTC), ~5/h
+  otherwise; nothing organic. Solo nights 86% abandoned (26 of 98 solo quits in the first minute);
+  with so few players almost everyone plays alone. Done: **Halloween event until 2 Nov** (GDD
+  "Halloween 2026": candy hunt, Pumpkin beam / Candy Corn trail / Trick or Treat title at 5/15/30
+  candy, badge Halloween2026 1401087647562759, jack-o'-lanterns at the house and in the lobby).
+  Owner to do: Halloween icon (`marketing/attic/icon_halloween_512.png`) + title "[🎃 HALLOWEEN]",
+  cross-post every reel to TikTok and YouTube Shorts, send the game to small Roblox horror
+  YouTubers/TikTokers. Next: `--since=96`: Candy events, solo abandonment; after 2 Nov swap the
+  icon and title back.
+
 - **16 Oct (v95)**, the owner: "players have reduced more than 5x". Numbers: daily visits 981 (12 Oct,
   after reel #2-style posts) → 422 → 513 → 371; returning visits 135 → 5; rating 14 up / 17 down
   (45%), 7.0k visits. Traffic comes only in bursts after a reel, so no reel = no players: post
@@ -361,7 +372,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 95).
+  (last published: version 96).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

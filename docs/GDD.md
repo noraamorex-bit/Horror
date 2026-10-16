@@ -284,6 +284,14 @@ A grate on the lawn has a prompt with a hint, so people who never saw the ending
 
 **The bar** (client `Finale`, top centre) is one slim line: a coloured dot and where he is (HIS BACK IS TURNED / HE'S TURNING / HE'S WATCHING · DON'T MOVE; later HE'S UPSTAIRS · 0:52 / HE'S IN THE TUNNELS / HE'S HUNTING YOU), the lock code so far (CODE 4 _ _ _), and bedtime, free players, strikes, the hatch. A short line of what to do appears under it only when it matters (at the table, or tied back up); in the tunnels the objective panel says where to go. The edges of the screen breathe red while he watches the table. No music plays in the finale (no stings when he turns, no music box).
 
+### Halloween 2026 (`HalloweenService`, `Economy.Halloween`, until 2 Nov 12:00 UTC)
+Halloween is when Roblox horror gets searched most, and traffic had fallen to ~5 visits an hour between reels. During the event:
+- **Candy hunt:** 5 wrapped candies (orange, foil ends, a faint glow so they can be found in the dark) at random spots each night, at least 12 studs apart, picked from `Layout.CandySpots` (24 floor/rug/table/hearth/bed/desk spots computed from the world dump with nothing in the way, at most 5 studs above the floor, checked in renders). "Take Candy" prompt; "🍬 Candy! 12 in all · Candy Corn at 15 · 3 more in the house". Surviving the night adds 2. Told once, 40 s into the night.
+- **Saved candy** (`Economy_v1` field `Candy`, added through the pending delta like coins) unlocks limited cosmetics at 5 / 15 / 30: the **Pumpkin** flashlight colour, the **Candy Corn** trail and the title **Trick or Treat** (earned in the game, never in crates). After the event they show "Halloween 2026 event" and can't be earned. Reaching 5 also gives the free **Halloween 2026** badge.
+- **Jack-o'-lanterns:** the big porch pumpkins are carved (triangle eyes and nose, a grin, glowing Neon, a candle PointLight; `Kit.jackFace`), two more light the front walk, and the lobby's big pumpkins grin at the queue circles. Carved pumpkins keep the Kit shape (`PropKey = "JackOLantern"`, so the Creator Store pumpkin swap skips them).
+- **Where you see it:** a small orange line under PLAY in the lobby ("🎃 HALLOWEEN · 🍬 7 · Candy Corn at 15"), the candy line on the result card, progress on locked Locker rows, and an admin COINS-tab candy button. Logged as `Candy` events.
+- **For the owner:** `marketing/attic/icon_halloween_512.png` (the icon with a HALLOWEEN ribbon and a jack-o'-lantern) and the title "someone lives in our attic. [🎃 HALLOWEEN]" until 2 Nov.
+
 ### Coins (`EconomyService`, `shared/Economy`, client `Store`, `Locker`, `Rewards`)
 Every player has a coin balance (DataStore `Economy_v1`; 100 welcome coins). Saves are merges: pending changes are added onto whatever another server saved, owned cosmetics are a union, and Robux receipts are recorded in the same document, so a coin pack pays exactly once.
 

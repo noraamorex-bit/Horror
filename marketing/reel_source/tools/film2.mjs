@@ -36,7 +36,7 @@ await page.evaluate(([world, cr, W, H]) => {
   const unitCyl = new T.CylinderGeometry(0.5, 0.5, 1, 24); unitCyl.rotateZ(-Math.PI / 2);
   const wedge = (() => { const g = new T.BufferGeometry();
     const v = [[-.5,-.5,-.5],[-.5,-.5,.5],[-.5,.5,.5],[.5,-.5,-.5],[.5,-.5,.5],[.5,.5,.5]];
-    const f = [[0,2,1],[3,4,5],[0,1,4],[0,4,3],[1,2,5],[1,5,4],[0,3,5],[0,5,2]];
+    const f = [[0,1,2],[3,5,4],[0,1,4],[0,4,3],[1,2,5],[1,5,4],[0,3,5],[0,5,2]];
     const pos = []; for (const t of f) for (const i of t) pos.push(...v[i]);
     g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.computeVertexNormals(); return g; })();
   const mats = {};

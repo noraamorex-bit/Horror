@@ -359,4 +359,34 @@ Layout.Outside = {
 	JunctionBox = Vector3.new(66.6, 5, -12),
 }
 
+-- Halloween candy (HalloweenService): where a wrapped candy can sit, on top of something (the point
+-- is the surface it rests on). Picked from the world's tables, rugs, beds, hearth and floors with
+-- nothing in the way, at most 5 studs above the floor, then checked in renders.
+Layout.CandySpots = {
+	Vector3.new(2, 15.02, 23.21), -- HallFloor
+	Vector3.new(5, 15.02, 5.2), -- HallFloor
+	Vector3.new(-2, 15.02, -18), -- HallFloor
+	Vector3.new(2.01, 1.02, 26.01), -- HallFloor
+	Vector3.new(-1, 1.02, 10.8), -- HallFloor
+	Vector3.new(2, 1.02, -6.32), -- HallFloor
+	Vector3.new(27.6, 1.1, -6.78), -- BootTray
+	Vector3.new(-5, 15.02, 15.52), -- Tread
+	Vector3.new(-5, 2.02, -5.8), -- Tread
+	Vector3.new(-36.27, 1.52, -15.12), -- Hearth
+	Vector3.new(-24, 3.32, -27.67), -- ConsoleTop
+	Vector3.new(-24, 3.12, -21), -- TableTop
+	Vector3.new(-16.73, 4.82, 17.5), -- TableTop
+	Vector3.new(-6.55, 4.32, -26), -- ConsoleTop
+	Vector3.new(10.3, 3.42, -26.6), -- BenchCushion
+	Vector3.new(2, 1.21, -18), -- RugCore
+	Vector3.new(19.6, 2.99, -26.74), -- SeatCushion
+	Vector3.new(26, 1.21, -20), -- RugCore
+	Vector3.new(17.66, 1.24, 13), -- RugCore
+	Vector3.new(-33.37, 18.65, -14.5), -- Duvet
+	Vector3.new(-27.44, 15.21, -14.5), -- RugCore
+	Vector3.new(-30.3, 18.72, 27.6), -- DeskTop
+	Vector3.new(-24, 15.21, 20), -- RugCore
+	Vector3.new(21, 15.21, -17), -- RugCore
+}
+
 return Layout

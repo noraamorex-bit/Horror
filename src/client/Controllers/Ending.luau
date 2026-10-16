@@ -389,6 +389,17 @@ local function showCard(opts)
 			TextColor3 = GOLD,
 		})
 	end
+	-- Halloween: the candy you found tonight, and what's next (EconomyService.nightRewards)
+	if type(coins) == "table" and type(coins.Candy) == "table" then
+		local c = coins.Candy
+		line({
+			Text = string.format("🍬 +%d candy tonight  ·  %d in all", tonumber(c.Tonight) or 0, tonumber(c.Total) or 0)
+				.. (c.Next and string.format("  ·  %s at %d", tostring(c.Next), tonumber(c.NextAt) or 0) or ""),
+			Font = UI.Font.Bold,
+			TextSize = 14,
+			TextColor3 = Color3.fromRGB(255, 150, 50),
+		})
+	end
 	-- invite / favorite, and the countdown
 	order += 1
 	local social = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, Parent = col })

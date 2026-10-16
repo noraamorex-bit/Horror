@@ -203,6 +203,12 @@ RENDER.COINS = function()
 			status.Text = "Type a number."
 		end
 	end)
+	-- Halloween candy (saved like the real thing: unlocks the Halloween rewards)
+	section("HALLOWEEN CANDY", 5)
+	local r3 = row(6)
+	for _, n in { 1, 5, 10 } do
+		btn(r3, "+" .. n .. " 🍬", function() send("candy", tostring(n)) end)
+	end
 	status.Text = "You have " .. fmt(tonumber(player:GetAttribute("Coins")) or 0) .. " coins."
 end
 -- the shop: every pass on/off for you (this server only), the paid gear, become him, saved credits

@@ -2258,6 +2258,60 @@ function Kit.pumpkin(parent, cf: CFrame, d: number, color: Color3?)
 	return m
 end
 
+-- a jack-o'-lantern's carved face, glowing, on a Kit.pumpkin sitting at cf (size d), facing `facing`
+-- (a flat direction): triangle eyes and nose, a grin, each piece seated on the curved front (the ribs
+-- reach 0.475 to 0.5 of d out), and a candle light inside (light = false to leave it dark)
+function Kit.jackFace(parent, cf: CFrame, d: number, facing: Vector3, light: boolean?)
+	local m = Kit.model(parent, "JackFace")
+	local glow = Color3.fromRGB(255, 150, 40)
+	local h = d * 0.72
+	local fwd = V(facing.X, 0, facing.Z).Unit
+	local right = fwd:Cross(V(0, 1, 0))
+	local mid = cf.Position + V(0, h / 2, 0)
+	local T = 0.05 -- piece thickness
+	-- the frame on the pumpkin's skin u studs across and v up from the middle of its front: -Z out
+	local function onSkin(u: number, v: number): CFrame
+		local r, ry = d * 0.475, h * 0.475
+		local b = math.clamp(v / ry, -1, 1)
+		local rr = r * math.sqrt(1 - b * b)
+		local a = math.clamp(u / math.max(rr, 0.01), -1.2, 1.2)
+		local n = fwd * math.cos(a) + right * math.sin(a)
+		local p = mid + n * rr + V(0, v, 0)
+		return CFrame.lookAt(p, p + n)
+	end
+	-- a triangle, apex up (down = true: apex down), w wide and t tall: two wedges back to back
+	local function tri(name: string, at: CFrame, w: number, t: number, down: boolean?)
+		for _, side in { -1, 1 } do
+			local c = at * CF(side * w / 4, 0, 0)
+			local look, up = c.LookVector, c.UpVector
+			if down then
+				up = -up
+			end
+			-- (a wedge is full height at its +Z edge: that edge goes to the middle of the triangle)
+			local frame = CFrame.fromMatrix(c.Position, side < 0 and look or -look, up)
+			Kit.wedge(m, name, frame, V(T, t, w / 2), glow, M.Neon)
+		end
+	end
+	for _, side in { -1, 1 } do
+		tri("Eye", onSkin(side * d * 0.17, h * 0.1), d * 0.2, d * 0.16)
+	end
+	tri("Nose", onSkin(0, -h * 0.06), d * 0.09, d * 0.08)
+	-- the grin: a curve of short slots, the ends turned up
+	for k = -3, 3 do
+		local u = k * d * 0.058
+		Kit.box(m, "Grin", onSkin(u, -h * 0.24 + (k * k) * h * 0.016), V(d * 0.05, d * 0.065 + (k == 0 and 0 or d * 0.02), T), glow, M.Neon)
+	end
+	if light ~= false then
+		local l = Instance.new("PointLight")
+		l.Color = Color3.fromRGB(255, 140, 50)
+		l.Range = 6 + d * 4
+		l.Brightness = 1.1
+		l.Shadows = false
+		l.Parent = m:FindFirstChild("Grin")
+	end
+	return m
+end
+
 -- a pot of autumn chrysanthemums
 function Kit.mums(parent, cf: CFrame, d: number, bloom: Color3)
 	local m = Kit.model(parent, "Mums")

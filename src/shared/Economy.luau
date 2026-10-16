@@ -70,12 +70,50 @@ Economy.Special = {
 	{ Id = "Title_Legend", Kind = "Title", Name = "Legend of Alder Lane", Rarity = "Legendary", Color = Color3.fromRGB(255, 205, 80), How = "Survive a Hard night without being caught" },
 	-- the secret ending's own reward
 	{ Id = "Title_Family", Kind = "Title", Name = "Not Your Family", Rarity = "Legendary", Color = Color3.fromRGB(255, 70, 70), How = "The secret ending" },
+	-- Halloween 2026 (Economy.Halloween): candy found in the house unlocks these, only during the event
+	{ Id = "Beam_Pumpkin", Kind = "Beam", Name = "Pumpkin", Rarity = "Rare", Color = Color3.fromRGB(255, 132, 24), Event = "Halloween", Candy = 5, How = "Halloween: find 5 candy" },
+	{ Id = "Trail_CandyCorn", Kind = "Trail", Name = "Candy Corn", Rarity = "Epic", Color = Color3.fromRGB(255, 176, 40), Event = "Halloween", Candy = 15, How = "Halloween: find 15 candy" },
+	{ Id = "Title_TrickOrTreat", Kind = "Title", Name = "Trick or Treat", Rarity = "Legendary", Color = Color3.fromRGB(255, 140, 30), Event = "Halloween", Candy = 30, How = "Halloween: find 30 candy" },
 	-- earned by levelling up (Economy.Levels)
 	{ Id = "Title_Lv5", Kind = "Title", Name = "Insomniac", Rarity = "Rare", Color = Color3.fromRGB(150, 190, 255), Level = 5 },
 	{ Id = "Title_Lv10", Kind = "Title", Name = "Still Breathing", Rarity = "Epic", Color = Color3.fromRGB(120, 230, 150), Level = 10 },
 	{ Id = "Title_Lv20", Kind = "Title", Name = "Attic Veteran", Rarity = "Epic", Color = Color3.fromRGB(255, 190, 90), Level = 20 },
 	{ Id = "Title_Lv30", Kind = "Title", Name = "He Can't Catch Me", Rarity = "Legendary", Color = Color3.fromRGB(255, 120, 220), Level = 30 },
 }
+
+local function specialById(id: string): any
+	for _, e in Economy.Special do
+		if e.Id == id then
+			return e
+		end
+	end
+	return nil
+end
+
+--[[
+	Halloween 2026 (HalloweenService): until 2 Nov, five wrapped candies are hidden around the house
+	every night (Layout.CandySpots) and surviving the night adds two more. Your candy (saved) unlocks
+	the Halloween cosmetics above at 5, 15 and 30; after the event they can't be earned any more.
+]]
+Economy.Halloween = {
+	Until = 1793620800, -- 2 Nov 2026, 12:00 UTC
+	PerNight = 5,
+	Survive = 2,
+	Steps = { "Beam_Pumpkin", "Trail_CandyCorn", "Title_TrickOrTreat" },
+}
+function Economy.halloweenLive(now: number?): boolean
+	return (now or os.time()) < Economy.Halloween.Until
+end
+-- the next Halloween reward for `candy`, or nil once all are unlocked
+function Economy.nextCandyReward(candy: number): any
+	for _, id in Economy.Halloween.Steps do
+		local c = specialById(id)
+		if c and candy < c.Candy then
+			return c
+		end
+	end
+	return nil
+end
 
 --[[
 	Levels: XP is every coin you've ever earned by playing (nights, quests, daily rewards; not

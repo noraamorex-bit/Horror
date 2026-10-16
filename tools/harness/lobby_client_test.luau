@@ -39,6 +39,7 @@ local ok, err = pcall(function()
 	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "LobbyHub", "Admin" }
 	player:SetAttribute("IsAdmin", true)
 	player:SetAttribute("Coins", 1234)
+	player:SetAttribute("Candy", 7)
 	S.TeleportService = { SetTeleportGui = function() end }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
@@ -59,6 +60,13 @@ local ok, err = pcall(function()
 	assert(panel, "admin panel built in the lobby")
 	local pill = H.unwrap(pg):FindFirstChild("AdminPill", true)
 	assert(pill, "admin pill")
+	-- Halloween: the event line under PLAY, with your candy and the next reward
+	local Cat = H.load("RS/Shared/Economy")
+	local hl = H.unwrap(pg):FindFirstChild("HalloweenLine", true)
+	assert(hl, "the Halloween line")
+	if Cat.halloweenLive(os.time()) then
+		assert(hl.Visible and string.find(hl.Text, "7", 1, true) and string.find(hl.Text, "Candy Corn at 15", 1, true), "candy and the next reward: " .. hl.Text)
+	end
 	-- count UI objects
 	local n = 0
 	for _ in H.unwrap(pg):GetDescendants() do n += 1 end

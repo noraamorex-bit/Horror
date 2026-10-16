@@ -137,6 +137,21 @@ function LobbyHub.start()
 			task.wait(1)
 		end
 	end)
+	-- Halloween (until 2 Nov): candy hidden in the house, and what it unlocks
+	local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
+	local event = UI.label({ LayoutOrder = 4, Size = UDim2.fromOffset(MENU_W, 16), Text = "", Font = UI.Font.Bold, TextSize = 12, TextColor3 = Color3.fromRGB(255, 150, 50), TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, Visible = false, Name = "HalloweenLine", Parent = quick })
+	local function eventLine()
+		local me = game:GetService("Players").LocalPlayer
+		local live = Cat.halloweenLive(workspace:GetServerTimeNow())
+		event.Visible = live
+		if live then
+			local candy = tonumber(me:GetAttribute("Candy")) or 0
+			local nxt = Cat.nextCandyReward(candy)
+			event.Text = "🎃 HALLOWEEN  ·  🍬 " .. candy .. (nxt and ("  ·  " .. nxt.Name .. " at " .. nxt.Candy) or "  ·  all rewards unlocked")
+		end
+	end
+	eventLine()
+	game:GetService("Players").LocalPlayer:GetAttributeChangedSignal("Candy"):Connect(eventLine)
 	UI.new("Frame", { LayoutOrder = 2, Size = UDim2.fromOffset(MENU_W, 6), BackgroundTransparency = 1, Parent = menu })
 	-- (just the three extras; coins, the locker, rewards and the shop are icons on the right: Dock)
 	local endingsBtn = menuButton(menu, "Endings", 3)

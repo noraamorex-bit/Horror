@@ -49,9 +49,12 @@ Stats.Beams = {
 -- and the colours that come out of crates (EconomyService: you own them)
 do
 	local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
-	for _, c in Cat.Cosmetics do
-		if c.Kind == "Beam" then
-			table.insert(Stats.Beams, { Id = c.Id, Name = c.Name, Crate = true, Rainbow = c.Rainbow, Color = c.Color })
+	-- (and the earned ones, like Halloween's Pumpkin: also yours once owned)
+	for _, list in { Cat.Cosmetics, Cat.Special } do
+		for _, c in list do
+			if c.Kind == "Beam" then
+				table.insert(Stats.Beams, { Id = c.Id, Name = c.Name, Crate = true, Rainbow = c.Rainbow, Color = c.Color })
+			end
 		end
 	end
 end

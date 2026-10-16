@@ -40,9 +40,20 @@ local function ownedSet(): { [string]: boolean }
 	return set
 end
 
+-- what a locked earned cosmetic says: Halloween ones show your candy while the event runs
+local function howText(def): string
+	if def.Event == "Halloween" then
+		if Cat.halloweenLive(workspace:GetServerTimeNow()) then
+			return string.format("🍬 %d/%d candy (Halloween)", tonumber(player:GetAttribute("Candy")) or 0, def.Candy)
+		end
+		return "Halloween 2026 event"
+	end
+	return (def.Level and ("Reach level " .. def.Level)) or def.How or "Found in crates"
+end
+
 local function beamUnlocked(b, owned): (boolean, string)
 	if b.Crate then
-		return owned[b.Id] == true, "Found in crates"
+		return owned[b.Id] == true, b.How and howText(b) or "Found in crates"
 	end
 	if b.Pass then
 		return player:GetAttribute("Pass_" .. b.Pass) == true or player:GetAttribute("Pass_VIP") == true, b.PassName
@@ -65,7 +76,7 @@ local function refresh()
 			unlocked, how = true, ""
 			chosen = equip[r.Kind] == nil
 		else
-			unlocked, how = owned[r.Def.Id] == true, (r.Def.Level and ("Reach level " .. r.Def.Level)) or r.Def.How or "Found in crates"
+			unlocked, how = owned[r.Def.Id] == true, howText(r.Def)
 			chosen = equip[r.Kind] == r.Def.Id
 		end
 		r.Label.TextTransparency = unlocked and 0 or 0.55
@@ -156,10 +167,12 @@ function Locker.start()
 		order += 1
 		makeRow(P.Pages.Beam, order, b, "Beam")
 	end
-	for _, c in Cat.Cosmetics do
-		if c.Kind == "Beam" then
-			order += 1
-			makeRow(P.Pages.Beam, order, { Id = c.Id, Name = c.Name, Color = c.Color, Rarity = c.Rarity, Rainbow = c.Rainbow, Crate = true }, "Beam")
+	for _, list in { Cat.Special, Cat.Cosmetics } do
+		for _, c in list do
+			if c.Kind == "Beam" then
+				order += 1
+				makeRow(P.Pages.Beam, order, { Id = c.Id, Name = c.Name, Color = c.Color, Rarity = c.Rarity, Rainbow = c.Rainbow, Crate = true, How = c.How, Event = c.Event, Candy = c.Candy }, "Beam")
+			end
 		end
 	end
 	for _, kind in { "Title", "Trail" } do
@@ -175,7 +188,7 @@ function Locker.start()
 			end
 		end
 	end
-	for _, a in { "Eco", "StatBeam", "StatReferrals", "StatReferred", "Pass_Colours", "Pass_Supporter", "Pass_VIP" } do
+	for _, a in { "Eco", "StatBeam", "StatReferrals", "StatReferred", "Pass_Colours", "Pass_Supporter", "Pass_VIP", "Candy" } do
 		player:GetAttributeChangedSignal(a):Connect(function()
 			if P.Frame.Visible then
 				refresh()

@@ -123,13 +123,14 @@ ctx.Finale = require(Services.FinaleService)
 ctx.Monster = require(Services.MonsterService)
 ctx.Badges = require(Services.BadgeService)
 ctx.Badges.init(ctx)
+ctx.Halloween = require(Services.HalloweenService)
 ctx.World = require(script.World.World)
 ctx.Director = require(script.Director.Director)
 ctx.Intruder = require(script.Intruder.Intruder)
 
 local ORDER = {
 	"Audio", "Noise", "Interaction", "Inventory", "Tools", "Power", "Doors", "PlayerState", "Hiding", "Capture",
-	"Objectives", "Dialogue", "Phone", "Escape", "Chat", "Ending", "Revive", "Admin", "Cutscene", "Heartbeat", "Puzzle", "Finale", "Monster", "World", "Director", "Intruder",
+	"Objectives", "Dialogue", "Phone", "Escape", "Chat", "Ending", "Revive", "Admin", "Cutscene", "Heartbeat", "Puzzle", "Finale", "Monster", "Halloween", "World", "Director", "Intruder",
 }
 
 for _, name in ORDER do

@@ -331,6 +331,7 @@ Config.Badges = {
 	Rescuer = 1978303375336712, -- cut a friend free
 	NotYourFamily = 892775622827536, -- the secret ending, out from under the house
 	ForeverFamily = 2482890253693907, -- the secret ending, nobody left the table
+	Halloween2026 = 1401087647562759, -- found 5 candies during Halloween 2026 (EconomyService.addCandy)
 }
 
 --[[

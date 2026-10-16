@@ -34,6 +34,10 @@ function World.build()
 	Neighborhood.build(ctx, f)
 	-- under it all: what he dug (the secret ending, FinaleService)
 	refs.Burrow = Burrow.build(ctx, f)
+	-- Halloween: tonight's candies (only during the event)
+	if ctx.Halloween then
+		ctx.Halloween.place(f)
+	end
 	-- last: pull apart any surfaces that would flicker against each other
 	Depth.resolve(f)
 	-- nicer Creator Store models for the small props, loaded in the background

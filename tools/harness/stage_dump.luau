@@ -24,7 +24,8 @@ local ok, err = pcall(function()
 	ctx.Objectives = H.load("Server/Services/ObjectiveService")
 	ctx.Director = { getAct = function() return "Evening" end, logTruth = function() end, onDiscovery = function() end, think = function() end, onItem = function() end, onHide = function() end }
 	ctx.World = H.load("Server/World/World")
-	for _, k in { "Audio", "Noise", "Interaction", "Inventory", "Power", "Doors", "Hiding", "Escape", "Capture", "PlayerState", "Phone", "World", "Objectives" } do
+	ctx.Halloween = H.load("Server/Services/HalloweenService") -- (its candies and lanterns while the event runs)
+	for _, k in { "Audio", "Noise", "Interaction", "Inventory", "Power", "Doors", "Hiding", "Escape", "Capture", "PlayerState", "Phone", "Halloween", "World", "Objectives" } do
 		ctx[k].init(ctx)
 	end
 	ctx.World.build()

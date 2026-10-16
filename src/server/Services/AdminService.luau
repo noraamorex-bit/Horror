@@ -267,6 +267,16 @@ COMMANDS.coins = function(player, arg)
 	return string.format("%s%d coins. You have %d.", n >= 0 and "+" or "", n, E.coins(player))
 end
 
+-- Halloween candy for yourself (saved; unlocks the Halloween rewards like found candy): "candy 5"
+COMMANDS.candy = function(player, arg)
+	local E = ctx.Economy
+	if not E or not E.addCandy then
+		return "No candy here."
+	end
+	local n = math.clamp(math.floor(tonumber(arg) or 1), 1, 100)
+	return string.format("+%d candy. You have %d.", n, E.addCandy(player, n))
+end
+
 -- the shop (SHOP tab): switch any pass on or off for yourself (this server only, nothing is bought
 -- or saved), hand yourself the paid gear, become him, a saved revive
 COMMANDS.pass = function(player, arg)

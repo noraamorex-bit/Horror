@@ -212,6 +212,17 @@ local ok, err = pcall(function()
 		print("death tip ok")
 	end
 	player:SetAttribute("DeathTip", nil)
+	-- Halloween: the candy line on the card
+	R.Result.OnClientEvent:Fire({ Outcome = "Escaped", Title = "YOU GOT OUT", Good = true, Line = "y", ReturnToLobby = true,
+		Coins = { Total = 40, Lines = { { Text = "Played a night", Amount = 40 } }, Candy = { Tonight = 3, Total = 12, Next = "Candy Corn", NextAt = 15 } } })
+	do
+		local found = false
+		for _, d in H.unwrap(pg):GetDescendants() do
+			if d:IsA("TextLabel") and string.find(d.Text, "+3 candy tonight", 1, true) and string.find(d.Text, "Candy Corn at 15", 1, true) then found = true end
+		end
+		assert(found, "the card's candy line")
+		print("candy line ok")
+	end
 	R.Result.OnClientEvent:Fire({ Outcome = "Died", Title = "YOU DIED", Good = false, Line = "y", CanRevive = true, ReviveIn = 12, CanSpectate = false, ReturnToLobby = true })
 	assert(ctx.EndingUI.reviveLabel():find(tostring(ctx.Config.Shop.Revive.Price) .. " R$", 1, true), "revive priced on the card (Config's price until the live one loads)")
 	R.Revived.OnClientEvent:Fire()
