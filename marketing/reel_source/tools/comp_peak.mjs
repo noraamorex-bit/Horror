@@ -157,7 +157,7 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
 await page.setContent(html);
 await page.evaluate(() => document.fonts.ready);
-const from = +(fromArg ?? 0), to = +(toArg ?? NF - 1);
+const from = +(fromArg ?? 0), to = Math.min(+(toArg ?? NF - 1), NF - 1);
 for (let f = from; f <= to; f++) {
   const fr = edit.frames[f];
   const img = fr.src && fs.existsSync(fr.src) ? 'data:image/png;base64,' + fs.readFileSync(fr.src).toString('base64') : '';

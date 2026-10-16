@@ -209,6 +209,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   hiding behind a box while he goes to his photo wall, the lunge on the hit, RUN: he slides down
   the ladder after you. Glitch "don't go up". (He's taller than the attic's roof ties: stand him
   between them, x = -36 + 3.79n.)
+  **Part 7** (`reel29`, `peak_horror_game_friends_7.mp4`): Halloween (the v96 event): the front walk
+  of glowing jack-o'-lanterns, the candy hunt (a candy in the dark hall, taken: film2 `hideExtras`),
+  a jack-o'-lantern on the top step and a trail of candy up the stairs, his legs in its glow, the
+  tilt up to his mask (he looks down at you), the lunge on the hit, RUN: he comes down the stairs.
+  Glitch "trick or treat". Pumpkin + candies are film2 `extras`; the world is a Halloween stage dump.
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**

@@ -170,6 +170,7 @@ if (spec.extras && spec.extras.length) {
       const m = new T.Mesh(geo, mat);
       m.position.set(...e.pos); m.rotation.set(...(e.rot || [0, 0, 0]), 'YXZ'); m.scale.set(...e.s);
       window.S.add(m);
+      (window.EXTRAS = window.EXTRAS || []).push(m);
     }
   }, spec.extras);
 }
@@ -249,6 +250,8 @@ for (const fr of spec.frames) {
       const M = new T.Matrix4().makeTranslation(h[0], h[1] || 0, h[2]).multiply(R).multiply(new T.Matrix4().makeTranslation(-h[0], -(h[1] || 0), -h[2]));
       for (const o of window.DOOR) o.matrix.copy(M.clone().multiply(o.userData.m0));
     }
+    // extras taken away on this frame (fr.hideExtras: points; anything of an extra within 1 stud)
+    for (const m of (window.EXTRAS || [])) m.visible = !(fr.hideExtras || []).some(p => Math.hypot(m.position.x - p[0], m.position.y - p[1] - 0.22, m.position.z - p[2]) < 1.0);
     // avatars moved and posed per frame (fr.av: [{ i, pos, yaw, pose }]); with fr.av, the ones not listed hide
     if (fr.av && window.AV) {
       for (const g of window.AV) g.visible = false;
