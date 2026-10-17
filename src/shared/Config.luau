@@ -388,8 +388,13 @@ Config.Finale = {
 	MinPlayers = 2,
 	-- the dinner: struggle while his back is turned, freeze while he watches
 	DinnerTime = 330, -- free everyone before bedtime
-	StrikePenalty = 30, -- every time he catches someone moving: this much less time
-	StrugglePerPress = 0.8, -- % of the zip tie per press (Hard: about 0.6): a few back-turned spells each
+	-- (v97: 13 of 35 secret endings were Forever Family, many inside 60-80 s, about 9 strikes each:
+	-- mashing STRUGGLE runs into his turn. Normal now forgives a reaction and warns once)
+	StrikePenalty = 20, -- every time he catches someone moving: this much less time (Hard: HardStrikePenalty)
+	HardStrikePenalty = 30,
+	StrikeGrace = 0.8, -- after he turns round, this long to stop (Hard: 0.3)
+	FreeWarnings = 1, -- Normal: the first strikes of the night only warn (no time lost)
+	StrugglePerPress = 1.2, -- % of the zip tie per press (Hard: x0.78): a couple of back-turned spells each
 	FakeOut = 0.25, -- sometimes the creak comes, and he doesn't turn round
 	BackTurned = { 6, 9 }, -- he faces the stove this long
 	Warning = 1.1, -- the creak before he turns round

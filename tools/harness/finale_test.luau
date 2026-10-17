@@ -189,11 +189,19 @@ local ok, err = pcall(function()
 	assert(before > 5, "struggling with his back turned works (" .. before .. ")")
 	tickUntil(function() return S.Mode == "Watching" end, 60, "him watching") -- (each fake-out starts a new 6-9 s spell)
 	local strikes = S.Strikes
+	-- (a press the moment he turns round is a reaction, not a strike: v97)
+	struggle(p2)
+	tick(0.1)
+	assert(S.Strikes == strikes, "no strike in the first moment after he turns")
+	tick(0.9)
+	assert(S.Mode == "Watching", "(still watching)")
+	local ends = S.EndsAt
 	struggle(p2)
 	tick(0.2)
 	assert(S.Strikes == strikes + 1, "struggling while he watches is a strike")
-	assert(S.Seats[p2].Progress < before, "and the tie gets tighter")
-	print(("strike: progress %.0f -> %.0f, bedtime moved up"):format(before, S.Seats[p2].Progress))
+	assert(S.Seats[p2].Progress < before and S.Seats[p2].Progress >= before - 26, "and the tie gets a little tighter (a quarter on Normal)")
+	assert(S.EndsAt == ends, "Normal: the first strike only warns (no time lost)")
+	print(("strike: progress %.0f -> %.0f, a warning"):format(before, S.Seats[p2].Progress))
 
 	-- free p1: struggle through his back-turned spells
 	local guard = 0
@@ -205,22 +213,19 @@ local ok, err = pcall(function()
 	end
 	assert(not p1:GetAttribute("Captured") and not p1:GetAttribute("FinaleTied"), "p1 free")
 	print("p1 struggled free (" .. S.Strikes .. " strikes so far)")
-	-- a free player away from their chair while he watches: a strike, and tied again
+	-- a free player away from their chair while he watches: a strike (now with time lost), and
+	-- on Normal pushed back to their chair, not tied up again
 	tickUntil(function() return S.Mode == "Watching" end, 60, "him watching (2)")
+	tick(1.0)
 	place1(S.Seats[p1].Spot.Pos + V(6, 3, 0))
-	local st = S.Strikes
+	local st, ends2 = S.Strikes, S.EndsAt
 	tick(0.5)
 	assert(S.Strikes > st, "caught off the chair")
-	assert(S.Seats[p1].Tied, "and tied up again")
-	print("p1 caught off the chair: tied again")
-	-- free p1 again, then cut p2 loose while his back is turned
-	guard = 0
-	while S.Seats[p1].Tied do
-		guard += 1
-		assert(guard < 4000, "never got free (2)")
-		if S.Mode == "Back" then struggle(p1) end
-		tick(0.1)
-	end
+	assert(S.EndsAt < ends2, "the second strike costs time")
+	assert(not S.Seats[p1].Tied, "Normal: not tied up again")
+	local off = ctx.Util.getRoot(p1).Position - S.Seats[p1].Spot.Pos
+	assert(V(off.X, 0, off.Z).Magnitude < 3, "but back at their chair")
+	print("p1 caught off the chair: back to the chair")
 	tickUntil(function() return S.Mode == "Back" end, 30, "back turned to cut")
 	place1(ctx.Util.getRoot(p2).Position + V(2, 0, 0))
 	trigger(ctx.Util.getRoot(p2), "FinaleCut", p1)

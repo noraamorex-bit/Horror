@@ -255,13 +255,29 @@ function Finale._free(player: Player, by: Player?)
 end
 
 -- he caught someone moving while he watched (or cutting, or struggling)
+local function hard(): boolean
+	return workspace:GetAttribute("Difficulty") == "Hard"
+end
+
+-- (he only just turned round: a press or a step that late is a reaction, not defiance)
+local function inGrace(): boolean
+	return S ~= nil and S.WatchSince ~= nil and os.clock() - S.WatchSince < (hard() and 0.3 or (cfg().StrikeGrace or 0.8))
+end
+
 function Finale._strike(player: Player)
 	if not S or S.Phase ~= "Dinner" or (S.LastStrike and os.clock() - S.LastStrike < 2) then
 		return
 	end
+	if inGrace() then
+		return
+	end
 	S.LastStrike = os.clock()
 	S.Strikes += 1
-	S.EndsAt -= cfg().StrikePenalty
+	-- Normal: the first strike(s) of the night only warn; then less time, and less undone than Hard
+	local warning = not hard() and S.Strikes <= (cfg().FreeWarnings or 0)
+	if not warning then
+		S.EndsAt -= hard() and (cfg().HardStrikePenalty or 30) or cfg().StrikePenalty
+	end
 	local seat = seatOf(player)
 	local lines = ctx.Story.Finale.Strike
 	ctx.Audio.playAt("DoorForce", burrow().TableCenter, { CaptionText = "[He slams his hand down on the table]", CaptionRange = 60 })
@@ -272,14 +288,19 @@ function Finale._strike(player: Player)
 	say(lines[((S.Strikes - 1) % #lines) + 1])
 	if seat then
 		if seat.Tied then
-			-- tighter: half the struggle undone
-			seat.Progress = math.max(0, seat.Progress - 50)
+			-- tighter: some of the struggle undone (half on Hard)
+			seat.Progress = math.max(0, seat.Progress - (hard() and 50 or 25))
 			player:SetAttribute("StruggleProgress", seat.Progress / 100)
-		else
+		elseif hard() then
 			tie(player)
+		else
+			-- (Normal: back to your chair, not tied up again)
+			local sp = seat.Spot
+			ctx.PlayerState.placeStanding(player, CFrame.lookAt(sp.Pos + sp.Dir * -1.8 + V(0, 3, 0), sp.Pos + V(0, 3, 0)))
 		end
 	end
-	ctx.Remotes.Notify:FireClient(player, "He saw you. Bedtime comes sooner.", "danger")
+	ctx.Remotes.Notify:FireClient(player, warning and "He saw you move. Freeze while he's watching. Next time, bedtime comes sooner."
+		or "He saw you. Bedtime comes sooner.", "danger")
 	broadcast({ Struck = player.UserId })
 end
 
@@ -552,6 +573,7 @@ local function dinnerLoop()
 		end
 		-- watching: he turns round; every other time he walks round the table behind your chairs
 		S.Mode = "Watching"
+		S.WatchSince = os.clock()
 		S.P.gait("Stare")
 		S.P.face(B.TableCenter)
 		broadcast()

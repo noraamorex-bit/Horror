@@ -214,6 +214,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   a jack-o'-lantern on the top step and a trail of candy up the stairs, his legs in its glow, the
   tilt up to his mask (he looks down at you), the lunge on the hit, RUN: he comes down the stairs.
   Glitch "trick or treat". Pumpkin + candies are film2 `extras`; the world is a Halloween stage dump.
+  **Part 8** (`reel30`, `peak_horror_game_friends_8.mp4`): the secret ending's family dinner under
+  the house: zip-tied at his candlelit table, two friends (film2 `avatars`, seated pose, scared
+  faces) across from you, him at the camping stove with his back turned, he turns and watches,
+  walks round behind your friends and leans in over one, the struggle (shaky view), the stove's
+  empty... he's beside you on the hit; RUN: out the dining-room door (rig on DiningDoor). Glitch
+  "don't move". Place cards hidden (their names are SurfaceGui text, which film2 can't draw).
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
@@ -228,6 +234,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **17 Oct (v97)**, stats on v96 (113 nights, 350 lobby visits, 233 players-in-a-night): first-nighters
+  quit mid-night 31% (was 42%), saw their night's end 72% (was 62%); heartbeat 24/35 passed; the
+  Halloween candy: 156 of 239 player-nights took some, 25 players reached 5 (Pumpkin), 1 reached 15;
+  joins in progress 6 of 206; invites used 0; solo nights still 87% no ending (size 2: 30%, 3: 17%,
+  4: 0%); median night 10.1 min (police 120 s since v94). Found: the **secret ending** lost players:
+  of 35 nights that reached it, 13 ended Forever Family (many in 60-80 s: ~9 strikes from mashing
+  STRUGGLE into his turn) and 12 were abandoned ~100 s in. v97: Normal forgives a 0.8 s reaction,
+  the first strike only warns, strikes cost 20 s and a quarter of the struggle, a free player caught
+  is put back at their chair (Hard unchanged: 30 s, half, re-tied), struggle 1.2%/press (was 0.8).
+  Next: `--since=97`: secret-ending outcomes, candy totals, solo nights.
 
 - **16 Oct (v96)**, the owner: "these reels are losing their effect. 0 ccu". Logs: traffic only in
   reel spikes (150-250 visits in ~2 h each: 13 Oct 20:00, 14 Oct 16:00, 15 Oct 01:00 UTC), ~5/h
@@ -377,7 +394,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 96).
+  (last published: version 97).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
