@@ -220,6 +220,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   walks round behind your friends and leans in over one, the struggle (shaky view), the stove's
   empty... he's beside you on the hit; RUN: out the dining-room door (rig on DiningDoor). Glitch
   "don't move". Place cards hidden (their names are SurfaceGui text, which film2 can't draw).
+  **Part 9** (`reel31`, `peak_horror_game_friends_9.mp4`): the boiler room (what a capture is): you
+  and a friend (avatar, arms behind, turned towards you) zip-tied to the pipes; the door opens, him
+  in the doorway, he goes; you struggle free, the friend shakes their head; hide at the boiler's back
+  corner; he comes back round past the water heater to your empty pipe, his head turns to the
+  boiler... and he's at you on the hit; RUN out the door. Glitch "he heard that". (The boiler's
+  burner faces +x: light our side of the room too or its back is a black block.)
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
