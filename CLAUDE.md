@@ -226,6 +226,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   corner; he comes back round past the water heater to your empty pipe, his head turns to the
   boiler... and he's at you on the hit; RUN out the door. Glitch "he heard that". (The boiler's
   burner faces +x: light our side of the room too or its back is a black block.)
+  **Part 10** (`reel32`, `peak_horror_game_friends_10.mp4`): the garage: the red car under a dim
+  bulb, the car keys on the pegboard (extras), the door from the house creaks open (rig on its
+  Panel/Inset/Knob), crouched behind the car's trunk while he walks down its far side, bends to look
+  in the back window, his head turns to the back of the car... he's round the corner on the hit; RUN
+  out the side door. Glitch "he's in here". (The sedan is solid inside: no shots from its seats.)
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
