@@ -20,7 +20,8 @@ local ok, err = pcall(function()
 	end })
 	-- fake marketplace + datastores
 	local finished = H.signal()
-	local MS = { PromptGamePassPurchaseFinished = finished, UserOwnsGamePassAsync = function(_, uid, id) return uid == 1 and id == PID.Battery end }
+	local productFinished = H.signal()
+	local MS = { PromptGamePassPurchaseFinished = finished, PromptProductPurchaseFinished = productFinished, UserOwnsGamePassAsync = function(_, uid, id) return uid == 1 and id == PID.Battery end }
 	H.services.MarketplaceService = MS
 	local serde = require("@lune/serde")
 	H.services.HttpService = { JSONEncode = function(_, v) return serde.encode("json", v) end, JSONDecode = function(_, v) return serde.decode("json", v) end }
@@ -127,6 +128,15 @@ local ok, err = pcall(function()
 	assert(tostring(r5):find("PurchaseGranted") and b:GetAttribute("RocketCredits") == 1, "saved for the next night")
 	assert(kv.Sales_v1[os.date("!%Y%m%d")].RocketNight[2] == 25, "and logged with its price")
 	assert(Stats.spendRocketCredits(b) == 1 and Stats.spendRocketCredits(b) == 0, "used once, all at once")
+	-- v98: the funnel: every purchase window that closes counts as asked, bought or not
+	local today = kv.Sales_v1[os.date("!%Y%m%d")]
+	assert(today["Ask:Colours"] and today["Ask:Colours"][1] == 1, "a pass window that sold")
+	assert(today["Ask:Supporter"] and today["Ask:Supporter"][1] == 1 and today["Ask:Supporter"][2] == 0, "a pass window closed without buying")
+	productFinished:Fire(2, RID, false)
+	productFinished:Fire(2, ctx.Config.Shop.Revive.Id, true)
+	assert(today["Ask:RocketNight"][1] == 1 and today["Ask:Revive"][1] == 1, "product windows")
+	assert(today.RocketNight[1] == 1, "asking isn't selling")
+	print("funnel ok")
 	-- the rocket launcher pass, bought: the pass is theirs
 	finished:Fire(a, PID.Rocket, true)
 	assert(a:GetAttribute("Pass_Rocket") == true, "rocket launcher granted")

@@ -296,15 +296,25 @@ def report_sales():
     if not days:
         print("\n== SALES: nothing logged yet")
         return
-    print("\n== SALES (per UTC day: count x, Robux spent)")
+    print("\n== SALES (per UTC day: count x, Robux spent; from v98 also how often each was asked)")
     total = Counter()
+    asks, sold = Counter(), Counter()
     for day in days:
         d = entry("Sales_v1", day)["data"] or {}
-        row = ", ".join(f"{k} {v[0]}x {v[1]}R$" for k, v in sorted(d.items(), key=lambda kv: -kv[1][1]))
-        print(f"  {day}: {row}")
-        for k, v in d.items():
+        buys = {k: v for k, v in d.items() if not k.startswith("Ask:")}
+        row = ", ".join(f"{k} {v[0]}x {v[1]}R$" for k, v in sorted(buys.items(), key=lambda kv: -kv[1][1]))
+        ask = ", ".join(f"{k[4:]} {v[0]}" for k, v in sorted(d.items(), key=lambda kv: -kv[1][0]) if k.startswith("Ask:"))
+        print(f"  {day}: {row}" + (f"\n      asked: {ask}" if ask else ""))
+        for k, v in buys.items():
             total[k] += v[1]
+            if any(a.startswith("Ask:") for a in d):
+                sold[k] += v[0]
+        for k, v in d.items():
+            if k.startswith("Ask:"):
+                asks[k[4:]] += v[0]
     print(f"  total: {sum(total.values())} R$  " + ", ".join(f"{k} {v}" for k, v in total.most_common()))
+    if asks:
+        print("  bought / asked (days with funnel logs): " + ", ".join(f"{k} {sold[k]}/{n}" for k, n in asks.most_common()))
 
 
 def main():

@@ -4,6 +4,7 @@
 	  small button under the inventory (never in the middle of the screen).
 	• ➕ INVITE A FRIEND while your night can still take players (acts I-II, room left): the invite
 	  brings them straight into this house (Social.invite carries the night's code; the lobby routes them).
+	  While he's chasing or charging within 70 studs of you it flashes and says STOP HIM.
 	• When someone knocks him flat with a rocket, everyone hears about it ("Sam knocked him flat with a
 	  ROCKET LAUNCHER!") and the button pulses for a moment.
 ]]
@@ -19,6 +20,8 @@ local rocketButton: TextButton
 local inviteButton: TextButton
 
 local HUNT = { SomeoneElse = true, Guest = true }
+local CHASE = { Chase = true, Charge = true }
+local chased = false -- he's after someone close to you right now: the rocket button says STOP HIM
 
 local function refresh()
 	if not rocketButton then
@@ -29,7 +32,7 @@ local function refresh()
 		and not player:GetAttribute("Escaped") and not player:GetAttribute("Monster")
 	local hunt = HUNT[workspace:GetAttribute("Act") or ""] == true and not workspace:GetAttribute("EndingActive")
 	rocketButton.Visible = p ~= nil and p.Id > 0 and canAct and hunt and not player:GetAttribute("Item_Rocket")
-	rocketButton.Text = "🚀 ROCKET  R$ " .. tostring(p and p.Price or 25)
+	rocketButton.Text = (chased and "🚀 STOP HIM  R$ " or "🚀 ROCKET  R$ ") .. tostring(p and p.Price or 25)
 	-- while this night can still take players: bring a friend straight into it (Social.invite)
 	if inviteButton then
 		inviteButton.Visible = canAct and workspace:GetAttribute("InviteOpen") == true and workspace:GetAttribute("NightCode") ~= nil
@@ -37,6 +40,31 @@ local function refresh()
 end
 
 Offers._refresh = refresh -- (tests)
+
+local function flash()
+	if rocketButton and rocketButton.Visible then
+		local base = Color3.fromRGB(110, 52, 10)
+		rocketButton.BackgroundColor3 = Color3.fromRGB(230, 120, 30)
+		ctx.UI.tween(rocketButton, 1.2, { BackgroundColor3 = base })
+	end
+end
+
+-- he's charging or chasing within reach of you: the moment a rocket is worth the most
+local function chaseChanged()
+	local was = chased
+	chased = false
+	if CHASE[workspace:GetAttribute("IntruderState") or ""] then
+		local him = ctx.Util and ctx.Util.creature and ctx.Util.creature()
+		local hr = him and him:FindFirstChild("HumanoidRootPart")
+		local me = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		chased = hr ~= nil and me ~= nil and (hr.Position - me.Position).Magnitude < 70
+	end
+	refresh()
+	if chased and not was then
+		flash()
+	end
+end
+Offers._chaseChanged = chaseChanged -- (tests)
 
 function Offers.isRocketShown(): boolean
 	return rocketButton ~= nil and rocketButton.Visible
@@ -51,11 +79,7 @@ function Offers.rocketHit(shooter: string)
 		ctx.HUD.notify(shooter .. " knocked him flat with a ROCKET LAUNCHER!", "info")
 	end
 	refresh()
-	if rocketButton and rocketButton.Visible then
-		local base = rocketButton.BackgroundColor3
-		rocketButton.BackgroundColor3 = Color3.fromRGB(230, 120, 30)
-		ctx.UI.tween(rocketButton, 1.2, { BackgroundColor3 = base })
-	end
+	flash()
 end
 
 function Offers.init(c)
@@ -116,6 +140,7 @@ function Offers.start()
 	end
 	workspace:GetAttributeChangedSignal("Act"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("EndingActive"):Connect(refresh)
+	workspace:GetAttributeChangedSignal("IntruderState"):Connect(chaseChanged)
 	refresh()
 end
 

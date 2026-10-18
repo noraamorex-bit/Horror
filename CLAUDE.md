@@ -156,6 +156,16 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   drinks, Casey 2 firecrackers that lure him); Pick your role 25 R$, in VIP. Sales logged in
   `Sales_v1` (pull_stats prints them). Admin SHOP tab. Head Start's description had been filtered ("pepper spray" gets hashed on the pass page).
 
+- **18 Oct (v98)**, the owner: "I need more Robux." 291 R$ in three days (Rocket pass 99, Become Him 2x,
+  Pick your role, donations, 2 revives of 74 deaths), falling; no data on how often anything was offered.
+  Done: **funnel** (every purchase window: `Ask:<key>` in Sales_v1 + `Ask` in the night log; pull_stats
+  prints bought / asked); **Starter Pack** (`Config.Shop.Starter`, 19 R$ once: 500 coins + a rocket + a
+  revive; top of the SHOP and a small button on the result card) **is off until the product exists**
+  (`Id = 0`: making it on Roblox was blocked here, the owner makes it or allows the API call);
+  **😈 BE HIM NEXT NIGHT** on a group's result card (bought now, used when the next night opens);
+  the 🚀 button says **STOP HIM** and flashes while he chases you. Also fixed: Mom's texts (and her
+  replies) wait until a scare is 4 s back (hunt_goal_test caught one landing 2 s after the music box).
+
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
 alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
@@ -245,6 +255,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **18 Oct (v98)**, stats since v97 (140 nights, 424 lobby visits, 8,275 visits, votes 18/20): solo
+  nights 94% no ending (size 2: 33%, 4: 0%); first nights saw the end 69%; veterans quit 49% (median
+  minute 1.1); heartbeat 35/49 passed; secret ending 2 Not Your Family / 2 Forever Family. Sales: see
+  Economy (v98). Owner to do: make the Starter Pack product (Creator Hub → Monetization → Developer
+  Products: "Starter Pack", 19 R$, icon `marketing/passes/starter_pack.png`) and send the id, or allow
+  the developer-products API call. Next: `--since=98`: bought / asked per product, then tune prices.
 
 - **17 Oct (v97)**, stats on v96 (113 nights, 350 lobby visits, 233 players-in-a-night): first-nighters
   quit mid-night 31% (was 42%), saw their night's end 72% (was 62%); heartbeat 24/35 passed; the
@@ -405,7 +422,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 97).
+  (last published: version 98).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

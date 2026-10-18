@@ -82,6 +82,37 @@ local ok, err = pcall(function()
 	assert(E.onReceipt({ ProductId = 123, PlayerId = 77, PurchaseId = "x" }) == R.Enum.ProductPurchaseDecision.NotProcessedYet, "not ours")
 	print("receipts ok")
 
+	-- v98: the Starter Pack, once: coins, a rocket and a revive for later; then it's off the menu
+	do
+		ctx.Config = H.load("RS/Shared/Config")
+		local st = ctx.Config.Shop.Starter
+		local wasId = st.Id
+		st.Id = 0
+		E._load(p)
+		assert(p:GetAttribute("StarterOffer") == nil, "not offered before the product exists")
+		st.Id = 4242
+		E._load(p)
+		assert(p:GetAttribute("StarterOffer") == true, "offered")
+		local rockets, revives = 0, credits
+		ctx.Stats.addRocketCredit = function() rockets += 1 return true end
+		local c0 = E.coins(p)
+		local g1 = E.onReceipt({ ProductId = st.Id, PlayerId = 77, PurchaseId = "starter-1" })
+		local g2 = E.onReceipt({ ProductId = st.Id, PlayerId = 77, PurchaseId = "starter-1" })
+		assert(g1 == R.Enum.ProductPurchaseDecision.PurchaseGranted and g2 == R.Enum.ProductPurchaseDecision.PurchaseGranted, "granted")
+		assert(E.coins(p) == c0 + st.Coins, "its coins, once: " .. E.coins(p))
+		assert(rockets == st.Rockets and credits == revives + st.Revives, "a rocket and a revive, once")
+		assert(p:GetAttribute("StarterOffer") == nil and E.hasStarter(p), "off the menu")
+		assert(saved.u77.Owned.StarterPack == true, "and saved as had")
+		E._save(77)
+		E._load(p)
+		assert(p:GetAttribute("StarterOffer") == nil, "still off after a rejoin")
+		-- (bought on a server they've already left: not taken until they're somewhere it can be given)
+		assert(E.onReceipt({ ProductId = st.Id, PlayerId = 78, PurchaseId = "starter-2" }) == R.Enum.ProductPurchaseDecision.NotProcessedYet, "waits for the player")
+		st.Id = wasId
+		ctx.Config = nil
+		print("starter pack ok")
+	end
+
 	-- crates: something new, then (eventually) a duplicate that pays back
 	E.addCoins(p, 20000)
 	local res = E.openCrate(p, "Basic")

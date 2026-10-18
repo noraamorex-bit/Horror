@@ -187,6 +187,12 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 - **Sales log**: every pass and product sold is counted per UTC day in `Sales_v1` (`pull_stats.py` prints it), and each player's owned passes go in the night log (`Pass`). Before this there was no way to see what sold except Creator Hub.
 - **Admin SHOP tab** (owner only): every pass on/off for yourself (this server, not saved), the paid gear (rocket, taser, spray, energy drinks, firecrackers), become him (or stop), a saved rocket or revive.
 
+### Monetization (v98: 291 R$ in three days, falling; nothing showed how often anything was offered)
+- **The funnel**: every purchase window that closes, bought or not, counts as `Ask:<key>` on the day's `Sales_v1` row and goes in the night log (`Ask`, "Revive+" / "Revive-"). `pull_stats.py` prints "bought / asked" per product. Read it before changing a price or an offer.
+- **Starter Pack** (developer product, `Config.Shop.Starter`, 19 R$, once per player): 500 coins, a rocket for the next night (RocketCredits) and a revive (ReviveCredits), worth 60 R$ bought apart. Saved as `Owned.StarterPack` in Economy_v1, in the same write as its coins and receipt; `StarterOffer` is on until then. Shown at the top of the SHOP's passes and as a small gold button on every result card. Off (hidden everywhere) while `Id = 0`: the product has to be made on Roblox first.
+- **BE HIM NEXT NIGHT**: a small red button on the result card when a group stays for another night. It buys Become him now (the night being over, it's saved as a free credit) and the client uses it as soon as the next night opens it (it asks on every change until the server says MonsterPending); with a saved one it's free.
+- **STOP HIM**: while he chases or charges within 70 studs of you, the 🚀 ROCKET button flashes and says STOP HIM.
+
 ### Repeat nights
 Every night has the full build-up (a shorter one for repeat groups, `Config.VeteranPace`, is off: the owner found a 7-minute night too fast).
 

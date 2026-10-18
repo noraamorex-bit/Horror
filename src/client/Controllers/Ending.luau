@@ -378,6 +378,69 @@ local function showCard(opts)
 		lobbyButton(row, "PLAY AGAIN", true, 2)
 	end
 
+	-- offers (v98), small and under the buttons: the one-time Starter Pack while it's on offer, and in a
+	-- group that's staying for another night, being him in it
+	do
+		local st = ctx.Config.Shop.Starter
+		local him = ctx.Config.Shop.BecomeHim
+		local starter = st and st.Id > 0 and player:GetAttribute("StarterOffer") == true
+		local beHim = opts.ReturnToLobby and opts.RestartIn and him and him.Id > 0 and #Players:GetPlayers() >= 2
+			and ctx.MonsterUI ~= nil
+		if starter or beHim then
+			order += 1
+			local offers = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, Parent = col })
+			UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = offers })
+			local function offer(text: string, bg: Color3, fg: Color3, order: number, onClick: () -> ()): TextButton
+				local b = UI.new("TextButton", {
+					Name = "Offer",
+					LayoutOrder = order,
+					Size = UDim2.fromOffset(0, 36),
+					AutomaticSize = Enum.AutomaticSize.X,
+					Text = text,
+					Font = UI.Font.Bold,
+					TextSize = 14,
+					TextColor3 = fg,
+					BackgroundColor3 = bg,
+					BackgroundTransparency = 0.1,
+					AutoButtonColor = true,
+					Parent = offers,
+				})
+				UI.corner(b, 8)
+				UI.new("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14), Parent = b })
+				b.Activated:Connect(onClick)
+				return b
+			end
+			if starter then
+				offer("🎁 STARTER PACK  ·  500 coins + rocket + revive  ·  R$ " .. tostring(st.Price), Color3.fromRGB(255, 205, 90), Color3.fromRGB(16, 14, 10), 1, function()
+					pcall(function()
+						MarketplaceService:PromptProductPurchase(player, st.Id)
+					end)
+				end).Name = "StarterOffer"
+			end
+			if beHim then
+				local saved = (tonumber(player:GetAttribute("MonsterCredits")) or 0) > 0
+				local b
+				-- (it says so once there's one saved for them: bought, or already had)
+				local function done()
+					if ctx.MonsterUI.wantsNext() and (tonumber(player:GetAttribute("MonsterCredits")) or 0) > 0 and b and b.Parent then
+						b.Text = "😈 YOU'LL BE HIM NEXT NIGHT"
+						b.AutoButtonColor = false
+					end
+				end
+				b = offer("😈 BE HIM NEXT NIGHT  ·  " .. (saved and "free" or ("R$ " .. tostring(him.Price))), Color3.fromRGB(110, 14, 18), Color3.fromRGB(255, 225, 225), 2, function()
+					-- (asks again if the last window was closed without buying)
+					ctx.MonsterUI.wantNext()
+					done()
+				end)
+				b.Name = "BeHimOffer"
+				local conn = player:GetAttributeChangedSignal("MonsterCredits"):Connect(done)
+				b.Destroying:Connect(function()
+					conn:Disconnect()
+				end)
+				done()
+			end
+		end
+	end
 	-- the night streak: another night soon pays more (EconomyService.nightRewards)
 	if type(coins) == "table" and (tonumber(coins.NextBonus) or 0) > 0 and opts.ReturnToLobby then
 		local streak = tonumber(coins.Chain) or 0

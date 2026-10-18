@@ -1,7 +1,8 @@
 --[[
 	Monster (client) — "Become him" (MonsterService).
 	• The small BECOME HIM button under the inventory, while someone could buy it this night
-	  (workspace BecomeHimOpen; free when you have a saved one: MonsterCredits).
+	  (workspace BecomeHimOpen; free when you have a saved one: MonsterCredits). BE HIM NEXT NIGHT on
+	  a co-op result card (Ending) buys one for the next night and uses it as soon as that night opens.
 	• Once you're him: the camera follows him, your controls steer him (the move direction goes to
 	  the server ten times a second), LUNGE / SEARCH (Shift / E, or the touch buttons), a slim bar
 	  at the top, the dark lit up a little for you, and every noise a survivor makes shows up as a
@@ -26,6 +27,7 @@ local vision: ColorCorrectionEffect
 local controls: any = nil
 local lastSent = Vector3.zero
 local sendClock = 0
+local wantNext = false -- (BE HIM NEXT NIGHT, pressed on the result card)
 
 function Monster.isActive(): boolean
 	return state ~= nil and state.Active == true
@@ -96,6 +98,32 @@ local function refreshBuy()
 	local saved = (tonumber(player:GetAttribute("MonsterCredits")) or 0) > 0
 	local price = ctx.Config.Shop.BecomeHim and ctx.Config.Shop.BecomeHim.Price or 50
 	buyButton.Text = saved and "😈 BECOME HIM  (free)" or ("😈 BECOME HIM  R$ " .. tostring(price))
+	-- said yes on last night's result card (BE HIM NEXT NIGHT): the saved one is used as soon as it can be
+	-- (asked again on every change until the server says yes: MonsterPending / Monster)
+	if player:GetAttribute("MonsterPending") or player:GetAttribute("Monster") then
+		wantNext = false
+	elseif wantNext and open and canAct and saved then
+		ctx.Remotes.MonsterAction:FireServer("UseCredit")
+	end
+end
+
+-- the result card's BE HIM NEXT NIGHT: free with a saved one, otherwise bought now (the server keeps
+-- it as a saved one, the night being over) and used when the next night opens it
+function Monster.wantNext()
+	wantNext = true
+	if (tonumber(player:GetAttribute("MonsterCredits")) or 0) <= 0 then
+		local p = ctx.Config.Shop.BecomeHim
+		if p and p.Id > 0 then
+			pcall(function()
+				MarketplaceService:PromptProductPurchase(player, p.Id)
+			end)
+		end
+	end
+	refreshBuy()
+end
+
+function Monster.wantsNext(): boolean
+	return wantNext
 end
 
 local function render()

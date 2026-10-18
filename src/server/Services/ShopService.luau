@@ -207,6 +207,8 @@ local function productKey(id: number): string
 		return "BecomeHim"
 	elseif S.RocketNight and id == S.RocketNight.Id then
 		return "RocketNight"
+	elseif S.Starter and S.Starter.Id > 0 and id == S.Starter.Id then
+		return "Starter"
 	end
 	local d = donationById(id)
 	if d then
@@ -239,6 +241,17 @@ local function rocketReceipt(info)
 	end
 	return Enum.ProductPurchaseDecision.NotProcessedYet
 end
+
+-- The funnel (v98): every purchase window that closes, bought or not, counts as "Ask:<key>" on the
+-- day's Sales_v1 row (so the sales lines read as n bought of n asked), and goes in the night's log
+-- with when it was asked ("Ask", "Revive+" / "Revive-").
+local function asked(player: Player?, key: string, bought: boolean)
+	Shop.logSale("Ask:" .. key, 0)
+	if player and ctx.Journey then
+		ctx.Journey.event(player, "Ask", key .. (bought and "+" or "-"))
+	end
+end
+Shop._asked = asked -- (tests)
 
 local onReceipt
 local function receipt(info)
@@ -416,8 +429,12 @@ function Shop.start()
 		sales = DataStoreService:GetDataStore("Sales_v1")
 	end)
 	MarketplaceService.ProcessReceipt = receipt
+	MarketplaceService.PromptProductPurchaseFinished:Connect(function(userId, productId, purchased)
+		asked(Players:GetPlayerByUserId(userId), productKey(productId), purchased == true)
+	end)
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
 		local pass = passById(passId)
+		asked(player, pass and pass.Key or ("Pass" .. tostring(passId)), purchased == true)
 		if purchased and pass then
 			if not player:GetAttribute("Pass_" .. pass.Key) then
 				Shop.logSale(pass.Key, pass.Price)

@@ -997,8 +997,17 @@ function Director.startMomNews()
 	state.MomTexting = true
 	local M = ctx.Story.MomNews
 	local myState = state
+	-- (never on top of a scare: a text waits until the last one is a few seconds back)
+	local function afterScare()
+		local since = os.clock() - (myState.LastScareAt or -1e9)
+		local gap = 4 * math.max(ctx.Config.TimeScale, 0.25)
+		if since < gap then
+			task.wait(gap - since)
+		end
+	end
 	task.spawn(function()
 		for _, line in M.Texts do
+			afterScare()
 			-- (Mom's texts belong to the quiet act: once the power's cut, nobody's reading them)
 			if state ~= myState or state.Act ~= "SmallThings" then
 				return
@@ -1009,6 +1018,7 @@ function Director.startMomNews()
 			myState.LastTextAt = os.clock()
 			task.wait(5.5)
 		end
+		afterScare()
 		if state ~= myState or state.Act ~= "SmallThings" then
 			return
 		end
@@ -1021,10 +1031,12 @@ function Director.startMomNews()
 		for _, p in ctx.Util.sessionPlayers() do
 			ctx.Phone.ask(p, "Mom", M.Ask, function(i)
 				task.wait(2.5)
+				afterScare()
 				if state == myState and state.Act == "SmallThings" then
 					ctx.Phone.deliver(p, "Mom", M.Answers[i] or M.Answers[1])
 					myState.LastTextAt = os.clock()
 					task.wait(3)
+					afterScare()
 					if state == myState and state.Act == "SmallThings" then
 						ctx.Phone.deliver(p, "Mom", M.After)
 						myState.LastTextAt = os.clock()

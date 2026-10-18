@@ -204,6 +204,41 @@ function Shop.start()
 		pages[name] = page
 	end
 
+	-- the Starter Pack (one time only, while it's on offer: StarterOffer), above the passes
+	do
+		local st = ctx.Config.Shop.Starter
+		local row = UI.new("Frame", { Name = "StarterRow", LayoutOrder = 0, Size = UDim2.new(1, -6, 0, 76), BackgroundColor3 = Color3.fromRGB(44, 34, 14), BackgroundTransparency = 0.05, Visible = false, ZIndex = 42, Parent = pages.Passes })
+		UI.corner(row, 10)
+		UI.stroke(row, GOLD, 1.5, 0.2)
+		UI.label({ Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -140, 0, 24), Text = "🎁 Starter Pack  <font size=\"13\" color=\"#78e696\">ONE TIME ONLY</font>", Font = UI.Font.Bold, TextSize = 17, TextColor3 = GOLD, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 43, Parent = row })
+		UI.label({ Position = UDim2.fromOffset(14, 32), Size = UDim2.new(1, -140, 0, 38), Text = st and string.format("%d coins, a rocket launcher for your next night and a revive for when he gets you.", st.Coins) or "", TextSize = 13, TextColor3 = UI.Color.Text, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 43, Parent = row })
+		local buy = UI.new("TextButton", {
+			AnchorPoint = Vector2.new(1, 0.5),
+			Position = UDim2.new(1, -12, 0.5, 0),
+			Size = UDim2.fromOffset(108, 40),
+			Text = "R$ " .. tostring(st and st.Price or ""),
+			Font = UI.Font.Bold,
+			TextSize = 16,
+			TextColor3 = Color3.fromRGB(14, 14, 16),
+			BackgroundColor3 = Color3.fromRGB(120, 230, 150),
+			ZIndex = 43,
+			Parent = row,
+		})
+		UI.corner(buy, 8)
+		buy.Activated:Connect(function()
+			if st and st.Id > 0 then
+				pcall(function()
+					MarketplaceService:PromptProductPurchase(player, st.Id)
+				end)
+			end
+		end)
+		local function show()
+			row.Visible = st ~= nil and st.Id > 0 and player:GetAttribute("StarterOffer") == true
+		end
+		player:GetAttributeChangedSignal("StarterOffer"):Connect(show)
+		show()
+	end
+
 	-- game passes
 	for i, pass in ctx.Config.Shop.Passes do
 		local row = UI.new("Frame", { LayoutOrder = i, Size = UDim2.new(1, -6, 0, 76), BackgroundColor3 = Color3.fromRGB(26, 26, 30), BackgroundTransparency = 0.1, ZIndex = 42, Parent = pages.Passes })

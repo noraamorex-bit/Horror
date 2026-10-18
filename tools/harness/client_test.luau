@@ -223,6 +223,57 @@ local ok, err = pcall(function()
 		assert(found, "the card's candy line")
 		print("candy line ok")
 	end
+	-- v98: the card's offers: the Starter Pack while it's on offer (and made on Roblox); BE HIM NEXT
+	-- NIGHT when a group stays for another night
+	do
+		local function find(name)
+			return H.unwrap(pg):FindFirstChild(name, true)
+		end
+		local st = ctx.Config.Shop.Starter
+		local wasId = st.Id
+		local wasGet = S.Players.GetPlayers
+		st.Id = 0
+		player:SetAttribute("StarterOffer", true)
+		R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 30, ReturnToLobby = true })
+		assert(not find("StarterOffer") and not find("BeHimOffer"), "no product made yet, and alone: no offers")
+		st.Id = 123
+		local other = H.wrap(roblox.Instance.new("Player"))
+		S.Players.GetPlayers = function() return { player, other } end
+		R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 30, ReturnToLobby = true })
+		local so, bh = find("StarterOffer"), find("BeHimOffer")
+		assert(so and string.find(so.Text, "R$ " .. st.Price, 1, true), "the Starter Pack on the card")
+		assert(bh and string.find(bh.Text, "R$", 1, true), "BE HIM NEXT NIGHT with its price: " .. tostring(bh and bh.Text))
+		-- pressed (and bought: a saved one): next night it's used as soon as it opens
+		local sent = {}
+		local realFire = R.MonsterAction.FireServer
+		R.MonsterAction.FireServer = function(_, a) table.insert(sent, a) end
+		ctx.MonsterUI.wantNext()
+		assert(ctx.MonsterUI.wantsNext(), "wanted")
+		player:SetAttribute("MonsterCredits", 1)
+		ctx.MonsterUI._refresh()
+		assert(#sent == 0, "not while the night's over")
+		local ws = H.unwrap(H.workspaceRoot)
+		local wasIn = player:GetAttribute("InGame")
+		player:SetAttribute("InGame", true)
+		ws:SetAttribute("BecomeHimOpen", true)
+		ctx.MonsterUI._refresh()
+		assert(sent[1] == "UseCredit", "used as soon as the next night opens it")
+		player:SetAttribute("MonsterPending", true)
+		ctx.MonsterUI._refresh()
+		assert(not ctx.MonsterUI.wantsNext() and #sent == 1, "done once the server says yes")
+		player:SetAttribute("MonsterPending", nil)
+		player:SetAttribute("MonsterCredits", nil)
+		ws:SetAttribute("BecomeHimOpen", nil)
+		player:SetAttribute("InGame", wasIn)
+		R.MonsterAction.FireServer = realFire
+		-- bought it: no more Starter offer
+		player:SetAttribute("StarterOffer", nil)
+		S.Players.GetPlayers = wasGet
+		R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 30, ReturnToLobby = true })
+		assert(not find("StarterOffer"), "once bought, it's gone")
+		st.Id = wasId
+		print("card offers ok")
+	end
 	R.Result.OnClientEvent:Fire({ Outcome = "Died", Title = "YOU DIED", Good = false, Line = "y", CanRevive = true, ReviveIn = 12, CanSpectate = false, ReturnToLobby = true })
 	assert(ctx.EndingUI.reviveLabel():find(tostring(ctx.Config.Shop.Revive.Price) .. " R$", 1, true), "revive priced on the card (Config's price until the live one loads)")
 	R.Revived.OnClientEvent:Fire()
@@ -326,6 +377,34 @@ local ok, err = pcall(function()
 		ws:SetAttribute("NightCode", nil)
 		refresh()
 		assert(not inv.Visible, "gone once the night closes")
+		-- v98: he's chasing someone near you: the button says STOP HIM; far away, it doesn't
+		do
+			local me = H.Instance.new("Model", H.workspaceRoot)
+			local myRoot = H.Instance.new("Part", me)
+			myRoot.Name = "HumanoidRootPart"
+			myRoot.Position = roblox.Vector3.new(0, 3, 0)
+			H.unwrap(player).Character = H.unwrap(me)
+			local cr = H.Instance.new("Model", H.workspaceRoot)
+			local hr = H.Instance.new("Part", cr)
+			hr.Name = "HumanoidRootPart"
+			hr.Position = roblox.Vector3.new(40, 3, 0)
+			S.CollectionService:AddTag(cr, "Creature")
+			ws:SetAttribute("IntruderState", "Chase")
+			ctx.Offers._chaseChanged()
+			assert(btn.Visible and string.find(btn.Text, "STOP HIM", 1, true), "chased: " .. btn.Text)
+			ws:SetAttribute("IntruderState", "Patrol")
+			ctx.Offers._chaseChanged()
+			assert(not string.find(btn.Text, "STOP HIM", 1, true), "not once he stops")
+			hr.Position = roblox.Vector3.new(200, 3, 0)
+			ws:SetAttribute("IntruderState", "Charge")
+			ctx.Offers._chaseChanged()
+			assert(not string.find(btn.Text, "STOP HIM", 1, true), "not when he's after someone far away")
+			ws:SetAttribute("IntruderState", nil)
+			ctx.Offers._chaseChanged()
+			S.CollectionService:RemoveTag(cr, "Creature")
+			cr:Destroy()
+			me:Destroy() -- (the harness can't set Character back to nil)
+		end
 		ws:SetAttribute("Act", wasAct)
 		player:SetAttribute("InGame", wasIn)
 		refresh()

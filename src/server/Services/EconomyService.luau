@@ -180,6 +180,9 @@ local function mirror(player: Player)
 	player:SetAttribute("TitleColor", title and title.Color or nil)
 	player:SetAttribute("TrailId", d.Equip.Trail)
 	player:SetAttribute("Candy", d.Candy)
+	-- the Starter Pack is on offer until it's bought (and once the product exists)
+	local st = ctx and ctx.Config and ctx.Config.Shop.Starter
+	player:SetAttribute("StarterOffer", (st and st.Id > 0 and not d.Owned.StarterPack) or nil)
 end
 
 ---------------------------------------------------------------------------
@@ -838,18 +841,37 @@ end
 ---------------------------------------------------------------------------
 -- Robux coin packs (ShopService routes the receipts here)
 ---------------------------------------------------------------------------
+-- the Starter Pack (Config.Shop.Starter): coins like a pack, plus a rocket and a revive for later;
+-- one per player (Owned.StarterPack, saved with the coins in the same write)
+local function starter(productId: number): any
+	local s = ctx and ctx.Config and ctx.Config.Shop.Starter
+	if s and s.Id > 0 and productId == s.Id then
+		return { Coins = s.Coins, Starter = s }
+	end
+	return nil
+end
+
 function Economy.isPack(productId: number): boolean
-	return Cat.pack(productId) ~= nil
+	return Cat.pack(productId) ~= nil or starter(productId) ~= nil
+end
+
+function Economy.hasStarter(player: Player): boolean
+	local d = docs[player.UserId]
+	return d ~= nil and d.Owned.StarterPack == true
 end
 
 function Economy.onReceipt(info): Enum.ProductPurchaseDecision
-	local pack = Cat.pack(info.ProductId)
+	local pack = Cat.pack(info.ProductId) or starter(info.ProductId)
 	if not pack then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	local userId = info.PlayerId
 	local key = tostring(info.PurchaseId)
 	local already = false
+	-- (the starter's rocket and revive are credits on the player's stats: they must be here for it)
+	if pack.Starter and not (Players:GetPlayerByUserId(userId) and docs[userId]) then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
 	if store then
 		local ok = pcall(function()
 			store:UpdateAsync("u" .. userId, function(old)
@@ -859,6 +881,9 @@ function Economy.onReceipt(info): Enum.ProductPurchaseDecision
 					return nil
 				end
 				d.Coins += pack.Coins
+				if pack.Starter then
+					d.Owned.StarterPack = true
+				end
 				table.insert(d.Receipts, key)
 				while #d.Receipts > 40 do
 					table.remove(d.Receipts, 1)
@@ -879,16 +904,32 @@ function Economy.onReceipt(info): Enum.ProductPurchaseDecision
 				pending[userId].Coins += pack.Coins
 			end
 			table.insert(d.Receipts, key)
+			if pack.Starter then
+				d.Owned.StarterPack = true
+			end
 			if player then
 				mirror(player)
+			end
+		end
+		if player and pack.Starter then
+			for _ = 1, pack.Starter.Rockets or 0 do
+				if ctx.Stats and ctx.Stats.addRocketCredit then
+					ctx.Stats.addRocketCredit(player)
+				end
+			end
+			for _ = 1, pack.Starter.Revives or 0 do
+				if ctx.Stats and ctx.Stats.addReviveCredit then
+					ctx.Stats.addReviveCredit(player)
+				end
 			end
 		end
 		if player then
 			result(player, { Kind = "Pack", Coins = pack.Coins })
 			if ctx.Telemetry and docs[userId] then
-				ctx.Telemetry.coins(player, pack.Coins, docs[userId].Coins, "IAP", "Pack" .. pack.Coins)
+				ctx.Telemetry.coins(player, pack.Coins, docs[userId].Coins, "IAP", pack.Starter and "Starter" or ("Pack" .. pack.Coins))
 			end
-			ctx.Remotes.Notify:FireClient(player, "+" .. pack.Coins .. " coins. Thank you!", "done")
+			ctx.Remotes.Notify:FireClient(player, pack.Starter and ("Starter Pack: +" .. pack.Coins .. " coins, a rocket for your next night and a revive. Thank you!")
+				or ("+" .. pack.Coins .. " coins. Thank you!"), "done")
 		end
 	end
 	return Enum.ProductPurchaseDecision.PurchaseGranted

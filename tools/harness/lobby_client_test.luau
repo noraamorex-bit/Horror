@@ -41,6 +41,10 @@ local ok, err = pcall(function()
 	player:SetAttribute("Coins", 1234)
 	player:SetAttribute("Candy", 7)
 	S.TeleportService = { SetTeleportGui = function() end }
+	-- (v98: the Starter Pack row, once the product exists and while it's on offer)
+	local starterId = ctx.Config.Shop.Starter.Id
+	ctx.Config.Shop.Starter.Id = 4242
+	player:SetAttribute("StarterOffer", true)
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -67,6 +71,9 @@ local ok, err = pcall(function()
 	if Cat.halloweenLive(os.time()) then
 		assert(hl.Visible and string.find(hl.Text, "7", 1, true) and string.find(hl.Text, "Candy Corn at 15", 1, true), "candy and the next reward: " .. hl.Text)
 	end
+	local row = H.unwrap(pg):FindFirstChild("StarterRow", true)
+	assert(row and row.Visible, "the Starter Pack at the top of the shop")
+	ctx.Config.Shop.Starter.Id = starterId
 	-- count UI objects
 	local n = 0
 	for _ in H.unwrap(pg):GetDescendants() do n += 1 end
