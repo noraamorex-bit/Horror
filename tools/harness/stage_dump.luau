@@ -77,6 +77,7 @@ local ok, err = pcall(function()
 				n = d.Name, sh = shape, s = { d.Size.X, d.Size.Y, d.Size.Z }, c = { d.CFrame:GetComponents() },
 				col = { math.floor(d.Color.R * 255), math.floor(d.Color.G * 255), math.floor(d.Color.B * 255) },
 				mat = d.Material.Name, tr = d.Transparency,
+				art = d:GetAttribute("ArtDecal"), -- (a painting or poster: the decal World/Props puts on its front)
 				m = mesh and { t = mesh.MeshType.Name, s = { mesh.Scale.X, mesh.Scale.Y, mesh.Scale.Z }, o = { mesh.Offset.X, mesh.Offset.Y, mesh.Offset.Z } } or nil,
 				ph = (function()
 					local a = d.Parent

@@ -1190,9 +1190,10 @@ end
 
 function Kit.photoFrame(parent, cf: CFrame, w: number, h: number, frameColor: Color3, seed: number?)
 	-- a small frame standing on a surface, leaning back
-	local p = cf * CF(0, h / 2 + 0.05, 0) * ANG(rad(12), 0, 0)
+	-- (high enough that the tilted frame's bottom edge rests on the surface instead of sinking in)
+	local p = cf * CF(0, (h / 2 + 0.15) * math.cos(rad(12)) + 0.12 * math.sin(rad(12)) + 0.01, 0) * ANG(rad(12), 0, 0)
 	local m = Kit.picture(parent, p, w, h, frameColor, seed)
-	Kit.box(m, "Stand", cf * CF(0, h * 0.3, 0.3) * ANG(rad(-25), 0, 0), V(0.1, h * 0.6, 0.05), frameColor, M.Wood)
+	Kit.box(m, "Stand", cf * CF(0, h * 0.3 * math.cos(rad(25)) + 0.03, 0.3) * ANG(rad(-25), 0, 0), V(0.1, h * 0.6, 0.05), frameColor, M.Wood)
 	return m
 end
 

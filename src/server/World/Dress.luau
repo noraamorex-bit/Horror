@@ -36,7 +36,12 @@ Dress.Posters = {
 	Mars = 15957284733, -- the old "Flight to Mars" film poster (532 x 1023)
 }
 
-function Dress.build(ctx, root: Instance)
+-- returns every part it added (World keeps them as refs.Dressing; dress_test checks them)
+function Dress.build(ctx, root: Instance): { BasePart }
+	local existing = {}
+	for _, d in root:GetDescendants() do
+		existing[d] = true
+	end
 	local L = ctx.Layout
 	local G, U = L.Y.Ground, L.Y.Upstairs
 	local KM, KC = Kit.M, Kit.C
@@ -132,7 +137,7 @@ function Dress.build(ctx, root: Instance)
 				Kit.box(m, "ChairLeg", cf * CF(sx * 0.4, (seatY - 0.06) / 2, sz * 0.4), V(0.12, seatY - 0.06, 0.12), color, KM.Wood)
 			end
 		end
-		Kit.soft(m, "ChairSeat", cf * CF(0, seatY, 0), V(1.0, 0.12, 1.0), 0.04, color, KM.Wood)
+		Kit.soft(m, "ChairSeat", cf * CF(0, seatY - 0.04, 0), V(1.0, 0.2, 1.0), 0.05, color, KM.Wood)
 		Kit.soft(m, "ChairBack", cf * CF(0, seatY + 0.6, 0.44), V(1.0, 0.9, 0.1), 0.05, color, KM.Wood)
 		for _, sx in { -1, 1 } do
 			Kit.box(m, "BackPost", cf * CF(sx * 0.4, seatY + 0.3, 0.44), V(0.1, 0.5, 0.1), color, KM.Wood)
@@ -210,20 +215,20 @@ function Dress.build(ctx, root: Instance)
 	do
 		local jamie = room("Jamie")
 		-- a dresser with the old TV and the console on it
-		local dcf = F(-16.4, U, 13.45, PZ)
+		local dcf = F(-16.4, U, 13.7, PZ)
 		local _, dH = Kit.dresser(jamie, dcf, 5.0, Kit.C.WoodMid)
-		Kit.tv(jamie, F(-17.4, U + dH, 13.25, PZ), 2.8, 1.7, true)
-		Kit.gameConsole(jamie, F(-14.9, U + dH, 13.35, PZ))
-		Kit.controller(jamie, F(-14.8, U + dH + 0.4, 13.5, PZ) * ANG(0, rad(20), 0))
+		Kit.tv(jamie, F(-17.4, U + dH, 13.5, PZ), 2.8, 1.7, true)
+		Kit.gameConsole(jamie, F(-14.9, U + dH, 13.6, PZ))
+		Kit.controller(jamie, F(-14.8, U + dH + 0.4, 13.75, PZ) * ANG(0, rad(20), 0))
 		-- posters
 		poster(jamie, F(-16.4, U + 8.0, 12.395, PZ), 2.2, 2.8, Dress.Posters.Basketball, Color3.fromRGB(40, 30, 30))
 		poster(jamie, F(-8.43, U + 7.4, 16.0, NX), 2.3, 3.25, Dress.Posters.Space, Color3.fromRGB(150, 170, 200))
 		poster(jamie, F(-8.43, U + 7.4, 19.3, NX) * ANG(0, 0, rad(2)), 1.75, 3.35, Dress.Posters.Mars, Color3.fromRGB(200, 120, 60))
 		-- a basketball in the corner
-		local ball = V(-10.3, U + 0.5, 13.3)
+		local ball = V(-10.3, U + 0.52, 13.3)
 		Kit.ball(jamie, "Basketball", ball, 1.0, Color3.fromRGB(214, 108, 44), KM.Rubber)
-		Kit.vcyl(jamie, "BallSeam", CF(ball) * ANG(rad(20), 0, 0), 0.04, 1.02, Color3.fromRGB(30, 22, 20), KM.Rubber)
-		Kit.vcyl(jamie, "BallSeam", CF(ball) * ANG(rad(20), 0, rad(90)), 0.04, 1.02, Color3.fromRGB(30, 22, 20), KM.Rubber)
+		Kit.vcyl(jamie, "BallSeam", CF(ball), 0.04, 1.01, Color3.fromRGB(30, 22, 20), KM.Rubber)
+		Kit.vcyl(jamie, "BallSeam", CF(ball) * ANG(0, rad(30), rad(90)), 0.04, 1.01, Color3.fromRGB(30, 22, 20), KM.Rubber)
 		-- dumbbells by the wall
 		for i, p in { V(-27.0, 0, 13.3), V(-25.7, 0, 13.7) } do
 			local d = CF(p.X, U + 0.24, p.Z) * ANG(0, rad(i * 14), 0)
@@ -256,7 +261,7 @@ function Dress.build(ctx, root: Instance)
 		local rugY = U + 0.075 -- (the top of the round rug's inner disc, 4 studs round (24, 17))
 		local tent = holder(lily, "Tipi", F(20.2, U, 10.6, PZ), V(3.6, 4.6, 3.6), Color3.fromRGB(232, 220, 196), KM.Fabric)
 		Kit.collider(tent, F(20.2, U, 10.6, PZ) * CF(0, 1.6, 0), V(2.6, 3.2, 2.6))
-		holder(lily, "RockingHorse", F(26.2, U, 27.6, NZ), V(3.3, 2.4, 1.1), Color3.fromRGB(176, 120, 70), KM.Wood, true)
+		holder(lily, "RockingHorse", F(30.3, U, 17.5, NX), V(3.3, 2.4, 1.1), Color3.fromRGB(176, 120, 70), KM.Wood, true)
 		-- the tea party: a little table, three chairs, two of her bears and the tea set
 		local tc = V(24, rugY, 15.2)
 		local tcf = CF(tc)
@@ -286,9 +291,10 @@ function Dress.build(ctx, root: Instance)
 			Kit.box(lily, "ToyBlock", CF(b[1].X, rugY + b[1].Y + 0.225, b[1].Z) * ANG(0, rad(i * 23), 0), V(0.45, 0.45, 0.45), b[2], KM.Wood)
 		end
 		-- a low toy shelf by the fish tank, a bear and a ball on top
-		Kit.bookcase(lily, F(38.65, U, 13.6, NX), 3.6, 1.1, 3.6, 2, Color3.fromRGB(240, 236, 230), 77)
-		Kit.teddy(lily, F(38.7, U + 3.7, 12.7, NX), 0.6, Color3.fromRGB(240, 220, 180))
-		Kit.ball(lily, "Ball", V(38.6, U + 3.7 + 0.35, 14.6), 0.7, Color3.fromRGB(110, 170, 230), KM.Plastic)
+		-- (its own key: the store bookshelf that replaces the house's bookcases is dark wood and full of old books)
+		Kit.bookcase(lily, F(38.5, U, 13.6, NX), 3.6, 1.1, 3.6, 2, Color3.fromRGB(240, 236, 230), 77):SetAttribute("PropKey", "ToyShelf")
+		Kit.teddy(lily, F(38.55, U + 3.8, 12.7, NX), 0.6, Color3.fromRGB(240, 220, 180))
+		Kit.ball(lily, "Ball", V(38.5, U + 3.8 + 0.35, 14.6), 0.7, Color3.fromRGB(110, 170, 230), KM.Plastic)
 	end
 
 	---------------------------------------------------------------------------
@@ -312,12 +318,13 @@ function Dress.build(ctx, root: Instance)
 	---------------------------------------------------------------------------
 	do
 		local uhall = room("UpperHall")
-		Kit.bookcase(uhall, F(-4.6, U, 28.6, NZ), 4.6, 1.1, 4.4, 2, Kit.C.WoodMid, 61)
-		Kit.photoFrame(uhall, F(-5.6, U + 4.5, 28.7, NZ), 0.9, 0.7, Kit.C.WoodDark, 62)
-		Kit.plant(uhall, F(-3.3, U + 4.5, 28.7, NZ), 0.6, "leafy", Color3.fromRGB(236, 232, 222))
-		holder(uhall, "LaundryBasket", F(1.4, U, 28.25, NZ) * ANG(0, rad(-6), 0), V(2.3, 1.1, 1.8), Color3.fromRGB(236, 236, 232), KM.Plastic, true)
+		-- (kept Kit-built: the store bookshelf would be taller than this and swallow what stands on top)
+		Kit.bookcase(uhall, F(-4.6, U, 28.6, NZ), 4.6, 1.1, 4.4, 2, Kit.C.WoodMid, 61):SetAttribute("PropKey", "LowBookcase")
+		Kit.photoFrame(uhall, F(-5.6, U + 4.6, 28.7, NZ), 0.9, 0.7, Kit.C.WoodDark, 62)
+		Kit.plant(uhall, F(-3.3, U + 4.6, 28.7, NZ), 0.6, "leafy", Color3.fromRGB(236, 232, 222))
+		holder(uhall, "LaundryBasket", F(1.4, U, 28.05, NZ) * ANG(0, rad(-6), 0), V(2.3, 1.1, 1.8), Color3.fromRGB(236, 236, 232), KM.Plastic, true)
 		for i, c in { Color3.fromRGB(226, 220, 206), Color3.fromRGB(230, 180, 190), Color3.fromRGB(110, 140, 170) } do
-			Kit.ellipsoid(uhall, "Clothes", F(1.4, U, 28.25, NZ) * CF((i - 2) * 0.5, 0.95 + i * 0.03, ((i % 2) - 0.5) * 0.4) * ANG(0, i * 1.1, rad(i * 5)), V(1.1, 0.3, 0.8), c, KM.Fabric)
+			Kit.ellipsoid(uhall, "Clothes", F(1.4, U, 28.05, NZ) * CF((i - 2) * 0.5, 0.95 + i * 0.03, ((i % 2) - 0.5) * 0.4) * ANG(0, i * 1.1, rad(i * 5)), V(1.1, 0.3, 0.8), c, KM.Fabric)
 		end
 		Kit.plant(uhall, F(-6.7, U, -28.6, PX), 1.3, "tree")
 	end
@@ -367,6 +374,14 @@ function Dress.build(ctx, root: Instance)
 		toothbrushCup(hbath, F(19.6, vTop, -4.85, PZ), Color3.fromRGB(150, 190, 220))
 		hamper(hbath, F(14.3, U, 6.55, NZ), 1.3, 2.2, Color3.fromRGB(200, 90, 90))
 	end
+
+	local added = {}
+	for _, d in root:GetDescendants() do
+		if d:IsA("BasePart") and not existing[d] then
+			table.insert(added, d)
+		end
+	end
+	return added
 end
 
 return Dress

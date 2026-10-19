@@ -62,3 +62,9 @@ Extra harness checks (run with the lune harness, `env.luau` from the scratch har
   after the ending), coins in and out.
 - `economy_test.luau` also covers levels: a veteran counted for the first time gets titles but no back
   pay, crossing levels pays each once, level-up coins aren't XP, the highest paid level wins a merge.
+- `dress_test.luau`: the lived-in layer (World/Dress, kept as `refs.Dressing`): none of its parts in a
+  door's swing, in front of a doorway / arch / open window, on a hiding spot's way out or in the view
+  from inside, on or around a prompt, by one of his nav nodes or on a candy spot; nothing sunk into the
+  house's furniture; every stand-in has a Props entry; under 1,200 parts.
+- `env.luau` loads the code of the checkout it's run from (`tools/harness` inside it), so a git
+  worktree tests its own changes.

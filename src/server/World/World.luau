@@ -33,7 +33,7 @@ function World.build()
 	Finish.build(ctx, f)
 	Interior.build(ctx, f, refs)
 	-- the lived-in layer: laundry, posters, toasters, toys
-	Dress.build(ctx, f)
+	refs.Dressing = Dress.build(ctx, f)
 	Exterior.build(ctx, f, refs)
 	Neighborhood.build(ctx, f)
 	-- under it all: what he dug (the secret ending, FinaleService)
