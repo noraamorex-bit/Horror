@@ -119,6 +119,15 @@ function Rig.build(Builder): Model
 		return stick(to, name, V(len, thick, thick), cf, color or BODY, nil, { Shape = Enum.PartType.Cylinder })
 	end
 
+	-- a long bone that thins from a to b: stacked cylinders, each a little thinner than the last
+	local function taper(to: BasePart, a: Vector3, b: Vector3, t0: number, t1: number)
+		local n = 3
+		for i = 0, n - 1 do
+			local k = i / (n - 1)
+			bone(to, "Bone", a:Lerp(b, i / n), a:Lerp(b, (i + 1) / n + (i < n - 1 and 0.02 or 0)), t0 + (t1 - t0) * k)
+		end
+	end
+
 	-- the jointed parts (R15 names: the client's animator looks the joints up by them). Each is the
 	-- ball at its own joint; the bone to the next joint is welded on.
 	local root = part("HumanoidRootPart", V(2, 2, 1), CF(P.Root), BODY, nil, { Transparency = 1, CanCollide = true, Massless = false, CastShadow = false })
@@ -168,14 +177,16 @@ function Rig.build(Builder): Model
 		local sx = s == "Left" and -1 or 1
 		local J = side(sx)
 		local ua, la, ul, ll = limbs[s .. "UpperArm"], limbs[s .. "LowerArm"], limbs[s .. "UpperLeg"], limbs[s .. "LowerLeg"]
-		bone(ua, "Bone", J.Shoulder, J.Elbow, 0.24)
+		taper(ua, J.Shoulder, J.Elbow, 0.27, 0.17)
 		bone(ua, "Bone", J.Shoulder + V(0, -0.15, 0), J.Shoulder:Lerp(J.Elbow, 0.45), 0.3) -- (what's left of a muscle)
-		bone(la, "Bone", J.Elbow, J.Wrist, 0.19)
-		ball(la, "Knuckle", 0.24, J.Wrist, JOINT)
-		bone(ul, "Bone", J.Hip, J.Knee, 0.3)
+		taper(la, J.Elbow, J.Wrist, 0.2, 0.12)
+		bone(la, "Tendon", J.Elbow + V(0, -0.2, -0.09), J.Wrist + V(0, 0.25, -0.06), 0.055) -- (strung like a wire)
+		ball(la, "Knuckle", 0.2, J.Wrist, JOINT)
+		taper(ul, J.Hip, J.Knee, 0.33, 0.2)
 		bone(ul, "Bone", J.Hip + V(0, -0.1, 0), J.Hip:Lerp(J.Knee, 0.5), 0.36)
-		bone(ll, "Bone", J.Knee, J.Ankle, 0.23)
-		ball(ll, "Knuckle", 0.26, J.Ankle, JOINT)
+		taper(ll, J.Knee, J.Ankle, 0.24, 0.13)
+		bone(ll, "Tendon", J.Knee + V(0, -0.25, 0.12), J.Ankle + V(0, 0.3, 0.09), 0.07) -- (the back of the calf: nothing but cord)
+		ball(ll, "Knuckle", 0.22, J.Ankle, JOINT)
 		-- the foot: long, narrow, three toes ending in pale nails
 		local foot = limbs[s .. "Foot"]
 		for i, tx in { -0.09, 0, 0.09 } do
@@ -185,7 +196,8 @@ function Rig.build(Builder): Model
 		end
 
 		-- the hand: a narrow palm, four long fingers (two joints each, curled in) and a thumb.
-		-- Every nail pale and split.
+		-- Every nail pale and split. Each finger hangs on its own joint ("LeftFinger1".. at the
+		-- knuckle): they flex, drum one after another, and claw (CreaturePose).
 		local hand = limbs[s .. "Hand"]
 		local palmBottom = J.Wrist + V(0, -0.52, -0.01)
 		for i, fx in { -0.1, -0.035, 0.035, 0.1 } do
@@ -193,11 +205,13 @@ function Rig.build(Builder): Model
 			local a = palmBottom + V(fx * sx, 0, 0)
 			local mid = a + V(fx * sx * 0.3, -len, -0.08 - 0.02 * i)
 			local tip = mid + V(fx * sx * 0.15, -len * 0.85, -0.3)
-			bone(hand, "Finger", a, mid, 0.065)
-			ball(hand, "Knuckle", 0.08, mid, BODY)
-			bone(hand, "Finger", mid, tip, 0.055)
+			local finger = ball(nil, s .. "Finger" .. i, 0.085, a, BODY)
+			joint(s .. "Finger" .. i, hand, finger, a)
+			bone(finger, "Finger", a, mid, 0.065)
+			ball(finger, "Knuckle", 0.08, mid, BODY)
+			bone(finger, "Finger", mid, tip, 0.055)
 			local nailDir = (tip - mid).Unit
-			bone(hand, "Nail", tip - nailDir * 0.02, tip + nailDir * 0.17, 0.05, NAIL)
+			bone(finger, "Nail", tip - nailDir * 0.02, tip + nailDir * 0.17, 0.05, NAIL)
 		end
 		local thumbA = J.Wrist + V(-sx * 0.16, -0.2, -0.06)
 		local thumbTip = thumbA + V(-sx * 0.12, -0.55, -0.22)
@@ -257,13 +271,15 @@ function Rig.build(Builder): Model
 		-- not quite level: staring at you
 		ellipsoid(stick(head, "EyeRim", V(0.33, 0.37, 0.1), onMask(sx * 0.155, 0.2, -0.05), MASK_DIRT))
 		ellipsoid(stick(head, "EyeHole", V(0.27, 0.31, 0.1), onMask(sx * 0.155, 0.2, -0.03), HOLE))
-		ellipsoid(stick(head, "Glint", V(0.055, 0.055, 0.03), onMask(sx * 0.15, sx < 0 and 0.17 or 0.21, 0.0), GLINT, Enum.Material.Neon))
+		ellipsoid(stick(head, "Glint", V(0.055, 0.055, 0.03), onMask(sx * 0.15, sx < 0 and 0.17 or 0.21, 0.03), GLINT, Enum.Material.Neon))
 		-- what's run down from them
 		stick(head, "Streak", V(0.03, 0.42, 0.03), onMask(sx * 0.2, -0.1, -0.008) * CFrame.Angles(0, 0, sx * 0.06), Color3.fromRGB(40, 36, 34))
 	end
 	-- the grin: stretched right across the face, cheek to cheek, curling up at the corners, two
-	-- rows of small teeth with black between them
-	ellipsoid(stick(head, "Mouth", V(0.5, 0.17, 0.1), onMask(0, -0.3, -0.03), HOLE))
+	-- rows of small teeth with black between them. It opens: the client stretches the black down
+	-- the face and drops the lower teeth with it, through their meshes' scale and offset
+	-- (CreaturePose.setJaw), the mask's mouth pulled open like a scream.
+	ellipsoid(stick(head, "Maw", V(0.5, 0.17, 0.1), onMask(0, -0.3, -0.03), HOLE))
 	for _, sx in { -1, 1 } do
 		ellipsoid(stick(head, "Mouth", V(0.16, 0.09, 0.1), onMask(sx * 0.25, -0.22, -0.035) * CFrame.Angles(0, 0, sx * 0.6), HOLE))
 	end
@@ -272,7 +288,10 @@ function Rig.build(Builder): Model
 		local curve = (x / 0.24) ^ 2 * 0.06
 		stick(head, "Tooth", V(0.032, 0.075, 0.03), onMask(x, -0.245 + curve, -0.012), TOOTH)
 		if math.abs(i) <= 4 then
-			stick(head, "Tooth", V(0.032, 0.065, 0.03), onMask(x, -0.352 + curve * 0.6, -0.012), TOOTH)
+			local low = stick(head, "LowerTooth", V(0.032, 0.065, 0.03), onMask(x, -0.352 + curve * 0.6, -0.012), TOOTH)
+			local m = Instance.new("SpecialMesh")
+			m.MeshType = Enum.MeshType.Brick
+			m.Parent = low
 		end
 	end
 	-- cracks from the brow down past the left eye, and across the chin
@@ -297,7 +316,7 @@ function Rig.build(Builder): Model
 		local y = dir.Unit
 		local z = (faceOut - y * faceOut:Dot(y)).Unit
 		local x = y:Cross(z).Unit
-		return stick(head, name, V(width, dir.Magnitude, 0.035), CFrame.fromMatrix((a + b) / 2, x, y, z), HAIR)
+		return stick(head, name, V(width, dir.Magnitude, 0.035), CFrame.fromMatrix((a + b) / 2, x, y, z), HAIR, Enum.Material.Fabric)
 	end
 	for i = 0, 13 do
 		local a = math.rad(-125 + i * (250 / 13)) -- (0 = straight back)
@@ -310,13 +329,13 @@ function Rig.build(Builder): Model
 		strip("Hair", top, over, w, dir + V(0, 0.6, 0))
 		strip("Hair", over - V(0, 0.04, 0), fall, w * 0.85, dir)
 	end
-	-- down the edges of the mask: two on the left, one on the right
-	for _, st in { { -0.3, 1.2, -0.02 }, { -0.24, 0.9, 0.01 }, { 0.3, 0.8, 0.02 } } do
+	-- down the edges of the mask, one each side (any further in and they read as bars across it)
+	for _, st in { { -0.33, 1.15, -0.02 }, { 0.33, 0.8, 0.02 } } do
 		local top = hc + V(st[1] * 0.7, 0.6, -0.16)
 		local over = V(P.Mask.X + st[1], P.Mask.Y + 0.42, P.Mask.Z - 0.22)
 		local bottom = over + V(st[3], -st[2], -0.06)
-		strip("Hair", top, over, 0.06, V(0, 0.5, -1))
-		strip("Hair", over, bottom, 0.05, V(0, 0, -1))
+		strip("Fringe", top, over, 0.05, V(0, 0.5, -1))
+		strip("Fringe", over, bottom, 0.04, V(0, 0, -1))
 	end
 
 	-- where the server thinks he sees and hears from (perception, sight lines, his breathing): an

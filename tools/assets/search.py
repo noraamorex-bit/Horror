@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Creator Store search → a labelled contact sheet of thumbnails, to shortlist models by eye.
 
-Usage: python3 tools/assets/search.py <outDir> "<keyword>" [count=24]
+Usage: python3 tools/assets/search.py <outDir> "<keyword>" [count=24] [category=10]
+(category 10 = models, 13 = decals/images, 3 = audio)
 Writes <outDir>/<keyword>.png (thumbnails with their asset ids) and <keyword>.json (id, name,
 creator, favourites). Free models only (the marketplace search returns those).
 """
@@ -21,9 +22,10 @@ def get(url):
 def main():
     out, kw = sys.argv[1], sys.argv[2]
     n = int(sys.argv[3]) if len(sys.argv) > 3 else 24
+    cat = int(sys.argv[4]) if len(sys.argv) > 4 else 10
     os.makedirs(out, exist_ok=True)
     q = urllib.parse.quote(kw)
-    ids = [str(x["id"]) for x in json.loads(get(f"https://apis.roblox.com/toolbox-service/v1/marketplace/10?keyword={q}&num={n}&sortDirection=Descending"))["data"]][:n]
+    ids = [str(x["id"]) for x in json.loads(get(f"https://apis.roblox.com/toolbox-service/v1/marketplace/{cat}?keyword={q}&num={n}&sortDirection=Descending"))["data"]][:n]
     det = json.loads(get("https://apis.roblox.com/toolbox-service/v1/items/details?assetIds=" + ",".join(ids)))
     info = {}
     for it in det.get("data", []):

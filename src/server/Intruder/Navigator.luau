@@ -8,8 +8,11 @@
 
 	• Closed doors on the way are opened (DoorService decides how long that takes).
 	• A goal nobody can stand on (inside a cupboard, on a bed) ends at the nearest spot he can.
-	• Wedged (no progress for a moment): re-route from where he is; still wedged, and nobody's
-	  looking, he slips to the next corner. isStuck() tells the brain to give up on the goal.
+	• Wedged (no progress for a moment): re-route from where he is; still wedged, he steps back
+	  off whatever caught him and goes round again; still wedged, and nobody's looking, he slips
+	  to the next corner. isStuck() tells the brain to give up on the goal.
+	• Stats (wedges, step-backs, slips, failed routes, routes planned and the time spent on
+	  them) go into the night log (JourneyService), so we can see how he gets about in real games.
 ]]
 
 local PathfindingService = game:GetService("PathfindingService")
@@ -59,6 +62,7 @@ function Navigator.new(ctx, humanoid: Humanoid, root: BasePart)
 	self.Stuck = 0
 	self.Hurry = false
 	self.DoorFilter = nil :: ((any) -> boolean)?
+	self.Stats = { Wedged = 0, StepBack = 0, Slip = 0, Fail = 0, Plans = 0, PlanMs = 0 }
 	return self
 end
 
@@ -77,6 +81,7 @@ function Navigator:_step()
 end
 
 function Navigator:_fail()
+	self.Stats.Fail += 1
 	self.Waypoints = nil
 	self.Failed = true
 	self.Arrived = true
@@ -92,6 +97,8 @@ function Navigator:_planGrid(): boolean
 	end
 	self.Version += 1
 	self.Computing = false
+	self.SideUntil = nil
+	local t0 = os.clock()
 	local path = NavGrid.findPath(from, goal, self.Reach)
 		or NavGrid.findPath(from - Vector3.new(0, 1, 0), goal, self.Reach)
 	if not path then
@@ -102,6 +109,8 @@ function Navigator:_planGrid(): boolean
 			table.insert(path, 1, near)
 		end
 	end
+	self.Stats.Plans += 1
+	self.Stats.PlanMs += (os.clock() - t0) * 1000
 	if not path then
 		self:_fail()
 		return true
@@ -109,7 +118,8 @@ function Navigator:_planGrid(): boolean
 	self.Waypoints = path
 	self.End = path[#path]
 	self.Index = math.min(2, #path)
-	self.LastProgress = os.clock()
+	-- (no fresh start for the wedge check here: a re-route doesn't move him; goTo sets it for a
+	-- new errand)
 	self:_step()
 	return true
 end
@@ -164,6 +174,10 @@ end
 -- opts: Speed, Tolerance, Hurry, Reach (how far from the goal the route may end)
 function Navigator:goTo(goal: Vector3, opts)
 	opts = opts or {}
+	-- (the same errand again, as a chase re-routes every second: keep counting how long he's been
+	-- wedged, and let a door he's waiting on or a step back finish; otherwise a wedge never
+	-- added up to a step back or a slip, and he stood there re-routing until the chase ended)
+	local same = self.Goal ~= nil and not self.Arrived and not self.Failed and (goal - self.Goal).Magnitude < 8
 	self.Goal = goal
 	self.Tolerance = opts.Tolerance or 3
 	self.Hurry = opts.Hurry == true
@@ -173,11 +187,15 @@ function Navigator:goTo(goal: Vector3, opts)
 	end
 	self.Arrived = false
 	self.Failed = false
-	self.Stuck = 0
-	self.WaitUntil = 0
-	self.Resume = false
-	self.LastPos = self.Root.Position
-	self.LastProgress = os.clock()
+	if not same then
+		self.Stuck = 0
+		self.WaitUntil = 0
+		self.Resume = false
+		self.LastPos = self.Root.Position
+		self.LastProgress = os.clock()
+	elseif os.clock() < self.WaitUntil or (self.SideUntil and os.clock() < self.SideUntil) then
+		return -- (re-routes from there when it's done)
+	end
 	self:_plan()
 end
 
@@ -185,6 +203,7 @@ end
 function Navigator:moveDirect(goal: Vector3, speed: number?)
 	self.Version += 1
 	self.Computing = false
+	self.SideUntil = nil
 	self.Goal = goal
 	self.End = goal
 	self.Waypoints = { goal }
@@ -205,6 +224,7 @@ end
 function Navigator:stop()
 	self.Version += 1
 	self.Computing = false
+	self.SideUntil = nil
 	self.Goal = nil
 	self.End = nil
 	self.Waypoints = nil
@@ -241,6 +261,32 @@ function Navigator:_doorAhead()
 	return nil
 end
 
+-- wedged on a corner or a table leg: a spot a couple of studs off, that he can walk straight to,
+-- away from where he was trying to go (or to the side of it). Steps there, then goes round again.
+function Navigator:_stepBack(pos: Vector3, toward: Vector3?): boolean
+	if not NavGrid.ready() or not inGrid(pos) then
+		return false
+	end
+	local dir = toward and Vector3.new(toward.X - pos.X, 0, toward.Z - pos.Z) or Vector3.zero
+	local base = dir.Magnitude > 0.1 and math.atan2(-dir.Z, -dir.X) or math.random() * math.pi * 2
+	-- (straight back first, then fanning out to the sides)
+	for _, da in { 0, 0.6, -0.6, 1.2, -1.2, 1.7, -1.7 } do
+		for _, r in { 3, 2 } do
+			local a = base + da
+			local probe = pos + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+			local floor = NavGrid.nearest(probe, 0.9)
+			if floor and NavGrid.straight(pos, floor + Vector3.new(0, ROOT, 0)) and (NavGrid.clearance(floor) or 0) >= 1 then
+				self.SideTo = floor
+				self.SideUntil = os.clock() + 0.8
+				self.Stats.StepBack += 1
+				self:_moveTo(floor)
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function unseen(ctx, p: Vector3): boolean
 	local perception = ctx.Director and ctx.Director.Perception
 	return perception == nil or not perception.anyoneSees(p + Vector3.new(0, 2, 0))
@@ -262,6 +308,18 @@ function Navigator:update()
 	end
 	if now < self.WaitUntil or self.Computing or not self.Waypoints then
 		self.LastProgress = now
+		return
+	end
+	-- (stepping back off a corner he caught: then a fresh route from there)
+	if self.SideUntil then
+		if now < self.SideUntil and flat(pos - (self.SideTo :: Vector3)) > 0.5 then
+			self.LastProgress = now
+			return
+		end
+		self.SideUntil = nil
+		self.LastPos = pos
+		self.LastProgress = now
+		self:_plan()
 		return
 	end
 
@@ -294,7 +352,7 @@ function Navigator:update()
 	if now - (self.LookAhead or 0) > 0.1 and NavGrid.ready() and inGrid(pos) then
 		self.LookAhead = now
 		local changed = false
-		while self.Index < #wps and NavGrid.straight(pos, wps[self.Index + 1]) do
+		while self.Index < #wps and NavGrid.straight(pos, wps[self.Index + 1], true) do
 			self.Index += 1
 			changed = true
 		end
@@ -324,8 +382,10 @@ function Navigator:update()
 		self.LastProgress = now
 		self.Stuck += 1
 		self.StuckAt = now
+		self.Stats.Wedged += 1
 		local nextWp = wps[math.min(self.Index, #wps)]
 		if self.Stuck >= 3 and nextWp and unseen(self.ctx, pos) and unseen(self.ctx, nextWp + Vector3.new(0, ROOT, 0)) then
+			self.Stats.Slip += 1
 			-- properly wedged and nobody's looking: slip along to the next corner
 			local model = self.Root:FindFirstAncestorWhichIsA("Model")
 			local at = nextWp + Vector3.new(0, ROOT + 0.1, 0)
@@ -337,6 +397,8 @@ function Navigator:update()
 				model:PivotTo(CFrame.lookAt(at, at + look.Unit))
 			end
 			self:_plan()
+		elseif self.Stuck >= 2 and self:_stepBack(pos, nextWp) then
+			return
 		elseif self.Goal then
 			self:_plan()
 		end

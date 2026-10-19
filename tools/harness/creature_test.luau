@@ -43,14 +43,50 @@ local ok, err = pcall(function()
 	-- the face: a mask, sockets, a grin with teeth, hair
 	local count = {}
 	for _, d in model:GetDescendants() do count[d.Name] = (count[d.Name] or 0) + 1 end
-	assert(count.Mask == 1 and count.EyeHole == 2 and (count.Tooth or 0) >= 15 and (count.Hair or 0) >= 20 and count.Glint == 2, "the face")
+	assert(count.Mask == 1 and count.EyeHole == 2 and (count.Tooth or 0) + (count.LowerTooth or 0) >= 15 and (count.Hair or 0) >= 20 and count.Glint == 2 and count.Maw == 1, "the face")
 	print("face ok")
+	-- (v100) jointed fingers; the mouth opens: the black stretches down from a still top edge and
+	-- the lower teeth drop to its new bottom
+	for _, side in { "Left", "Right" } do
+		for i = 1, 4 do
+			assert(motors[side .. "Finger" .. i], "finger joint " .. side .. i)
+		end
+	end
+	local jaws = Pose.jawMeshes(model)
+	local maw, lowTeeth = nil, 0
+	for _, j in jaws do
+		if j.Name == "Maw" then maw = j else lowTeeth += 1 end
+	end
+	assert(maw and lowTeeth == 9, "the mouth's moving parts: " .. #jaws)
+	Pose.setJaw(jaws, 1)
+	local mawPart = maw.Mesh.Parent
+	local h = 0.17 * maw.Mesh.Scale.Y
+	local topEdge = maw.Mesh.Offset.Y + h / 2
+	assert(math.abs(topEdge - 0.085) < 1e-3 and h > 0.35, "the mouth opens downwards from its top edge")
+	for _, j in jaws do
+		if j.Name == "LowerTooth" then
+			assert(j.Mesh.Offset.Y < -0.18, "the lower teeth drop with it")
+		end
+	end
+	Pose.setJaw(jaws, 0)
+	assert(maw.Mesh.Scale.Y == 1 and maw.Mesh.Offset.Magnitude < 1e-6, "shut again")
+	assert(mawPart.Name == "Maw", "the mouth part")
+	for _, g in { "Chase", "Walk", "Reach", "Stunned", "Stare", "Idle" } do
+		local lo, hi = 1, 0
+		for i = 0, 200 do
+			local j = Pose.jaw(g, i * 0.05, 1)
+			lo, hi = math.min(lo, j), math.max(hi, j)
+		end
+		assert(lo >= -0.05 and hi <= 1.2, g .. " jaw in range")
+		if g == "Chase" or g == "Stunned" then assert(lo > 0.4, g .. ": mouth wide open") end
+	end
+	print("jaw + fingers ok")
 
 	-- every gait poses the joints; no NaN anywhere
 	for _, g in { "Chase", "Walk", "Search", "Reach", "Stunned", "Stare", "Idle", "Peek" } do
 		for _, t in { 0, 0.7, 3.3, 11.1 } do
 			local P = Pose.get(g, t * 2, t, 1)
-			assert(P.Root and P.Neck and P.LeftShoulder and P.RightHip, g .. " poses the body")
+			assert(P.Root and P.Neck and P.LeftShoulder and P.RightHip and P.LeftFinger1 and P.RightFinger4, g .. " poses the body")
 			for name, cf in P do
 				local x, y, z = cf:ToEulerAnglesXYZ()
 				assert(x == x and y == y and z == z and cf.Position.Y == cf.Position.Y, g .. " " .. name .. " is a number")

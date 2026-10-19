@@ -2486,6 +2486,12 @@ function Intruder.position(): Vector3?
 	return S.InHouse and S.Root and S.Root.Position or nil
 end
 
+-- how his navigation went so far tonight (the night log: wedged, step-backs, slips, failed
+-- routes, routes planned and the milliseconds spent on them)
+function Intruder.navStats(): { [string]: number }?
+	return S.Nav and S.Nav.Stats or nil
+end
+
 function Intruder.trap(): boolean
 	if not Intruder.isInBasement() or S.State == "Trapped" or S.State == "Gone" then
 		return false

@@ -14,3 +14,5 @@ tools/assets/package-lock.json
 
 # helper agents' isolated working copies
 .claude/worktrees/
+tools/harness/navgrid_*.txt
+tools/harness/zz_*.luau

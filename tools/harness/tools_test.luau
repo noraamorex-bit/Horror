@@ -59,6 +59,15 @@ local ok, err = pcall(function()
 		assert(t and t:IsA("Tool") and t:FindFirstChild("Handle"), item .. ": a tool with a handle")
 		assert(t.Parent == H.unwrap(backpack) or t.Parent == backpack, item .. ": in the backpack")
 		assert(t:GetAttribute("ItemId") == item and #t.ToolTip > 10, item .. ": knows what it is and says how to use it")
+		-- (v100) a picture in the hotbar, and the count for the line above it
+		assert(string.match(t.TextureId, "^rbxassetid://%d+$"), item .. ": has its hotbar icon")
+		assert(t:GetAttribute("Label") and (item == "Flashlight" or t:GetAttribute("Count") == 2), item .. ": its name and what's left")
+	end
+	local icons = {}
+	for _, item in ctx.Tools.Items do
+		local id = ctx.Tools.Info[item].Icon
+		assert(not icons[id], "every item its own icon")
+		icons[id] = true
 	end
 	assert(tool("Taser").Name == "Taser (2)", "named with what's left: " .. tool("Taser").Name)
 	ctx.Inventory.take(p, "Taser")

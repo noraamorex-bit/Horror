@@ -81,7 +81,8 @@ for name, y in { Basement = -13, Ground = 1, Upstairs = 15 } do
 		end
 		table.insert(lines, table.concat(row))
 	end
-	fs.writeFile("/tmp/claude-0/-home-user-Horror/84f4b59f-d9bd-5c4a-9b16-ad5ba90d0af8/scratchpad/navgrid_" .. name .. ".txt", table.concat(lines, "\n"))
+	-- (a map of the floor for looking at by eye: next to the harness, never committed)
+	pcall(fs.writeFile, "navgrid_" .. name .. ".txt", table.concat(lines, "\n"))
 end
 for _, e in H.errors do print("ERR", e) end
 assert(#failures == 0, #failures .. " unreachable")

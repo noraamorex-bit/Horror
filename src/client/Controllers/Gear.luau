@@ -5,6 +5,8 @@
 	• The hotbar shows only while you can use things: not hiding, tied up, dead, being him, in a
 	  cutscene, a conversation or the heartbeat minigame.
 	• F (or D-pad up) takes the flashlight out and switches it on, or puts it away.
+	• The hotbar shows each item's picture (ToolService Icon); what's in your hand, and how many are
+	  left, is one small line just above it ("TASER · 3 SHOTS").
 ]]
 
 local Players = game:GetService("Players")
@@ -91,6 +93,26 @@ local function hasTools(): boolean
 	return false
 end
 
+-- what's in your hand, just above the hotbar (the hotbar shows pictures, not names): "TASER · 3 SHOTS"
+local heldBox: Frame? = nil
+local heldText: TextLabel? = nil
+function Gear.heldLine(): string?
+	local char = player.Character
+	local tool = char and char:FindFirstChildOfClass("Tool")
+	if not tool or tool:GetAttribute("ItemId") == nil then
+		return nil
+	end
+	local label = string.upper(tostring(tool:GetAttribute("Label") or tool:GetAttribute("ItemId")))
+	local n = tonumber(tool:GetAttribute("Count"))
+	if n and n > 1 then
+		local unit = tool:GetAttribute("Unit")
+		label ..= "  ·  " .. n .. (type(unit) == "string" and (" " .. string.upper(unit) .. "S") or " LEFT")
+	elseif n == 1 and tool:GetAttribute("Unit") then
+		label ..= "  ·  LAST " .. string.upper(tostring(tool:GetAttribute("Unit")))
+	end
+	return label
+end
+
 local lastLift = -1
 local function refresh()
 	local want = not blocked()
@@ -103,6 +125,14 @@ local function refresh()
 	-- the hotbar sits at the bottom centre: what's usually there moves up above it (about 72 screen
 	-- pixels, whatever the UI's scale)
 	local lift = (want and hasTools()) and math.ceil(72 / math.max(0.3, ctx.UI.Scale or 1)) or 0
+	if heldBox and heldText then
+		local line = want and Gear.heldLine() or nil
+		heldBox.Visible = line ~= nil
+		heldBox.Position = UDim2.new(0.5, 0, 1, -lift - 14)
+		if line then
+			heldText.Text = line
+		end
+	end
 	if lift ~= lastLift then
 		lastLift = lift
 		if ctx.HUD and ctx.HUD.setBottomLift then
@@ -168,6 +198,8 @@ function Gear.start()
 			Gear.toggleFlashlight()
 		end
 	end)
+	heldBox = ctx.UI.box({ Name = "HeldItem", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -86), Visible = false, Parent = ctx.UI.Root }, { 3, 10 })
+	heldText = ctx.UI.fitLabel({ Text = "", Font = ctx.UI.Font.Bold, TextSize = 13, Parent = heldBox }, 320)
 	local clock = 0
 	RunService.Heartbeat:Connect(function(dt)
 		clock += dt

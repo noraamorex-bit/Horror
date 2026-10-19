@@ -268,6 +268,16 @@ def report_nights(nights):
     invited = sum(1 for n in started for p in (n.get("P") or {}).values()
                   if any(ev[1] == "Joined" and len(ev) > 2 and ev[2] == "invite" for ev in p.get("Ev") or []))
     print(f"  late arrivals who joined a night in progress: {joined} (brought by a friend's invite: {invited})")
+    # (v100) how he got about: wedged / step-backs / slips / failed routes, per night, and A* time
+    navs = [n["Nav"] for n in started if n.get("Nav")]
+    if navs:
+        tot = Counter()
+        for nv in navs:
+            tot.update(nv)
+        k = len(navs)
+        print(f"  his navigation ({k} nights): per night wedged {tot['Wedged'] / k:.1f}, step-backs {tot['StepBack'] / k:.1f}, "
+              f"slips {tot['Slip'] / k:.1f}, failed routes {tot['Fail'] / k:.1f}, routes {tot['Plans'] / k:.0f} "
+              f"({tot['PlanMs'] / max(tot['Plans'], 1):.1f} ms each)")
     # script errors (v82+): on players' devices (Perf.Err) and on the game servers (SErr)
     cerr, cwho, serr = Counter(), Counter(), Counter()
     for n in started:

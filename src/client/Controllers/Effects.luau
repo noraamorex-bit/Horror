@@ -280,6 +280,9 @@ function Effects.jumpscare(head: BasePart?)
 	flash.Parent = Lighting
 	ctx.UI.tween(flash, 0.9, { TintColor = Color3.new(1, 1, 1), Contrast = 0, Brightness = 0 })
 	Effects.shake(1.4, 0.9)
+	if ctx.Creature then
+		ctx.Creature.scream(1.3) -- (the mask's mouth stretched wide open)
+	end
 	local t0 = os.clock()
 	local jerk = CFrame.identity
 	local nextJerk = 0
@@ -339,10 +342,15 @@ function Effects.figure(cf: CFrame, duration: number, gait: string?)
 			copy:PivotTo(cf * CFrame.new(0, 2.3, 0))
 			local Pose = ctx.CreaturePose
 			local seed, t0 = math.random() * 100, os.clock()
+			local jaws = Pose and Pose.jawMeshes(copy) or {}
 			local function pose()
-				local P = Pose and Pose.get(gait or "Stare", 0, os.clock() - t0 + 0.6, seed) or {}
+				local tt = os.clock() - t0 + 0.6
+				local P = Pose and Pose.get(gait or "Stare", 0, tt, seed) or {}
 				for name, m in motors do
 					m.Transform = P[name] or CFrame.identity
+				end
+				if Pose then
+					Pose.setJaw(jaws, Pose.jaw(gait or "Stare", tt, seed))
 				end
 			end
 			pose()

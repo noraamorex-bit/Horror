@@ -307,6 +307,7 @@ function NavGrid.build(exclude: { Instance }?, budget: number?)
 			end
 		end
 	end
+	NavGrid._clearance(g)
 	-- connected areas (a bed top is its own little island: nothing is ever routed to it)
 	local comp = 0
 	for id in g.Nbr do
@@ -328,6 +329,33 @@ function NavGrid.build(exclude: { Instance }?, budget: number?)
 	-- (found nothing at all: no house here, leave it to PathfindingService)
 	G = next(g.Nbr) ~= nil and g or nil
 	building = false
+end
+
+-- how far each cell is from the nearest wall or piece of furniture, in cells (0: right against
+-- one, 1, 2; nil: further). A* pays for being close, so routes keep to the middle of rooms and
+-- halls and give corners and door jambs room, where his long limbs used to catch.
+function NavGrid._clearance(g)
+	local clear = {}
+	local frontier = {}
+	for id in g.Edge do
+		if g.Nbr[id] then
+			clear[id] = 0
+			table.insert(frontier, id)
+		end
+	end
+	for d = 1, 2 do
+		local nextF = {}
+		for _, id in frontier do
+			for _, n in g.Nbr[id] do
+				if clear[n] == nil then
+					clear[n] = d
+					table.insert(nextF, n)
+				end
+			end
+		end
+		frontier = nextF
+	end
+	g.Clear = clear
 end
 
 ---------------------------------------------------------------------------
@@ -390,14 +418,14 @@ local function levelAt(ix: number, iz: number, y: number, maxDy: number): number
 	if not ys then
 		return nil
 	end
-	local best, bd = nil, maxDy
+	local best, bd, bestId = nil, maxDy, nil
 	for li, yy in ys do
 		local d = math.abs(yy - y)
 		if d <= bd then
-			best, bd = yy, d
+			best, bd, bestId = yy, d, col * MAX_LEVELS + li - 1
 		end
 	end
-	return best
+	return best, bestId
 end
 
 --[[
@@ -405,18 +433,33 @@ end
 	Every point on the line must sit inside a square of four standable cells at about the same
 	height: each cell's clear box is 2.2 wide, so together they hold his 2-wide body wherever it
 	is in the square (no clipping a door jamb or a table corner on the way past).
+	`tight`: also keep a cell's width off walls and furniture (Clear 0) along the way, except
+	near the two ends and on the cells in `allow` (the route A* chose: a doorway is all Clear 0).
 ]]
-local function clearLine(x0: number, z0: number, y0: number, x1: number, z1: number): boolean
+local function clearLine(x0: number, z0: number, y0: number, x1: number, z1: number, tight: boolean?, allow: { [number]: boolean }?): boolean
 	local dx, dz = x1 - x0, z1 - z0
 	local len = math.sqrt(dx * dx + dz * dz)
 	local steps = math.max(1, math.ceil(len / 0.25))
 	local y = y0
 	local lastKey = -1
+	local lastNear = -1
+	local Clear = G.Clear
 	for i = 0, steps do
 		local t = i / steps
 		local fx = (x0 + dx * t - G.X0) / CELL
 		local fz = (z0 + dz * t - G.Z0) / CELL
 		local ix, iz = math.floor(fx), math.floor(fz)
+		if tight and Clear and t * len > 1.5 and (1 - t) * len > 1.5 then
+			local rx, rz = math.floor(fx + 0.5), math.floor(fz + 0.5)
+			local nk = rx * 100000 + rz
+			if nk ~= lastNear then
+				lastNear = nk
+				local _, id = levelAt(rx, rz, y, STEP * 1.5)
+				if id and Clear[id] == 0 and not (allow and allow[id]) then
+					return false
+				end
+			end
+		end
 		-- (exactly on a grid line: the square on either side will do; use the lower one)
 		local key = ix * 100000 + iz
 		if key ~= lastKey then
@@ -447,15 +490,16 @@ local function clearLine(x0: number, z0: number, y0: number, x1: number, z1: num
 	return true
 end
 
-local function straightIds(a: number, b: number): boolean
+local function straightIds(a: number, b: number, allow: { [number]: boolean }?): boolean
 	if a == b then
 		return true
 	end
-	return clearLine(G.NX_[a], G.NZ_[a], G.NY_[a], G.NX_[b], G.NZ_[b])
+	return clearLine(G.NX_[a], G.NZ_[a], G.NY_[a], G.NX_[b], G.NZ_[b], allow ~= nil, allow)
 end
 
 -- can he walk straight from `from` (where he stands, or any point above a floor) to `to`?
-function NavGrid.straight(from: Vector3, to: Vector3): boolean
+-- `tight`: and without brushing past a wall or a piece of furniture on the way
+function NavGrid.straight(from: Vector3, to: Vector3, tight: boolean?): boolean
 	if not G then
 		return false
 	end
@@ -467,7 +511,10 @@ function NavGrid.straight(from: Vector3, to: Vector3): boolean
 	if not b then
 		return false
 	end
-	return clearLine(from.X, from.Z, G.NY_[a], G.NX_[b], G.NZ_[b])
+	if tight and not G.Clear then
+		NavGrid._clearance(G)
+	end
+	return clearLine(from.X, from.Z, G.NY_[a], G.NX_[b], G.NZ_[b], tight)
 end
 
 -- a binary heap of node ids by score
@@ -511,11 +558,16 @@ local function heapPop(h, f)
 	return top
 end
 
+
+
 local function astar(a: number, b: number): { number }?
 	if a == b then
 		return { a }
 	end
-	local NXs, NYs, NZs, Nbr, Edge = G.NX_, G.NY_, G.NZ_, G.Nbr, G.Edge
+	if not G.Clear then
+		NavGrid._clearance(G)
+	end
+	local NXs, NYs, NZs, Nbr, Clear = G.NX_, G.NY_, G.NZ_, G.Nbr, G.Clear
 	local bx, by, bz = NXs[b], NYs[b], NZs[b]
 	local gScore = { [a] = 0 }
 	local from = {}
@@ -556,7 +608,8 @@ local function astar(a: number, b: number): { number }?
 					local nx, nz = NXs[n], NZs[n]
 					local diag = nx ~= cx and nz ~= cz
 					-- (hugging a wall costs a little: he keeps to the middle of halls and doorways)
-					local ng = gc + (diag and 1.414 or 1) + abs(NYs[n] - cy) * 0.5 + (Edge[n] and 1.5 or 0)
+					local c = Clear[n]
+					local ng = gc + (diag and 1.414 or 1) + abs(NYs[n] - cy) * 0.5 + (c == 0 and 1.5 or c == 1 and 0.5 or c == 2 and 0.15 or 0)
 					local old = gScore[n]
 					if not old or ng < old then
 						gScore[n] = ng
@@ -570,10 +623,15 @@ local function astar(a: number, b: number): { number }?
 	return nil
 end
 
--- pull the cell path taut: keep only the corners
+-- pull the cell path taut: keep only the corners. (Taut, but not tight: a shortcut may not
+-- brush past a wall or furniture that the route itself kept off, so he rounds corners wide.)
 local function smooth(path: { number }): { number }
 	if #path <= 2 then
 		return path
+	end
+	local allow = {}
+	for _, id in path do
+		allow[id] = true
 	end
 	local out = { path[1] }
 	local i = 1
@@ -581,7 +639,7 @@ local function smooth(path: { number }): { number }
 		local j = i + 1
 		-- (step through the path a few cells at a time, then back off to the last straight one)
 		local k = j
-		while k + 1 <= #path and straightIds(path[i], path[k + 1]) do
+		while k + 1 <= #path and straightIds(path[i], path[k + 1], allow) do
 			k += 1
 		end
 		j = k
@@ -605,6 +663,13 @@ function NavGrid.findPath(from: Vector3, to: Vector3, reach: number?): { Vector3
 	local b = snap(to, reach or 6, G.Comp[a])
 	if not b then
 		return nil
+	end
+	-- (in plain sight of it, with room either side: no search needed)
+	if not G.Clear then
+		NavGrid._clearance(G)
+	end
+	if straightIds(a, b, {}) then
+		return { nodePos(a), nodePos(b) }
 	end
 	local cells = astar(a, b)
 	if not cells then
@@ -637,6 +702,21 @@ function NavGrid.randomNear(center: Vector3, rMin: number, rMax: number, rng: Ra
 		end
 	end
 	return pc
+end
+
+-- how much room there is around a point: 0 (against a wall) .. 3 (open floor); nil off the survey
+function NavGrid.clearance(pos: Vector3): number?
+	if not G then
+		return nil
+	end
+	local id = snap(pos, 1)
+	if not id then
+		return nil
+	end
+	if not G.Clear then
+		NavGrid._clearance(G)
+	end
+	return G.Clear[id] or 3
 end
 
 -- (for him standing at a floor-level point)

@@ -22,15 +22,20 @@ local root: BasePart? = nil
 local phase = 0
 local seed = math.random() * 100
 local lookClock = 0
+local jawList = {}
+local jaw = 0
+local screamUntil = 0
 
 local function bind(m: Model?)
 	model = m
 	motors = {}
 	current = {}
 	root = nil
+	jawList = {}
 	if not m then
 		return
 	end
+	jawList = Pose.jawMeshes(m)
 	for _, d in m:GetDescendants() do
 		if d:IsA("Motor6D") then
 			motors[d.Name] = d
@@ -104,6 +109,12 @@ end
 function Creature.init(c)
 	ctx = c
 	Pose = ctx.CreaturePose
+	ctx.Creature = Creature
+end
+
+-- his mouth wide open for a moment (the jumpscare)
+function Creature.scream(duration: number)
+	screamUntil = os.clock() + duration
 end
 
 function Creature.start()
@@ -171,6 +182,10 @@ function Creature.start()
 				current[name] = cur
 				motor.Transform = cur
 			end
+			-- the mouth: snapping between positions with everything else
+			local want = os.clock() < screamUntil and 1 or Pose.jaw(gait, t, seed)
+			jaw += (want - jaw) * 0.7
+			Pose.setJaw(jawList, jaw)
 		end
 
 		-- what it's like to be near him

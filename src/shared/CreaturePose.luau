@@ -225,7 +225,101 @@ function CreaturePose.get(gait: string, phase: number, t: number, seed: number?)
 		P.LeftKnee = A(-0.12, 0, 0)
 		P.RightKnee = A(-0.12, 0, 0)
 	end
+	-- the fingers (a joint at each knuckle: +X curls them in towards the palm)
+	local curl: (number, number) -> number
+	if gait == "Chase" then
+		-- clawing at the floor as the hands slap down
+		curl = function(side, i)
+			return 0.55 + 0.35 * max(0, sin(phase + side * math.pi + i * 0.25))
+		end
+	elseif gait == "Reach" then
+		-- spread wide, then closing on you
+		curl = function(_, i)
+			return -0.35 + 0.95 * max(0, sin(t * 2.6 - i * 0.3)) ^ 2
+		end
+	elseif gait == "Stunned" then
+		curl = function(_, i)
+			return 0.9 + jitter(t + i, 0.25)
+		end
+	elseif gait == "Stare" or gait == "Idle" or gait == "Peek" then
+		-- drumming, one after another, slowly; the other hand dead still
+		curl = function(side, i)
+			if side == 1 then
+				return 0.15
+			end
+			return 0.1 + 0.75 * max(0, sin(t * 3.4 - i * 0.9)) ^ 6
+		end
+	else
+		curl = function(side, i)
+			return 0.2 + 0.12 * sin(t * 1.3 + i + side)
+		end
+	end
+	for side, name in { "Left", "Right" } do
+		for i = 1, 4 do
+			P[name .. "Finger" .. i] = A(curl(side, i), 0, 0)
+		end
+	end
 	return P
+end
+
+-- how far open his mouth is (0 shut .. 1 a scream), per gait: gaping and panting as he runs,
+-- opening slowly as he stares at you, now and then a silent yawn while he walks
+function CreaturePose.jaw(gait: string, t: number, seed: number?): number
+	local s = seed or 0
+	if gait == "Chase" then
+		return 0.7 + 0.2 * sin(t * 9.3) + jitter(t, 0.06)
+	elseif gait == "Stunned" then
+		return 0.85 + jitter(t * 2, 0.15)
+	elseif gait == "Reach" then
+		return 0.5 + 0.3 * max(0, sin(t * 1.7)) + jitter(t, 0.04)
+	elseif gait == "Stare" then
+		-- (opens, slowly, as if he's about to say something; then snaps shut)
+		local c = (t * 0.32 + s * 0.13) % 1
+		return c < 0.75 and 0.08 + 0.72 * (c / 0.75) ^ 2 or 0.05
+	elseif gait == "Peek" then
+		return 0.25 + 0.1 * sin(t * 0.8)
+	end
+	return 0.05 + 0.55 * max(0, sin(t * 0.55 + s)) ^ 12
+end
+
+-- the mouth's moving parts (Rig): the black of the mouth (Maw, 0.17 tall) stretches down the face
+-- with its top edge kept still, and the lower teeth drop to its new bottom edge. The offset and
+-- scale for that part's mesh, in the head's frame (nil: not part of the mouth)
+local JAW = { Maw = true, LowerTooth = true }
+local JAW_DROP = 0.21
+local MAW_H = 0.17
+function CreaturePose.jawOffset(name: string, open: number): (Vector3?, Vector3?)
+	if not JAW[name] then
+		return nil, nil
+	end
+	local d = math.clamp(open, 0, 1) * JAW_DROP
+	-- (down the face and back with it: the mask curves away under the mouth)
+	if name == "Maw" then
+		return Vector3.new(0, -d / 2, d * 0.15), Vector3.new(1, (MAW_H + d) / MAW_H, 1)
+	end
+	return Vector3.new(0, -d, d * 0.12), Vector3.one
+end
+
+-- the meshes that move when he opens his mouth, found once per model
+function CreaturePose.jawMeshes(model: Instance): { { Mesh: SpecialMesh, Name: string } }
+	local list = {}
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and JAW[d.Name] then
+			local m = d:FindFirstChildOfClass("SpecialMesh")
+			if m then
+				table.insert(list, { Mesh = m, Name = d.Name })
+			end
+		end
+	end
+	return list
+end
+
+function CreaturePose.setJaw(list: { { Mesh: SpecialMesh, Name: string } }, open: number)
+	for _, j in list do
+		local off, scale = CreaturePose.jawOffset(j.Name, open)
+		j.Mesh.Offset = off or Vector3.zero
+		j.Mesh.Scale = scale or Vector3.one
+	end
 end
 
 -- strides per stud of travel, per gait (radians of phase per stud)

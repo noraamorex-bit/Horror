@@ -432,6 +432,22 @@ local ok, err = pcall(function()
 		t:SetAttribute("ItemId", "Taser")
 		ctx.Gear.use(t)
 		assert(used and used[1] == "Taser", "a click on the taser asks the server to fire it")
+		-- (v100) in your hand: one line above the hotbar with what's left
+		local me = H.Instance.new("Model", H.workspaceRoot)
+		H.unwrap(player).Character = H.unwrap(me)
+		t:SetAttribute("Label", "Taser")
+		t:SetAttribute("Unit", "shot")
+		t:SetAttribute("Count", 3)
+		t.Parent = me
+		assert(ctx.Gear.heldLine() == "TASER  ·  3 SHOTS", "held line: " .. tostring(ctx.Gear.heldLine()))
+		t:SetAttribute("Count", 1)
+		assert(ctx.Gear.heldLine() == "TASER  ·  LAST SHOT", "the last one")
+		ctx.Gear._refresh()
+		local box = H.unwrap(pg):FindFirstChild("HeldItem", true)
+		assert(box and box.Visible, "shown above the hotbar")
+		t.Parent = nil
+		ctx.Gear._refresh()
+		assert(not box.Visible, "gone when nothing's in your hand")
 		R.UseItem.FireServer = realFire
 		player:SetAttribute("InGame", wasIn)
 		ctx.Gear._refresh()

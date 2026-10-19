@@ -97,6 +97,8 @@ local function since(): number
 	return math.floor((os.clock() - (night.Clock or os.clock())) * 10 + 0.5) / 10
 end
 
+local navSeen: { [string]: number } = {}
+
 local function ensureNight()
 	if night then
 		return night
@@ -274,6 +276,23 @@ function Journey.flush(why: string?)
 	end
 	n.Data.Why = why
 	n.Data.Len = math.floor(os.clock() - n.Clock)
+	-- (v100) how he got about tonight: counts since the last night written on this server
+	local I = ctx.Intruder
+	local okN, nav = pcall(function()
+		return I and I.navStats and I.navStats()
+	end)
+	if okN and nav then
+		local out = {}
+		for k, v in nav do
+			local base = navSeen[k] or 0
+			if v < base then
+				base = 0 -- (he was built again: a fresh count)
+			end
+			out[k] = math.floor(v - base + 0.5)
+			navSeen[k] = v
+		end
+		n.Data.Nav = out
+	end
 	if #serverErrors > 0 then
 		n.Data.SErr = serverErrors
 		serverErrors = {}

@@ -12,7 +12,7 @@ local process = require("@lune/process")
 local MODE = process.args[1] or "sweep"
 local SEED = tonumber(process.args[2] or "7")
 math.randomseed(SEED)
-local CACHE = "/tmp/claude-0/-home-user-Horror/84f4b59f-d9bd-5c4a-9b16-ad5ba90d0af8/scratchpad/navgrid_cache.json"
+local CACHE = "/tmp/claude-0/-home-user-Horror/e0d7b3ed-0289-5d75-b841-90320013b441/scratchpad/navgrid_cache.json"
 local Enum = H.roblox.Enum
 local R = H.roblox
 local V = R.Vector3.new
@@ -68,6 +68,9 @@ H.services.TweenService.Create = function(_, obj, _, goal)
 	}
 end
 for _, k in names do if ctx[k].start then ctx[k].start() end end
+-- (a night that never ends: these runs measure how he gets about, and the police fallback would
+-- otherwise end the night a few minutes in and stand him still for the rest of the run)
+ctx.Ending.trigger = function() end
 
 local function mkPlayer(name, id, at)
 	local p = H.wrap(R.Instance.new("Player"))
@@ -180,6 +183,41 @@ local okRun, err = pcall(function()
 		end
 		print(("trips %d, failed %d, slow %d, idle>2.5s %d, climbs %d, total blocked %.1fs, avg trip %.1fs"):format(trips, fails, slow, wedged, walker.Climbs, walker.Blocked, totalT / trips))
 		assert(fails == 0 and wedged == 0, "navigation problems")
+	elseif MODE == "bench" then
+		-- routes between random spots: how long A* takes, and how close to walls the routes run
+		local goals = {}
+		for _, n in ctx.Layout.Nodes do table.insert(goals, n.Pos) end
+		for _, sp in ctx.Hiding.spotsNear(V(0, 0, 0), 1000) do table.insert(goals, sp.Exit.Position) end
+		local N = tonumber(process.args[3] or "300")
+		local total, worst, corners, samples, tight, found = 0, 0, 0, 0, 0, 0
+		for _ = 1, N do
+			local a = NavGrid.nearest(goals[math.random(1, #goals)], 4)
+			local b = goals[math.random(1, #goals)]
+			if a then
+				local t0 = os.clock()
+				local path = NavGrid.findPath(a + V(0, 4.9, 0), b, 6)
+				local ms = (os.clock() - t0) * 1000
+				total += ms
+				worst = math.max(worst, ms)
+				if path then
+					found += 1
+					corners += #path
+					for i = 2, #path do
+						local p0, p1 = path[i - 1], path[i]
+						local n = math.max(1, math.floor((p1 - p0).Magnitude))
+						for k = 0, n - 1 do
+							local c = NavGrid.clearance and NavGrid.clearance(p0:Lerp(p1, k / n) + V(0, 3, 0))
+							if c then
+								samples += 1
+								if c == 0 then tight += 1 end
+							end
+						end
+					end
+				end
+			end
+		end
+		print(("bench: %d routes (%d found), A* %.1f ms avg, %.1f ms worst, %.1f corners, %.1f%% of the way against a wall"):format(
+			N, found, total / N, worst, corners / math.max(found, 1), tight / math.max(samples, 1) * 100))
 	else
 		-- the brain, hunting: three players moving about, making noise, hiding
 		local players, placers = {}, {}

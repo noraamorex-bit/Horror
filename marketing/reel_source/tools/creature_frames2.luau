@@ -36,6 +36,16 @@ local ok, err = pcall(function()
 			m = mesh and { t = mesh.MeshType.Name, s = { 1, 1, 1 }, o = { 0, 0, 0 } } or nil,
 		})
 	end
+	-- (stills: parts hidden by name, from any frame's "hideParts")
+	for _, fr in serde.decode("json", fs.readFile(DIR .. "/frames_in.json")) do
+		for _, name in fr.hideParts or {} do
+			for i, d in list do
+				if d.Name == name then
+					parts[i].tr = 1
+				end
+			end
+		end
+	end
 	local motors = {}
 	for _, d in raw:GetDescendants() do if d:IsA("Motor6D") then table.insert(motors, d) end end
 	local welds = {}
@@ -48,6 +58,12 @@ local ok, err = pcall(function()
 		local duck = fr.duck or 0
 		if duck > 0 then
 			P.Root = R.CFrame.new(0, -duck * 0.45, 0) * (P.Root or R.CFrame.new()) * R.CFrame.Angles(-duck * 0.3, 0, 0)
+		end
+		-- (stills: any joint set outright, [rx, ry, rz])
+		if fr.joints then
+			for name, r in fr.joints do
+				P[name] = R.CFrame.Angles(r[1], r[2], r[3])
+			end
 		end
 		if fr.neck then
 			P.Neck = (P.Neck or R.CFrame.new()) * R.CFrame.Angles(fr.neck[1], fr.neck[2], fr.neck[3])
@@ -71,10 +87,23 @@ local ok, err = pcall(function()
 				end
 			end
 		end
+		local jawOpen = fr.jaw or Pose.jaw(fr.gait, fr.t or 0, 1)
 		local out = {}
 		for i, d in list do
 			local cf = posed[K(d)] or rest[K(d)]
+			local off, scale = Pose.jawOffset(d.Name, jawOpen)
+			if off then
+				cf = cf * R.CFrame.new(off.X, off.Y, off.Z)
+			end
 			local c = { cf:GetComponents() }
+			if scale then
+				-- (film2 takes the scale from the matrix: stretch the part's own axes)
+				for j = 0, 2 do
+					c[4 + j * 3] *= scale.X
+					c[5 + j * 3] *= scale.Y
+					c[6 + j * 3] *= scale.Z
+				end
+			end
 			for j = 1, 12 do c[j] = math.floor(c[j] * 10000 + 0.5) / 10000 end
 			out[i] = c
 		end

@@ -22,14 +22,19 @@ for _, k in Tools.Items do
 	IS_TOOL[k] = true
 end
 
+-- Icon: the hotbar picture (v100), one set of plain white silhouettes from the Creator Store (public
+-- images: "flashlight GUI", a white taser, "Graffiti Spray Can White", "Rocket Launcher", a white
+-- can, "Bomb" as a firecracker). With a picture the hotbar shows no name, so what's left goes in the
+-- tool's Count attribute and the client shows it above the hotbar while it's in your hand (Gear).
 local INFO = {
-	Flashlight = { Name = "Flashlight", Tip = "Click to switch it on and off. A lit flashlight shows him where you are." },
-	Taser = { Name = "Taser", Tip = "Click where he is: stuns him, then he can only limp after you." },
-	PepperSpray = { Name = "Pepper spray", Tip = "Click when he's close: he can't see, and backs off." },
-	Rocket = { Name = "Rocket launcher", Tip = "Click where he is: knocks him flat. It's LOUD." },
-	EnergyDrink = { Name = "Energy drink", Tip = "Click to drink: 10 s of sprinting that never tires you." },
-	Firecracker = { Name = "Firecracker", Tip = "Click where to throw it: the bang draws him away." },
+	Flashlight = { Name = "Flashlight", Icon = 11697193612, Tip = "Click to switch it on and off. A lit flashlight shows him where you are." },
+	Taser = { Name = "Taser", Icon = 113603668207377, Unit = "shot", Tip = "Click where he is: stuns him, then he can only limp after you." },
+	PepperSpray = { Name = "Pepper spray", Icon = 127709193173096, Tip = "Click when he's close: he can't see, and backs off." },
+	Rocket = { Name = "Rocket launcher", Icon = 13577018040, Unit = "rocket", Tip = "Click where he is: knocks him flat. It's LOUD." },
+	EnergyDrink = { Name = "Energy drink", Icon = 9307558976, Tip = "Click to drink: 10 s of sprinting that never tires you." },
+	Firecracker = { Name = "Firecracker", Icon = 13590809075, Tip = "Click where to throw it: the bang draws him away." },
 }
+Tools.Info = INFO -- (tests)
 
 function Tools.isTool(item: string): boolean
 	return IS_TOOL[item] == true
@@ -62,7 +67,10 @@ local function build(item: string): Tool
 	tool.CanBeDropped = false
 	tool.RequiresHandle = true
 	tool.ToolTip = INFO[item].Tip
+	tool.TextureId = "rbxassetid://" .. INFO[item].Icon
 	tool:SetAttribute("ItemId", item)
+	tool:SetAttribute("Label", INFO[item].Name)
+	tool:SetAttribute("Unit", INFO[item].Unit)
 	local handle = Instance.new("Part")
 	handle.Name = "Handle"
 	handle.CanCollide = false
@@ -183,6 +191,7 @@ function Tools.refresh(p: Player, item: string)
 	end
 	local name = INFO[item].Name
 	tool.Name = (item == "Flashlight" or n <= 1) and name or (name .. " (" .. n .. ")")
+	tool:SetAttribute("Count", item ~= "Flashlight" and n or nil)
 end
 
 function Tools.refreshAll(p: Player)

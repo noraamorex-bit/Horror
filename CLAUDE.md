@@ -94,6 +94,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   turns right round (`Rig`, `CreaturePose`, client `Creature`). The server sees from an invisible
   `Eyes` point at the old head height (7.8). He stands across the street in the lobby fog (Watcher).
   Previews: the creature studio in the scratchpad (`cstudio/run.sh <gaits> lit|dark`, film2).
+  v100: tapered limbs, jointed fingers, a mouth that opens (gaping as he runs, screaming in the
+  jumpscare); stills can hide parts (`hideParts`) and set joints (`joints`) in creature_frames2.
 
 **Audio**
 - Lots of small sounds (doors, items, sirens, jumpscares…). **Occasional** sudden loud stingers are
@@ -275,6 +277,20 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **19 Oct (v100)**, the owner (after showing a reel of another game: raw first-person gameplay, a
+  black spindly monster in a doorway): "Make proper icon and thumbnail. Make the monster even better
+  and improve pathfinding a lot. Make icons for inventory items." Done: **store art**
+  (`marketing/reel_source/art100/`: scene.py icon|thumb|thumb2 → run.sh (film2) → post.py grade +
+  title, Lora Bold in `marketing/fonts/`): `marketing/attic/icon_v100_1024/512.png` (him leaning
+  over a kid who hasn't seen him), `thumbnail_v100_1.png` / `_2.png` — the owner uploads them (the
+  key has no asset:write). **Monster**: tapered bones + tendons, jointed fingers, the mouth opens
+  (see GDD). **Pathfinding**: clearance-aware routes (wall-hugging 23% → 5.5%), step back when
+  wedged, the chase re-route bug (wedges never escalated), nav stats in the night log (`Nav`,
+  pull_stats). **Item icons** in the hotbar + a held-item line. navai_test: the police fallback
+  ended its night 3 sim-minutes in (every later trip "failed"): it now stubs the ending; `bench`
+  mode. Next: `--since=100`: `his navigation` line (wedged / slips per night), phone quits in
+  SmallThings (v99: 4 of 5 phones quit mid-night).
+
 - **19 Oct (v99)**, the owner: comments say "this game sucks dont play it"; "the monster and builds
   especially need reworking", Locust / THRESHOLD-level creepy, proper scares, better sounds, top build,
   and a new-style reel. Stats since v98 (103 nights, 269 lobby visits, rating 18 up / 24 down = 43%):
@@ -454,7 +470,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 99).
+  (last published: version 100).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
