@@ -67,7 +67,7 @@ local ok, err = pcall(function()
 	-- FLOAT AUDIT: furniture and props must rest on something
 	local MOUNTED = { Picture = true, Sconce = true, Pendant = true, CeilingFan = true, Curtain = true, Mirror = true, FairyLights = true,
 		StringLights = true, Towel = true, WallLantern = true, Wire = true, UpperCabinets = true, Hood = true, Shelving = true, Clock = true,
-		TelephonePole = true, StreetLamp = true, RoadSign = true, Speaker = true, Monitor = true, TV = true, Lantern = true, Keyboard = true }
+		TelephonePole = true, StreetLamp = true, RoadSign = true, Speaker = true, Monitor = true, TV = true, Lantern = true, Keyboard = true, Poster = true }
 	local skipTop = { Structure = true, Doors = true, Windows = true, Lights = true, Finishes = true }
 	local floats = {}
 	for _, top in world:GetChildren() do

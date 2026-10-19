@@ -3,7 +3,15 @@ local roblox = require("@lune/roblox")
 local fs = require("@lune/fs")
 local luau = require("@lune/luau")
 
+-- the checkout these tests are run from (tools/harness inside it), so a git worktree tests its own code
 local REPO = "/home/user/Horror/"
+do
+	local cwd = require("@lune/process").cwd:gsub("\\", "/")
+	local base = cwd:match("^(.*/)tools/harness/?$")
+	if base and fs.isDir(base .. "src") then
+		REPO = base
+	end
+end
 local M = {}
 M.errors = {}
 M.renderSteps = {}

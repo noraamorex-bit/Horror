@@ -283,6 +283,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **19 Oct (v101)**: the lived-in layer (`World/Dress`, GDD "The lived-in layer"): ~40 placements
+  in rooms that read empty (kitchen counters, master bedroom, Jamie's and Lily's rooms, den, upstairs
+  hall, garage, bathrooms), Creator Store stand-ins swapped by `Props.Models`; all clear of doorways,
+  door swings, hiding spots, prompts, nav nodes and candy spots (`dress_test`); nav sweep 60/60 on
+  the new layout.
+
 - **19 Oct (v100)**, the owner (after showing a reel of another game: raw first-person gameplay, a
   black spindly monster in a doorway): "Make proper icon and thumbnail. Make the monster even better
   and improve pathfinding a lot. Make icons for inventory items." Done: **store art**
@@ -476,7 +482,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 100).
+  (last published: version 101).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

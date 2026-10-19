@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { loadProps } from './propload.mjs';
+import { execFileSync } from 'child_process';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const [,, stagePath, cache, viewsPath, outDir] = process.argv;
@@ -17,6 +18,27 @@ fs.mkdirSync(outDir, { recursive: true });
 fs.mkdirSync(cache, { recursive: true });
 
 const { models, meshes, textures, tris } = await loadProps(stage, cache);
+
+// paintings and posters (parts with an ArtDecal): the decal asset -> its image, as data URLs
+function loadArt() {
+  const out = {};
+  for (const id of new Set(stage.parts.filter(p => p.art).map(p => String(p.art)))) {
+    try {
+      const df = path.join(cache, id + '.bin');
+      if (!fs.existsSync(df)) execFileSync('python3', [path.join(here, 'fetch.py'), cache, id], { stdio: 'pipe' });
+      const m = fs.readFileSync(df, 'utf8').match(/<url>[^<]*?id=(\d+)/);
+      if (!m) continue;
+      const tf = path.join(cache, m[1] + '.bin');
+      if (!fs.existsSync(tf)) execFileSync('python3', [path.join(here, 'fetch.py'), cache, m[1]], { stdio: 'pipe' });
+      const b = fs.readFileSync(tf);
+      const mime = b[0] === 0x89 ? 'image/png' : (b[0] === 0xff ? 'image/jpeg' : null);
+      if (mime) out[id] = `data:${mime};base64,` + b.toString('base64');
+    } catch (e) { console.log('art', id, 'failed:', String(e.message).slice(0, 120)); }
+  }
+  console.log('art', Object.keys(out).length);
+  return out;
+}
+const arts = loadArt();
 const W = 1280, H = 720;
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
@@ -24,7 +46,7 @@ page.on('console', m => { if (m.type() === 'error' || m.type() === 'log') consol
 await page.setContent(`<html><body style="margin:0;background:#000"><canvas id="c" width="${W}" height="${H}"></canvas></body></html>`);
 await page.addScriptTag({ path: path.join(here, 'node_modules/three/build/three.min.js') });
 await page.addScriptTag({ path: path.join(here, 'propscene.js') });
-await page.evaluate(async ([stage, models, meshes, textures, W, H]) => {
+await page.evaluate(async ([stage, models, meshes, textures, arts, W, H]) => {
   const T = THREE;
   const renderer = new T.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true, preserveDrawingBuffer: true });
   renderer.setSize(W, H, false); renderer.outputColorSpace = T.SRGBColorSpace; renderer.toneMapping = T.ACESFilmicToneMapping;
@@ -49,14 +71,21 @@ await page.evaluate(async ([stage, models, meshes, textures, W, H]) => {
     let g = box, sx = p.s[0], sy = p.s[1], sz = p.s[2];
     if (p.m && /Sphere/.test(p.m.t)) g = ball; else if (p.sh === 'Ball') { g = ball; const d = Math.min(sx, sy, sz); sx = sy = sz = d; }
     else if (p.sh === 'Cylinder') { g = cyl; const d = Math.min(sy, sz); sy = sz = d; }
-    const mesh = new T.Mesh(g, mat(p.col, p.mat, p.tr));
+    let material = mat(p.col, p.mat, p.tr);
+    if (p.art && arts[p.art]) {
+      // the picture on the part's front (-Z) face, tinted like World/Props does (BoxGeometry face 5 = -Z)
+      const tex = new T.TextureLoader().load(arts[p.art]); tex.colorSpace = T.SRGBColorSpace;
+      const pic = new T.MeshStandardMaterial({ map: tex, roughness: 0.8, color: new T.Color('rgb(235,228,212)') });
+      material = [material, material, material, material, material, pic];
+    }
+    const mesh = new T.Mesh(g, material);
     const m = cfm(p.c).multiply(new T.Matrix4().makeScale(sx, sy, sz));
     mesh.matrixAutoUpdate = false; mesh.matrix.copy(m); mesh.userData.pos = new T.Vector3(p.c[0], p.c[1], p.c[2]);
     scene.add(mesh);
   }
   await window.addProps(scene, stage, models, meshes, textures);
   scene.updateMatrixWorld(true);
-}, [stage, models, meshes, textures, W, H]);
+}, [stage, models, meshes, textures, arts, W, H]);
 for (const v of views) {
   await page.evaluate((v) => {
     const T = THREE, scene = window.S;

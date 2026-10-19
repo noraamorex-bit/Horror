@@ -21,7 +21,10 @@ Scratch output goes wherever you point it (not in the repo).
    name); Kit furniture records its frame as its WorldPivot.
 4. **Check in the house**: `cd tools/harness && lune run stage_dump.luau <out>/stage.json`, then
    `node tools/assets/stage.mjs <out>/stage.json <cache> views.json <outDir>` renders the house with
-   the props placed exactly as World/Props fit() does (views.json: `[{name, pos, look, fov, radius}]`).
+   the props placed exactly as World/Props fit() does (views.json: `[{name, pos, look, fov, radius}]`),
+   and the paintings and posters (parts with an `ArtDecal`) with their real pictures.
+   A Kit piece that keeps its own look gets a `PropKey` with no entry (Lily's white toy shelf is
+   `ToyShelf`, not `Bookcase`), so the swap passes it by.
 5. `tools/harness/props_test.luau` tests the fitting itself (turn, scale, floor, back to the wall).
 
 Don't swap things players use or hide in (beds, wardrobes, desks you hide under, the fridge, oven,
