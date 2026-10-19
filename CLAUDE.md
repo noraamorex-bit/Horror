@@ -262,6 +262,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   (his head turns right round) → "so i hid." → "i didn't breathe." → "it stopped." → the doors torn
   open on 22.15 s → "RUN." (up the stairs on all fours). Tools: `comp_story.mjs`; store art from the same
   renders: `reel33/stills.py icon|thumb` → `marketing/attic/icon_v99_*.png`, `thumbnail_v99_1920.png`.
+- **Every reel says plainly it's a new Roblox game, with the name** (19 Oct, the owner: the story
+  reel "is barely advertising a new Roblox game to play… make sure people clearly see that"): a red
+  **NEW ROBLOX HORROR GAME** tag + the name on screen from the first frame to the last clip, and an
+  end card with the name big, "SEARCH IT ON ROBLOX" and a search bar typing the name, "FREE · 1-4
+  PLAYERS · WITH FRIENDS" (`comp_story.mjs` `text.brand`, on by default). Reel 33 rebranded:
+  `someone_lives_story_1_branded.mp4`. Do the same in any new format.
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**

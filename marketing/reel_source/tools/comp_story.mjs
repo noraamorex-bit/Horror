@@ -12,15 +12,21 @@ const [,, editPath, outDir, fromArg, toArg] = process.argv;
 const edit = JSON.parse(fs.readFileSync(editPath, 'utf8'));
 fs.mkdirSync(outDir, { recursive: true });
 const NF = edit.frames.length;
-const FD = '/mnt/skills/examples/canvas-design/canvas-fonts/';
+// (the fonts live in the repo: marketing/fonts; OFL)
+const FD = new URL('../../fonts/', import.meta.url).pathname;
 const font = (f) => 'data:font/ttf;base64,' + fs.readFileSync(FD + f).toString('base64');
-const T = Object.assign({ endTitle: 'someone lives in our attic.', endSub: 'search it on roblox.', date: 'OCT 31 2026', time0: [3, 12, 7] }, edit.text || {});
+// brand (v100, the owner: the reel "is barely advertising a new Roblox game to play, with the name"):
+// a banner from the first frame to the last clip (NEW ROBLOX HORROR GAME + the name), and an end card
+// that sells it: the name big, a search bar typing it in, free, with friends
+const T = Object.assign({ endTitle: 'someone lives in our attic.', endSub: 'search it on roblox.', date: 'OCT 31 2026', time0: [3, 12, 7],
+  brand: true, tag: 'NEW ROBLOX HORROR GAME', name: 'someone lives in our attic.' }, edit.text || {});
 
 const html = `<!doctype html><html><head><style>
 @font-face { font-family: S; src: url(${font('LibreBaskerville-Regular.ttf')}); }
 @font-face { font-family: SI; src: url(${font('Lora-Italic.ttf')}); }
 @font-face { font-family: SB; src: url(${font('Lora-Bold.ttf')}); }
 @font-face { font-family: M; src: url(${font('DMMono-Regular.ttf')}); }
+@font-face { font-family: W; src: url(${font('WorkSans-Bold.ttf')}); }
 html,body { margin:0; width:1080px; height:1920px; overflow:hidden; background:#000; }
 #base, #inv { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; }
 #red, #blue { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; mix-blend-mode:screen; opacity:0; }
@@ -44,6 +50,23 @@ html,body { margin:0; width:1080px; height:1920px; overflow:hidden; background:#
 #cap .r { color:#e3262b; }
 #cap .ln { white-space:nowrap; }
 #run { left:0; right:0; top:760px; text-align:center; font-family:SB; font-size:300px; letter-spacing:-6px; color:#e3262b; }
+/* the brand banner (under Instagram's top bar, clear of the camcorder stamp) */
+#brand { left:0; right:0; top:215px; text-align:center; }
+#tag { display:inline-block; background:#e3262b; color:#fff; font-family:W; font-size:40px; letter-spacing:3px; padding:12px 26px 10px; border-radius:10px; box-shadow:0 4px 18px rgba(0,0,0,.6); }
+#bname { margin-top:16px; font-family:SB; font-size:70px; color:#f4f1ea; text-shadow:0 3px 14px rgba(0,0,0,1), 0 0 5px rgba(0,0,0,1); }
+#bname .r { color:#e3262b; }
+/* the end card, branded */
+#e2 { left:60px; right:60px; top:560px; text-align:center; }
+#e2tag { display:inline-block; background:#e3262b; color:#fff; font-family:W; font-size:46px; letter-spacing:4px; padding:14px 30px 12px; border-radius:12px; }
+#e2name { margin-top:44px; font-family:SB; font-size:128px; line-height:136px; color:#f4f1ea; }
+#e2name .r { color:#e3262b; }
+#e2on { margin-top:70px; font-family:W; font-size:40px; letter-spacing:3px; color:#bdbdc4; }
+#e2bar { margin:22px auto 0; width:900px; height:112px; border-radius:56px; background:#f4f4f6; display:flex; align-items:center; box-shadow:0 6px 30px rgba(0,0,0,.6); }
+#e2glass { width:44px; height:44px; margin:0 26px 0 40px; border:7px solid #505058; border-radius:50%; position:relative; box-sizing:border-box; flex:none; }
+#e2glass::after { content:''; position:absolute; width:7px; height:22px; background:#505058; right:-9px; bottom:-17px; transform:rotate(-45deg); border-radius:3px; }
+#e2q { font-family:W; font-size:46px; color:#18181c; white-space:nowrap; text-shadow:none; }
+#e2cur { display:inline-block; width:4px; height:50px; background:#18181c; vertical-align:-8px; margin-left:3px; }
+#e2foot { margin-top:60px; font-family:W; font-size:38px; letter-spacing:2px; color:#f4f1ea; white-space:nowrap; }
 /* the end card */
 #endTitle { left:60px; right:60px; top:820px; text-align:center; font-family:S; font-size:70px; color:#f4f1ea; }
 #endSub { left:0; right:0; top:960px; text-align:center; font-family:SI; font-size:52px; color:#e3262b; }
@@ -62,6 +85,10 @@ html,body { margin:0; width:1080px; height:1920px; overflow:hidden; background:#
 <div class="l" id="flash"></div>
 <div class="l" id="black"></div>
 <canvas class="l" id="noise" width="270" height="480" style="width:1080px;height:1920px; image-rendering: pixelated; opacity:0"></canvas>
+<div class="o" id="brand"><div id="tag">${T.tag}</div><div id="bname">${T.name.replace('attic.', '<span class="r">attic.</span>')}</div></div>
+<div class="o sh" id="e2"><div id="e2tag">${T.tag}</div><div id="e2name">someone lives<br>in our <span class="r">attic.</span></div>
+<div id="e2on">SEARCH IT ON ROBLOX</div><div id="e2bar"><div id="e2glass"></div><span id="e2q"></span><span id="e2cur"></span></div>
+<div id="e2foot">FREE &nbsp;·&nbsp; 1-4 PLAYERS &nbsp;·&nbsp; WITH FRIENDS</div></div>
 <div class="o sh" id="endTitle">${T.endTitle}</div>
 <div class="o sh" id="endSub">${T.endSub}</div>
 <script>
@@ -87,7 +114,9 @@ function caption(lines, n) {
 }
 window.setFrame = (f, fr) => {
   const t = f / 30;
-  for (const id of ['rec','stamp','play','cap','capbg','run','endTitle','endSub']) $(id).style.opacity = 0;
+  for (const id of ['rec','stamp','play','cap','capbg','run','endTitle','endSub','brand','e2']) $(id).style.opacity = 0;
+  // the banner: on from the first frame, all the way to the end card (dimmed under the scare's flash)
+  if (${T.brand} && fr.section !== 'end') $('brand').style.opacity = fr.scare && fr.scareI < 2 ? 0.3 : 1;
   const b = $('base');
   b.style.filter = 'contrast(1.12) saturate(.78) brightness(' + (fr.bright || 1.3) + ')';
   b.style.transform = 'none';
@@ -149,8 +178,19 @@ window.setFrame = (f, fr) => {
         nctx.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',' + (0.5 + rnd(k) * 0.5) + ')'; nctx.fillRect(x, y, w, h);
       }
     }
-    if (lt >= 0.3) { $('endTitle').style.opacity = Math.min(1, (lt - 0.3) / 0.4); }
-    if (lt >= 1.2) { $('endSub').style.opacity = Math.min(1, (lt - 1.2) / 0.4); }
+    if (${T.brand}) {
+      // the name, then the search bar typing it in, then free / with friends
+      const e = $('e2'); e.style.opacity = Math.min(1, Math.max(0, (lt - 0.25) / 0.3));
+      const typed = Math.max(0, Math.floor((lt - 1.3) * 22));
+      $('e2q').textContent = ${JSON.stringify(T.name)}.slice(0, typed);
+      $('e2cur').style.opacity = (Math.floor(lt * 2.5) % 2) ? 0 : 1;
+      $('e2foot').style.opacity = Math.min(1, Math.max(0, (lt - 2.9) / 0.4));
+      $('e2on').style.opacity = Math.min(1, Math.max(0, (lt - 0.9) / 0.3));
+      $('e2bar').style.opacity = $('e2on').style.opacity;
+    } else {
+      if (lt >= 0.3) { $('endTitle').style.opacity = Math.min(1, (lt - 0.3) / 0.4); }
+      if (lt >= 1.2) { $('endSub').style.opacity = Math.min(1, (lt - 1.2) / 0.4); }
+    }
   }
   // the black at the very start, the grain everywhere
   if (t < 0.12) $('black').style.opacity = Math.max(+$('black').style.opacity, 1 - t / 0.12);
