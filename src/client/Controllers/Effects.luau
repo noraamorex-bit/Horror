@@ -265,8 +265,8 @@ function Effects.jumpscare(head: BasePart?)
 	local oldType, oldFov = cam.CameraType, cam.FieldOfView
 	cam.CameraType = Enum.CameraType.Scriptable
 	cam.FieldOfView = 48
-	-- the scream, a low hit under it, and your own gasp
-	for _, name in { "Jumpscare", "HorrorHitLow", "Gasp" } do
+	-- the screech, the scream hit, a low hit under it, and your own gasp
+	for _, name in { "Screech", "Jumpscare", "HorrorHitLow", "Gasp" } do
 		local s = localSound(name)
 		if s then
 			s:Play()
@@ -281,11 +281,19 @@ function Effects.jumpscare(head: BasePart?)
 	ctx.UI.tween(flash, 0.9, { TintColor = Color3.new(1, 1, 1), Contrast = 0, Brightness = 0 })
 	Effects.shake(1.4, 0.9)
 	local t0 = os.clock()
-	while os.clock() - t0 < 0.85 and head.Parent do
-		-- right in front of his face, lunging a little closer
-		local k = (os.clock() - t0) / 0.85
+	local jerk = CFrame.identity
+	local nextJerk = 0
+	while os.clock() - t0 < 0.95 and head.Parent do
+		-- right in front of his face as it lunges at you (fast, then the last stretch slow), the
+		-- picture jerking from one angle to the next like the stop-motion of his body
+		local k = (os.clock() - t0) / 0.95
+		local reach = 3.6 - 2.3 * (1 - (1 - math.min(k * 1.6, 1)) ^ 3)
+		if os.clock() >= nextJerk then
+			nextJerk = os.clock() + 0.06 + math.random() * 0.06
+			jerk = CFrame.Angles(0, 0, (math.random() - 0.5) * 0.35)
+		end
 		local hcf = head.CFrame
-		cam.CFrame = CFrame.lookAt(hcf.Position + hcf.LookVector * (2.6 - k * 0.9) + Vector3.new(0, 0.1, 0), hcf.Position)
+		cam.CFrame = CFrame.lookAt(hcf.Position + hcf.LookVector * reach + Vector3.new(0, 0.05, 0), hcf.Position) * jerk
 		task.wait()
 	end
 	flash:Destroy()
@@ -303,28 +311,48 @@ function Effects.shake(mag: number, duration: number)
 end
 
 -- a figure only you can see (built locally, gone in a moment)
-function Effects.figure(cf: CFrame, duration: number)
-	-- him: a still copy of the real thing, frozen mid-stare (the old block man if he isn't loaded)
+function Effects.figure(cf: CFrame, duration: number, gait: string?)
+	-- him: a copy of the real thing, posed (staring, head laid over, by default) and twitching
+	-- in stop-motion while it's there (the old block man if he isn't loaded)
 	local real = ctx.Util.creature()
 	if real and real:IsA("Model") and real:GetAttribute("Creature") then
 		local ok, copy = pcall(function()
 			return real:Clone()
 		end)
 		if ok and copy then
+			local motors: { [string]: Motor6D } = {}
 			for _, d in copy:GetDescendants() do
 				if d:IsA("BasePart") then
-					d.Anchored = true
+					-- (only the root is anchored: the joints have to be free to take the pose)
+					d.Anchored = d.Name == "HumanoidRootPart"
 					d.CanCollide = false
 					d.CanQuery = false
 				elseif d:IsA("Sound") or d:IsA("Humanoid") then
 					d:Destroy()
+				elseif d:IsA("Motor6D") then
+					motors[d.Name] = d
 				end
 			end
 			copy.Name = "Figure"
 			copy:SetAttribute("Creature", nil)
 			game:GetService("CollectionService"):RemoveTag(copy, "Creature")
 			copy:PivotTo(cf * CFrame.new(0, 2.3, 0))
+			local Pose = ctx.CreaturePose
+			local seed, t0 = math.random() * 100, os.clock()
+			local function pose()
+				local P = Pose and Pose.get(gait or "Stare", 0, os.clock() - t0 + 0.6, seed) or {}
+				for name, m in motors do
+					m.Transform = P[name] or CFrame.identity
+				end
+			end
+			pose()
 			copy.Parent = workspace
+			task.spawn(function()
+				while copy.Parent and os.clock() - t0 < duration do
+					task.wait(1 / 16 + math.random() * 0.03)
+					pose()
+				end
+			end)
 			task.delay(duration, function()
 				copy:Destroy()
 			end)

@@ -1,6 +1,6 @@
 --[[
 	World — builds (and rebuilds) the whole level into workspace.World.
-	World.build() -> refs, World.destroy(), World.folder(), World.refs()
+	World.build() -> refs, World.destroy(), World.folder(), World.refs(), World.signs()
 ]]
 
 local House = require(script.Parent.House)
@@ -11,6 +11,7 @@ local Neighborhood = require(script.Parent.Neighborhood)
 local Burrow = require(script.Parent.Burrow)
 local Depth = require(script.Parent.Depth)
 local Props = require(script.Parent.Props)
+local Signs = require(script.Parent.Signs)
 
 local World = {}
 local ctx
@@ -55,6 +56,13 @@ function World.destroy()
 		folder = nil
 	end
 	refs = {}
+end
+
+-- the blackout: his wet footprints from the attic hatch along the upstairs hall (Signs)
+function World.signs()
+	if folder and not folder:FindFirstChild("Footprints") then
+		Signs.footprints(folder)
+	end
 end
 
 function World.folder(): Folder

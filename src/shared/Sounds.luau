@@ -100,7 +100,23 @@ Sounds.Library = {
 	Heartbeat = { Id = "rbxassetid://9043365727", Volume = 0.6, Looped = true },
 	-- him, hunting by sound (ProSoundEffects creature vocals, pitched down)
 	Growl = { Id = "rbxassetid://9125476001", Volume = 0.9, Pitch = 0.62, Range = 60, Caption = "[A low growl]" },
-	Roar = { Id = "rbxassetid://9113980319", Volume = 1, Pitch = 0.75, Range = 140, Caption = "[A ROAR, and running]" },
+	-- v99: when he charges, a shrill inhuman screech (ProSoundEffects "Creature Vocal Spider
+	-- Screech Low To Midrange (attack)"), not a lion's roar
+	Roar = { Id = "rbxassetid://9125478014", Volume = 1, Pitch = 0.85, Range = 140, Caption = "[A SCREECH, and running]" },
+	-- the same screech up close, for the jumpscare (client)
+	Screech = { Id = "rbxassetid://9125474518", Volume = 1, Pitch = 0.95 },
+	-- his joints, cracking (ProSoundEffects "Squishy Bone Cracks 4", "Bone Cracks 22")
+	BoneCrack1 = { Id = "rbxassetid://9119559515", Volume = 0.8, Range = 34, Caption = "[Something cracks, like knuckles]" },
+	BoneCrack2 = { Id = "rbxassetid://9113546114", Volume = 0.75, Range = 34, Caption = "[Joints cracking]" },
+	-- his long hands slapping down on the boards when he runs on all fours ("Creature Footsteps Clacky Claw")
+	ClawStep = { Id = "rbxassetid://9125467664", Volume = 0.8, Pitch = 0.7, Range = 60 },
+	-- a deep, wordless whisper (ProSoundEffects "Whisper Bursts Eerie Unintelligible Phrases")
+	CreatureWhisper = { Id = "rbxassetid://9126213744", Volume = 0.8, Range = 40, Caption = "[Whispering]" },
+	-- fingernails on the glass ("Tap On Glass Window 1")
+	GlassTap = { Id = "rbxassetid://9119918673", Volume = 0.8, Range = 30, Caption = "[Tapping on the glass]" },
+	-- the house settling in the storm, now and then ("House Creaks 13", "House Creaks 12"; client ambience)
+	HouseCreak1 = { Id = "rbxassetid://9114839397", Volume = 0.35 },
+	HouseCreak2 = { Id = "rbxassetid://9114838434", Volume = 0.3 },
 	-- the heartbeat minigame: a beat you hit, and the one he hears
 	HeartHit = { Id = "rbxassetid://9120316945", Volume = 0.8, Pitch = 0.7 },
 	Cough = { Id = "rbxassetid://9113948412", Fallback = ENGINE_THUD, Volume = 1, Range = 60, Caption = "[A man coughing and choking]" },
@@ -115,9 +131,11 @@ Sounds.Library = {
 	Spray = { Id = "rbxassetid://9113044265", Fallback = ENGINE_SPLASH, Volume = 0.8, Range = 30, Caption = "[Pssshhht]" },
 	ZipTie = { Id = "rbxassetid://9118047781", Fallback = ENGINE_THUD, Volume = 0.6, Range = 25, Caption = "[Zip ties ratchet]" },
 	Struggle = { Id = "rbxassetid://9113535436", Fallback = ENGINE_THUD, Volume = 0.7, Range = 35, Caption = "[Muffled struggling]" },
-	ManWhisper = { Id = "rbxassetid://9113585946", Volume = 0.6, Range = 14, Caption = "[A man's breathing, very close]" },
+	-- v99: wet, rasping, not-quite-human breathing (ProSoundEffects "Creature Mix Weird Deep
+	-- Monster Breathing 3"; the loop: "Creature Dying Pterodactyl Breathing 2", slowed)
+	ManWhisper = { Id = "rbxassetid://9113984056", Volume = 0.7, Pitch = 0.85, Range = 14, Caption = "[Wet, rasping breathing, very close]" },
 	-- his breathing, always with him: you hear it only when he's a few steps away
-	IntruderBreath = { Id = "rbxassetid://9113585946", Volume = 0.45, Range = 16, Looped = true },
+	IntruderBreath = { Id = "rbxassetid://9113971010", Volume = 0.4, Pitch = 0.8, Range = 16, Looped = true },
 	-- Creator Store (public): "Phone Vibrating On Table"
 	-- (the file buzzes for 3 s: the owner found it "so loud, long and annoying". One short, quiet buzz)
 	PhoneVibrate = { Id = "rbxassetid://121031853982816", Fallback = ENGINE_BEEP, Volume = 0.16, Length = 0.55 },

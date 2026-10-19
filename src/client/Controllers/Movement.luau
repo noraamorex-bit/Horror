@@ -56,6 +56,8 @@ end
 local beamPart: Part
 local localBeam: SpotLight
 local localGlow: PointLight
+local dustBox: Part
+local dust: ParticleEmitter
 
 local function buildLocalFlashlight()
 	beamPart = Instance.new("Part")
@@ -85,6 +87,35 @@ local function buildLocalFlashlight()
 	localGlow.Color = Color3.fromRGB(255, 244, 222)
 	localGlow.Enabled = false
 	localGlow.Parent = beamPart
+	-- dust hanging in the air: a box of slow specks just in front of you, lit only by the lights
+	-- they drift through, so in the dark they show up in your beam and nowhere else (v99)
+	dustBox = Instance.new("Part")
+	dustBox.Name = "LocalDust"
+	dustBox.Anchored = true
+	dustBox.CanCollide = false
+	dustBox.CanQuery = false
+	dustBox.CanTouch = false
+	dustBox.Transparency = 1
+	dustBox.Size = Vector3.new(9, 6, 14)
+	dustBox.Parent = workspace
+	dust = Instance.new("ParticleEmitter")
+	dust.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	dust.Color = ColorSequence.new(Color3.fromRGB(255, 246, 228))
+	dust.LightEmission = 0
+	dust.LightInfluence = 1
+	dust.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 0.04) })
+	dust.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.2, 0.35), NumberSequenceKeypoint.new(0.8, 0.35), NumberSequenceKeypoint.new(1, 1) })
+	dust.Lifetime = NumberRange.new(4, 7)
+	dust.Rate = 0
+	dust.Speed = NumberRange.new(0.05, 0.25)
+	dust.SpreadAngle = Vector2.new(180, 180)
+	dust.Drag = 1
+	dust.Acceleration = Vector3.new(0, -0.03, 0)
+	dust.RotSpeed = NumberRange.new(-20, 20)
+	dust.Shape = Enum.ParticleEmitterShape.Box
+	dust.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+	dust.LockedToPart = false
+	dust.Parent = dustBox
 end
 
 function Movement.start()
@@ -177,7 +208,11 @@ function Movement.start()
 		localGlow.Enabled = on
 		if on then
 			beamPart.CFrame = cam.CFrame * CFrame.new(0.7, -0.6, -0.4)
+			dustBox.CFrame = cam.CFrame * CFrame.new(0, 0, -8)
 		end
+		-- (indoors only: outside it's raining)
+		local wantDust = on and ctx.Mode ~= "Lobby" and ctx.Rooms.isInside(cam.CFrame.Position)
+		dust.Rate = wantDust and (ctx.UI.isTouch() and 14 or 26) or 0
 		-- the server's copy (so others see your beam) stays off for you, and aims with your pitch
 		local head = char:FindFirstChild("Head")
 		local mount = head and head:FindFirstChild("FlashlightMount") :: Attachment?

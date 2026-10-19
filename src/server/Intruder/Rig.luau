@@ -1,12 +1,18 @@
 --[[
-	Rig — what Curtis looks like now. Built from parts so it never depends on the catalog
+	Rig — what Curtis looks like (v99). Built from parts so it never depends on the catalog
 	loading, and rigged with the standard R15 joint names so the client can animate it
-	procedurally (client/Controllers/Creature).
+	procedurally (client/Controllers/Creature, shared/CreaturePose).
 
-	A head and a half taller than you, starved thin and stooped. A long, torn black coat, the
-	hood up. Under the hood a cracked white porcelain mask: two hollow black eyes with a pin of
-	light in each, and a grin stitched shut from ear to ear. Arms too long for his body: bare,
-	grey forearms and hands whose fingers hang past his knees, nails black.
+	Whatever he was when he first climbed into the attic, years in the dark have starved him down
+	to something jointed: nearly ten feet of black, oil-dull limbs as thin as broom handles, joined
+	at swollen knuckle-like balls, like a mannequin someone left out in the rain. A ribcage you can
+	count. Arms that hang past his knees and end in long black fingers with pale, split nails. His
+	face is a long porcelain mask: two deep sockets that droop at the corners, a pin of light far
+	inside each, and a mouth hanging open on a row of small teeth, stretched like he's screaming
+	without a sound. Lank black hair hangs down over it. Rags of the shirt he came in with.
+
+	The joint parts are untextured balls/blocks at each joint (identity rotation: the Motor6Ds
+	are worked out from positions); the bones between them are cylinders welded on.
 
 		local model = Rig.build(Builder)  -- standing on y = 0, facing -Z; HumanoidRootPart is primary
 ]]
@@ -17,17 +23,41 @@ local V = Vector3.new
 local CF = CFrame.new
 
 Rig.HipHeight = 3.9
-Rig.RootY = 4.9 -- HumanoidRootPart centre above the floor
+Rig.RootY = 4.9 -- HumanoidRootPart centre above the floor (the navigator and NavGrid use it)
+Rig.Height = 9.9 -- standing straight, the top of his head (doors are 9.5: he stoops through)
 
-local COAT = Color3.fromRGB(19, 18, 18)
-local COAT_EDGE = Color3.fromRGB(28, 26, 25)
-local TROUSERS = Color3.fromRGB(23, 22, 22)
-local SKIN = Color3.fromRGB(168, 164, 156) -- grey, months without daylight
-local MASK = Color3.fromRGB(204, 198, 184)
-local HOLE = Color3.fromRGB(4, 4, 4)
-local GLINT = Color3.fromRGB(255, 246, 232)
-local NAIL = Color3.fromRGB(14, 12, 12)
-local HAIR = Color3.fromRGB(10, 10, 10)
+local BODY = Color3.fromRGB(15, 14, 14)
+local JOINT = Color3.fromRGB(27, 25, 24)
+local RIB = Color3.fromRGB(44, 40, 38)
+local MASK = Color3.fromRGB(221, 213, 196)
+local MASK_DIRT = Color3.fromRGB(150, 140, 124)
+local HOLE = Color3.fromRGB(3, 3, 3)
+local GLINT = Color3.fromRGB(255, 244, 228)
+local TOOTH = Color3.fromRGB(200, 190, 166)
+local NAIL = Color3.fromRGB(176, 166, 146)
+local HAIR = Color3.fromRGB(7, 7, 7)
+local RAG = Color3.fromRGB(46, 42, 38)
+
+-- where everything sits, standing straight (feet on y = 0, facing -Z)
+local P = {
+	Root = V(0, Rig.RootY, 0),
+	Pelvis = V(0, 5.55, 0),
+	Waist = V(0, 5.8, 0),
+	Chest = V(0, 7.15, 0.04),
+	Neck = V(0, 8.0, 0.02),
+	Head = V(0, 9.15, -0.04),
+	Mask = V(0, 9.12, -0.24),
+}
+local function side(sx: number)
+	return {
+		Shoulder = V(sx * 0.66, 7.75, 0.04),
+		Elbow = V(sx * 0.72, 5.25, 0.04),
+		Wrist = V(sx * 0.74, 2.75, 0.0),
+		Hip = V(sx * 0.34, 5.4, 0),
+		Knee = V(sx * 0.37, 2.85, -0.06),
+		Ankle = V(sx * 0.38, 0.33, 0.04),
+	}
+end
 
 function Rig.build(Builder): Model
 	local model = Instance.new("Model")
@@ -69,23 +99,43 @@ function Rig.build(Builder): Model
 		w.Parent = p
 		return p
 	end
+	-- a round part (a joint, a knuckle)
+	local function ball(to: BasePart?, name: string, d: number, at: Vector3, color: Color3)
+		local props = { Shape = Enum.PartType.Ball }
+		if to then
+			return stick(to, name, V(d, d, d), CF(at), color, nil, props)
+		end
+		return part(name, V(d, d, d), CF(at), color, nil, props)
+	end
+	-- a bone: a cylinder from a to b (Roblox cylinders run along their X axis), welded to `to`
+	local function bone(to: BasePart, name: string, a: Vector3, b: Vector3, thick: number, color: Color3?)
+		local dir = b - a
+		local len = dir.Magnitude
+		local x = dir.Unit
+		local up = math.abs(x.Y) > 0.95 and V(0, 0, 1) or V(0, 1, 0)
+		local z = x:Cross(up).Unit
+		local y = z:Cross(x).Unit
+		local cf = CFrame.fromMatrix((a + b) / 2, x, y, z)
+		return stick(to, name, V(len, thick, thick), cf, color or BODY, nil, { Shape = Enum.PartType.Cylinder })
+	end
 
-	-- the body (R15 names: the client's animator looks the joints up by them)
-	local root = part("HumanoidRootPart", V(2, 2, 1), CF(0, Rig.RootY, 0), COAT, nil, { Transparency = 1, CanCollide = true, Massless = false, CastShadow = false })
-	local lowerTorso = part("LowerTorso", V(1.25, 0.7, 0.72), CF(0, 4.9, 0), COAT, Enum.Material.Fabric)
-	local upperTorso = part("UpperTorso", V(1.45, 1.75, 0.8), CF(0, 6.1, 0.02), COAT, Enum.Material.Fabric)
-	local head = part("Head", V(1.12, 1.42, 1.16), CF(0, 7.82, 0.06), COAT, Enum.Material.Fabric)
-	ellipsoid(head)
+	-- the jointed parts (R15 names: the client's animator looks the joints up by them). Each is the
+	-- ball at its own joint; the bone to the next joint is welded on.
+	local root = part("HumanoidRootPart", V(2, 2, 1), CF(P.Root), BODY, nil, { Transparency = 1, CanCollide = true, Massless = false, CastShadow = false })
+	local lowerTorso = ellipsoid(part("LowerTorso", V(0.95, 0.5, 0.5), CF(P.Pelvis), BODY))
+	local upperTorso = ellipsoid(part("UpperTorso", V(1.0, 1.55, 0.58), CF(P.Chest), BODY))
+	local head = ellipsoid(part("Head", V(0.8, 1.25, 0.8), CF(P.Head), HAIR))
 
 	local limbs = {}
-	for _, side in { "Left", "Right" } do
-		local sx = side == "Left" and -1 or 1
-		limbs[side .. "UpperArm"] = part(side .. "UpperArm", V(0.44, 2.05, 0.48), CF(sx * 0.98, 5.78, 0.02), COAT, Enum.Material.Fabric)
-		limbs[side .. "LowerArm"] = part(side .. "LowerArm", V(0.32, 2.05, 0.34), CF(sx * 0.98, 3.73, 0.02), SKIN)
-		limbs[side .. "Hand"] = part(side .. "Hand", V(0.34, 0.62, 0.2), CF(sx * 0.98, 2.4, 0.02), SKIN)
-		limbs[side .. "UpperLeg"] = part(side .. "UpperLeg", V(0.56, 2.1, 0.6), CF(sx * 0.4, 3.5, 0), TROUSERS, Enum.Material.Fabric)
-		limbs[side .. "LowerLeg"] = part(side .. "LowerLeg", V(0.42, 2.1, 0.46), CF(sx * 0.4, 1.4, 0), TROUSERS, Enum.Material.Fabric)
-		limbs[side .. "Foot"] = part(side .. "Foot", V(0.46, 0.35, 1.1), CF(sx * 0.4, 0.175, -0.16), NAIL, Enum.Material.Leather)
+	for _, s in { "Left", "Right" } do
+		local sx = s == "Left" and -1 or 1
+		local J = side(sx)
+		limbs[s .. "UpperArm"] = ball(nil, s .. "UpperArm", 0.42, J.Shoulder, JOINT)
+		limbs[s .. "LowerArm"] = ball(nil, s .. "LowerArm", 0.3, J.Elbow, JOINT)
+		limbs[s .. "Hand"] = ellipsoid(part(s .. "Hand", V(0.26, 0.5, 0.11), CF(J.Wrist + V(0, -0.27, -0.01)), BODY))
+		limbs[s .. "UpperLeg"] = ball(nil, s .. "UpperLeg", 0.4, J.Hip, JOINT)
+		limbs[s .. "LowerLeg"] = ball(nil, s .. "LowerLeg", 0.36, J.Knee, JOINT)
+		limbs[s .. "Foot"] = part(s .. "Foot", V(0.3, 0.2, 1.15), CF(J.Ankle + V(0, -0.2, -0.38)), BODY)
 	end
 	model.PrimaryPart = root
 
@@ -100,111 +150,180 @@ function Rig.build(Builder): Model
 		m.Parent = p1
 		return m
 	end
-	joint("Root", root, lowerTorso, V(0, 4.9, 0))
-	joint("Waist", lowerTorso, upperTorso, V(0, 5.25, 0))
-	joint("Neck", upperTorso, head, V(0, 6.98, 0.04))
-	for _, side in { "Left", "Right" } do
-		local sx = side == "Left" and -1 or 1
-		joint(side .. "Shoulder", upperTorso, limbs[side .. "UpperArm"], V(sx * 0.9, 6.72, 0.02))
-		joint(side .. "Elbow", limbs[side .. "UpperArm"], limbs[side .. "LowerArm"], V(sx * 0.98, 4.76, 0.02))
-		joint(side .. "Wrist", limbs[side .. "LowerArm"], limbs[side .. "Hand"], V(sx * 0.98, 2.71, 0.02))
-		joint(side .. "Hip", lowerTorso, limbs[side .. "UpperLeg"], V(sx * 0.4, 4.55, 0))
-		joint(side .. "Knee", limbs[side .. "UpperLeg"], limbs[side .. "LowerLeg"], V(sx * 0.4, 2.45, 0))
-		joint(side .. "Ankle", limbs[side .. "LowerLeg"], limbs[side .. "Foot"], V(sx * 0.4, 0.35, 0))
+	joint("Root", root, lowerTorso, P.Root)
+	joint("Waist", lowerTorso, upperTorso, P.Waist)
+	joint("Neck", upperTorso, head, P.Neck)
+	for _, s in { "Left", "Right" } do
+		local J = side(s == "Left" and -1 or 1)
+		joint(s .. "Shoulder", upperTorso, limbs[s .. "UpperArm"], J.Shoulder)
+		joint(s .. "Elbow", limbs[s .. "UpperArm"], limbs[s .. "LowerArm"], J.Elbow)
+		joint(s .. "Wrist", limbs[s .. "LowerArm"], limbs[s .. "Hand"], J.Wrist)
+		joint(s .. "Hip", lowerTorso, limbs[s .. "UpperLeg"], J.Hip)
+		joint(s .. "Knee", limbs[s .. "UpperLeg"], limbs[s .. "LowerLeg"], J.Knee)
+		joint(s .. "Ankle", limbs[s .. "LowerLeg"], limbs[s .. "Foot"], J.Ankle)
 	end
 
-	-- fingers: four long grey ones per hand, black nails, slightly curled
-	for _, side in { "Left", "Right" } do
-		local sx = side == "Left" and -1 or 1
-		local hand = limbs[side .. "Hand"]
-		for i, fx in { -0.12, -0.04, 0.04, 0.12 } do
-			local len = (i == 2 or i == 3) and 1.0 or 0.82
-			local curl = math.rad(6 + i * 3)
-			local base = CF(sx * 0.98 + fx * sx, 2.09, 0.02 - 0.02 * i)
-			local finger = stick(hand, "Finger", V(0.075, len, 0.075), base * CF(0, -len / 2, 0) * CFrame.Angles(curl, 0, 0), SKIN)
-			stick(hand, "Nail", V(0.085, 0.14, 0.085), finger.CFrame * CF(0, -len / 2 - 0.02, -0.01), NAIL)
+	-- the bones: long and thin, a little thicker at the top of each
+	for _, s in { "Left", "Right" } do
+		local sx = s == "Left" and -1 or 1
+		local J = side(sx)
+		local ua, la, ul, ll = limbs[s .. "UpperArm"], limbs[s .. "LowerArm"], limbs[s .. "UpperLeg"], limbs[s .. "LowerLeg"]
+		bone(ua, "Bone", J.Shoulder, J.Elbow, 0.24)
+		bone(ua, "Bone", J.Shoulder + V(0, -0.15, 0), J.Shoulder:Lerp(J.Elbow, 0.45), 0.3) -- (what's left of a muscle)
+		bone(la, "Bone", J.Elbow, J.Wrist, 0.19)
+		ball(la, "Knuckle", 0.24, J.Wrist, JOINT)
+		bone(ul, "Bone", J.Hip, J.Knee, 0.3)
+		bone(ul, "Bone", J.Hip + V(0, -0.1, 0), J.Hip:Lerp(J.Knee, 0.5), 0.36)
+		bone(ll, "Bone", J.Knee, J.Ankle, 0.23)
+		ball(ll, "Knuckle", 0.26, J.Ankle, JOINT)
+		-- the foot: long, narrow, three toes ending in pale nails
+		local foot = limbs[s .. "Foot"]
+		for i, tx in { -0.09, 0, 0.09 } do
+			local toeAt = J.Ankle + V(tx, -0.27, -0.95 - (i == 2 and 0.08 or 0))
+			bone(foot, "Toe", toeAt + V(0, 0, 0.25), toeAt, 0.07)
+			stick(foot, "Nail", V(0.07, 0.05, 0.14), CF(toeAt + V(0, -0.01, -0.06)), NAIL)
 		end
-		-- a knuckly thumb
-		stick(hand, "Thumb", V(0.08, 0.55, 0.08), CF(sx * 0.98 - sx * 0.2, 2.2, -0.08) * CFrame.Angles(0.3, 0, sx * 0.35), SKIN)
+
+		-- the hand: a narrow palm, four long fingers (two joints each, curled in) and a thumb.
+		-- Every nail pale and split.
+		local hand = limbs[s .. "Hand"]
+		local palmBottom = J.Wrist + V(0, -0.52, -0.01)
+		for i, fx in { -0.1, -0.035, 0.035, 0.1 } do
+			local len = (i == 2 or i == 3) and 0.72 or 0.6
+			local a = palmBottom + V(fx * sx, 0, 0)
+			local mid = a + V(fx * sx * 0.3, -len, -0.08 - 0.02 * i)
+			local tip = mid + V(fx * sx * 0.15, -len * 0.85, -0.3)
+			bone(hand, "Finger", a, mid, 0.065)
+			ball(hand, "Knuckle", 0.08, mid, BODY)
+			bone(hand, "Finger", mid, tip, 0.055)
+			local nailDir = (tip - mid).Unit
+			bone(hand, "Nail", tip - nailDir * 0.02, tip + nailDir * 0.17, 0.05, NAIL)
+		end
+		local thumbA = J.Wrist + V(-sx * 0.16, -0.2, -0.06)
+		local thumbTip = thumbA + V(-sx * 0.12, -0.55, -0.22)
+		bone(hand, "Thumb", thumbA, thumbTip, 0.06)
+		bone(hand, "Nail", thumbTip, thumbTip + (thumbTip - thumbA).Unit * 0.14, 0.05, NAIL)
 	end
 
-	-- the coat: a high collar, a gaunt strip of chest showing ribs, long torn tails
+	-- the trunk: a spine you can see between pelvis and ribs, a ribcage, collarbones, shoulder blades
+	bone(lowerTorso, "Spine", P.Pelvis, P.Waist + V(0, 0.5, 0.08), 0.22)
+	for i = 0, 4 do
+		ball(upperTorso, "Vertebra", 0.15, V(0, 6.05 + i * 0.42, 0.33 - i * 0.01), JOINT)
+	end
+	for i = 0, 4 do
+		-- each rib: sternum out to the side, then round towards the back
+		local y = 7.55 - i * 0.24
+		local w = 0.5 - math.abs(i - 1.5) * 0.04
+		for _, sx in { -1, 1 } do
+			local a = V(sx * 0.05, y, -0.3)
+			local b = V(sx * w, y - 0.06, -0.12)
+			local c = V(sx * (w - 0.02), y - 0.1, 0.18)
+			bone(upperTorso, "Rib", a, b, 0.055, RIB)
+			bone(upperTorso, "Rib", b, c, 0.055, RIB)
+		end
+	end
+	bone(upperTorso, "Sternum", V(0, 7.7, -0.3), V(0, 6.65, -0.28), 0.07, RIB)
 	for _, sx in { -1, 1 } do
-		stick(upperTorso, "Collar", V(0.5, 0.75, 0.9), CF(sx * 0.42, 7.05, 0.05) * CFrame.Angles(0, 0, sx * -0.28), COAT_EDGE, Enum.Material.Fabric)
-		stick(upperTorso, "Lapel", V(0.45, 1.5, 0.08), CF(sx * 0.3, 6.25, -0.43) * CFrame.Angles(0, 0, sx * 0.18), COAT_EDGE, Enum.Material.Fabric)
+		bone(upperTorso, "Collarbone", V(sx * 0.06, 7.82, -0.22), V(sx * 0.62, 7.82, 0.0), 0.08, RIB)
+		ellipsoid(stick(upperTorso, "ShoulderBlade", V(0.36, 0.55, 0.12), CF(sx * 0.3, 7.35, 0.3) * CFrame.Angles(0, 0, sx * 0.25), BODY))
+		bone(lowerTorso, "HipBone", V(sx * 0.1, 5.75, -0.16), V(sx * 0.42, 5.5, -0.05), 0.11, RIB)
 	end
-	local chest = stick(upperTorso, "Chest", V(0.34, 1.2, 0.05), CF(0, 6.3, -0.41), SKIN)
-	for i = 0, 3 do
-		stick(upperTorso, "Rib", V(0.3, 0.035, 0.03), chest.CFrame * CF(0, 0.35 - i * 0.22, -0.03), Color3.fromRGB(110, 104, 98))
+	-- rags of the shirt he came in with: a torn collar and strips hanging off the hips
+	for i, a in { -0.38, -0.12, 0.16, 0.36 } do
+		local len = 0.45 + (i % 3) * 0.22
+		stick(lowerTorso, "Rag", V(0.2, len, 0.04), CF(a, 5.55 - len / 2, -0.25) * CFrame.Angles(0.08, 0, a * 0.3), RAG, Enum.Material.Fabric)
 	end
-	-- tails hang from the waist: a back panel and two at the sides, ragged at the bottom
-	local tails = {
-		{ V(1.3, 2.6, 0.1), CF(0, 3.75, 0.42) * CFrame.Angles(math.rad(-6), 0, 0) },
-		{ V(0.5, 2.3, 0.1), CF(-0.66, 3.9, 0.08) * CFrame.Angles(0, math.rad(90), math.rad(4)) },
-		{ V(0.5, 2.3, 0.1), CF(0.66, 3.9, 0.08) * CFrame.Angles(0, math.rad(90), math.rad(-4)) },
-	}
-	for _, t in tails do
-		local panel = stick(lowerTorso, "CoatTail", t[1], t[2], COAT, Enum.Material.Fabric)
-		-- torn strips at the hem, different lengths
-		for k = -1, 1 do
-			local w = t[1].X / 3
-			local len = 0.35 + ((k + 2) * 37 % 5) * 0.12
-			stick(lowerTorso, "Rag", V(w * 0.8, len, 0.08), panel.CFrame * CF(k * w, -t[1].Y / 2 - len / 2 + 0.05, 0), COAT, Enum.Material.Fabric)
-		end
+	for _, sx in { -1, 1 } do
+		stick(upperTorso, "Rag", V(0.32, 0.5, 0.05), CF(sx * 0.33, 7.72, -0.26) * CFrame.Angles(-0.1, 0, sx * 0.4), RAG, Enum.Material.Fabric)
 	end
-	-- sleeves end ragged at the elbow
-	for _, side in { "Left", "Right" } do
-		local arm = limbs[side .. "UpperArm"]
-		stick(arm, "Cuff", V(0.5, 0.2, 0.54), arm.CFrame * CF(0, -1.0, 0), COAT_EDGE, Enum.Material.Fabric)
-	end
-	-- neck: thin, grey
-	stick(head, "NeckSkin", V(0.55, 0.38, 0.38), CF(0, 7.05, 0.05) * CFrame.Angles(0, 0, math.pi / 2), Color3.fromRGB(96, 92, 86), nil, { Shape = Enum.PartType.Cylinder })
 
-	-- the hood's peak, so the silhouette reads as a hood
-	stick(head, "HoodPeak", V(1.0, 0.4, 0.7), CF(0, 8.45, -0.08) * CFrame.Angles(math.rad(-20), 0, 0), COAT, Enum.Material.Fabric, { ClassName = "WedgePart" })
-	-- the mask: a long, grimy porcelain face filling the hood's opening. Not a smile: the
-	-- eyes are tall hollow drops sagging at the corners, and the mouth hangs open, stretched
-	-- down like it's in the middle of a scream that never comes out.
-	local maskC = CF(0, 7.78, -0.32)
-	ellipsoid(stick(head, "Mask", V(0.8, 1.22, 0.5), maskC, MASK, Enum.Material.SmoothPlastic))
-	local ma, mb, mc = 0.4, 0.61, 0.25
+	-- the neck: long, thin, two bones (it bends further than a neck should)
+	bone(head, "NeckBone", P.Neck, P.Neck + V(0, 0.62, -0.03), 0.17)
+	ball(head, "Knuckle", 0.16, P.Neck + V(0, 0.32, -0.02), JOINT)
+
+	-- the mask: a long, grimy porcelain face over the front of the head
+	local maskC = CF(P.Mask)
+	ellipsoid(stick(head, "Mask", V(0.78, 1.32, 0.5), maskC, MASK, Enum.Material.SmoothPlastic))
+	local ma, mb, mc = 0.39, 0.66, 0.25
 	-- a point on the mask's face (x, y from its centre), pushed `out` studs off the surface
 	local function onMask(x: number, y: number, out: number): CFrame
 		local k = 1 - (x / ma) ^ 2 - (y / mb) ^ 2
 		local z = mc * math.sqrt(math.max(k, 0.02))
-		-- face the surface normal a little, so features sit flush on the curve
 		local nx = x / (ma * ma)
 		return maskC * CF(x, y, -z - out) * CFrame.Angles(0, -nx * 0.05, 0)
 	end
 	for _, sx in { -1, 1 } do
-		-- tall hollow eyes, tilted so they droop outward
-		ellipsoid(stick(head, "EyeHole", V(0.17, 0.38, 0.1), onMask(sx * 0.16, 0.1, -0.035) * CFrame.Angles(0, 0, sx * 0.32), HOLE))
-		-- soot running down from each eye
-		stick(head, "Streak", V(0.035, 0.42, 0.03), onMask(sx * 0.19, -0.2, -0.008) * CFrame.Angles(0, 0, sx * 0.08), Color3.fromRGB(58, 54, 50))
+		-- big round sockets, sunk deep, a grey bruise round each; a tiny pale pupil far inside,
+		-- not quite level: staring at you
+		ellipsoid(stick(head, "EyeRim", V(0.33, 0.37, 0.1), onMask(sx * 0.155, 0.2, -0.05), MASK_DIRT))
+		ellipsoid(stick(head, "EyeHole", V(0.27, 0.31, 0.1), onMask(sx * 0.155, 0.2, -0.03), HOLE))
+		ellipsoid(stick(head, "Glint", V(0.055, 0.055, 0.03), onMask(sx * 0.15, sx < 0 and 0.17 or 0.21, 0.0), GLINT, Enum.Material.Neon))
+		-- what's run down from them
+		stick(head, "Streak", V(0.03, 0.42, 0.03), onMask(sx * 0.2, -0.1, -0.008) * CFrame.Angles(0, 0, sx * 0.06), Color3.fromRGB(40, 36, 34))
 	end
-	-- a pin of light, deep in each eye, slightly different heights: he is looking at you
-	ellipsoid(stick(head, "Glint", V(0.07, 0.07, 0.03), onMask(-0.15, 0.03, 0.0), GLINT, Enum.Material.Neon))
-	ellipsoid(stick(head, "Glint", V(0.07, 0.07, 0.03), onMask(0.15, 0.06, 0.0), GLINT, Enum.Material.Neon))
-	-- a cold, faint light just in front of the mask: in a pitch-black room you can only just
-	-- make out the face
-	local glowAt = stick(head, "FaceGlow", V(0.1, 0.1, 0.1), onMask(0, 0.05, 0.75), GLINT, nil, { Transparency = 1, CastShadow = false })
+	-- the grin: stretched right across the face, cheek to cheek, curling up at the corners, two
+	-- rows of small teeth with black between them
+	ellipsoid(stick(head, "Mouth", V(0.5, 0.17, 0.1), onMask(0, -0.3, -0.03), HOLE))
+	for _, sx in { -1, 1 } do
+		ellipsoid(stick(head, "Mouth", V(0.16, 0.09, 0.1), onMask(sx * 0.25, -0.22, -0.035) * CFrame.Angles(0, 0, sx * 0.6), HOLE))
+	end
+	for i = -5, 5 do
+		local x = i * 0.04
+		local curve = (x / 0.24) ^ 2 * 0.06
+		stick(head, "Tooth", V(0.032, 0.075, 0.03), onMask(x, -0.245 + curve, -0.012), TOOTH)
+		if math.abs(i) <= 4 then
+			stick(head, "Tooth", V(0.032, 0.065, 0.03), onMask(x, -0.352 + curve * 0.6, -0.012), TOOTH)
+		end
+	end
+	-- cracks from the brow down past the left eye, and across the chin
+	stick(head, "Crack", V(0.018, 0.34, 0.02), onMask(-0.04, 0.45, -0.004) * CFrame.Angles(0, 0, 0.45), Color3.fromRGB(40, 36, 34))
+	stick(head, "Crack", V(0.018, 0.22, 0.02), onMask(-0.12, 0.36, -0.004) * CFrame.Angles(0, 0, -0.35), Color3.fromRGB(40, 36, 34))
+	stick(head, "Crack", V(0.016, 0.18, 0.02), onMask(0.1, -0.52, -0.004) * CFrame.Angles(0, 0, -0.9), Color3.fromRGB(40, 36, 34))
+	-- a cold, faint light in front of the mask: in a pitch-black room you only just make it out
+	local glowAt = stick(head, "FaceGlow", V(0.1, 0.1, 0.1), onMask(0, 0.05, 0.8), GLINT, nil, { Transparency = 1, CastShadow = false })
 	local glow = Instance.new("PointLight")
 	glow.Color = Color3.fromRGB(196, 206, 232)
-	glow.Brightness = 0.6
-	glow.Range = 3.4
+	glow.Brightness = 0.55
+	glow.Range = 3.6
 	glow.Shadows = false
 	glow.Parent = glowAt
-	-- the mouth: a long black oval hanging open
-	ellipsoid(stick(head, "Mouth", V(0.17, 0.4, 0.1), onMask(0, -0.31, -0.035), HOLE))
-	-- cracks from the brow down past the left eye
-	stick(head, "Crack", V(0.018, 0.3, 0.02), onMask(-0.05, 0.4, -0.004) * CFrame.Angles(0, 0, 0.45), Color3.fromRGB(40, 36, 34))
-	stick(head, "Crack", V(0.018, 0.2, 0.02), onMask(-0.13, 0.3, -0.004) * CFrame.Angles(0, 0, -0.35), Color3.fromRGB(40, 36, 34))
-	stick(head, "Crack", V(0.016, 0.16, 0.02), onMask(0.08, -0.5, -0.004) * CFrame.Angles(0, 0, -0.2), Color3.fromRGB(40, 36, 34))
-	-- lank black hair hanging out of the hood either side of the mask
-	for i, a in { -0.5, -0.38, -0.27, 0.27, 0.38, 0.5 } do
-		local len = 1.2 + (i % 3) * 0.18
-		stick(head, "Hair", V(0.06, len, 0.06), CF(a, 7.75 - len / 2 + 0.45, -0.18 + math.abs(a) * 0.3) * CFrame.Angles(0.05, 0, a * 0.15), HAIR)
+
+	-- lank black hair, wet and clumped: flat strips from the crown, over the skull and hanging
+	-- straight down to the shoulders at the back and sides; a few across the front of the mask
+	local hc = P.Head
+	local function strip(name: string, a: Vector3, b: Vector3, width: number, faceOut: Vector3)
+		-- a flat ribbon from a to b, its flat side facing `faceOut`
+		local dir = b - a
+		local y = dir.Unit
+		local z = (faceOut - y * faceOut:Dot(y)).Unit
+		local x = y:Cross(z).Unit
+		return stick(head, name, V(width, dir.Magnitude, 0.035), CFrame.fromMatrix((a + b) / 2, x, y, z), HAIR)
 	end
+	for i = 0, 13 do
+		local a = math.rad(-125 + i * (250 / 13)) -- (0 = straight back)
+		local dir = V(math.sin(a), 0, math.cos(a))
+		local len = 1.1 + ((i * 7) % 5) * 0.2 + (math.abs(a) < 1.1 and 0.5 or 0)
+		local top = hc + V(0, 0.62, 0) + dir * 0.1
+		local over = hc + V(0, 0.15, 0) + dir * 0.43
+		local fall = over + V(0, -len, 0) + dir * 0.06
+		local w = 0.13 + (i % 3) * 0.03
+		strip("Hair", top, over, w, dir + V(0, 0.6, 0))
+		strip("Hair", over - V(0, 0.04, 0), fall, w * 0.85, dir)
+	end
+	-- down the edges of the mask: two on the left, one on the right
+	for _, st in { { -0.3, 1.2, -0.02 }, { -0.24, 0.9, 0.01 }, { 0.3, 0.8, 0.02 } } do
+		local top = hc + V(st[1] * 0.7, 0.6, -0.16)
+		local over = V(P.Mask.X + st[1], P.Mask.Y + 0.42, P.Mask.Z - 0.22)
+		local bottom = over + V(st[3], -st[2], -0.06)
+		strip("Hair", top, over, 0.06, V(0, 0.5, -1))
+		strip("Hair", over, bottom, 0.05, V(0, 0, -1))
+	end
+
+	-- where the server thinks he sees and hears from (perception, sight lines, his breathing): an
+	-- invisible point fixed to the root at about the height of his face as he walks, hunched. (His
+	-- real head is up at 9-10 feet standing; the server never animates him, so it would sit inside
+	-- door frames and the tunnel roofs.) The jumpscare camera still looks at the real Head.
+	stick(root, "Eyes", V(0.4, 0.4, 0.4), CF(0, 7.82, 0.06), BODY, nil, { Transparency = 1, CastShadow = false })
 
 	local hum = Instance.new("Humanoid")
 	hum.RigType = Enum.HumanoidRigType.R15

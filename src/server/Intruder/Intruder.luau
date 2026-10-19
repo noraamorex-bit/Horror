@@ -49,6 +49,7 @@ local function fresh()
 		Humanoid = nil,
 		Root = nil,
 		Head = nil,
+		Face = nil,
 		Nav = nil,
 		InHouse = false,
 		Entering = false,
@@ -219,7 +220,9 @@ local function ensureModel()
 	S.Model = model
 	S.Humanoid = model:FindFirstChildOfClass("Humanoid")
 	S.Root = model:FindFirstChild("HumanoidRootPart")
-	S.Head = model:FindFirstChild("Head")
+	-- (S.Head: his eyes for everything the server works out; S.Face: the real head, for the jumpscare)
+	S.Head = model:FindFirstChild("Eyes", true) or model:FindFirstChild("Head")
+	S.Face = model:FindFirstChild("Head")
 	S.Root.Anchored = true
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then
@@ -2106,6 +2109,31 @@ local function animate(dt: number)
 			CaptionText = running and "[Heavy footsteps, running]" or "[Heavy footsteps]",
 			CaptionRange = running and 70 or 28,
 		})
+		-- (on all fours: his long hands slap down too, a beat after the feet)
+		if running and not below then
+			task.delay(interval * 0.45, function()
+				if S.Model and S.InHouse then
+					ctx.Audio.playAt("ClawStep", pos() - V(0, 3, 0), { Pitch = 0.65 + math.random() * 0.1, Min = 8, Range = 70, Caption = false })
+				end
+			end)
+		end
+	end
+	-- standing still, close to you, his joints crack now and then (v99)
+	S.CrackClock = (S.CrackClock or 8) - dt
+	if S.CrackClock <= 0 then
+		S.CrackClock = 6 + math.random() * 8
+		if speed < 1 and S.InHouse and S.Head and S.State ~= "Gone" and S.State ~= "Trapped" then
+			local near = false
+			for _, p in ctx.Util.activePlayers() do
+				local r = ctx.Util.getRoot(p)
+				if r and (r.Position - S.Head.Position).Magnitude < 30 then
+					near = true
+				end
+			end
+			if near then
+				ctx.Audio.playAt("BoneCrack" .. math.random(1, 2), S.Head.Position - V(0, 2, 0), { Caption = math.random() < 0.5 })
+			end
+		end
 	end
 end
 
@@ -2328,9 +2356,9 @@ function Intruder.spook()
 	end
 end
 
--- his head, for the capture jumpscare
+-- his head, for the capture jumpscare (the real one, with the mask on it)
 function Intruder.getHead(): BasePart?
-	return S.Head
+	return S.Face or S.Head
 end
 
 -- just broke free (or was cut free): for a few seconds he can't see, hear or grab them, and he

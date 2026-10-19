@@ -87,6 +87,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   upstairs. Spawn him far away").
 - Never stuck on doors/walls (NavGrid survey + navigator).
 - Footsteps clearly audible and louder the closer he is.
+- **Look (v99, the owner: "look at the Locust or Threshold games… their monster is actually creepy"):**
+  a ~10-ft black jointed mannequin (ball joints, ribcage, long two-jointed fingers, pale nails), a
+  long porcelain mask with big round sockets, pinprick pupils and a stretched toothy grin, wet black
+  hair; played in **stop-motion** (12-18 poses/s); runs on all fours; head lolls 90°, now and then
+  turns right round (`Rig`, `CreaturePose`, client `Creature`). The server sees from an invisible
+  `Eyes` point at the old head height (7.8). He stands across the street in the lobby fog (Watcher).
+  Previews: the creature studio in the scratchpad (`cstudio/run.sh <gaits> lit|dark`, film2).
 
 **Audio**
 - Lots of small sounds (doors, items, sirens, jumpscares…). **Occasional** sudden loud stingers are
@@ -241,6 +248,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   Panel/Inset/Knob), crouched behind the car's trunk while he walks down its far side, bends to look
   in the back window, his head turns to the back of the car... he's round the corner on the hit; RUN
   out the side door. Glitch "he's in here". (The sedan is solid inside: no shots from its seats.)
+- **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
+  style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
+  over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
+  typed in the lower middle with one word in red, a soft dark backdrop; a camcorder overlay (● REC,
+  "OCT 31 2026", a running clock, PLAY ▶ for the first second, scanlines, colour bleed); the scare as a
+  negative flash into a shaking red frame; "RUN." huge and red; a black end card ("someone lives in our
+  attic." / "search it on roblox."). The writing: "my sister kept saying / someone lives in our attic."
+  (chunks on the music-box notes) → "we laughed at her. / every night." (on the drop's pops) → "then the
+  power went out." → "those aren't ours." (his footprints) → "that's not a man." → "and it heard me."
+  (his head turns right round) → "so i hid." → "i didn't breathe." → "it stopped." → the doors torn
+  open on 22.15 s → "RUN." (up the stairs on all fours). Tools: `comp_story.mjs`; store art from the same
+  renders: `reel33/stills.py icon|thumb` → `marketing/attic/icon_v99_*.png`, `thumbnail_v99_1920.png`.
 - Reels that show little of the game didn't work ("the goal is to maximize players"). Don't copy other
   creators' reels; vary colours; avoid AI-looking purple.
 - **Caption format:**
@@ -255,6 +274,19 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **19 Oct (v99)**, the owner: comments say "this game sucks dont play it"; "the monster and builds
+  especially need reworking", Locust / THRESHOLD-level creepy, proper scares, better sounds, top build,
+  and a new-style reel. Stats since v98 (103 nights, 269 lobby visits, rating 18 up / 24 down = 43%):
+  first-nighters quit while he was **offstage** 27 of 64 (acts I and the blackout act: nothing scary
+  yet), console quits 46%; sales 0 of 10 Become Him windows bought. Done: the new creature (see The
+  intruder), stop-motion animation, new jumpscare (lunge + screech), new scares (**YardFigure** in act I,
+  also when you close an upstairs window; **HallStare** before he's in; tap on the glass before the
+  window figure; hands slammed on the glass), new licensed sounds (screech, bone cracks, claw steps,
+  wet breathing, whisper, glass taps, house creaks), his wet footprints at the blackout (`World/Signs`),
+  flashlight dust, colder grade in the dark, him watching from the lobby fog. Reel 33: the new "story"
+  format (see Marketing). Next: `--since=99`: quits while Offstage in Evening, YardFigure/HallStare in
+  the truth logs, rating trend.
 
 - **18 Oct (v98)**, stats since v97 (140 nights, 424 lobby visits, 8,275 visits, votes 18/20): solo
   nights 94% no ending (size 2: 33%, 4: 0%); first nights saw the end 69%; veterans quit 49% (median
@@ -422,7 +454,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 98).
+  (last published: version 99).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

@@ -706,6 +706,10 @@ function Director.startAct(name: string, cause: Player?)
 			ctx.Audio.playAt("Breaker", Vector3.new(41, 8, -12.7))
 			ctx.Audio.playAt("PowerDown", Vector3.new(0, 8, 0))
 			ctx.PlayerState.scareNear(Vector3.new(0, 8, 0), 300, 8)
+			-- (and upstairs, wet footprints from under the attic hatch)
+			if ctx.World and ctx.World.signs then
+				ctx.World.signs()
+			end
 			Director.logTruth("PowerOut")
 			ctx.Escape.cutLine()
 			if ctx.Escape.stealKeys() then
@@ -1234,6 +1238,27 @@ local function fire(e, data)
 			end
 		end)
 	end
+end
+
+-- (v99) someone just closed one of the first act's open windows upstairs, and is still looking
+-- out of it: a moment later, lightning, and him standing out in the yard below (YardFigure, once a
+-- night). glassPos: the window; out: straight out of the house through it.
+function Director.windowGlance(player: Player, glassPos: Vector3, out: Vector3)
+	if state.Act ~= "Evening" then
+		return
+	end
+	local e = eventById("YardFigure")
+	if not e or state.Fired[e.Id] or os.clock() - (state.LastScareAt or -1e9) < 8 then
+		return
+	end
+	local myNight = state
+	task.delay(1.0, function()
+		if state ~= myNight or state.Act ~= "Evening" or state.Fired[e.Id] or not player.Parent then
+			return
+		end
+		local face = Vector3.new(glassPos.X, 4, glassPos.Z)
+		fire(e, { Player = player, Watch = { Stand = face + out * 10, Face = face } })
+	end)
 end
 
 local function tryEvent(e, force: boolean?): boolean

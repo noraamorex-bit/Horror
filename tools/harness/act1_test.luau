@@ -80,8 +80,23 @@ local ok, err = pcall(function()
 	for _, w in ctx.World.refs().OpenWindows do
 		local prompts = w.Glass:GetDescendants()
 	end
+	-- (v99) closing an open window upstairs, you are looking out of it: the Director's chance for
+	-- the yard figure, straight out of the house through that window
+	local glances = {}
+	local realGlance = ctx.Director.windowGlance
+	ctx.Director.windowGlance = function(pl, gp, out)
+		table.insert(glances, { gp, out })
+		return realGlance(pl, gp, out)
+	end
 	press("Glass", "Close window")
 	press("Glass", "Close window")
+	ctx.Director.windowGlance = realGlance
+	assert(#glances >= 1, "a glance out of the window, got " .. #glances)
+	for _, g in glances do
+		local gp, out = g[1], g[2]
+		assert(math.abs(out.Magnitude - 1) < 1e-6 and out.Y == 0, "a flat outward direction")
+		assert((gp + out * 5).Magnitude > gp.Magnitude, "pointing out of the house")
+	end
 	status("after windows")
 	print("all required done:", ctx.Objectives.allRequiredDone())
 end)

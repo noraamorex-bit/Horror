@@ -488,6 +488,46 @@ local function build(root: Folder)
 	Kit.sedan(root, CFrame.lookAt(ORIGIN + V(-50, 0.45, 32.5), ORIGIN + V(-40, 0.45, 32.5)), Color3.fromRGB(110, 28, 30))
 	Kit.sedan(root, CFrame.lookAt(ORIGIN + V(37.6, 0.7, -18), ORIGIN + V(37.6, 0.7, -28)), Color3.fromRGB(40, 60, 90))
 
+	-- (v99) across the street, under the far streetlamp in the fog: him. Dead still, head laid over
+	-- on one side, looking at the house; the clients animate him like the real one (Creature), so
+	-- now and then his head snaps, or turns right round. He never comes any closer.
+	local okRig, watcher = pcall(function()
+		local Rig = require(script.Parent.Parent.Intruder.Rig)
+		local m = Rig.build(B)
+		m.Name = "Watcher"
+		for _, d in m:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.CanCollide = false
+				d.CanQuery = false
+				d.Anchored = d.Name == "HumanoidRootPart"
+			end
+		end
+		local feet = ORIGIN + V(-36.5, 0.75, 52.5)
+		local at = CFrame.lookAt(feet + V(0, Rig.RootY, 0), ORIGIN + V(0, Rig.RootY, -10))
+		local from = (m.PrimaryPart :: BasePart).CFrame
+		m:PivotTo(at)
+		if ((m.PrimaryPart :: BasePart).Position - at.Position).Magnitude > 0.1 then
+			-- (somewhere PivotTo doesn't move models, the test harness: each part moved by hand)
+			for _, d in m:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.CFrame = at * from:Inverse() * d.CFrame
+				end
+			end
+		end
+		m:SetAttribute("Gait", "Stare")
+		m.Parent = root
+		return m
+	end)
+	if okRig and watcher then
+		task.spawn(function()
+			-- (mostly the head-on-one-side stare; sometimes idle, which is when it turns round)
+			while watcher.Parent do
+				task.wait(14 + math.random() * 10)
+				watcher:SetAttribute("Gait", watcher:GetAttribute("Gait") == "Stare" and "Idle" or "Stare")
+			end
+		end)
+	end
+
 	-- queue circles on the patio: plain white outlines
 	for i, size in ctx.Config.Lobby.QueueSizes do
 		-- (spread out, with room to walk between: the signs over them never overlap)

@@ -336,14 +336,128 @@ Events.List = {
 		end,
 		Run = function(ctx, D, data)
 			local w = data.Watch
+			-- (v99) a tap, tap on the glass first, so you're looking right at it when the lightning comes
+			ctx.Remotes.PlaySound:FireClient(data.Player, "GlassTap", w.Face, { Volume = 0.9 })
+			task.wait(0.9)
 			D.lightning(1.2)
-			ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(w.Stand, w.Face), 1.4)
+			ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(w.Stand, w.Face), 1.4, "Stare")
 			task.delay(0.3, function()
 				ctx.PlayerState.addNerve(data.Player, -12)
 				ctx.Remotes.Shake:FireClient(data.Player, 0.35, 0.8)
 				D.think(data.Player, ctx.Story.Thoughts.Events.FigureWindow)
 			end)
 			D.logTruth("FigureWindow")
+		end,
+	},
+	---------------------------------------------------------------------------
+	-- v99: in the first act, looking out of a ground-floor window: lightning, and for a second
+	-- something impossibly tall is standing out in the yard, its head on one side, watching
+	-- the house. Then it's dark again.
+	{
+		Id = "YardFigure",
+		Acts = { Evening = true },
+		Weight = 4,
+		Tension = 14,
+		Once = true,
+		Cond = function(ctx)
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if not room or room.Floor ~= "Ground" or p:GetAttribute("Hiding") then
+					continue
+				end
+				for _, w in ctx.Layout.WindowWatch do
+					if w.Room == room.Name then
+						local toWin = w.Face - root.Position
+						local flat = V(toWin.X, 0, toWin.Z)
+						if flat.Magnitude < 24 and flat.Magnitude > 2 and root.CFrame.LookVector:Dot(flat.Unit) > 0.7 then
+							return { Player = p, Watch = w }
+						end
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			local w = data.Watch
+			local out = w.Stand - w.Face
+			out = V(out.X, 0, out.Z).Unit
+			local at = w.Stand + out * 14
+			D.lightning(0.8)
+			ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(at, V(w.Face.X, at.Y, w.Face.Z)), 0.9, "Stare")
+			task.delay(0.35, function()
+				ctx.PlayerState.addNerve(data.Player, -8)
+				D.think(data.Player, ctx.Story.Thoughts.Events.YardFigure)
+			end)
+			D.logTruth("YardFigure")
+		end,
+	},
+	---------------------------------------------------------------------------
+	-- v99: before he's in for good: at the far end of the hall you're looking down, in the dark,
+	-- something standing dead still with its head laid over on one side. A whisper. Then the
+	-- lights stutter and it's gone, and something in the dark cracks like a knuckle.
+	{
+		Id = "HallStare",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 3,
+		Tension = 22,
+		Once = true,
+		Cond = function(ctx)
+			if ctx.Intruder.isInHouse() then
+				return nil
+			end
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			local chars = {}
+			for _, p in ctx.Util.activePlayers() do
+				if p.Character then
+					table.insert(chars, p.Character)
+				end
+			end
+			params.FilterDescendantsInstances = chars
+			for _, p in ctx.Util.activePlayers() do
+				local head = p.Character and p.Character:FindFirstChild("Head") :: BasePart?
+				local root = ctx.Util.getRoot(p)
+				if not head or not root or p:GetAttribute("Hiding") then
+					continue
+				end
+				local look = root.CFrame.LookVector
+				for _, n in ctx.Layout.Nodes do
+					local to = n.Pos - root.Position
+					local flat = V(to.X, 0, to.Z)
+					if math.abs(to.Y) < 4 and flat.Magnitude > 16 and flat.Magnitude < 40 and look:Dot(flat.Unit) > 0.93 then
+						-- nobody else near it, and a clear view of his whole height from where you stand
+						local alone = true
+						for _, o in ctx.Util.activePlayers() do
+							local r = ctx.Util.getRoot(o)
+							if r and (r.Position - n.Pos).Magnitude < 14 then
+								alone = false
+							end
+						end
+						local feet = n.Pos - V(0, 3, 0)
+						local clear = alone
+							and workspace:Raycast(head.Position, feet + V(0, 8.5, 0) - head.Position, params) == nil
+							and workspace:Raycast(head.Position, feet + V(0, 4, 0) - head.Position, params) == nil
+						if clear then
+							return { Player = p, Feet = feet, From = root.Position }
+						end
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			local feet = data.Feet
+			ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(feet + V(0, 2.6, 0), V(data.From.X, feet.Y + 2.6, data.From.Z)), 1.7, "Stare")
+			ctx.Remotes.PlaySound:FireClient(data.Player, "CreatureWhisper", feet + V(0, 8, 0), { Volume = 0.8 })
+			task.delay(0.5, function()
+				ctx.PlayerState.addNerve(data.Player, -12)
+				ctx.Remotes.Shake:FireClient(data.Player, 0.25, 0.6)
+				D.think(data.Player, ctx.Story.Thoughts.Events.HallStare)
+			end)
+			task.delay(1.75, function()
+				ctx.Remotes.PlaySound:FireClient(data.Player, "BoneCrack1", feet + V(0, 6, 0), { Volume = 0.9 })
+			end)
+			D.logTruth("HallStare")
 		end,
 	},
 	---------------------------------------------------------------------------
@@ -578,8 +692,8 @@ Events.List = {
 				ctx.Audio.playAt("WindowBang", w.Face, { Volume = 1, Caption = i == 1 })
 				if i == 1 then
 					jolt(ctx, w.Face, 30, 16, 0.6)
-					-- his silhouette right up against the glass, for a split second
-					ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(w.Stand:Lerp(w.Face, 0.85), w.Face), 0.45)
+					-- him at the glass, both long hands slammed flat against it, for a split second
+					ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(w.Stand:Lerp(w.Face, 0.4), w.Face), 0.45, "Reach")
 				end
 				task.wait(0.28)
 			end

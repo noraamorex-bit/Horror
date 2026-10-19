@@ -52,6 +52,14 @@ local ok, err = pcall(function()
 	local n = 0
 	for _, d in lobby:GetDescendants() do if d:IsA("BasePart") then n += 1 end end
 	print("lobby parts", n)
+	-- (v99) him, across the street under the far streetlamp, posed by the clients like the real one
+	local watcher = lobby:FindFirstChild("Watcher")
+	assert(watcher and watcher:GetAttribute("Gait") == "Stare", "the watcher across the street")
+	local wroot = watcher:FindFirstChild("HumanoidRootPart")
+	assert(wroot.Anchored and not wroot.CanCollide and wroot.CFrame.Position.Z > 400 + 46, "on the far sidewalk, out of the way: " .. tostring(wroot.Anchored) .. " " .. tostring(wroot.CanCollide) .. " " .. tostring(wroot.CFrame.Position))
+	for _, d in watcher:GetDescendants() do
+		if d:IsA("BasePart") then assert(not d.CanCollide, "nothing on him collides") end
+	end
 	-- every circle counts down from Countdown the moment someone steps in; full, it drops to FullCountdown
 	local L = ctx.Config.Lobby
 	assert(L.Countdown == 10 and L.FullCountdown == 3, "10 s, 3 s when full")

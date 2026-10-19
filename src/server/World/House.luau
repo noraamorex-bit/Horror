@@ -123,6 +123,12 @@ function House.build(ctx, root: Instance)
 					TweenService:Create(glass, TweenInfo.new(0.6), { CFrame = closedCF, Size = glass.Size / Vector3.new(1, 0.55, 1) }):Play()
 					ctx.Audio.playAt("WindowClose", glass.Position, { Caption = false })
 					ctx.Objectives.step("Windows", op.id)
+					-- (still looking out of it: the first act's scare, him down in the yard)
+					if ctx.Director and ctx.Director.windowGlance then
+						local gp = glass.Position
+						local out = math.abs(gp.Z) >= math.abs(gp.X) * 0.75 and Vector3.new(0, 0, math.sign(gp.Z)) or Vector3.new(math.sign(gp.X), 0, 0)
+						ctx.Director.windowGlance(player, gp, out)
+					end
 					local all = true
 					for _, w in refs.OpenWindows do
 						if not w.Closed then

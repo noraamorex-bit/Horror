@@ -1,7 +1,7 @@
 --[[
 	Creature — makes Curtis move like something that shouldn't (shared/CreaturePose), on every
-	client, every frame: a bent-double sprint with flailing arms, a slow walk with the head
-	cocked, the head snapping round for no reason. The server only moves his root and says
+	client: a run on all fours, a slow hunched walk with the head lolling, the head snapping (and
+	now and then turning right round), all of it played back in jerky stop-motion steps. The server only moves his root and says
 	which gait he's in (model attribute "Gait").
 
 	And what being near him does: your flashlight stutters, lights around him flicker, the
@@ -78,6 +78,7 @@ end
 local nearbyLights: { Light } = {}
 local lightScan = 0
 local duck, duckWant, duckClock = 0, 0, 0
+local frameHold = 0
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 local overlap = OverlapParams.new()
@@ -143,10 +144,10 @@ function Creature.start()
 		if duckClock <= 0 then
 			duckClock = 0.1
 			rayParams.FilterDescendantsInstances = { model }
-			local top = root.Position.Y + 4.0 -- his hood, standing straight
-			local hit = workspace:Raycast(root.Position, Vector3.new(0, 4.6, 0), rayParams)
-				or workspace:Raycast(root.Position + root.CFrame.LookVector * 1.4, Vector3.new(0, 4.6, 0), rayParams)
-			duckWant = hit and math.clamp(top - hit.Position.Y + 0.35, 0, 2.2) or 0
+			local top = root.Position.Y + 4.6 -- the top of his head, walking hunched (Rig.Height 9.9 standing)
+			local hit = workspace:Raycast(root.Position, Vector3.new(0, 5.4, 0), rayParams)
+				or workspace:Raycast(root.Position + root.CFrame.LookVector * 1.6, Vector3.new(0, 5.4, 0), rayParams)
+			duckWant = hit and math.clamp(top - hit.Position.Y + 0.35, 0, 3.0) or 0
 		end
 		duck += (duckWant - duck) * (1 - math.exp(-dt * 10))
 		if duck > 0.02 then
@@ -157,13 +158,19 @@ function Creature.start()
 				target[hip] = (target[hip] or CFrame.identity) * CFrame.Angles(duck * 0.3, 0, 0)
 			end
 		end
-		local alpha = 1 - math.exp(-dt * 14)
-		for name, motor in motors do
-			local want = target[name] or CFrame.identity
-			local cur = current[name] or CFrame.identity
-			cur = cur:Lerp(want, alpha)
-			current[name] = cur
-			motor.Transform = cur
+		-- played back like stop-motion: each pose held for a few frames, then the next (12-18 a
+		-- second, unevenly), so his limbs jerk from one position to the next like a puppet's
+		-- while he glides along
+		frameHold -= dt
+		if frameHold <= 0 then
+			frameHold = 1 / 18 + math.random() * (1 / 12 - 1 / 18)
+			for name, motor in motors do
+				local want = target[name] or CFrame.identity
+				local cur = current[name] or CFrame.identity
+				cur = cur:Lerp(want, 0.8)
+				current[name] = cur
+				motor.Transform = cur
+			end
 		end
 
 		-- what it's like to be near him

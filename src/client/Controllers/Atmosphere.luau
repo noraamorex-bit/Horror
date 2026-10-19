@@ -276,9 +276,10 @@ function Atmosphere.start()
 				Contrast = 0.03,
 				Brightness = 0.03,
 			} or {
-				TintColor = Color3.new(1, 1, 1),
-				Saturation = 0,
-				Contrast = 0,
+				-- (the dark house, and outside: cold and drained, the shadows a little deeper)
+				TintColor = Color3.fromRGB(232, 238, 255),
+				Saturation = -0.12,
+				Contrast = 0.07,
 				Brightness = 0,
 			})
 			ctx.UI.tween(Lighting, 1.2, { Ambient = cozy and WARM_AMBIENT or baseAmbient })
@@ -289,7 +290,9 @@ function Atmosphere.start()
 			local a = math.random() * math.pi * 2
 			local r = 12 + math.random() * 16
 			local p = cam.CFrame.Position + Vector3.new(math.cos(a) * r, (math.random() < 0.4) and 9 or -2, math.sin(a) * r)
-			ctx.Effects.playSound(math.random() < 0.7 and "Floorboard" or "HatchCreak", p, { Caption = false, Volume = 0.35 + math.random() * 0.25 })
+			local pick = math.random()
+			local name = pick < 0.4 and "Floorboard" or (pick < 0.55 and "HatchCreak" or (pick < 0.8 and "HouseCreak1" or "HouseCreak2"))
+			ctx.Effects.playSound(name, p, { Caption = false, Volume = 0.3 + math.random() * 0.25 })
 		end
 		if piano then
 			local want = (cozy and workspace:GetAttribute("Act") == "Evening" and not workspace:GetAttribute("Delivery")) and 0.22 or 0
