@@ -43,6 +43,18 @@ Props.Models = {
 	Stool = { Id = 13001590550, Yaw = 0 }, -- "Bar Chair Stool": black seat on a chrome stem
 	WaterHeater = { Id = 1037614531, Yaw = 0 }, -- "Electric Water Heater": white tank, copper pipes
 	Guitar = { Id = 1491240459, Yaw = 0 }, -- "Acoustic Guitar Mesh"
+	-- (the dressing pass, World/Dress: inspected for scripts, one mesh or a few plain parts each)
+	Toaster = 12981691084, -- a brushed-steel two-slot toaster (one mesh)
+	KnifeBlock = 15764570325, -- "Knife block thing": a wooden block, three handles
+	PaperTowels = 5516760880, -- a roll on a wooden stand
+	CoffeeMaker = 85020801176631, -- "coffee_maker": black drip machine, steel carafe
+	LaundryBasket = { Id = 13443196851, Yaw = 0 }, -- a white plastic laundry basket (one mesh)
+	Tipi = { Id = 12553825132, Yaw = 0 }, -- "OpenTipi": a canvas play tent on poles
+	RockingHorse = { Id = 5674846912, Yaw = 0 }, -- "rocking horse_01": a wooden rocking horse (one mesh)
+	TeaSet = 81115340896469, -- "Strawberry Tea set": a pink toy teapot and cups
+	TeddyPink = 8820218869, -- "Stuffed Toy Teddy Bear" in a pink dress
+	TeddyBrown = 4919878545, -- a brown teddy bear
+	Cooler = { Id = 5221805197, Yaw = 0 }, -- "Camping Cooler": red with a white lid
 }
 
 -- flat things are fitted by their width only (a scattered heap of shards is only a few
