@@ -11,3 +11,6 @@ marketing/reel_source/tools/node_modules/
 marketing/reel_source/tools/package-lock.json
 tools/assets/node_modules/
 tools/assets/package-lock.json
+
+# helper agents' isolated working copies
+.claude/worktrees/
