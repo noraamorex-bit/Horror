@@ -128,20 +128,20 @@ Config.Intruder = {
 		"Classic" is the older brain (he always feels roughly where you are).
 	]]
 	Brain = "Figure",
-	-- (his speeds: all of them a little under your walking pace, 10. He gets you by surprise, in a dead
-	-- end, in your hiding spot, or because you froze; not by outrunning you)
-	ChargeSpeed = 9, -- going for a sound he's sure of (you walk at 10, sprint at 17)
-	InvestigateSpeed = 8,
+	-- (his speeds. v102, the owner: "make him faster": chasing or charging he now outpaces your walk
+	-- (10) but not your sprint (17): seen, you run (and hide). Before, everything sat under 10.)
+	ChargeSpeed = 12, -- going for a sound he's sure of (you walk at 10, sprint at 17)
+	InvestigateSpeed = 9,
 	ChargeSearchTime = 5, -- thrashing about where the noise was, after a charge
 	InvestigateSearchTime = 6,
 	InspectTime = { 7, 10 }, -- standing at your hiding spot, listening (v91: +1 s for the heartbeat's longer lead-in)
 	InspectNearChance = 0.25, -- walking right past an occupied spot (not holding breath): he stops
-	WalkSpeed = 7, -- lying low between hunts
+	WalkSpeed = 8, -- lying low between hunts
 	SneakSpeed = 5,
-	ProwlSpeed = 9, -- (Classic brain) going to where he feels you are
-	ChaseSpeed = 9, -- he can see you: just under your walking pace, and he never stops
-	LungeSpeed = 9.5, -- the last few steps
-	MaxSpeed = 9.8, -- a hard cap on all of the above: never as fast as your walk
+	ProwlSpeed = 11, -- (Classic brain) going to where he feels you are
+	ChaseSpeed = 12.5, -- he can see you: faster than you walk, slower than you sprint, and he never stops
+	LungeSpeed = 13.5, -- the last few steps
+	MaxSpeed = 14.5, -- a hard cap on all of the above: never as fast as your sprint
 	GrabRange = 4.5,
 	FOV = 90, -- degrees
 	-- (short sight: he hunts by sound. Lit rooms and your beam still give you away)
@@ -153,7 +153,7 @@ Config.Intruder = {
 	HearWalk = 10, -- walking (not crouched) this close: he notices you behind him
 	HearSprint = 16, -- running
 	HearFlashlight = 12, -- your beam on the walls around him
-	SoloChaseSlowdown = 0.5, -- studs/s slower when playing alone
+	SoloChaseSlowdown = 1, -- studs/s slower when playing alone
 	ChaseLoseSightTime = 2.5, -- out of sight this long and he's back to following your trail
 	-- what he knows
 	SenseDelay = 3, -- he feels where you were this many seconds ago
@@ -178,7 +178,7 @@ Config.Intruder = {
 	CaptiveGrace = 45, -- and for this long ignores the basement (struggling, rescues): the rescue window
 	FreedGrace = 40, -- just got free (yourself or a friend): he can't see, hear or grab you for this long
 	-- patrolling (nobody to sense): he sweeps the rooms you were last in, listening
-	PatrolSpeed = 7.5,
+	PatrolSpeed = 8.5,
 	PatrolPause = { 1.5, 3 },
 	PatrolCheckChance = 0.25, -- at each stop: tear open a hiding spot nearby
 	DriftAfter = 60, -- nobody has met him this long: his patrols lean toward people out in the open
@@ -198,11 +198,11 @@ Config.Difficulty = {
 	VoteTime = 12,
 	Hard = {
 		Intruder = {
-			WalkSpeed = 7.5,
-			PatrolSpeed = 8,
-			ProwlSpeed = 9.6,
-			ChaseSpeed = 9.6, -- (Hard: a hair under your walking pace; stop or stumble and he's on you)
-			LungeSpeed = 9.9,
+			WalkSpeed = 8.5,
+			PatrolSpeed = 9,
+			ProwlSpeed = 12,
+			ChaseSpeed = 13.5, -- (Hard: only a sprint gets away)
+			LungeSpeed = 14.5,
 			SenseDelay = 2,
 			HideGrace = 6,
 			OpenFindChance = 0.85,
@@ -219,9 +219,9 @@ Config.Difficulty = {
 			GrabRange = 5,
 			HearWalk = 11,
 			PatrolCheckChance = 0.4,
-			SoloChaseSlowdown = 0.3,
-			ChargeSpeed = 9.6,
-			InvestigateSpeed = 8.5,
+			SoloChaseSlowdown = 0.6,
+			ChargeSpeed = 13,
+			InvestigateSpeed = 9.5,
 			InspectNearChance = 0.5,
 		},
 		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22, Travel = 0.9, Lead = 1.2, ForgiveWrong = false },
@@ -411,7 +411,7 @@ Config.Finale = {
 	BedtimeHunt = 70, -- the last stretch: he hunts at a run
 	PatrolSpeed = 6.5,
 	InvestigateSpeed = 8,
-	ChaseSpeed = 9.2, -- still under your walk (10)
+	ChaseSpeed = 11, -- (v102: faster than your walk, like upstairs)
 	Sight = 22,
 	SightFlashlight = 34,
 	FOV = 110,
@@ -430,7 +430,7 @@ Config.Finale = {
 -- survivor's walk (10), like him; LUNGE is the burst that makes it a game
 Config.Monster = {
 	MinPlayers = 2, -- survivors in the night (it's co-op only)
-	WalkSpeed = 9.5,
+	WalkSpeed = 11.5,
 	LungeSpeed = 17,
 	LungeTime = 1.4,
 	LungeCooldown = 9,
@@ -446,7 +446,9 @@ Config.Monster = {
 Config.Taser = {
 	Charges = 3,
 	Range = 50,
-	AimCone = 24, -- degrees either side of where you aim (v94: 9 felt like it didn't work at all)
+	AimCone = 30, -- degrees either side of where you aim (v94: 9 felt like it didn't work at all)
+	AutoRange = 26, -- (v102, the owner: "too hard to aim, just make it autohit when you are close") this
+	-- close and in plain sight, every shot hits wherever you point
 	Stun = 5,
 	Slow = 14, -- seconds he moves at SlowFactor afterwards
 	SlowFactor = 0.55,

@@ -36,6 +36,20 @@ local function bind(m: Model?)
 		return
 	end
 	jawList = Pose.jawMeshes(m)
+	-- (v102: in the house he wears a faint pale outline and fill wherever you can actually see
+	-- him, never through walls, so he reads in the dark; not in the lobby, where he's a shape in
+	-- the fog)
+	if ctx.Mode ~= "Lobby" and not m:FindFirstChild("SeeHim") then
+		local hl = Instance.new("Highlight")
+		hl.Name = "SeeHim"
+		hl.DepthMode = Enum.HighlightDepthMode.Occluded
+		hl.FillColor = Color3.fromRGB(120, 128, 155)
+		hl.FillTransparency = 0.82
+		hl.OutlineColor = Color3.fromRGB(190, 198, 222)
+		hl.OutlineTransparency = 0.45
+		hl.Adornee = m
+		hl.Parent = m
+	end
 	for _, d in m:GetDescendants() do
 		if d:IsA("Motor6D") then
 			motors[d.Name] = d

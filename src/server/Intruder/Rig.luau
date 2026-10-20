@@ -26,8 +26,10 @@ Rig.HipHeight = 3.9
 Rig.RootY = 4.9 -- HumanoidRootPart centre above the floor (the navigator and NavGrid use it)
 Rig.Height = 9.9 -- standing straight, the top of his head (doors are 9.5: he stoops through)
 
-local BODY = Color3.fromRGB(15, 14, 14)
-local JOINT = Color3.fromRGB(27, 25, 24)
+-- (v102, the owner: "I can't even see the monster": a charcoal you can make out in the dark, not
+-- pure black)
+local BODY = Color3.fromRGB(38, 36, 36)
+local JOINT = Color3.fromRGB(58, 54, 52)
 local RIB = Color3.fromRGB(44, 40, 38)
 local MASK = Color3.fromRGB(221, 213, 196)
 local MASK_DIRT = Color3.fromRGB(150, 140, 124)
@@ -302,10 +304,19 @@ function Rig.build(Builder): Model
 	local glowAt = stick(head, "FaceGlow", V(0.1, 0.1, 0.1), onMask(0, 0.05, 0.8), GLINT, nil, { Transparency = 1, CastShadow = false })
 	local glow = Instance.new("PointLight")
 	glow.Color = Color3.fromRGB(196, 206, 232)
-	glow.Brightness = 0.55
-	glow.Range = 3.6
+	glow.Brightness = 1.3
+	glow.Range = 7
 	glow.Shadows = false
 	glow.Parent = glowAt
+	-- and a faint cold light off his chest onto the walls and floor around him, so his shape shows
+	-- against them in a dark room
+	local aura = Instance.new("PointLight")
+	aura.Name = "Aura"
+	aura.Color = Color3.fromRGB(150, 166, 205)
+	aura.Brightness = 0.8
+	aura.Range = 11
+	aura.Shadows = false
+	aura.Parent = upperTorso
 
 	-- lank black hair, wet and clumped: flat strips from the crown, over the skull and hanging
 	-- straight down to the shoulders at the back and sides; a few across the front of the mask

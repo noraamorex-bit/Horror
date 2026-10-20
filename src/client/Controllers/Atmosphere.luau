@@ -191,7 +191,10 @@ function Atmosphere.start()
 	warmth.Parent = Lighting
 	local baseAmbient = Lighting.Ambient
 	local WARM_AMBIENT = Color3.fromRGB(40, 30, 22)
-	local warmOn: boolean? = nil
+	-- (v102, the owner: after the blackout "we can't see him": the dark house is moonlit now, a
+	-- cold blue you can find your way and see him by; your flashlight still matters)
+	local OUTAGE_AMBIENT = Color3.fromRGB(70, 76, 100)
+	local warmOn: string? = nil
 	-- soft piano while the evening is still just an evening: indoors, first act, lights on
 	-- (no chase or tension music: it slammed in whenever he chased anyone nearby, even a friend in
 	-- another room. His footsteps, breathing and your heartbeat carry the hunt.)
@@ -268,8 +271,10 @@ function Atmosphere.start()
 		-- warm indoors (ground floor and upstairs) while the lights are on
 		local floor = inside and ctx.Rooms.floorOf(cam.CFrame.Position)
 		local cozy = inside and workspace:GetAttribute("Power") ~= false and (floor == "Ground" or floor == "Upstairs")
-		if cozy ~= warmOn then
-			warmOn = cozy
+		local outage = inside and workspace:GetAttribute("Power") == false
+		local mood = cozy and "warm" or (outage and "outage" or "cold")
+		if mood ~= warmOn then
+			warmOn = mood
 			ctx.UI.tween(warmth, 1.2, cozy and {
 				TintColor = Color3.fromRGB(255, 230, 200),
 				Saturation = 0.22,
@@ -279,10 +284,10 @@ function Atmosphere.start()
 				-- (the dark house, and outside: cold and drained, the shadows a little deeper)
 				TintColor = Color3.fromRGB(232, 238, 255),
 				Saturation = -0.12,
-				Contrast = 0.07,
-				Brightness = 0,
+				Contrast = outage and 0.03 or 0.07,
+				Brightness = outage and 0.05 or 0,
 			})
-			ctx.UI.tween(Lighting, 1.2, { Ambient = cozy and WARM_AMBIENT or baseAmbient })
+			ctx.UI.tween(Lighting, 1.2, { Ambient = cozy and WARM_AMBIENT or (outage and OUTAGE_AMBIENT or baseAmbient) })
 		end
 		local act = workspace:GetAttribute("Act")
 		if inside and (act == "SmallThings" or act == "SomeoneElse" or act == "Guest") and os.clock() > nextCreak then

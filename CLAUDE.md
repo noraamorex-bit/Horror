@@ -80,8 +80,16 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 **The intruder (Curtis)**
 - Genuinely scary creature; smart (Doors' "Figure"-style: hunts by sound and sight, charges, inspects
   hiding spots, heartbeat minigame). Players must **hide**.
-- **Slower than the player's walk speed.** Not too hard (owner worried about rage-quits); after a capture
-  he leaves so friends get a rescue window.
+- **Faster than your walk, slower than your sprint** (v102, the owner: "make him faster"; until v101 he
+  was always under the walk speed): chase 12.5 / charge 12 (Hard 13.5 / 13), cap 14.5; you walk 10,
+  sprint 17. Not too hard (owner worried about rage-quits); after a capture he leaves so friends get a
+  rescue window.
+- **You must be able to see him** (v102: "I can't even see the monster… because of how dark it is"):
+  charcoal body, brighter face glow + a cold chest light, a faint outline/fill in the house (client
+  Highlight, occluded, not in the lobby), and the dark house after the blackout is moonlit
+  (Atmosphere OUTAGE_AMBIENT). Don't make him or the blackout pitch black again.
+- **Taser auto-hits up close** (`Taser.AutoRange` 26, in plain sight, wherever you point; aim cone 30°
+  further out).
 - Before the hunt he stays hidden — no pointless noises or knocked-over chairs in front of you.
 - **He enters the house far from everyone** when the hunt starts (the owner: "why does he spawn
   upstairs. Spawn him far away").
@@ -482,7 +490,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 101).
+  (last published: version 102).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

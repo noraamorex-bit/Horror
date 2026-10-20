@@ -2799,6 +2799,17 @@ function Intruder.onTaser(player: Player, aim: Vector3)
 			and Perception.clear(from, S.Head.Position, { char :: Instance }, S.Model) then
 			hit = true
 			to = from + toHim
+		elseif (S.Head.Position - head.Position).Magnitude <= (T.AutoRange or 0) then
+			-- close and in plain sight (from your eyes to his, or to his chest): it hits, wherever
+			-- you were pointing
+			local chest = S.Root and S.Root.Position + V(0, 1.5, 0) or S.Head.Position
+			if Perception.clear(head.Position, S.Head.Position, { char :: Instance }, S.Model)
+				or Perception.clear(head.Position, chest, { char :: Instance }, S.Model) then
+				hit = true
+				local dir = (chest - head.Position).Unit
+				from = head.Position + V(0, -0.6, 0) + dir * 1.5
+				to = chest
+			end
 		end
 	end
 	if not hit then

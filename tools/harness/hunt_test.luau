@@ -220,6 +220,10 @@ local ok, err = pcall(function()
 		assert(s1 == "Charge" and ctx.Intruder._state().Data.Searching, "in the head start: he arrives and searches around, not straight to their spot (" .. s1 .. ")")
 		spared[a] = nil
 		I.setMode("Hunt")
+		-- (wherever the earlier steps left him, he may already have listened at this spot or seen
+		-- them get in: start this check clean)
+		ctx.Intruder._state().SpotCooldown[hs] = nil
+		ctx.Intruder._state().SawHide[hs] = nil
 		local s2 = arrive()
 		print("12 caller in the shower: head start", s1, "/ none", s2)
 		assert(s2 == "Inspect", "no head start: he heard them get in (" .. s2 .. ")")
@@ -235,19 +239,23 @@ local ok, err = pcall(function()
 		tick(0.5)
 		ctx.Inventory.give(b, "Taser", ctx.Config.Taser.Charges)
 		local head = ctx.Intruder.getHead()
-		local at = head.Position + head.CFrame.LookVector * 10 + R.Vector3.new(0, -1.5, 0)
-		bRoot.CFrame = R.CFrame.new(at)
-		bHead.CFrame = R.CFrame.new(at + R.Vector3.new(0, 1.5, 0))
-		local away = (bHead.Position - head.Position).Unit
-		ctx.Intruder.onTaser(b, away) -- (pointing the wrong way)
+		-- (far off, beyond the auto-hit range, pointing the wrong way: a miss)
+		local far = head.Position + head.CFrame.LookVector * (ctx.Config.Taser.AutoRange + 8) + R.Vector3.new(0, -1.5, 0)
+		bRoot.CFrame = R.CFrame.new(far)
+		bHead.CFrame = R.CFrame.new(far + R.Vector3.new(0, 1.5, 0))
+		ctx.Intruder.onTaser(b, (bHead.Position - head.Position).Unit)
 		assert(I.getState() ~= "Stunned", "a miss doesn't stun")
 		assert(ctx.Inventory.count(b, "Taser") == ctx.Config.Taser.Charges - 1, "a miss still uses a shot")
 		T += ctx.Config.Taser.Cooldown + 0.1
+		local at = head.Position + head.CFrame.LookVector * 10 + R.Vector3.new(0, -1.5, 0)
+		bRoot.CFrame = R.CFrame.new(at)
+		bHead.CFrame = R.CFrame.new(at + R.Vector3.new(0, 1.5, 0))
 		local aim = (head.Position + R.Vector3.new(0, -1.2, 0) - (bHead.Position + R.Vector3.new(0, -0.6, 0))).Unit
 		local normalChase = ctx.Intruder._tune().ChaseSpeed
-		ctx.Intruder.onTaser(b, aim)
-		print("14 tasered:", I.getState(), "shots left", ctx.Inventory.count(b, "Taser"))
-		assert(I.getState() == "Stunned" and st.Data.Taser, "a hit stuns him")
+		-- (v102: 10 studs off and in plain sight, pointing the wrong way still hits)
+		ctx.Intruder.onTaser(b, (bHead.Position - head.Position).Unit)
+		print("14 tasered close, aimed away:", I.getState(), "shots left", ctx.Inventory.count(b, "Taser"))
+		assert(I.getState() == "Stunned" and st.Data.Taser, "close up, every shot hits")
 		ctx.Intruder.onTaser(b, aim)
 		assert(ctx.Inventory.count(b, "Taser") == ctx.Config.Taser.Charges - 2, "the cooldown: no double shot")
 		tick(ctx.Config.Taser.Stun + 0.5)
