@@ -36,7 +36,7 @@ local function follow(p: Player?)
 	if hum then
 		cam.CameraType = Enum.CameraType.Custom
 		cam.CameraSubject = hum
-		label.Text = (player:GetAttribute("Escaped") and "You got out" or "You didn't make it") .. "   ·   watching " .. (p :: Player).DisplayName .. "   ·   tap to switch"
+		label.Text = (player:GetAttribute("Escaped") and "You got out" or "You didn't make it") .. "   ·   watching " .. (p :: Player).DisplayName .. "   ·   " .. (ctx.UI.isTouch() and "tap" or "click") .. " to switch"
 	else
 		-- nobody left inside: the house from across the street
 		cam.CameraType = Enum.CameraType.Scriptable

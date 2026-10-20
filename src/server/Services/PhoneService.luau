@@ -57,7 +57,7 @@ function Phone.ask(player: Player, thread: string, options: { string }, onPick: 
 	-- a beat after whatever came just before
 	task.delay(3, function()
 		if pending[player] == mine then
-			ctx.Remotes.Notify:FireClient(player, "Tap PHONE to reply to " .. thread, "info")
+			ctx.Remotes.Notify:FireClient(player, "Open your phone to reply to " .. thread, "info")
 		end
 	end)
 	task.delay(timeout or 75, function()

@@ -204,7 +204,12 @@ function UI.init(ctx)
 	local function rescale()
 		local cam = workspace.CurrentCamera
 		local v = cam and cam.ViewportSize or Vector2.new(1280, 720)
-		local s = math.clamp(math.min(v.X / 1100, v.Y / 620), 0.62, 1.3)
+		-- (v104, a player: "unnecessary mobile UI for pc players". The HUD is laid out for a phone;
+		-- on a 1080p monitor it was blown up 1.3x: chunky buttons and huge text. With a mouse and
+		-- keyboard it stays at about its real size.)
+		-- (a phone, or a console on a TV across the room: the big layout)
+		local s = if touchNow or UI.isGamepad() then math.clamp(math.min(v.X / 1100, v.Y / 620), 0.62, 1.3)
+			else math.clamp(math.min(v.X / 1320, v.Y / 742), 0.72, 1.05)
 		scale.Scale = s
 		topScale.Scale = s
 		UI.Scale = s
@@ -212,6 +217,10 @@ function UI.init(ctx)
 	UI.Scale = 1
 	rescale()
 	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(rescale)
+	-- (picking up a pad, or touching the screen: the other layout)
+	UserInputService.LastInputTypeChanged:Connect(function()
+		task.defer(rescale)
+	end)
 	if workspace.CurrentCamera then
 		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
 	end

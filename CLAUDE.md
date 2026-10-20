@@ -62,6 +62,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Onboarding: one notice with OK, then the character **thinks out loud** (big text, ~5 s each) to say
   what to do. Objective panel top-right ("OBJECTIVE"), multi-step tasks, "!" markers where to go.
 - Roblox's standard ProximityPrompts for interactions.
+- **PC is not a big phone (v104**, a player: "unnecessary mobile UI for pc"): with mouse and keyboard
+  the HUD stays ~real size (`UI.rescale`; touch/console keep the big one), the heartbeat shows Q / E key
+  caps, no "tap" wording. Look at layouts with `ui_dump.luau` + `tools/assets/ui_preview.mjs`.
 - **Usable items are Roblox tools in the default hotbar** (equip, click / tap to use; v94, the owner).
   Touch buttons are only SPRINT and CROUCH (plus BREATH/LEAVE/STRUGGLE in context).
 - Secret-ending HUD is one slim bar at the top (it was "way too big" before).
@@ -98,6 +101,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **The revive offer sits right under the death card's headline** (v103; it was at the bottom under
   the coins, off a phone's screen): big, green, pulsing, with why ("Your friends are still in there"
   / "Back on your feet, far from him"), the last one standing's countdown under it.
+- **Unloopable (v104**, a player: "most loopable enemy in horror games"): his run speed stays under
+  your sprint, but chasing you round something low (a table, a bed, the kitchen island; never a wall,
+  never another floor) he pounces over it (`leapOver`/`leap`, 3 s apart); run dry and you're
+  **winded** (no sprint until 35%: `Movement.WindedRecover`, red bar).
+- **Surprises in the hunt (v104**, a player: "no surprise factor"): from a minute in, every 75-120 s
+  he either waits in an empty hiding spot near someone (a creak at 15 studs, bursts out at 7.5) or
+  appears behind someone alone (turn round: he screams and chases; don't: gone in 7 s). 0.7 s
+  scream before he runs, so it's a scare, not a free catch.
 - **Taser auto-hits up close** (`Taser.AutoRange` 26, in plain sight, wherever you point; aim cone 30°
   further out).
 - Before the hunt he stays hidden — no pointless noises or knocked-over chairs in front of you.
@@ -116,6 +127,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   jumpscare); stills can hide parts (`hideParts`) and set joints (`joints`) in creature_frames2.
 
 **Audio**
+- **v104** (a player: '"horror game" but almost no audio'): every sound file was measured
+  (`tools/audio_audit.py`): many were mastered very quiet → per-sound `Gain` on top of any volume
+  (`Sounds.volume`). Client `Dread`: eerie room tone in the dark house, a rumble + heartbeat as he
+  gets close, noises off during the hunt. Still no music.
 - Lots of small sounds (doors, items, sirens, jumpscares…). **Occasional** sudden loud stingers are
   wanted (the owner liked the door-yank scare) — rare only.
 - **No loud music**: none at night start/end, no chase/tension music, no music in the secret ending.
@@ -329,6 +344,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **20 Oct (v104)**, the owner forwarded a review: "Unpolished, unnecessary mobile UI for pc players,
+  most loopable enemy in horror games, no surprise factor to scare you, 'horror game' but almost no
+  audio for it." → "Improve the game." Done: audio gains + Dread, the leap + winded, the two hunt
+  surprises, the PC layout (see the sections above; GDD "The dark house", "Surprises during the
+  hunt", "Over the furniture", "PC and phone layouts"). Can't hear the mix here: the gains come from
+  measured peaks. Next: `--since=104`: surprised/player and leaps/player (pull_stats), quits right after
+  a surprise, PC quits vs phone.
+
 - **20 Oct (reel 36)**: the gameplay series Part 1 (see Marketing). Next reel: Part 2 of it (new
   gameplay beats: the taser, the 911 call, a friend's rescue, the shower/bed hides).
 
@@ -535,7 +558,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 103).
+  (last published: version 104).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

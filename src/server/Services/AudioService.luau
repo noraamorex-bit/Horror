@@ -26,7 +26,7 @@ local function build(name: string, opts)
 	local s = Instance.new("Sound")
 	s.Name = name
 	s.SoundId = ctx.Sounds.resolve(name) or ""
-	s.Volume = opts.Volume or def.Volume or 0.6
+	s.Volume = ctx.Sounds.volume(name, opts.Volume)
 	s.PlaybackSpeed = opts.Pitch or def.Pitch or 1
 	s.RollOffMode = Enum.RollOffMode.InverseTapered
 	s.RollOffMinDistance = opts.Min or def.Min or 6

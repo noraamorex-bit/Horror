@@ -139,7 +139,7 @@ function LobbyHub.start()
 	end)
 	-- Halloween (until 2 Nov): candy hidden in the house, and what it unlocks
 	local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
-	local event = UI.label({ LayoutOrder = 4, Size = UDim2.fromOffset(MENU_W, 16), Text = "", Font = UI.Font.Bold, TextSize = 12, TextColor3 = Color3.fromRGB(255, 150, 50), TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, Visible = false, Name = "HalloweenLine", Parent = quick })
+	local event = UI.label({ LayoutOrder = 4, Size = UDim2.fromOffset(MENU_W, 16), AutomaticSize = Enum.AutomaticSize.Y, Text = "", Font = UI.Font.Bold, TextSize = 12, TextColor3 = Color3.fromRGB(255, 150, 50), TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, Visible = false, Name = "HalloweenLine", Parent = quick })
 	local function eventLine()
 		local me = game:GetService("Players").LocalPlayer
 		local live = Cat.halloweenLive(workspace:GetServerTimeNow())
@@ -147,7 +147,7 @@ function LobbyHub.start()
 		if live then
 			local candy = tonumber(me:GetAttribute("Candy")) or 0
 			local nxt = Cat.nextCandyReward(candy)
-			event.Text = "🎃 HALLOWEEN  ·  🍬 " .. candy .. (nxt and ("  ·  " .. nxt.Name .. " at " .. nxt.Candy) or "  ·  all rewards unlocked")
+			event.Text = "🎃 HALLOWEEN  ·  🍬 " .. candy .. (nxt and ("  ·  next: " .. nxt.Name .. " (" .. nxt.Candy .. ")") or "  ·  all unlocked")
 		end
 	end
 	eventLine()

@@ -99,6 +99,9 @@ Rooms that read empty got the things a family leaves about at night, built after
 ### Music and sound
 A quiet music box in the rain in the lobby ("Eerie Music Box", APM, volume 0.06); soft piano indoors in Act I; no chase or tension music (it used to slam in whenever he chased anyone nearby, even a friend in another room: the hunt is his footsteps, his breathing and your heartbeat); and from Act II the house creaks somewhere near you every 20-50 s.
 
+**The dark house** (client `Dread`, v104; a player: '"horror game" but almost no audio for it'). Still no music. Once the power's gone, an eerie room tone sits under everything indoors (ProSoundEffects "Eerie Ambience 1"), a little louder while he hunts. As he gets close (within 55 studs, half as much through a floor) a low rumble swells ("Hollow Rumble 1"), your heartbeat starts and quickens with it (also when your nerve is fine), and your flashlight stutters now and then. While he hunts and isn't on you, every 14-30 s there's a noise off 18-34 studs away, maybe a floor up or down: creaks, a floorboard, the stairs, a thud upstairs, wood splintering, his joints, a door handle, a whisper, and rarely a shriek far off.
+**Loudness** (v104, `tools/audio_audit.py`): every sound in the library was downloaded and measured. They all play, but many were mastered very quiet (his footsteps peaked at -18 dB, the tunnel ones at -43, the house creaks at -21 played at a third of the volume). Each sound now has a `Gain`, a correction for its file, applied on top of whatever volume it's played at (`Sounds.volume`, up to Roblox's 10): his footsteps, breathing (heard from 26 studs now) and listening breath, the creaks, closets, drawers and beds he rips open, the light switches, the rumble of the storm.
+
 **Acoustics** (client `Acoustics`, v84). The reverb follows the room you're in (tiled bathrooms ring, the basement, boiler room and garage are stone, halls are halls, the living room and den are soft, the tunnels under the house echo). A sound in the world with something solid between you and it (a wall, a floor, a closed door; not glass) loses its highs and some body, eased in and out, so his footsteps behind a wall sound behind a wall and turn sharp the moment there's nothing between you; shut in a hiding spot, everything outside is muffled. Only sounds placed in the world are touched (not your own footsteps, the UI, the heartbeat or the music). The grandfather clock now ticks (Creator Store "Clock Tick (1 Second Long, Loopable)") and texts buzz like a phone on a table.
 
 ### Hanging out
@@ -113,6 +116,15 @@ Ten clue documents are **evidence** (`Story.Evidence`): the warm mug, the invoic
 ### He's hiding, not haunting
 Before the hunt, Curtis is trying not to be found. Anything he does in person (a door easing open, food gone from the fridge, the music box) can only happen where he actually is, and only when nobody can see him (`Where` on an event in `Director/Events.luau`). He doesn't knock on walls or throw chairs for effect. The one loud thing he does by accident: if you spot him, he bolts, and sometimes knocks a chair flying on the way. Walk right up to him in the dark and he shoves you to the floor and runs. Open a door he's standing behind and it gets yanked shut in your face (a few minutes apart at most). Door leaves never trap him: he pushes half-open doors wide and walks through them.
 Once the hunt begins he is physically in the house, so the house's tricks stop: only events marked `DuringHunt` (storm, the neighbour's dog, floorboards, and the second breaker flip when he's really at the panel) still play.
+
+### Surprises during the hunt (v104)
+A player: "no surprise factor to scare you". A minute into the hunt, then every 75-120 s, instead of just patrolling he does one of these (`trySurprise`, alternating):
+- **In a closet.** He slips unseen into an empty hiding spot 14-32 studs from someone out in the open and waits there (out of sight, silent). Come within 15 studs and it creaks (the warning); within 7.5 and he bursts out at you (a slam, his screech, the sting, the screen jolts), screams for 0.7 s, then chases. Nobody comes in 40 s: he slips out. Climb into it and he has you (Normal: thrown out with a beat to run; Hard: caught).
+- **Behind you.** Someone alone (nobody within 25 studs), out in the open: he's suddenly standing 5.5-8 studs behind them in the same room, breathing. Turn round and he screams and comes for you (0.7 s to run); don't, and after 7 s there's a whisper and he's gone.
+Both count in the night log (`Surprised` per player).
+
+### Over the furniture (v104)
+A player: "most loopable enemy in horror games". He's slower than your sprint by design, so circling the dining table, a bed or the kitchen island kept him going round forever. Chasing someone in sight with something low between them (anything under his chest, never a wall, never onto another floor) when going round is 1.3x the distance or more, he pounces over it in stop-motion and lands on the far side with a thud (`leapOver` / `leap`; every 3 s at most; `Leaps` in the night log). And running dry winds you: no sprint until your breath is back to 35% (`Movement.WindedRecover`; the stamina bar goes red). Before, a sprint at 0 flickered back on at 1, so you could stutter-sprint forever at about his speed.
 
 ### Sudden scares, rarely
 A loud musical sting (APM "Fear Hit") lands with the big scares: a door slam, the plate smashing, the window bang, a thunderclap right on top of the house. It plays at most once every 2½ minutes, so it stays a shock.
@@ -351,7 +363,7 @@ Every player has a coin balance (DataStore `Economy_v1`; 100 welcome coins). Sav
 
 ### Movement & stealth
 - First-person camera, locked.
-- Walk 10 · Crouch 5 (**C**) · Sprint 17 (**Shift**, uses stamina).
+- Walk 10 · Crouch 5 (**C**) · Sprint 17 (**Shift**, uses stamina; run dry and you're winded until it's back to 35%).
 - **Footstep noise is calculated on the server** from real velocity: crouch 4, walk 16, sprint 38 studs.
 - Noise is heard at ~55% range through floors.
 
@@ -449,6 +461,9 @@ The loop is **hear him coming → break line of sight → hide → hold your bre
 **Item icons (v100)**: each tool shows its own picture in the hotbar slot (`ToolService.Info`: Creator Store images, checked by eye: flashlight, taser, pepper spray, rocket launcher, energy drink, firecracker) with its name under it, and while one is in your hand a small line above the hotbar says what it is and what's left ("TASER · 3 SHOTS", "TASER · LAST SHOT").
 
 Flashlight ×2, Walkie ×2, Pepper Spray (mom's purse, 2 uses), House Keys (Host), Multitool (Tinkerer), Car Keys (hook → attic nest; spare in office), Basement Key (mudroom), Electrical Tape (two rolls, random drawers each night), Fire Poker (breaks ground-floor windows, very loud), Scissors (bathroom).
+
+### PC and phone layouts (v104)
+A player: "unnecessary mobile UI for pc players". The HUD is designed for a phone; on a 1080p monitor `UI.rescale` blew it up 1.3x (chunky buttons, huge text). With a mouse and keyboard it now stays at about its real size (`min(w/1320, h/742)`, 0.72-1.05); phones and consoles on a TV keep the big layout. The heartbeat minigame shows two small **Q / E** key caps at the ends of the lane (LB / RB on a pad; still clickable) instead of the phone's big LEFT / RIGHT pads, and no message tells a PC player to "tap". To look at a layout without the Roblox client: `lune run ui_dump <lobby|night|hunt|heartbeat|hiding|captured> <pc|touch> out.json` (tools/harness) then `node tools/assets/ui_preview.mjs out.json out.png pc|phone|tablet [backdrop.png]`.
 
 ### Controls
 | Key | Touch (phone / tablet) | Gamepad | Action |

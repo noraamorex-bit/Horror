@@ -7,6 +7,11 @@
 	Caption  : shown to players who hear it. Captions always show, so the game is fully
 	           playable (and accessible) before any audio is imported.
 
+	Gain     : a correction for how loud the file itself is (v104, tools/audio_audit.py measured every
+	           one: they all play, but many were mastered very quiet: his footsteps peaked at -18 dB,
+	           the dirt ones at -43, the house creaks at -21). Every volume this sound is played at,
+	           the library's or a caller's, is multiplied by it (Sounds.volume), up to Roblox's 10.
+
 	Suggested searches for the Creator Store are in the Note fields.
 ]]
 
@@ -20,8 +25,8 @@ local ENGINE_SPLASH = "rbxasset://sounds/impact_water.mp3"
 
 Sounds.Library = {
 	-- Ambience (client, looped)
-	Rain = { Id = "rbxassetid://9112853287", Volume = 0.8, Looped = true },
-	RainWindow = { Id = "rbxassetid://9112856881", Volume = 0.6, Looped = true },
+	Rain = { Id = "rbxassetid://9112853287", Volume = 0.8, Looped = true, Gain = 1.4 },
+	RainWindow = { Id = "rbxassetid://9112856881", Volume = 0.6, Looped = true, Gain = 1.6 },
 	-- APM "Eerie Music Box": the lobby, standing on Alder Lane in the rain
 	LobbyMusic = { Id = "rbxassetid://139053896078359", Volume = 0.06, Looped = true },
 	-- APM "Music Box Lullaby (30s)": Lily's music box, playing by itself
@@ -30,44 +35,44 @@ Sounds.Library = {
 	ShowerRun = { Id = "rbxassetid://365551014", Volume = 0.9, Looped = true, Range = 70, Caption = "[The shower is running upstairs]" },
 	-- APM (licensed for Roblox): "Solo Piano - Gentle Rain - Remastered", the cozy first act indoors
 	CozyPiano = { Id = "rbxassetid://9046644321", Volume = 0.22, Looped = true },
-	Wind = { Id = "rbxassetid://9120697823", Fallback = ENGINE_WIND, Volume = 0.12, Looped = true },
+	Wind = { Id = "rbxassetid://9120697823", Fallback = ENGINE_WIND, Volume = 0.12, Looped = true, Gain = 1.6 },
 	Thunder = { Id = "rbxassetid://9120016037", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
 	Thunder2 = { Id = "rbxassetid://9120016241", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
 	Thunder3 = { Id = "rbxassetid://9120016256", Fallback = ENGINE_THUD, Volume = 1, Caption = "[Thunder]" },
-	ThunderRumble = { Id = "rbxassetid://9120018695", Fallback = ENGINE_THUD, Volume = 0.6 },
+	ThunderRumble = { Id = "rbxassetid://9120018695", Fallback = ENGINE_THUD, Volume = 0.6, Gain = 3.5 },
 	-- Creator Store (public): "Clock Tick (1 Second Long, Loopable)"
 	ClockTick = { Id = "rbxassetid://344101086", Volume = 0.25, Looped = true, Range = 30 },
 	ClockChime = { Id = "rbxassetid://9113816347", Fallback = ENGINE_BEEP, Volume = 0.5, Range = 120, Caption = "[The grandfather clock chimes]" },
-	FridgeHum = { Id = "rbxassetid://9112889082", Volume = 0.06, Looped = true, Range = 20 },
-	FireCrackle = { Id = "rbxassetid://9112780193", Volume = 0.55, Looped = true, Range = 30 },
+	FridgeHum = { Id = "rbxassetid://9112889082", Volume = 0.06, Looped = true, Range = 20, Gain = 2 },
+	FireCrackle = { Id = "rbxassetid://9112780193", Volume = 0.55, Looped = true, Range = 30, Gain = 1.5 },
 
 	-- House
-	Footstep = { Id = "rbxassetid://9120880067", Fallback = ENGINE_STEP, Volume = 0.9, Range = 70, Caption = "[Footsteps]" },
+	Footstep = { Id = "rbxassetid://9120880067", Fallback = ENGINE_STEP, Volume = 0.9, Range = 70, Caption = "[Footsteps]", Gain = 3.5 },
 	-- ProSoundEffects "Dragon Footsteps": a heavy two-legged thing walking on soft ground (his steps
 	-- in the dirt tunnels under the house; three takes, picked at random)
-	FootstepDirt1 = { Id = "rbxassetid://9114165561", Fallback = ENGINE_STEP, Volume = 1, Range = 70 },
-	FootstepDirt2 = { Id = "rbxassetid://9114166137", Fallback = ENGINE_STEP, Volume = 1, Range = 70 },
-	FootstepDirt3 = { Id = "rbxassetid://9114166413", Fallback = ENGINE_STEP, Volume = 1, Range = 70 },
-	FootstepsAbove = { Id = "rbxassetid://9114493393", Fallback = ENGINE_STEP, Volume = 1, Range = 90, Caption = "[Footsteps... above you]" },
-	DoorOpen = { Id = "rbxassetid://9120839010", Volume = 0.6, Range = 45, Caption = "[A door creaks]" },
-	DoorClose = { Id = "rbxassetid://9120839581", Fallback = ENGINE_THUD, Volume = 0.6, Range = 45, Caption = "[A door closes]" },
+	FootstepDirt1 = { Id = "rbxassetid://9114165561", Fallback = ENGINE_STEP, Volume = 1, Range = 70, Gain = 12 },
+	FootstepDirt2 = { Id = "rbxassetid://9114166137", Fallback = ENGINE_STEP, Volume = 1, Range = 70, Gain = 12 },
+	FootstepDirt3 = { Id = "rbxassetid://9114166413", Fallback = ENGINE_STEP, Volume = 1, Range = 70, Gain = 12 },
+	FootstepsAbove = { Id = "rbxassetid://9114493393", Fallback = ENGINE_STEP, Volume = 1, Range = 90, Caption = "[Footsteps... above you]", Gain = 8 },
+	DoorOpen = { Id = "rbxassetid://9120839010", Volume = 0.6, Range = 45, Caption = "[A door creaks]", Gain = 1.8 },
+	DoorClose = { Id = "rbxassetid://9120839581", Fallback = ENGINE_THUD, Volume = 0.6, Range = 45, Caption = "[A door closes]", Gain = 1.8 },
 	DoorSlam = { Id = "rbxassetid://9114153270", Fallback = ENGINE_THUD, Volume = 1, Range = 110, Caption = "[A door SLAMS]" },
-	DoorRattle = { Id = "rbxassetid://9114138011", Fallback = ENGINE_THUD, Volume = 0.7, Range = 50, Caption = "[A door handle rattles]" },
-	Deadbolt = { Id = "rbxassetid://9114144264", Fallback = ENGINE_THUD, Volume = 0.6, Range = 30, Caption = "[Click of a deadbolt]" },
+	DoorRattle = { Id = "rbxassetid://9114138011", Fallback = ENGINE_THUD, Volume = 0.7, Range = 50, Caption = "[A door handle rattles]", Gain = 1.6 },
+	Deadbolt = { Id = "rbxassetid://9114144264", Fallback = ENGINE_THUD, Volume = 0.6, Range = 30, Caption = "[Click of a deadbolt]", Gain = 1.5 },
 	DoorForce = { Id = "rbxassetid://9114129501", Fallback = ENGINE_THUD, Volume = 1, Range = 80, Caption = "[Someone is forcing a door]" },
 	Knock = { Id = "rbxassetid://9120918417", Fallback = ENGINE_THUD, Volume = 1, Range = 60, Caption = "[Knocking]" },
-	LightSwitch = { Id = "rbxassetid://9116284750", Fallback = ENGINE_THUD, Volume = 0.5, Range = 16 },
+	LightSwitch = { Id = "rbxassetid://9116284750", Fallback = ENGINE_THUD, Volume = 0.5, Range = 16, Gain = 4 },
 	Breaker = { Id = "rbxassetid://9119633359", Fallback = ENGINE_THUD, Pitch = 0.8, Volume = 1, Range = 70, Caption = "[A heavy clunk from the garage]" },
 	PowerDown = { Id = "rbxassetid://9117871125", Volume = 0.8, Range = 200, Caption = "[Everything goes silent]" },
 	PowerUp = { Id = "rbxassetid://9117882503", Volume = 0.6, Range = 200, Caption = "[The fridge hums back to life]" },
 	MicrowaveHum = { Id = "rbxassetid://9114258913", Volume = 0.4, Looped = true, Range = 30, Caption = "[Microwave humming]" },
-	MicrowaveBeep = { Id = "rbxassetid://9118777437", Fallback = ENGINE_BEEP, Volume = 0.6, Range = 50, Caption = "[Beep beep beep]" },
+	MicrowaveBeep = { Id = "rbxassetid://9118777437", Fallback = ENGINE_BEEP, Volume = 0.6, Range = 50, Caption = "[Beep beep beep]", Gain = 6 },
 	-- ProSoundEffects "Popping Corn 4"
 	Popcorn = { Id = "rbxassetid://9117845085", Volume = 0.6, Range = 35, Caption = "[Popcorn popping]" },
 	Faucet = { Id = "rbxassetid://9119153987", Fallback = ENGINE_SPLASH, Volume = 0.3, Range = 20, Caption = "[Running water]" },
 	Toilet = { Id = "rbxassetid://9120106655", Fallback = ENGINE_SPLASH, Volume = 0.6, Range = 40, Caption = "[A toilet flushes]" },
 	PhoneRing = { Id = "rbxassetid://9117305259", Fallback = ENGINE_BEEP, Volume = 1, Looped = true, Range = 120, Caption = "[The landline is ringing]" },
-	DialTone = { Id = "rbxassetid://9125716553", Fallback = ENGINE_BEEP, Volume = 0.5, Range = 10 },
+	DialTone = { Id = "rbxassetid://9125716553", Fallback = ENGINE_BEEP, Volume = 0.5, Range = 10, Gain = 1.6 },
 	TVStatic = { Id = "rbxassetid://9113115842", Volume = 0.3, Looped = true, Range = 40, Caption = "[TV static]" },
 	TVShow = { Id = "rbxassetid://9114012077", Volume = 0.3, Looped = true, Range = 40, Caption = "[TV murmuring]" },
 	TVAlert = { Id = "rbxassetid://9113089565", Fallback = ENGINE_BEEP, Volume = 0.7, Looped = true, Range = 60, Caption = "[EMERGENCY ALERT TONE]" },
@@ -76,9 +81,9 @@ Sounds.Library = {
 	GlassBreak = { Id = "rbxassetid://9114590297", Fallback = ENGINE_THUD, Volume = 1, Range = 160, Caption = "[GLASS SHATTERS]" },
 	CarEngine = { Id = "rbxassetid://9112952489", Volume = 0.8, Range = 150, Caption = "[A car engine starts]" },
 	Siren = { Id = "rbxassetid://9117810961", Fallback = ENGINE_WIND, Volume = 1, Looped = true, Range = 400, Caption = "[Sirens]" },
-	DogBark = { Id = "rbxassetid://8678449977", Volume = 0.8, Range = 180, Caption = "[A dog barking next door]" },
-	Floorboard = { Id = "rbxassetid://9114496277", Fallback = ENGINE_STEP, Volume = 0.8, Range = 60, Caption = "[A floorboard creaks]" },
-	HatchCreak = { Id = "rbxassetid://9126263691", Fallback = ENGINE_THUD, Volume = 0.7, Range = 60, Caption = "[Something creaks in the ceiling]" },
+	DogBark = { Id = "rbxassetid://8678449977", Volume = 0.8, Range = 180, Caption = "[A dog barking next door]", Gain = 4 },
+	Floorboard = { Id = "rbxassetid://9114496277", Fallback = ENGINE_STEP, Volume = 0.8, Range = 60, Caption = "[A floorboard creaks]", Gain = 2.5 },
+	HatchCreak = { Id = "rbxassetid://9126263691", Fallback = ENGINE_THUD, Volume = 0.7, Range = 60, Caption = "[Something creaks in the ceiling]", Gain = 2.2 },
 	Doorbell = { Id = "rbxassetid://91808856778507", Fallback = ENGINE_BEEP, Volume = 1, Range = 120, Caption = "[The doorbell rings]" },
 	Sting = { Id = "rbxassetid://9120769331", Volume = 0.8, Range = 40 },
 	-- APM "Eyes Scream Horror Hit": the moment he grabs you
@@ -90,7 +95,7 @@ Sounds.Library = {
 	-- jump scares: loud, sudden, close
 	PlateCrash = { Id = "rbxassetid://9114592102", Fallback = ENGINE_THUD, Volume = 1, Range = 140, Caption = "[CRASH - something shatters in the kitchen]" },
 	CeilingThud = { Id = "rbxassetid://9113437538", Fallback = ENGINE_THUD, Volume = 1, Range = 90, Caption = "[A heavy THUD in the ceiling]" },
-	WindowBang = { Id = "rbxassetid://9120752961", Fallback = ENGINE_THUD, Volume = 1, Range = 90, Caption = "[BANG BANG - someone slams on the window]" },
+	WindowBang = { Id = "rbxassetid://9120752961", Fallback = ENGINE_THUD, Volume = 1, Range = 90, Caption = "[BANG BANG - someone slams on the window]", Gain = 2.6 },
 	DoorYank = { Id = "rbxassetid://9114129501", Fallback = ENGINE_THUD, Volume = 1, Range = 110, Caption = "[Someone is yanking at the door handle]" },
 	ChairDrop = { Id = "rbxassetid://9113768971", Fallback = ENGINE_THUD, Volume = 1, Range = 100, Caption = "[Something heavy falls over]" },
 	WindowClose = { Id = "rbxassetid://9119205658", Fallback = ENGINE_THUD, Volume = 0.6, Range = 30 },
@@ -99,24 +104,24 @@ Sounds.Library = {
 	-- APM "HEARTBEAT 01 96BPM": looped, sped up and louder as your nerve goes
 	Heartbeat = { Id = "rbxassetid://9043365727", Volume = 0.6, Looped = true },
 	-- him, hunting by sound (ProSoundEffects creature vocals, pitched down)
-	Growl = { Id = "rbxassetid://9125476001", Volume = 0.9, Pitch = 0.62, Range = 60, Caption = "[A low growl]" },
+	Growl = { Id = "rbxassetid://9125476001", Volume = 0.9, Pitch = 0.62, Range = 60, Caption = "[A low growl]", Gain = 2.6 },
 	-- v99: when he charges, a shrill inhuman screech (ProSoundEffects "Creature Vocal Spider
 	-- Screech Low To Midrange (attack)"), not a lion's roar
 	Roar = { Id = "rbxassetid://9125478014", Volume = 1, Pitch = 0.85, Range = 140, Caption = "[A SCREECH, and running]" },
 	-- the same screech up close, for the jumpscare (client)
 	Screech = { Id = "rbxassetid://9125474518", Volume = 1, Pitch = 0.95 },
 	-- his joints, cracking (ProSoundEffects "Squishy Bone Cracks 4", "Bone Cracks 22")
-	BoneCrack1 = { Id = "rbxassetid://9119559515", Volume = 0.8, Range = 34, Caption = "[Something cracks, like knuckles]" },
-	BoneCrack2 = { Id = "rbxassetid://9113546114", Volume = 0.75, Range = 34, Caption = "[Joints cracking]" },
+	BoneCrack1 = { Id = "rbxassetid://9119559515", Volume = 0.8, Range = 34, Caption = "[Something cracks, like knuckles]", Gain = 2 },
+	BoneCrack2 = { Id = "rbxassetid://9113546114", Volume = 0.75, Range = 34, Caption = "[Joints cracking]", Gain = 1.8 },
 	-- his long hands slapping down on the boards when he runs on all fours ("Creature Footsteps Clacky Claw")
 	ClawStep = { Id = "rbxassetid://9125467664", Volume = 0.8, Pitch = 0.7, Range = 60 },
 	-- a deep, wordless whisper (ProSoundEffects "Whisper Bursts Eerie Unintelligible Phrases")
-	CreatureWhisper = { Id = "rbxassetid://9126213744", Volume = 0.8, Range = 40, Caption = "[Whispering]" },
+	CreatureWhisper = { Id = "rbxassetid://9126213744", Volume = 0.8, Range = 40, Caption = "[Whispering]", Gain = 1.6 },
 	-- fingernails on the glass ("Tap On Glass Window 1")
-	GlassTap = { Id = "rbxassetid://9119918673", Volume = 0.8, Range = 30, Caption = "[Tapping on the glass]" },
+	GlassTap = { Id = "rbxassetid://9119918673", Volume = 0.8, Range = 30, Caption = "[Tapping on the glass]", Gain = 1.8 },
 	-- the house settling in the storm, now and then ("House Creaks 13", "House Creaks 12"; client ambience)
-	HouseCreak1 = { Id = "rbxassetid://9114839397", Volume = 0.35 },
-	HouseCreak2 = { Id = "rbxassetid://9114838434", Volume = 0.3 },
+	HouseCreak1 = { Id = "rbxassetid://9114839397", Volume = 0.35, Gain = 6 },
+	HouseCreak2 = { Id = "rbxassetid://9114838434", Volume = 0.3, Gain = 1.6 },
 	-- the heartbeat minigame: a beat you hit, and the one he hears
 	HeartHit = { Id = "rbxassetid://9120316945", Volume = 0.8, Pitch = 0.7 },
 	Cough = { Id = "rbxassetid://9113948412", Fallback = ENGINE_THUD, Volume = 1, Range = 60, Caption = "[A man coughing and choking]" },
@@ -127,48 +132,48 @@ Sounds.Library = {
 	RocketBoom = { Id = "rbxassetid://9114361763", Fallback = ENGINE_THUD, Volume = 1, Range = 400, Caption = "[A huge explosion]" },
 	-- Casey's firecrackers (Pro Sound Effects "Fireworks Sparse 2", the first seconds) and Morgan's drink
 	Firecracker = { Id = "rbxassetid://9112780898", Fallback = ENGINE_THUD, Volume = 1, Range = 160, Length = 4 },
-	Gulp = { Id = "rbxassetid://9114171957", Volume = 0.7, Range = 18 },
+	Gulp = { Id = "rbxassetid://9114171957", Volume = 0.7, Range = 18, Gain = 2.5 },
 	Spray = { Id = "rbxassetid://9113044265", Fallback = ENGINE_SPLASH, Volume = 0.8, Range = 30, Caption = "[Pssshhht]" },
 	ZipTie = { Id = "rbxassetid://9118047781", Fallback = ENGINE_THUD, Volume = 0.6, Range = 25, Caption = "[Zip ties ratchet]" },
 	Struggle = { Id = "rbxassetid://9113535436", Fallback = ENGINE_THUD, Volume = 0.7, Range = 35, Caption = "[Muffled struggling]" },
 	-- v99: wet, rasping, not-quite-human breathing (ProSoundEffects "Creature Mix Weird Deep
 	-- Monster Breathing 3"; the loop: "Creature Dying Pterodactyl Breathing 2", slowed)
-	ManWhisper = { Id = "rbxassetid://9113984056", Volume = 0.7, Pitch = 0.85, Range = 14, Caption = "[Wet, rasping breathing, very close]" },
+	ManWhisper = { Id = "rbxassetid://9113984056", Volume = 0.7, Pitch = 0.85, Range = 22, Caption = "[Wet, rasping breathing, very close]", Gain = 3.5 },
 	-- his breathing, always with him: you hear it only when he's a few steps away
-	IntruderBreath = { Id = "rbxassetid://9113971010", Volume = 0.4, Pitch = 0.8, Range = 16, Looped = true },
+	IntruderBreath = { Id = "rbxassetid://9113971010", Volume = 0.4, Pitch = 0.8, Range = 26, Looped = true, Gain = 3 },
 	-- Creator Store (public): "Phone Vibrating On Table"
 	-- (the file buzzes for 3 s: the owner found it "so loud, long and annoying". One short, quiet buzz)
 	PhoneVibrate = { Id = "rbxassetid://121031853982816", Fallback = ENGINE_BEEP, Volume = 0.16, Length = 0.55 },
 
 	-- Interface / handling (mostly client-side)
-	Pickup = { Id = "rbxassetid://9113849306", Volume = 0.5, Range = 20 },
-	Paper = { Id = "rbxassetid://9125723307", Volume = 0.6 },
-	FlashlightClick = { Id = "rbxassetid://9114479661", Volume = 0.6, Range = 15 },
-	Matches = { Id = "rbxassetid://9120930385", Volume = 0.7, Range = 25 },
+	Pickup = { Id = "rbxassetid://9113849306", Volume = 0.5, Range = 20, Gain = 1.6 },
+	Paper = { Id = "rbxassetid://9125723307", Volume = 0.6, Gain = 2 },
+	FlashlightClick = { Id = "rbxassetid://9114479661", Volume = 0.6, Range = 15, Gain = 2 },
+	Matches = { Id = "rbxassetid://9120930385", Volume = 0.7, Range = 25, Gain = 2.5 },
 	LogDrop = { Id = "rbxassetid://9120871246", Volume = 0.7, Range = 30 },
-	ObjectiveDone = { Id = "rbxassetid://9126073001", Volume = 0.35 },
+	ObjectiveDone = { Id = "rbxassetid://9126073001", Volume = 0.35, Gain = 1.6 },
 
 	-- Handling: drawers, cupboards, hiding, items (ProSoundEffects)
-	DrawerOpen = { Id = "rbxassetid://9125756882", Volume = 0.6, Range = 25 },
-	ClosetOpen = { Id = "rbxassetid://9113817128", Volume = 0.5, Range = 25 },
-	ClosetClose = { Id = "rbxassetid://9113817295", Volume = 0.5, Range = 25 },
-	BedCreak = { Id = "rbxassetid://9113383926", Volume = 0.6, Range = 22 },
+	DrawerOpen = { Id = "rbxassetid://9125756882", Volume = 0.6, Range = 25, Gain = 9 },
+	ClosetOpen = { Id = "rbxassetid://9113817128", Volume = 0.5, Range = 25, Gain = 5 },
+	ClosetClose = { Id = "rbxassetid://9113817295", Volume = 0.5, Range = 25, Gain = 12 },
+	BedCreak = { Id = "rbxassetid://9113383926", Volume = 0.6, Range = 22, Gain = 5 },
 	KeysJingle = { Id = "rbxassetid://9116178785", Volume = 0.7, Range = 20 },
 	ScissorsSnip = { Id = "rbxassetid://9118831072", Volume = 0.8, Range = 25, Caption = "[Snip]" },
-	TapeRip = { Id = "rbxassetid://9114200028", Volume = 0.7, Range = 25 },
-	FlashlightOn = { Id = "rbxassetid://9114480271", Volume = 0.6, Range = 15 },
-	FlashlightOff = { Id = "rbxassetid://9114479857", Volume = 0.6, Range = 15 },
+	TapeRip = { Id = "rbxassetid://9114200028", Volume = 0.7, Range = 25, Gain = 2.5 },
+	FlashlightOn = { Id = "rbxassetid://9114480271", Volume = 0.6, Range = 15, Gain = 3 },
+	FlashlightOff = { Id = "rbxassetid://9114479857", Volume = 0.6, Range = 15, Gain = 2.5 },
 	SwitchClick = { Id = "rbxassetid://9119717523", Volume = 0.6, Range = 15 },
-	BreakerClick = { Id = "rbxassetid://9119716652", Volume = 0.9, Range = 40 },
-	StairCreak = { Id = "rbxassetid://9114493757", Volume = 0.6, Range = 40 },
+	BreakerClick = { Id = "rbxassetid://9119716652", Volume = 0.9, Range = 40, Gain = 2 },
+	StairCreak = { Id = "rbxassetid://9114493757", Volume = 0.6, Range = 40, Gain = 1.6 },
 	WalkieChirp = { Id = "rbxassetid://9120456889", Volume = 0.7, Range = 20 },
-	ToolDrop = { Id = "rbxassetid://9114007026", Volume = 0.8, Range = 50, Caption = "[Metal clatters to the floor]" },
+	ToolDrop = { Id = "rbxassetid://9114007026", Volume = 0.8, Range = 50, Caption = "[Metal clatters to the floor]", Gain = 2 },
 
 	-- Being caught, and everyone else hearing it
 	BodyFall = { Id = "rbxassetid://9113481839", Volume = 1, Range = 70, Caption = "[A heavy thud]" },
 	MuffledScream = { Id = "rbxassetid://9125652443", Volume = 0.55, Pitch = 0.82, Range = 160, Caption = "[A muffled scream somewhere in the house]" },
 	Gasp = { Id = "rbxassetid://9125572450", Volume = 0.8 },
-	GaspDeep = { Id = "rbxassetid://9114554949", Volume = 0.7 },
+	GaspDeep = { Id = "rbxassetid://9114554949", Volume = 0.7, Gain = 3 },
 	-- APM "Horror Hits 11" / "Horror Kit Hits 19": layered under the jumpscare scream
 	HorrorHit = { Id = "rbxassetid://1840927273", Volume = 0.9 },
 	HorrorHitLow = { Id = "rbxassetid://1841093403", Volume = 0.8 },
@@ -178,7 +183,7 @@ Sounds.Library = {
 	-- The way out
 	CarDoor = { Id = "rbxassetid://9113204879", Volume = 0.9, Range = 60, Caption = "[A car door slams]" },
 	CarDriveAway = { Id = "rbxassetid://9112945344", Volume = 1, Range = 260, Caption = "[A car tearing away down the street]" },
-	SirenApproach = { Id = "rbxassetid://9112871822", Volume = 1, Range = 900, Caption = "[Sirens, getting closer]" },
+	SirenApproach = { Id = "rbxassetid://9112871822", Volume = 1, Range = 900, Caption = "[Sirens, getting closer]", Gain = 2.5 },
 	PoliceRadio = { Id = "rbxassetid://9125774594", Volume = 0.8, Range = 60, Caption = "[Police radio chatter]" },
 
 	-- Music for the end of the night (APM)
@@ -199,8 +204,24 @@ Sounds.Library = {
 	CountBeep = { Id = "rbxassetid://9113399926", Volume = 0.4 },
 }
 
+-- The dark house (client Dread, v104: a player wrote '"horror game" but almost no audio for it'):
+-- an eerie room tone once the power's gone, a low rumble that swells as he gets close, and noises
+-- off somewhere in the house during the hunt (ProSoundEffects, licensed for every experience)
+Sounds.Library.DarkBed = { Id = "rbxassetid://9112775175", Volume = 0.5, Looped = true } -- "Eerie Ambience 1"
+Sounds.Library.Presence = { Id = "rbxassetid://9112795295", Volume = 1.4, Looped = true } -- "Hollow Rumble 1"
+Sounds.Library.WoodSplinter = { Id = "rbxassetid://9126239755", Volume = 1, Gain = 3, Range = 90, Caption = "[Wood splintering somewhere in the house]" }
+Sounds.Library.DistantShriek = { Id = "rbxassetid://9125361248", Volume = 1, Gain = 4, Pitch = 0.7, Range = 220, Caption = "[An inhuman shriek, somewhere in the house]" }
+
 function Sounds.get(name: string)
 	return Sounds.Library[name]
+end
+
+-- the volume a sound is actually played at: the one asked for (or the library's), corrected for
+-- how loud the file is
+function Sounds.volume(name: string, asked: number?): number
+	local def = Sounds.Library[name]
+	local v = asked or (def and def.Volume) or 0.6
+	return math.min(10, v * ((def and def.Gain) or 1))
 end
 
 function Sounds.resolve(name: string): string?

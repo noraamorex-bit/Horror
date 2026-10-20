@@ -10,7 +10,7 @@
 
 	Replicated attributes on Player:
 		InGame, Role, RoleName, Nerve, Stamina, Crouching, Sprinting, FlashlightOn, Battery,
-		Signal, Hiding, Captured, Escaped, HoldingBreath
+		Signal, Hiding, Captured, Escaped, HoldingBreath, Winded (out of breath: no sprint until it recovers)
 ]]
 
 local Players = game:GetService("Players")
@@ -404,7 +404,13 @@ local function tick(dt: number)
 		local stamina = player:GetAttribute("Stamina") or M.StaminaMax
 		local moving = root.AssemblyLinearVelocity.Magnitude > 1.5 and hum.MoveDirection.Magnitude > 0.1
 		local crouch = intent.Crouch == true
-		local sprint = intent.Sprint == true and not crouch and moving and stamina > 1
+		-- (winded: out of breath until it's back to WindedRecover)
+		local winded = player:GetAttribute("Winded") == true
+		if winded and stamina >= (M.WindedRecover or 35) then
+			winded = false
+			player:SetAttribute("Winded", nil)
+		end
+		local sprint = intent.Sprint == true and not crouch and moving and stamina > 1 and not winded
 		local role = player:GetAttribute("Role")
 		local nerve = player:GetAttribute("Nerve") or 100
 
@@ -425,6 +431,10 @@ local function tick(dt: number)
 				drain *= 1.4
 			end
 			stamina = math.max(0, stamina - drain * dt)
+			if stamina <= 0 and not (rushUntil[player] and rushUntil[player] > os.clock()) then
+				player:SetAttribute("Winded", true)
+				ctx.Audio.playFor(player, "GaspDeep")
+			end
 		else
 			-- (the marathon pass: you get your breath back twice as fast too)
 			local regen = M.StaminaRegen * (player:GetAttribute("Pass_Marathon") and 2 or 1)

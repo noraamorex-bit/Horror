@@ -66,6 +66,10 @@ Config.Movement = {
 	StaminaDrain = 14, -- per second while sprinting
 	StaminaRegen = 9,
 	RunnerDrainMultiplier = 0.6,
+	-- (v104, a player: "most loopable enemy in horror games". Run dry and you're winded: no sprint
+	-- until your breath is back to this much. Before, a sprint at 0 stamina flickered back on at 1,
+	-- so you could stutter-sprint forever at about his chase speed and circle a table all night.)
+	WindedRecover = 35,
 	CrouchCameraOffset = -1.6,
 }
 

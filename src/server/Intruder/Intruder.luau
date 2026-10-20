@@ -37,6 +37,7 @@ local inspect: (any) -> ()
 local grabAnyone: () -> boolean
 local patrolRoute: () -> { Vector3 }
 local unstick: (string) -> ()
+local trySurprise: () -> boolean
 local STATES: { [string]: (number, { Player }) -> () } = {}
 
 local function fresh()
@@ -686,6 +687,7 @@ local function startHunt()
 	end
 	S.LastHuntAt = now()
 	S.LastContact = S.LastContact or now()
+	S.NextSurprise = S.NextSurprise or now() + 60
 	S.Waves += 1
 	local justEntered = S.JustEntered
 	S.JustEntered = nil
@@ -1186,6 +1188,162 @@ STATES.Prowl = function(_, visible)
 end
 
 --[[
+	Over the furniture (v104, a player: "most loopable enemy in horror games"). He's slower than your
+	sprint by design, so circling a table, a bed or the kitchen island used to keep him going round
+	after you forever. Now, chasing you with something low between you (a table, a bed, a sofa, a
+	counter; nothing above his chest, no wall), when walking round it is a real detour, he goes over
+	it: a stop-motion pounce, onto the far side, landing with a thud. Not through walls or anything
+	tall; not onto another floor; once every few seconds.
+]]
+local LEAP = { Cooldown = 3, MinDist = 4, MaxDist = 16, MaxTop = 4.8, Detour = 1.3, Time = 0.55 }
+
+local leapIgnore: { Instance } = {}
+local function leapExclude(_): { Instance }
+	return leapIgnore
+end
+
+local function leapParams(): RaycastParams
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore: { Instance } = { S.Model }
+	for _, p in game:GetService("Players"):GetPlayers() do
+		if p.Character then
+			table.insert(ignore, p.Character)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	leapIgnore = ignore
+	return params
+end
+
+-- something low between him and `target` worth going over: (where he lands, the top of it)
+local function leapOver(target: Vector3): (Vector3?, number?)
+	local p = pos()
+	local params = leapParams()
+	local down = workspace:Raycast(p, V(0, -12, 0), params)
+	if not down then
+		return nil, nil
+	end
+	local floor = down.Position.Y
+	local tDown = workspace:Raycast(target + V(0, 1, 0), V(0, -12, 0), params)
+	if not tDown or math.abs(tDown.Position.Y - floor) > 1.5 then
+		return nil, nil -- (not on another floor, nor down the stairs)
+	end
+	local flat = V(target.X - p.X, 0, target.Z - p.Z)
+	local d = flat.Magnitude
+	if d < LEAP.MinDist or d > LEAP.MaxDist then
+		return nil, nil
+	end
+	local dir = flat.Unit
+	-- something in the way below his chest (a ray between a table's legs misses it: try a few heights)...
+	local low
+	for _, h in { 0.8, 1.6, 2.4, 3.2, 4 } do
+		local hit = workspace:Raycast(V(p.X, floor + h, p.Z), dir * d, params)
+		if hit and (not low or hit.Distance < low.Distance) then
+			low = hit
+		end
+	end
+	if not low then
+		return nil, nil
+	end
+	-- ...but nothing at head height all the way over (no wall, no wardrobe, no doorframe top)
+	for _, h in { 5.4, 7.2 } do
+		if workspace:Raycast(V(p.X, floor + h, p.Z), dir * d, params) then
+			return nil, nil
+		end
+	end
+	-- the top of it, and the floor on the far side
+	local top, landing = floor, nil
+	local k = low.Distance
+	while k <= d do
+		local q = V(p.X, 0, p.Z) + dir * k
+		local hit = workspace:Raycast(V(q.X, floor + 7, q.Z), V(0, -8, 0), params)
+		local y = hit and hit.Position.Y or floor
+		if y > floor + 0.6 then
+			top = math.max(top, y)
+		elseif top > floor + 0.6 then
+			-- past it: land a step clear of the edge (never beyond where they are)
+			local at = math.min(k + 1.4, d)
+			landing = V(p.X, floor, p.Z) + dir * at
+			break
+		end
+		k += 0.6
+	end
+	if not landing or top - floor > LEAP.MaxTop then
+		return nil, nil
+	end
+	-- (somewhere he can stand: the nearest walkable spot, still on the far side)
+	if NavGrid.ready() and not NavGrid.roomAt(landing, nil, leapExclude(params)) then
+		local spot = NavGrid.nearest(landing, 3.5)
+		if not spot or (V(spot.X, 0, spot.Z) - V(p.X, 0, p.Z)):Dot(dir) < k - 0.2 then
+			return nil, nil
+		end
+		landing = V(spot.X, floor, spot.Z)
+	end
+	-- only when going round is a real detour
+	if NavGrid.ready() then
+		local path = NavGrid.findPath(p, V(target.X, p.Y, target.Z))
+		if path then
+			local len, last = 0, p
+			for _, w in path do
+				len += (V(w.X, 0, w.Z) - V(last.X, 0, last.Z)).Magnitude
+				last = w
+			end
+			if len < d * LEAP.Detour then
+				return nil, nil
+			end
+		end
+	end
+	return landing, top
+end
+
+local function leap(landing: Vector3, top: number, who: Player?)
+	S.LastLeap = now()
+	S.Leaping = true
+	S.Nav:stop()
+	local from = S.Root.Position
+	local rootUp = (S.Humanoid and S.Humanoid.HipHeight or Rig.HipHeight) + S.Root.Size.Y / 2
+	local to = V(landing.X, landing.Y + rootUp + 0.05, landing.Z)
+	local look = V(to.X - from.X, 0, to.Z - from.Z)
+	look = look.Magnitude > 0.1 and look.Unit or S.Root.CFrame.LookVector
+	-- (his feet clear the top by a stud; he's folded up in the air)
+	local rise = math.max(0, top + 1 + rootUp * 0.55 - math.max(from.Y, to.Y))
+	S.Root.Anchored = true
+	ctx.Audio.playAt("BoneCrack" .. math.random(1, 2), from, { Caption = false })
+	ctx.Audio.playAt("ClawStep", from - V(0, 3, 0), { Pitch = 0.6, Min = 8, Range = 70, Caption = false })
+	if ctx.Director.logTruthRaw and not S.LoggedLeap then
+		S.LoggedLeap = true
+		ctx.Director.logTruthRaw("Running round the furniture didn't work: he went over it.")
+	end
+	if ctx.Journey and who then
+		ctx.Journey.count(who, "Leaps")
+	end
+	task.spawn(function()
+		local t0 = now()
+		while S.Model and S.Root.Parent do
+			local k = math.min(1, (now() - t0) / LEAP.Time)
+			-- (in jerks, like the rest of him: 14 poses a second)
+			local kk = math.floor(k * 8 + 0.5) / 8
+			local p = from:Lerp(to, kk) + V(0, 4 * kk * (1 - kk) * rise, 0)
+			S.Root.CFrame = CFrame.lookAt(p, p + look)
+			if k >= 1 then
+				break
+			end
+			task.wait(1 / 14)
+		end
+		if S.Model and S.Root.Parent then
+			S.Root.Anchored = false
+			pcall(function()
+				S.Root:SetNetworkOwner(nil)
+			end)
+			ctx.Audio.playAt("BodyFall", landing, { Volume = 1, Caption = false })
+			ctx.Audio.playAt("ClawStep", landing, { Pitch = 0.55, Min = 8, Range = 70, Caption = false })
+		end
+		S.Leaping = false
+	end)
+end
+
+--[[
 	Chase: he can see you. He's faster than you and doesn't tire; up close he lunges. Get out of
 	his sight and he's back to following your trail, a few seconds behind.
 ]]
@@ -1207,6 +1365,12 @@ STATES.Chase = function(_, visible)
 		return
 	end
 	local r = rootOf(t) :: BasePart
+	-- (screaming at you first: a surprise gives you a beat to run)
+	if d.HoldUntil and now() < d.HoldUntil then
+		S.Nav:stop()
+		faceToward(r.Position)
+		return
+	end
 	local seen = table.find(visible, t) ~= nil
 	if seen then
 		d.LastSeen = now()
@@ -1236,6 +1400,14 @@ STATES.Chase = function(_, visible)
 	local speed = I.ChaseSpeed - (solo and I.SoloChaseSlowdown or 0)
 	if seen and (r.Position - pos()).Magnitude < 10 then
 		speed = I.LungeSpeed
+	end
+	-- circling something low between you? he goes over it (v104)
+	if seen and now() - (S.LastLeap or -1e9) > LEAP.Cooldown then
+		local landing, top = leapOver(r.Position)
+		if landing and top then
+			leap(landing, top, t)
+			return
+		end
 	end
 	follow(goal, speed)
 	tryGrab(t)
@@ -1705,6 +1877,248 @@ local function ripOut(who: Player, spot)
 	else
 		patrol()
 	end
+end
+
+--[[
+	Surprises (v104, a player: "no surprise factor to scare you"). A minute into the hunt, and then
+	every minute and a half or two, he doesn't just patrol:
+	• Closet: he slips unseen into an empty closet / wardrobe / shower near someone out in the
+	  open and waits. Come within 15 studs and its door creaks (the warning); walk up to it and he
+	  bursts out at you. Nobody comes in 40 s: he slips out again. Climb into it and he has you.
+	• Behind you: someone alone, out in the open, not looking: he's suddenly standing a few steps
+	  behind them, breathing. Turn round and he screams and comes for you; don't, and after a few
+	  seconds he's gone again (a whisper, the breathing stops).
+]]
+local SURPRISE = { Gap = { 75, 120 }, Retry = 10, ClosetWait = 40, Warn = 15, Burst = 7.5, StalkWait = 7 }
+
+local function nextSurprise()
+	S.NextSurprise = now() + SURPRISE.Gap[1] + math.random() * (SURPRISE.Gap[2] - SURPRISE.Gap[1])
+end
+
+local function outInTheOpen(p: Player): BasePart?
+	if not valid(p) or p:GetAttribute("Hiding") or p:GetAttribute("Captured") then
+		return nil
+	end
+	return rootOf(p)
+end
+
+local function hideInCloset(): boolean
+	local best, bestScore = nil, -math.huge
+	for _, spot in ctx.Hiding.all() do
+		if spot.Exit and not ctx.Hiding.occupant(spot) then
+			local exit = spot.Exit.Position
+			if not Perception.anyoneSees(exit + V(0, 3, 0), S.Model) then
+				for _, p in ctx.Util.activePlayers() do
+					local r = outInTheOpen(p)
+					if r and math.abs(r.Position.Y - exit.Y) < 8 then
+						local d = (r.Position - exit).Magnitude
+						if d > 14 and d < 32 then
+							local score = -math.abs(d - 20) + math.random() * 4
+							if score > bestScore then
+								best, bestScore = spot, score
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	if not best then
+		return false
+	end
+	S.Nav:stop()
+	S.Root.Anchored = true
+	S.Model:PivotTo(OFFSTAGE)
+	setState("Closet", { Spot = best, Until = now() + SURPRISE.ClosetWait })
+	if ctx.Director.logTruthRaw and not S.LoggedCloset then
+		S.LoggedCloset = true
+		ctx.Director.logTruthRaw("He hid in the closets too. Not to sleep: to wait for someone to walk past.")
+	end
+	return true
+end
+
+-- out of the closet at someone
+local function burstOut(spot, p: Player)
+	local r = rootOf(p) :: BasePart
+	local exit = spot.Exit.Position
+	local at = exit
+	-- (they're standing right on the way out, thrown out of it: he comes out beside them)
+	if (V(r.Position.X, exit.Y, r.Position.Z) - exit).Magnitude < 3 then
+		local out = V(exit.X - spot.Position.X, 0, exit.Z - spot.Position.Z)
+		local side = out.Magnitude > 0.1 and V(-out.Unit.Z, 0, out.Unit.X) or V(1, 0, 0)
+		at = exit + side * 4
+		if NavGrid.ready() and not NavGrid.roomAt(V(at.X, exit.Y - 3, at.Z), nil, { S.Model }) then
+			at = exit - side * 4
+		end
+	end
+	placeAt(at, r.Position)
+	nextSurprise()
+	S.StungAt[p] = now()
+	ctx.Audio.playAt("DoorYank", spot.Position, { CaptionText = "[Something BURSTS out at you]", CaptionRange = 50 })
+	ctx.Audio.playAt("Roar", S.Head.Position, { Caption = false })
+	ctx.Audio.playFor(p, "Stinger")
+	ctx.Remotes.Shake:FireClient(p, 0.9, 0.7)
+	if ctx.Journey then
+		ctx.Journey.count(p, "Surprised")
+	end
+	startChase(p)
+	S.Data.HoldUntil = now() + 0.7 -- (the scream: a beat to turn and run)
+end
+
+STATES.Closet = function()
+	local d = S.Data
+	local spot = d.Spot
+	local exit = spot.Exit.Position
+	-- someone climbed in with him (Hard: that's it; Normal: thrown out, and a beat to run)
+	local inside = ctx.Hiding.occupant(spot)
+	if inside then
+		placeAt(exit, spot.Position)
+		nextSurprise()
+		if workspace:GetAttribute("Difficulty") == "Hard" then
+			ripOut(inside, spot)
+		else
+			ctx.Hiding.exit(inside, true)
+			burstOut(spot, inside)
+		end
+		return
+	end
+	for _, p in ctx.Util.activePlayers() do
+		local r = outInTheOpen(p)
+		if r and math.abs(r.Position.Y - exit.Y) < 8 then
+			local dist = (r.Position - exit).Magnitude
+			if dist < SURPRISE.Warn and not d.Warned then
+				d.Warned = true
+				ctx.Audio.playAt(ctx.Hiding.sound(spot, true), spot.Position, { Pitch = 0.7, CaptionText = "[A creak... from a hiding place close by]", CaptionRange = 18 })
+			end
+			if dist < SURPRISE.Burst then
+				burstOut(spot, p)
+				return
+			end
+		end
+	end
+	if now() >= d.Until and not Perception.anyoneSees(exit + V(0, 3, 0), S.Model) then
+		-- nobody came: out again, quietly
+		placeAt(exit, exit + V(0, 0, -1))
+		nextSurprise()
+		patrol()
+	end
+end
+
+local function standBehind(): boolean
+	for _, p in ctx.Util.activePlayers() do
+		local r = outInTheOpen(p)
+		if r then
+			-- (alone: nobody else within 25 studs to see him first)
+			local alone = true
+			for _, q in ctx.Util.activePlayers() do
+				local rq = q ~= p and rootOf(q)
+				if rq and (rq.Position - r.Position).Magnitude < 25 then
+					alone = false
+				end
+			end
+			local look = r.CFrame.LookVector
+			local back = V(-look.X, 0, -look.Z)
+			if alone and back.Magnitude > 0.1 then
+				back = back.Unit
+				local params = RaycastParams.new()
+				params.FilterType = Enum.RaycastFilterType.Exclude
+				params.FilterDescendantsInstances = { S.Model, p.Character :: Instance }
+				local room = ctx.Rooms.find(r.Position)
+				for _, dist in { 6.5, 5.5, 8 } do
+					local at = r.Position + back * dist
+					local down = workspace:Raycast(at + V(0, 2, 0), V(0, -9, 0), params)
+					local floor = down and V(at.X, down.Position.Y, at.Z)
+					-- room to stand, in the same room, nothing between him and them
+					if floor and math.abs(floor.Y - (r.Position.Y - 3)) < 2.5 and ctx.Rooms.find(floor + V(0, 3, 0)) == room
+						and (not NavGrid.ready() or NavGrid.roomAt(floor, nil, { S.Model }))
+						and not workspace:Raycast(floor + V(0, 5, 0), (r.Position + V(0, 1.5, 0)) - (floor + V(0, 5, 0)), params) then
+						S.Nav:stop()
+						placeAt(floor + V(0, 1, 0), r.Position)
+						S.Root.Anchored = true
+						setState("Stalk", { Target = p, Start = now(), Until = now() + SURPRISE.StalkWait })
+						-- (his breathing, right there; a joint cracks)
+						ctx.Audio.playAt("ManWhisper", S.Head.Position, { CaptionRange = 14 })
+						if ctx.Director.logTruthRaw and not S.LoggedStalk then
+							S.LoggedStalk = true
+							ctx.Director.logTruthRaw("Sometimes, when you were alone, he was right behind you. Most of the time you never turned round.")
+						end
+						return true
+					end
+				end
+			end
+		end
+	end
+	return false
+end
+
+STATES.Stalk = function(_, visible)
+	local d = S.Data
+	local p = d.Target
+	local r = valid(p) and not p:GetAttribute("Hiding") and rootOf(p)
+	local turned = nil
+	if r then
+		faceToward(r.Position)
+		local to = V(pos().X - r.Position.X, 0, pos().Z - r.Position.Z)
+		local look = r.CFrame.LookVector
+		if to.Magnitude > 0.1 and V(look.X, 0, look.Z).Unit:Dot(to.Unit) > 0.55 and now() - d.Start > 0.5 then
+			turned = p
+		end
+	end
+	-- (or someone else walks in on him)
+	for _, q in visible do
+		if not turned and q ~= p then
+			turned = q
+		end
+	end
+	if turned then
+		-- they turned round: he SCREAMS
+		S.Root.Anchored = false
+		nextSurprise()
+		S.StungAt[turned] = now()
+		ctx.Audio.playAt("Roar", S.Head.Position, { CaptionText = "[A SCREECH, right behind you]", CaptionRange = 30 })
+		ctx.Audio.playFor(turned, "Stinger")
+		ctx.Audio.playFor(turned, "GaspDeep")
+		ctx.Remotes.Shake:FireClient(turned, 1, 0.8)
+		if ctx.Journey then
+			ctx.Journey.count(turned, "Surprised")
+		end
+		startChase(turned)
+		S.Data.HoldUntil = now() + 0.7 -- (the scream: a beat to turn and run)
+		return
+	end
+	if not r or now() >= d.Until then
+		-- they never turned round: a whisper, and he's gone
+		ctx.Audio.playAt("CreatureWhisper", S.Head.Position, { Caption = false })
+		S.Root.Anchored = false
+		nextSurprise()
+		if not relocate() then
+			withdraw()
+		else
+			patrol()
+		end
+	end
+end
+
+trySurprise = function(): boolean
+	if now() < (S.NextSurprise or math.huge) or S.Frenzy or inCaptiveGrace() then
+		return false
+	end
+	-- (nobody's in a chase or being taken, and the call hasn't just been made)
+	S.SurpriseFlip = not S.SurpriseFlip
+	local ok = if S.SurpriseFlip then (standBehind() or hideInCloset()) else (hideInCloset() or standBehind())
+	if not ok then
+		S.NextSurprise = now() + SURPRISE.Retry
+	end
+	return ok
+end
+Intruder._surprise = function(kind: string?) -- (tests)
+	S.NextSurprise = 0
+	if kind == "closet" then
+		return hideInCloset()
+	elseif kind == "behind" then
+		return standBehind()
+	end
+	return trySurprise()
 end
 
 STATES.Inspect = function(_, visible)
@@ -2191,7 +2605,16 @@ local function think(dt: number)
 	if state == "Offstage" or state == "Gone" or state == "Stopped" then
 		return
 	end
+	-- (in a closet, waiting for someone to walk past: nothing to animate, nothing to see)
+	if state == "Closet" then
+		STATES.Closet(dt, {})
+		return
+	end
 	animate(dt)
+	-- (mid-pounce over the furniture: nothing else until he lands)
+	if S.Leaping then
+		return
+	end
 	-- (someone else is driving him: FinaleService)
 	if state == "Puppet" then
 		return
@@ -2244,6 +2667,11 @@ local function think(dt: number)
 		if listenForBreath(dt) then
 			return
 		end
+	end
+	-- now and then, a surprise instead of the plain patrol (v104; never while he's lying low: that's
+	-- the breather to move in)
+	if S.Mode == "Hunt" and state == "Patrol" and #visible == 0 and trySurprise() then
+		return
 	end
 	local handler = STATES[state]
 	if handler then
@@ -2462,6 +2890,8 @@ function Intruder._tune()
 	return tune()
 end
 
+Intruder._leapOver = function(target) return leapOver(target) end -- (tests)
+Intruder._leap = function(l, t) leap(l, t) end
 function Intruder._state()
 	return S
 end

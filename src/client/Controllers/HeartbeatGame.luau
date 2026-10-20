@@ -138,8 +138,27 @@ local function open(payload)
 	local touch = ctx.UI.isTouch()
 	hint.Text = touch and "He's listening. Tap LEFT or RIGHT as each half reaches the heart."
 		or (ctx.UI.isGamepad() and "He's listening. Press LB / RB as each half reaches the heart."
-			or "He's listening. Click LEFT / RIGHT (or Q / E) as each half reaches the heart.")
-	-- (the buttons on every device: with only Q / E named, most PC players never pressed anything)
+			or "He's listening. Press Q / E as each half reaches the heart.")
+	-- (the buttons on every device: with only Q / E named, most PC players never pressed anything.
+	-- On a phone, two big LEFT / RIGHT pads in the bottom corners; with a keyboard or a pad, two key
+	-- caps at the ends of the lane, clickable too (v104, a player: "unnecessary mobile UI for pc").)
+	local pad = ctx.UI.isGamepad()
+	for _, pair in { { touchL, "L" }, { touchR, "R" } } do
+		local b, left = pair[1], pair[2] == "L"
+		if touch then
+			b.AnchorPoint = Vector2.new(left and 0 or 1, 1)
+			b.Position = left and UDim2.new(0, 30, 1, -30) or UDim2.new(1, -30, 1, -30)
+			b.Size = UDim2.fromOffset(200, 120)
+			b.TextSize = 26
+			b.Text = left and "◀ LEFT" or "RIGHT ▶"
+		else
+			b.AnchorPoint = Vector2.new(0.5, 0.5)
+			b.Position = UDim2.new(0.5, left and -372 or 372, 0.55, -21)
+			b.Size = UDim2.fromOffset(58, 58)
+			b.TextSize = pad and 20 or 28
+			b.Text = left and (pad and "LB" or "Q") or (pad and "RB" or "E")
+		end
+	end
 	touchL.Visible = true
 	touchR.Visible = true
 	root.Visible = true

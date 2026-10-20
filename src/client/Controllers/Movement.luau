@@ -204,8 +204,11 @@ function Movement.start()
 
 		-- your own flashlight: a local light that follows the camera exactly
 		local on = player:GetAttribute("FlashlightOn") == true
-		localBeam.Enabled = on
-		localGlow.Enabled = on
+		-- (v104: him close by and your light stutters, now and then)
+		local prox = ctx.Dread and ctx.Dread.proximity() or 0
+		local stutter = on and prox > 0.4 and math.noise(os.clock() * 9, 3.7) > 0.42 - prox * 0.3
+		localBeam.Enabled = on and not stutter
+		localGlow.Enabled = on and not stutter
 		if on then
 			beamPart.CFrame = cam.CFrame * CFrame.new(0.7, -0.6, -0.4)
 			dustBox.CFrame = cam.CFrame * CFrame.new(0, 0, -8)

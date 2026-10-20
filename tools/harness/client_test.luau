@@ -36,7 +36,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -47,6 +47,29 @@ local ok, err = pcall(function()
 		end
 	end
 	print("controllers started (touch=" .. tostring(touch) .. ")")
+	-- v104 Dread: noises off are picked by weight and placed 18-34 studs away; nothing near him
+	do
+		local D = mods.Dread
+		local RB = H.roblox
+		assert(D.proximity() == 0, "he's nowhere near")
+		local seen = {}
+		for i = 0, 20 do
+			local name = D.pick(i / 20)
+			seen[name] = true
+			assert(ctx.Sounds.get(name), "a real sound: " .. name)
+		end
+		assert(seen.HouseCreak1 and seen.DistantShriek, "the whole range gets picked")
+		for _ = 1, 30 do
+			local p = D.spot(RB.Vector3.new(0, 5, 0), math.random(), math.random(), math.random())
+			local flat = RB.Vector3.new(p.X, 0, p.Z).Magnitude
+			assert(flat >= 18 and flat <= 34.01, "18-34 studs off: " .. flat)
+		end
+		-- Gain: the file's loudness correction, capped at Roblox's 10
+		assert(ctx.Sounds.volume("Footstep", 1.6) > 1.6 * 3, "his footsteps get their gain")
+		assert(ctx.Sounds.volume("FootstepDirt1", 2) == 10, "capped at 10")
+		assert(ctx.Sounds.volume("Thunder") == ctx.Sounds.get("Thunder").Volume, "no gain: as asked")
+		print("dread ok")
+	end
 	-- the objective arrow: hidden when the "!" is on screen; at the edge pointing the way when it isn't
 	do
 		local M = mods.Markers

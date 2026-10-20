@@ -64,7 +64,7 @@ local function refreshRoles()
 		end
 	end
 	roleHint.Text = owns and "WHO DO YOU PLAY TONIGHT? (what you start with)"
-		or string.format("Your role is random tonight · tap one to choose yours (R$ %d)", price)
+		or string.format("Your role is random tonight · pick one to choose yours (R$ %d)", price)
 	local want = player:GetAttribute("WantRole")
 	for id, b in roleButtons do
 		local on = owns and want == id

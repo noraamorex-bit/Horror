@@ -133,6 +133,24 @@ local function boxBlocked(c: Vector3, h: Vector3): boolean
 	return false
 end
 
+-- room for him to stand at this floor point? (what of him collides: his root, a 2x2x1 box 4.9 up;
+-- the rest of him passes over a chair back. The grid itself keeps a wider berth than he needs.)
+function NavGrid.roomAt(floor: Vector3, halfWidth: number?, exclude: { Instance }?): boolean
+	local op = OverlapParams.new()
+	op.FilterType = Enum.RaycastFilterType.Exclude
+	op.FilterDescendantsInstances = exclude or {}
+	op.RespectCanCollide = true
+	pcall(function()
+		op.CollisionGroup = "Intruder"
+	end)
+	local saved = overlapParams
+	overlapParams = op
+	local w = halfWidth or 1.1
+	local free = not boxBlocked(floor + V(0, 4.9, 0), V(w, 1.05, w))
+	overlapParams = saved
+	return free
+end
+
 ---------------------------------------------------------------------------
 -- Survey
 ---------------------------------------------------------------------------

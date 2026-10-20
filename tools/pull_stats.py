@@ -188,7 +188,9 @@ def report_nights(nights):
         print(f"      minute they quit (median): {round(median(ts_) / 60, 1) if ts_ else '-'}")
         caps = [sum(1 for ev in r[2].get("Ev") or [] if ev[1] == "Cap") for r in group]
         print(f"      captures/player {sum(caps) / n:.2f}  hides/player {sum((r[2].get('Hides') or 0) for r in group) / n:.1f}  "
-              f"seen/player {sum((r[2].get('Seen') or 0) for r in group) / n:.1f}")
+              f"seen/player {sum((r[2].get('Seen') or 0) for r in group) / n:.1f}  "
+              f"surprised/player {sum((r[2].get('Surprised') or 0) for r in group) / n:.2f}  "
+              f"leaps over furniture/player {sum((r[2].get('Leaps') or 0) for r in group) / n:.2f}")
         beats = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Beat" and len(ev) > 2)
         if beats:
             print(f"      heartbeat minigames: {dict(beats)}")

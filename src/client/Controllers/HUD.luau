@@ -685,6 +685,8 @@ local function update()
 	-- stamina
 	local stamina = player:GetAttribute("Stamina") or 100
 	staminaFill.Size = UDim2.fromScale(stamina / 100, 1)
+	-- (winded: red until you've got your breath back, v104)
+	staminaFill.BackgroundColor3 = player:GetAttribute("Winded") and Color3.fromRGB(205, 60, 52) or Color3.fromRGB(220, 220, 210)
 	staminaBar.Visible = stamina < 99 and player:GetAttribute("InGame") == true
 
 	-- context meter

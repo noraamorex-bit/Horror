@@ -260,13 +260,13 @@ function Atmosphere.start()
 		muffle.HighGain = inside and -14 or 0
 		muffle.MidGain = inside and -5 or 0
 		if rainSound then
-			rainSound.Volume = inside and 0.45 or 0.85
+			rainSound.Volume = ctx.Sounds.volume("Rain", inside and 0.45 or 0.85)
 		end
 		if rainWindow then
-			rainWindow.Volume = inside and 0.55 or 0
+			rainWindow.Volume = ctx.Sounds.volume("RainWindow", inside and 0.55 or 0)
 		end
 		if windSound then
-			windSound.Volume = inside and 0.1 or 0.25
+			windSound.Volume = ctx.Sounds.volume("Wind", inside and 0.1 or 0.25)
 		end
 		-- warm indoors (ground floor and upstairs) while the lights are on
 		local floor = inside and ctx.Rooms.floorOf(cam.CFrame.Position)

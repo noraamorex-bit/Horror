@@ -28,7 +28,7 @@ local function localSound(name: string, parent: Instance?): Sound?
 	local s = Instance.new("Sound")
 	s.Name = name
 	s.SoundId = id
-	s.Volume = def.Volume or 0.5
+	s.Volume = ctx.Sounds.volume(name)
 	s.PlaybackSpeed = def.Pitch or 1
 	s.Looped = def.Looped or false
 	s.Parent = parent or SoundService
@@ -49,7 +49,7 @@ function Effects.playSound(name: string, position: Vector3?, opts)
 	local s = localSound(name, parent)
 	if s then
 		if opts.Volume then
-			s.Volume = opts.Volume
+			s.Volume = ctx.Sounds.volume(name, opts.Volume)
 		end
 		s:Play()
 		Debris:AddItem(att or s, 10)
@@ -537,12 +537,14 @@ function Effects.start()
 		-- heartbeat below Heavy
 		local heavy = ctx.Config.Nerve.Heavy
 		if heartbeat then
-			local want = inGame and nerve < heavy
+			-- (v104: and whenever he's close, seen or not: Dread)
+			local prox = ctx.Dread and ctx.Dread.proximity() or 0
+			local want = inGame and (nerve < heavy or prox > 0.2)
 			if want then
 				heartbeat.Looped = true
-				-- 96 bpm at the edge of panic, up to ~150 at the bottom
-				heartbeat.PlaybackSpeed = 1 + (1 - nerve / heavy) * 0.6
-				heartbeat.Volume = 0.25 + fear * 0.5
+				-- 96 bpm at the edge of panic, up to ~150 at the bottom (or with him right there)
+				heartbeat.PlaybackSpeed = 1 + math.max(nerve < heavy and (1 - nerve / heavy) or 0, prox) * 0.6
+				heartbeat.Volume = math.max(nerve < heavy and 0.25 + fear * 0.5 or 0, 0.15 + prox * 0.65)
 				if not heartbeat.IsPlaying then
 					heartbeat:Play()
 				end
