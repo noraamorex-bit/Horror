@@ -23,8 +23,9 @@ HB0 = start["fold"]                 # the heartbeat minigame opens as he folds d
 HB_HINT = "He's listening. Tap LEFT or RIGHT as each half reaches the heart."
 
 def hud(f, name, i):
+    # (no hotbar on the hook: "(Part 1)" sits where it does)
     t = f / FPS
-    h = {"sel": 1, "chat": [[n, c, m] for (tt, n, c, m) in CHAT if t >= tt][-3:]}
+    h = {"sel": 1 if name != "hook" else 0, "chat": [[n, c, m] for (tt, n, c, m) in CHAT if t >= tt][-3:]}
     h["obj"] = "Find the noise downstairs" if t < 7.5 else ("<b>!</b> Hide from him" if name != "run" else "<b>!</b> Get out of the house")
     if name == "chase":
         h["stam"] = 1.0 - 0.55 * i / 72

@@ -147,6 +147,7 @@ function hud(fr, f) {
   $('obj').style.display = h.obj ? 'block' : 'none';
   if (h.obj) $('objT').innerHTML = h.obj;
   for (let j = 1; j <= ${T.items.length}; j++) $('slot' + j).classList.toggle('on', h.sel === j);
+  $('hot').style.display = h.sel ? 'flex' : 'none';
   $('stam').style.display = h.stam === undefined ? 'none' : 'block';
   if (h.stam !== undefined) $('stamF').style.width = (100 * h.stam) + '%';
   $('chat').style.display = h.chat && h.chat.length ? 'block' : 'none';
