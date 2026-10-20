@@ -109,6 +109,7 @@ RENDER.NIGHT = function()
 	local r1 = row(2)
 	btn(r1, "Start: Normal", function() send("start", "Normal") end)
 	btn(r1, "Start: Hard", function() send("start", "Hard") end)
+	btn(r1, "Start: Nightmare", function() send("start", "Nightmare") end)
 	section("JUMP TO ACT", 3)
 	local r2 = row(4)
 	for _, a in info.Acts do

@@ -1,6 +1,7 @@
 --[[
-	Vote — the CHOOSE MODE screen before the night: NORMAL or HARD, everyone votes, the counts
-	update live, a countdown runs. More votes for HARD makes it a hard night (a tie stays normal).
+	Vote — the CHOOSE MODE screen before the night: NORMAL, HARD or NIGHTMARE, everyone votes, the
+	counts update live, a countdown runs. The most votes wins (a tie goes to the easier one).
+	NIGHTMARE (v103) is locked until you've finished a night: caught once and you're dead, 2x coins.
 
 	The four roles and what each starts with show here for everyone (Story.Roles Gear); owners of
 	the "pick your role" pass tap one to play it tonight, anyone else gets the pass offered.
@@ -34,9 +35,16 @@ local lastBeep = -1
 local closing: thread? = nil
 
 local MODES = {
-	{ Key = "Normal", Text = "NORMAL", Sub = "The way the night is meant to be.", Color = Color3.fromRGB(245, 245, 245) },
-	{ Key = "Hard", Text = "HARD", Sub = "He's faster, smarter and angrier. Batteries die sooner. Help takes longer.", Color = Color3.fromRGB(235, 45, 45) },
+	{ Key = "Normal", Text = "NORMAL", Size = 46, Sub = "The way the night is meant to be.", Color = Color3.fromRGB(245, 245, 245) },
+	{ Key = "Hard", Text = "HARD", Size = 46, Sub = "Faster, smarter, angrier. Batteries die sooner. Help takes longer.", Color = Color3.fromRGB(235, 45, 45) },
+	{ Key = "Nightmare", Text = "NIGHTMARE", Size = 30, Sub = "Caught once = dead. Almost as fast as your sprint. 2× COINS.", Color = Color3.fromRGB(150, 10, 20) },
 }
+local NIGHTMARE_LOCKED = "🔒 Finish a night first to unlock."
+
+-- (NIGHTMARE: only once you've finished a night; the server checks too)
+local function nightmareOpen(): boolean
+	return (tonumber(player:GetAttribute("StatNights")) or 0) >= 1
+end
 
 local function passId(key: string): number
 	for _, p in ctx.Config.Shop.Passes do
@@ -78,7 +86,14 @@ local function render(payload)
 		b.Stroke.Transparency = picked and 0 or 0.55
 		b.Frame.BackgroundTransparency = picked and 0.55 or 0.8
 	end
-	footer.Text = string.format("%d / %d voted", (payload.Normal or 0) + (payload.Hard or 0), payload.Total or #Players:GetPlayers())
+	footer.Text = string.format("%d / %d voted", (payload.Normal or 0) + (payload.Hard or 0) + (payload.Nightmare or 0), payload.Total or #Players:GetPlayers())
+	local nm = boxes.Nightmare
+	if nm then
+		local sub = nm.Frame:FindFirstChild("Sub") :: TextLabel?
+		if sub then
+			sub.Text = nightmareOpen() and MODES[3].Sub or NIGHTMARE_LOCKED
+		end
+	end
 	-- skip the build-up (only offered when everyone has played a night before)
 	skipButton.Visible = payload.CanSkip == true and payload.Result == nil
 	if payload.CanSkip then
@@ -128,18 +143,23 @@ local function close(result: string?, skip: boolean?)
 	skipButton.Visible = false
 	if result then
 		-- the winning mode, big, for a moment
-		local m = result == "Hard" and MODES[2] or MODES[1]
+		local m = MODES[1]
+		for _, mm in MODES do
+			if mm.Key == result then
+				m = mm
+			end
+		end
 		title.Text = m.Text .. " MODE"
 		title.TextColor3 = m.Color
 		for _, mm in MODES do
 			boxes[mm.Key].Frame.Active = false
 			boxes[mm.Key].Frame.Visible = mm.Key == result
 		end
-		footer.Text = result == "Hard" and "Good luck." or "Stay quiet. Stay together."
+		footer.Text = result == "Nightmare" and "Don't get caught. Not even once." or (result == "Hard" and "Good luck." or "Stay quiet. Stay together.")
 		if skip then
 			footer.Text = "Skipping to the blackout."
 		end
-		ctx.Effects.playSound(result == "Hard" and "HorrorHitLow" or "UISelect", nil, { Caption = false })
+		ctx.Effects.playSound(result ~= "Normal" and "HorrorHitLow" or "UISelect", nil, { Caption = false })
 	end
 	closing = task.delay(result and 1.6 or 0, function()
 		closing = nil
@@ -178,11 +198,12 @@ local function build()
 	UI.new("UIStroke", { Thickness = 3, Color = Color3.new(0, 0, 0), Parent = title })
 
 	local row = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 190), BackgroundTransparency = 1, LayoutOrder = 2, ZIndex = 5, Parent = col })
-	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 30), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = row })
+	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 26), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = row })
+	local W = 236
 	for i, m in MODES do
 		local b = UI.new("TextButton", {
 			Name = m.Key,
-			Size = UDim2.fromOffset(330, 190),
+			Size = UDim2.fromOffset(W, 190),
 			Text = "",
 			AutoButtonColor = false,
 			BackgroundColor3 = m.Color,
@@ -193,19 +214,25 @@ local function build()
 		})
 		UI.corner(b, 6)
 		local stroke = UI.new("UIStroke", { Color = m.Color, Thickness = 2, Transparency = 0.55, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Parent = b })
-		local name = UI.label({ Position = UDim2.fromOffset(0, 22), Size = UDim2.new(1, 0, 0, 56), Text = m.Text, Font = Enum.Font.Arcade, TextSize = 56, TextColor3 = m.Color, ZIndex = 6, Parent = b })
+		-- (NIGHTMARE's dark red needs a light outline to read on the dark screen)
+		local textColor = m.Key == "Nightmare" and Color3.fromRGB(255, 60, 70) or m.Color
+		local name = UI.label({ Position = UDim2.fromOffset(0, 22), Size = UDim2.new(1, 0, 0, 56), Text = m.Text, Font = Enum.Font.Arcade, TextSize = m.Size, TextColor3 = textColor, ZIndex = 6, Parent = b })
 		UI.new("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0), Parent = name })
-		local count = UI.label({ Position = UDim2.fromOffset(0, 82), Size = UDim2.new(1, 0, 0, 36), Text = "(0)", Font = Enum.Font.Arcade, TextSize = 34, TextColor3 = m.Color, ZIndex = 6, Parent = b })
-		UI.label({ Position = UDim2.new(0, 16, 0, 124), Size = UDim2.new(1, -32, 0, 54), Text = m.Sub, TextSize = 17, TextWrapped = true, TextColor3 = UI.Color.Dim, ZIndex = 6, Parent = b })
+		local count = UI.label({ Position = UDim2.fromOffset(0, 82), Size = UDim2.new(1, 0, 0, 36), Text = "(0)", Font = Enum.Font.Arcade, TextSize = 34, TextColor3 = textColor, ZIndex = 6, Parent = b })
+		UI.label({ Name = "Sub", Position = UDim2.new(0, 12, 0, 122), Size = UDim2.new(1, -24, 0, 60), Text = m.Sub, TextSize = 15, TextWrapped = true, TextColor3 = UI.Color.Dim, ZIndex = 6, Parent = b })
 		b.Activated:Connect(function()
 			if not open or not b.Active then
+				return
+			end
+			if m.Key == "Nightmare" and not nightmareOpen() then
+				ctx.Effects.playSound("UIClick", nil, { Caption = false })
 				return
 			end
 			mine = m.Key
 			ctx.Remotes.CastVote:FireServer(m.Key)
 			ctx.Effects.playSound("UISelect", nil, { Caption = false })
-			b.Size = UDim2.fromOffset(316, 182)
-			UI.tween(b, 0.25, { Size = UDim2.fromOffset(330, 190) }, Enum.EasingStyle.Back)
+			b.Size = UDim2.fromOffset(W - 14, 182)
+			UI.tween(b, 0.25, { Size = UDim2.fromOffset(W, 190) }, Enum.EasingStyle.Back)
 		end)
 		boxes[m.Key] = { Frame = b, Stroke = stroke, Count = count, Color = m.Color }
 	end

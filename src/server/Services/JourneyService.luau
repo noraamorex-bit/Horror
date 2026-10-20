@@ -179,7 +179,7 @@ function Journey.nightStart(players: { Player })
 	n.Started = true
 	n.Clock = os.clock()
 	n.Data.Start = os.time()
-	n.Data.Diff = workspace:GetAttribute("Difficulty")
+	n.Data.Diff = workspace:GetAttribute("Nightmare") and "Nightmare" or workspace:GetAttribute("Difficulty")
 	n.Data.Size = #players
 	for _, p in players do
 		local e = entry(p)

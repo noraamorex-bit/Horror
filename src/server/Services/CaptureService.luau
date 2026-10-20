@@ -218,8 +218,8 @@ function Capture.capture(player: Player)
 	if captives[player] or player:GetAttribute("Escaped") or player:GetAttribute("Dead") or player:GetAttribute("AdminGod") then
 		return false
 	end
-	-- you only get away once
-	if everCaptured[player] then
+	-- you only get away once (on NIGHTMARE, not even that)
+	if everCaptured[player] or workspace:GetAttribute("Nightmare") == true then
 		return Capture.kill(player)
 	end
 	local slotIndex = freeSlot()

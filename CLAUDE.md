@@ -88,6 +88,16 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   charcoal body, brighter face glow + a cold chest light, a faint outline/fill in the house (client
   Highlight, occluded, not in the lobby), and the dark house after the blackout is moonlit
   (Atmosphere OUTAGE_AMBIENT). Don't make him or the blackout pitch black again.
+- **NIGHTMARE mode** (v103, the owner asked whether a much harder monster would sell more revives:
+  forced difficulty would mostly add quits; an opt-in mode instead): a third vote box, locked until
+  you've finished a night (the server checks too); Hard plus `Config.Difficulty.Nightmare.Intruder`
+  on top (chase 15, still under your sprint 17; sharper senses, shorter breaks); **caught once =
+  dead** (a revive is offered); **2x coins** (`Economy.Night.NightmareMultiplier`); title "Nightmare
+  Survivor"; badge Nightmare 3428208981624377. Workspace `Difficulty` stays "Hard" so every Hard rule
+  applies, plus `Nightmare` = true; the night log's Diff says "Nightmare".
+- **The revive offer sits right under the death card's headline** (v103; it was at the bottom under
+  the coins, off a phone's screen): big, green, pulsing, with why ("Your friends are still in there"
+  / "Back on your feet, far from him"), the last one standing's countdown under it.
 - **Taser auto-hits up close** (`Taser.AutoRange` 26, in plain sight, wherever you point; aim cone 30°
   further out).
 - Before the hunt he stays hidden — no pointless noises or knocked-over chairs in front of you.
@@ -300,6 +310,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **20 Oct (v103)**: NIGHTMARE mode + the revive panel (see The intruder). Next: `--since=103`:
+  revive bought / asked (want well above 2 of 74), how many groups pick NIGHTMARE and how they do,
+  quits right after a death.
+
 - **19 Oct (v101)**: the lived-in layer (`World/Dress`, GDD "The lived-in layer"): ~40 placements
   in rooms that read empty (kitchen counters, master bedroom, Jamie's and Lily's rooms, den, upstairs
   hall, garage, bathrooms), Creator Store stand-ins swapped by `Props.Models`; all clear of doorways,
@@ -499,7 +513,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 102).
+  (last published: version 103).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

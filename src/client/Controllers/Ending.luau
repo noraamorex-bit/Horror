@@ -222,6 +222,45 @@ local function showCard(opts)
 			UI.tween(tip, 0.6, { TextTransparency = 0 })
 		end)
 	end
+	-- (v103) the revive, right under the headline where it can't be missed: it used to sit at the
+	-- bottom under the coins (off the screen on a phone), and 2 of 74 deaths bought one. Big,
+	-- pulsing, with why it matters right now; the last one standing sees the night's countdown here.
+	if opts.Revive then
+		order += 1
+		local panel = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = col })
+		UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = panel })
+		local rb = button(panel, "⟳  " .. Ending.reviveLabel(), true, 1, Ending.revive)
+		rb.BackgroundColor3 = Color3.fromRGB(120, 230, 150)
+		rb.Size = UDim2.fromOffset(340, 62)
+		rb.TextSize = 22
+		local pulse = UI.new("UIScale", { Scale = 1, Parent = rb })
+		task.spawn(function()
+			while rb.Parent do
+				UI.tween(pulse, 0.6, { Scale = 1.06 }, Enum.EasingStyle.Sine)
+				task.wait(0.6)
+				UI.tween(pulse, 0.6, { Scale = 1 }, Enum.EasingStyle.Sine)
+				task.wait(0.6)
+			end
+		end)
+		local why = opts.ReviveIn and "Back on your feet, far from him. The night goes on."
+			or "Your friends are still in there. Get back in and help them."
+		UI.label({ LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = why, TextSize = 15, TextColor3 = UI.Color.Dim, Parent = panel })
+		if opts.ReviveIn then
+			-- the last one standing: the night waits a moment for a revive
+			local countdown = UI.label({ LayoutOrder = 3, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = "", Font = UI.Font.Bold, TextSize = 16, TextColor3 = BAD, Parent = panel })
+			task.spawn(function()
+				local left = opts.ReviveIn
+				while left > 0 and screen.Parent do
+					countdown.Text = "The night ends in " .. left .. "s"
+					task.wait(1)
+					left -= 1
+				end
+				if screen.Parent then
+					countdown.Text = ""
+				end
+			end)
+		end
+	end
 	if opts.WinTime then
 		-- a win: your time, for the fastest-wins board in the lobby
 		line({ Text = "YOUR TIME  " .. tostring(opts.WinTime), Font = UI.Font.Bold, TextSize = 20, TextColor3 = UI.Color.Text })
@@ -311,11 +350,6 @@ local function showCard(opts)
 	order += 1
 	local row = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 58), BackgroundTransparency = 1, Parent = col })
 	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = row })
-	if opts.Revive then
-		local rb = button(row, Ending.reviveLabel(), true, 0, Ending.revive)
-		rb.BackgroundColor3 = Color3.fromRGB(120, 230, 150)
-		rb.Size = UDim2.fromOffset(250, 54)
-	end
 	if opts.Spectate then
 		button(row, "SPECTATE", not opts.Revive, 1, function()
 			closeCard()
@@ -475,21 +509,6 @@ local function showCard(opts)
 	if opts.Good then
 		-- (likes decide how often Roblox recommends the game)
 		line({ Text = "Enjoyed it? A 👍 on the game page helps more people find it.", TextSize = 13, TextColor3 = UI.Color.Dim })
-	end
-	if opts.ReviveIn then
-		-- the last one standing: the night waits a moment for a revive
-		local countdown = line({ Text = "", Font = UI.Font.Bold, TextSize = 16, TextColor3 = BAD })
-		task.spawn(function()
-			local left = opts.ReviveIn
-			while left > 0 and screen.Parent do
-				countdown.Text = "The night ends in " .. left .. "s"
-				task.wait(1)
-				left -= 1
-			end
-			if screen.Parent then
-				countdown.Text = ""
-			end
-		end)
 	end
 	if opts.RestartIn then
 		local countdown = line({ Text = "", TextSize = 14, TextColor3 = UI.Color.Dim })

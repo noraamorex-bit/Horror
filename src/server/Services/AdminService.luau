@@ -64,7 +64,7 @@ local COMMANDS = {}
 -- the night -------------------------------------------------------------------
 COMMANDS.start = function(player, arg)
 	if ctx.Director.adminStart(arg) then
-		return "Night started (" .. (arg == "Hard" and "Hard" or "Normal") .. ")."
+		return "Night started (" .. ((arg == "Hard" or arg == "Nightmare") and arg or "Normal") .. ")."
 	end
 	return "A night is already running."
 end

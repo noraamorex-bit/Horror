@@ -40,6 +40,9 @@ function Badges.onEnding(kind: string)
 		if hard and made then
 			Badges.award(p, "HardSurvivor")
 		end
+		if made and workspace:GetAttribute("Nightmare") == true then
+			Badges.award(p, "Nightmare")
+		end
 	end
 end
 

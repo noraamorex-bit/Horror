@@ -198,6 +198,12 @@ After that the character **thinks out loud** (`Story.Thoughts`, `client/Controll
 - **BE HIM NEXT NIGHT**: a small red button on the result card when a group stays for another night. It buys Become him now (the night being over, it's saved as a free credit) and the client uses it as soon as the next night opens it (it asks on every change until the server says MonsterPending); with a saved one it's free.
 - **STOP HIM**: while he chases or charges within 70 studs of you, the 🚀 ROCKET button flashes and says STOP HIM.
 
+### NIGHTMARE mode (v103)
+A third choice in the vote, for people who know the house (locked until you've finished a night; the server ignores a vote from anyone who hasn't). It's a Hard night (every Hard rule: batteries, police, heartbeat, last chance) with `Config.Difficulty.Nightmare.Intruder` laid over Hard's settings: walk 9, patrol 10, charge 14.5, chase 15, lunge 16, cap 16.5 (you sprint at 17: you still get away running, for as long as your stamina lasts), sharper sight (36 lit / 14 dark / 50 at your beam), he feels you 1.5 s late, 5 s of grace after you leave a hiding spot, opens the right spot 90% of the time, three checks per search, ambushes more, short breaks. **Caught once and you're dead**: no boiler room, no struggling free (the revive offer is right there). The night pays **2x coins** (instead of Hard's 1.5x), surviving it earns the title **Nightmare Survivor** and the **Nightmare** badge. The vote's most votes win; a tie goes to the easier mode. Workspace `Difficulty` = "Hard" plus `Nightmare` = true (the HUD's act line says NIGHTMARE; the night log's Diff says "Nightmare").
+
+### The revive offer (v103)
+Dead, the revive is the first thing under the headline on your card: a big green pulsing "⟳ REVIVE · 10 R$" (or USE REVIVE with a saved one), with why it matters right now ("Your friends are still in there. Get back in and help them." in co-op, "Back on your feet, far from him. The night goes on." for the last one standing, with the night's countdown under it). Before, it sat at the bottom under the coin breakdown, off the screen on a phone: 2 of 74 deaths bought one.
+
 ### Repeat nights
 Every night has the full build-up (a shorter one for repeat groups, `Config.VeteranPace`, is off: the owner found a 7-minute night too fast).
 

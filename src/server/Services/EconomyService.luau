@@ -741,6 +741,9 @@ function Economy.nightRewards(player: Player, info): any
 			if workspace:GetAttribute("Difficulty") == "Hard" and (tonumber(player:GetAttribute("NightCaught")) or 0) == 0 then
 				Economy.achieve(player, "Title_Legend")
 			end
+			if workspace:GetAttribute("Nightmare") == true then
+				Economy.achieve(player, "Title_Nightmare")
+			end
 		end
 	end
 	-- the night streak (once per night): a night started within 15 minutes of the last one ending pays more
@@ -765,7 +768,10 @@ function Economy.nightRewards(player: Player, info): any
 		queueSave(player.UserId)
 	end
 	local mult = 1
-	if workspace:GetAttribute("Difficulty") == "Hard" then
+	local nightmare = workspace:GetAttribute("Nightmare") == true
+	if nightmare then
+		mult *= N.NightmareMultiplier
+	elseif workspace:GetAttribute("Difficulty") == "Hard" then
 		mult *= N.HardMultiplier
 	end
 	if player:GetAttribute("Boost_Lucky") then
@@ -773,7 +779,7 @@ function Economy.nightRewards(player: Player, info): any
 	end
 	if mult > 1 and total > 0 then
 		local bonus = math.floor(total * mult) - total
-		table.insert(lines, { Text = (player:GetAttribute("Boost_Lucky") and "Lucky charm" or "Hard mode") .. " bonus", Amount = bonus })
+		table.insert(lines, { Text = (player:GetAttribute("Boost_Lucky") and "Lucky charm" or (nightmare and "Nightmare ×2" or "Hard mode")) .. " bonus", Amount = bonus })
 		total += bonus
 	end
 	-- pass perks: VIP +50% (or Supporter +20%) on the night's pay

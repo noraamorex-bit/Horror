@@ -338,6 +338,7 @@ end
 function Director.enterLobby()
 	state = fresh()
 	workspace:SetAttribute("Difficulty", nil)
+	workspace:SetAttribute("Nightmare", nil)
 	workspace:SetAttribute("Act", "Lobby")
 	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)
 	broadcastLobby()
@@ -402,22 +403,40 @@ local function startGame(skipToBlackout: boolean?)
 end
 
 ---------------------------------------------------------------------------
--- The difficulty vote: NORMAL or HARD, before the night starts (Config.Difficulty)
+-- The difficulty vote: NORMAL, HARD or NIGHTMARE (v103: only for players who've finished a night),
+-- before the night starts (Config.Difficulty)
 ---------------------------------------------------------------------------
-local function tally(): (number, number, number)
-	local normal, hard = 0, 0
+local function tally(): (number, number, number, number)
+	local normal, hard, nightmare = 0, 0, 0
 	local v = state.Vote
 	for p, choice in (v and v.Votes) or {} do
 		if p.Parent then
 			if choice == "Hard" then
 				hard += 1
+			elseif choice == "Nightmare" then
+				nightmare += 1
 			else
 				normal += 1
 			end
 		end
 	end
-	return normal, hard, #Players:GetPlayers()
+	return normal, hard, #Players:GetPlayers(), nightmare
 end
+
+-- the most votes wins; a tie goes to the easier one
+local function voteWinner(normal: number, hard: number, nightmare: number): string
+	if nightmare > hard and nightmare > normal then
+		return "Nightmare"
+	end
+	return hard > normal and "Hard" or "Normal"
+end
+
+-- Hard, or Hard with the NIGHTMARE overlay (Config.Difficulty.Nightmare)
+local function setDifficulty(diff: string)
+	workspace:SetAttribute("Difficulty", diff == "Normal" and "Normal" or "Hard")
+	workspace:SetAttribute("Nightmare", diff == "Nightmare" or nil)
+end
+Director._setDifficulty = setDifficulty -- (tests)
 
 -- Everyone here has finished a night before: they may vote to skip the build-up and start at
 -- the blackout (more than half of them must want it). Repeat players were leaving a minute into
@@ -454,13 +473,14 @@ local function sendVote(target: Player?)
 	if not v then
 		return
 	end
-	local normal, hard, total = tally()
+	local normal, hard, total, nightmare = tally()
 	local left = math.max(0, v.Ends - os.clock())
 	for _, p in target and { target } or Players:GetPlayers() do
 		ctx.Remotes.Vote:FireClient(p, {
 			Ends = workspace:GetServerTimeNow() + left,
 			Normal = normal,
 			Hard = hard,
+			Nightmare = nightmare,
 			Total = total,
 			Mine = v.Votes[p],
 			CanSkip = v.CanSkip or nil,
@@ -492,23 +512,23 @@ local function voteTick(): boolean
 		end
 		return true
 	end
-	local normal, hard, total = tally()
+	local normal, hard, total, nightmare = tally()
 	if total == 0 then
 		state.Vote = nil -- everyone left: back to waiting
 		return false
 	end
-	if os.clock() < v.Ends and normal + hard < total then
+	if os.clock() < v.Ends and normal + hard + nightmare < total then
 		sendVote()
 		return true
 	end
-	-- more votes for HARD than NORMAL makes it a hard night (a tie stays normal)
-	local diff = hard > normal and "Hard" or "Normal"
-	workspace:SetAttribute("Difficulty", diff)
+	-- the most votes wins (a tie goes to the easier one)
+	local diff = voteWinner(normal, hard, nightmare)
+	setDifficulty(diff)
 	v.Result = diff
 	v.SkipResult = skipWins(total)
 	v.StartAt = os.clock() + 2
 	for _, p in Players:GetPlayers() do
-		ctx.Remotes.Vote:FireClient(p, { Result = diff, Normal = normal, Hard = hard, Total = total, Skip = v.SkipResult or nil })
+		ctx.Remotes.Vote:FireClient(p, { Result = diff, Normal = normal, Hard = hard, Nightmare = nightmare, Total = total, Skip = v.SkipResult or nil })
 	end
 	return true
 end
@@ -860,7 +880,7 @@ function Director.adminStart(difficulty: string?): boolean
 		return false
 	end
 	state.Vote = nil
-	workspace:SetAttribute("Difficulty", difficulty == "Hard" and "Hard" or "Normal")
+	setDifficulty(difficulty == "Nightmare" and "Nightmare" or (difficulty == "Hard" and "Hard" or "Normal"))
 	startGame()
 	return true
 end
@@ -1674,7 +1694,11 @@ function Director.start()
 			end
 			return
 		end
-		if choice ~= "Normal" and choice ~= "Hard" then
+		if choice ~= "Normal" and choice ~= "Hard" and choice ~= "Nightmare" then
+			return
+		end
+		-- (NIGHTMARE is for people who know the house: finished a night first)
+		if choice == "Nightmare" and (tonumber(player:GetAttribute("StatNights")) or 0) < 1 then
 			return
 		end
 		v.Votes[player] = choice

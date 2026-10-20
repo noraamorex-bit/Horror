@@ -229,6 +229,34 @@ Config.Difficulty = {
 		PoliceMultiplier = 1.25, -- help takes longer to arrive
 		LastChance = 30,
 	},
+	-- NIGHTMARE (v103, opt-in, for players who've finished a night): everything Hard has, plus this
+	-- laid over it (workspace "Nightmare" = true, "Difficulty" stays "Hard"). Caught once and you're
+	-- dead (a revive brings you back); 2x coins; its own title and badge.
+	Nightmare = {
+		Intruder = {
+			WalkSpeed = 9,
+			PatrolSpeed = 10,
+			ProwlSpeed = 14,
+			InvestigateSpeed = 10.5,
+			ChargeSpeed = 14.5,
+			ChaseSpeed = 15, -- (your sprint is 17: you get away only running, and only so long)
+			LungeSpeed = 16,
+			MaxSpeed = 16.5,
+			SightLit = 36,
+			SightDark = 14,
+			SightFlashlight = 50,
+			SenseDelay = 1.5,
+			HideGrace = 5,
+			OpenFindChance = 0.9,
+			SearchChecks = 3,
+			AmbushChance = 0.65,
+			WithdrawMin = 6,
+			WithdrawMax = 10,
+			InspectNearChance = 0.6,
+			SoloChaseSlowdown = 0.4,
+			GrabRange = 5.2,
+		},
+	},
 }
 
 -- The heartbeat minigame (DOORS-style): he's listening at your hiding spot. Half-hearts fly in
@@ -328,6 +356,7 @@ Config.Badges = {
 	GoneQuiet = 2732889922402301,
 	GotAway = 1526454404455151,
 	HardSurvivor = 3696145087218819, -- survived a night on Hard
+	Nightmare = 3428208981624377, -- survived a NIGHTMARE night (v103)
 	Rescuer = 1978303375336712, -- cut a friend free
 	NotYourFamily = 892775622827536, -- the secret ending, out from under the house
 	ForeverFamily = 2482890253693907, -- the secret ending, nobody left the table

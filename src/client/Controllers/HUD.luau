@@ -645,7 +645,7 @@ local function update()
 	clockLabel.Text = (act ~= "Lobby" and mins) and ctx.Util.clockString(mins) or ""
 	actLabel.Text = ACT_NAMES[act] or ""
 	if actLabel.Text ~= "" and workspace:GetAttribute("Difficulty") == "Hard" then
-		actLabel.Text ..= "  ·  HARD"
+		actLabel.Text ..= workspace:GetAttribute("Nightmare") and "  ·  NIGHTMARE" or "  ·  HARD"
 	end
 	if player:GetAttribute("Role") == "Host" and act ~= "Lobby" then
 		local cam = workspace.CurrentCamera

@@ -1,5 +1,6 @@
--- vote_test: the NORMAL / HARD vote before the night. A tie stays Normal; a HARD majority makes
--- him faster, the police slower and the last chance shorter. Run with arg "tie" or "hard".
+-- vote_test: the NORMAL / HARD / NIGHTMARE vote before the night. A tie stays Normal; a HARD majority
+-- makes him faster, the police slower and the last chance shorter; NIGHTMARE (finished a night first)
+-- is Hard with more on top, and caught once = dead. Run with arg "tie" or "hard".
 local H = require("./env")
 local function setup()
 	local ctx: any = {}
@@ -125,6 +126,41 @@ local ok, err = pcall(function()
 	local act = ws:GetAttribute("Act")
 	print("skip", wantSkip, "-> act", act)
 	assert(act == (wantSkip and "SomeoneElse" or "Evening"), "starts at the blackout only when skipped")
+
+	-- (v103) NIGHTMARE: locked until you've finished a night; most votes wins (a tie goes to the
+	-- easier one); it's Hard with the overlay on top; caught once and you're dead
+	ctx.Director.enterLobby()
+	a:SetAttribute("StatNights", 0); b:SetAttribute("StatNights", 3)
+	ctx.Director._beginVote()
+	ctx.Remotes.CastVote.OnServerEvent:Fire(a, "Nightmare")
+	assert(last(fired, "Vote", a).Nightmare == 0, "a first-timer can't vote NIGHTMARE")
+	a:SetAttribute("StatNights", 1)
+	ctx.Remotes.CastVote.OnServerEvent:Fire(a, MODE == "hard" and "Normal" or "Nightmare")
+	ctx.Remotes.CastVote.OnServerEvent:Fire(b, "Nightmare")
+	ctx.Director._voteTick()
+	local nm = last(fired, "Vote", b)
+	local wantNm = MODE ~= "hard" -- (hard run: 1 NORMAL vs 1 NIGHTMARE, a tie: the easier one)
+	print("nightmare vote", nm.Normal, nm.Nightmare, "->", nm.Result)
+	assert(nm.Result == (wantNm and "Nightmare" or "Normal"), "the vote picks " .. (wantNm and "NIGHTMARE" or "NORMAL (a tie)"))
+	local t2 = os.clock()
+	while os.clock() - t2 < 2.1 do end
+	ctx.Director._voteTick()
+	if wantNm then
+		assert(ws:GetAttribute("Difficulty") == "Hard" and ws:GetAttribute("Nightmare") == true, "NIGHTMARE: Hard + the overlay")
+		local nmCfg = ctx.Config.Difficulty.Nightmare.Intruder
+		local t = ctx.Intruder._tune()
+		assert(t.ChaseSpeed == nmCfg.ChaseSpeed and t.SenseDelay == nmCfg.SenseDelay and t.MaxSpeed == nmCfg.MaxSpeed, "his NIGHTMARE settings")
+		assert(t.ChaseSpeed < ctx.Config.Movement.Sprint, "still slower than your sprint")
+		assert(t.HearWalk == ctx.Config.Difficulty.Hard.Intruder.HearWalk, "and everything else Hard has")
+		ctx.Capture.capture(a)
+		print("caught once on NIGHTMARE: dead", a:GetAttribute("Dead"), "captured", a:GetAttribute("Captured"))
+		assert(a:GetAttribute("Dead") == true, "caught once = dead")
+		ctx.Director.enterLobby()
+		assert(ws:GetAttribute("Nightmare") == nil and ws:GetAttribute("Difficulty") == nil, "cleared for the next night")
+		assert(ctx.Intruder._tune().ChaseSpeed == normalChase, "and he's back to normal")
+	else
+		assert(ws:GetAttribute("Nightmare") == nil and ws:GetAttribute("Difficulty") == "Normal", "a tie stays NORMAL")
+	end
 end)
 print(ok and ("VOTE OK " .. MODE) or ("VOTE FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

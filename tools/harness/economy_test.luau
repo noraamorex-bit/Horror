@@ -280,6 +280,20 @@ local ok, err = pcall(function()
 	t:SetAttribute("NightCaught", 0)
 	E.nightRewards(t, { Seconds = 600, Survived = true })
 	assert(E.owns(t, "Title_Legend"), "a Hard night, never caught: Legend of Alder Lane")
+	-- (v103) NIGHTMARE: its own title, and 2x coins instead of Hard's 1.5x
+	H.unwrap(H.workspaceRoot):SetAttribute("Nightmare", true)
+	E.resetNight()
+	local rn = E.nightRewards(t, { Seconds = 600, Survived = true })
+	assert(E.owns(t, "Title_Nightmare"), "survived a NIGHTMARE night: Nightmare Survivor")
+	local x2 = nil
+	for _, l in rn.Lines do
+		if l.Text == "Nightmare ×2 bonus" then
+			x2 = l.Amount
+		end
+	end
+	print("   nightmare night pays", rn.Total, "of which the x2 bonus", x2)
+	assert(x2 and x2 > 0, "the NIGHTMARE x2 line")
+	H.unwrap(H.workspaceRoot):SetAttribute("Nightmare", nil)
 	H.unwrap(H.workspaceRoot):SetAttribute("Difficulty", nil)
 	print("night titles ok")
 	-- today's daily reward comes with a night (not day 7: that crate opens in the lobby)

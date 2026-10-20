@@ -68,6 +68,7 @@ Economy.Special = {
 	{ Id = "Title_Quiet", Kind = "Title", Name = "The Quiet One", Rarity = "Epic", Color = Color3.fromRGB(150, 230, 210), How = "Survive a night without him ever seeing you" },
 	{ Id = "Title_NightOwl", Kind = "Title", Name = "Night Owl", Rarity = "Rare", Color = Color3.fromRGB(180, 190, 255), How = "Play 3 nights in a row (night streak)" },
 	{ Id = "Title_Legend", Kind = "Title", Name = "Legend of Alder Lane", Rarity = "Legendary", Color = Color3.fromRGB(255, 205, 80), How = "Survive a Hard night without being caught" },
+	{ Id = "Title_Nightmare", Kind = "Title", Name = "Nightmare Survivor", Rarity = "Legendary", Color = Color3.fromRGB(200, 20, 30), How = "Survive a NIGHTMARE night" },
 	-- the secret ending's own reward
 	{ Id = "Title_Family", Kind = "Title", Name = "Not Your Family", Rarity = "Legendary", Color = Color3.fromRGB(255, 70, 70), How = "The secret ending" },
 	-- Halloween 2026 (Economy.Halloween): candy found in the house unlocks these, only during the event
@@ -190,6 +191,7 @@ Economy.Night = {
 	NewEnding = 50, -- an ending you hadn't seen before
 	Secret = 150, -- the secret ending (everyone tied up at once... and out)
 	HardMultiplier = 1.5,
+	NightmareMultiplier = 2, -- (v103: instead of Hard's)
 	LuckyMultiplier = 1.5,
 	MinSeconds = 120, -- shorter than this (left early): only the minutes
 	-- Night streak: another night soon after the last one pays more (the 2nd +25%, the 3rd on +50%)

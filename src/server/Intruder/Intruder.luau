@@ -96,11 +96,18 @@ local tuned, tunedFor = nil, nil
 local slowed, slowedFor = nil, nil
 tune = function(): any
 	local d = workspace:GetAttribute("Difficulty") or "Normal"
-	if tunedFor ~= d or not tuned then
-		tunedFor = d
+	local nightmare = workspace:GetAttribute("Nightmare") == true
+	local key = nightmare and d .. "+Nightmare" or d
+	if tunedFor ~= key or not tuned then
+		tunedFor = key
 		tuned = table.clone(ctx.Config.Intruder)
 		local diff = ctx.Config.Difficulty and ctx.Config.Difficulty[d]
 		for k, v in (diff and diff.Intruder) or {} do
+			tuned[k] = v
+		end
+		-- (NIGHTMARE: Hard, and this on top)
+		local nm = nightmare and ctx.Config.Difficulty and ctx.Config.Difficulty.Nightmare
+		for k, v in (nm and nm.Intruder) or {} do
 			tuned[k] = v
 		end
 	end
