@@ -268,6 +268,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   Panel/Inset/Knob), crouched behind the car's trunk while he walks down its far side, bends to look
   in the back window, his head turns to the back of the car... he's round the corner on the hit; RUN
   out the side door. Glitch "he's in here". (The sedan is solid inside: no shots from its seats.)
+- **The gameplay series** (`reel36`, `peak_gameplay_part1.mp4`, 20 Oct; the owner: the peak format "was
+  better. But I don't want this whole story thing… I want gameplay… scenes like hiding, monster finding
+  you, chasing you, scary jumpscare", "call it part 1"): the PEAK format numbered from (Part 1) again, on
+  #2's track and slot lengths, no story text; a night as you'd play it, first person with two friend
+  avatars (Riley blue, Jamie green): the living room → he's by the fireplace, they bolt → the chase up the
+  stairs → the linen closet → Riley grabbed and dragged off ("Riley was caught!") → he folds down to the
+  crack (the heartbeat minigame, "He's moving away...") → the doors torn open on 22.15 s → RUN. comp_peak
+  now draws the **game's HUD** from `fr.hud` (objective, hotbar flashlight/taser, sprint bar, chat with
+  the friends, notice, heartbeat lane), the **brand** (red tag every clip, name under it on the hook,
+  the search-bar end card; `text.brand`, default on) and a stronger scare (`scareI`: 3 pixelated frames,
+  then the real frame punched in, shaking, red flash). Fonts now from `marketing/fonts` (Outfit added).
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
@@ -317,6 +328,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **20 Oct (reel 36)**: the gameplay series Part 1 (see Marketing). Next reel: Part 2 of it (new
+  gameplay beats: the taser, the 911 call, a friend's rescue, the shower/bed hides).
 
 - **20 Oct (v103)**: NIGHTMARE mode + the revive panel (see The intruder). Next: `--since=103`:
   revive bought / asked (want well above 2 of 74), how many groups pick NIGHTMARE and how they do,
