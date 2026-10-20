@@ -62,7 +62,8 @@ local ok, err = pcall(function()
 		-- (stills: any joint set outright, [rx, ry, rz])
 		if fr.joints then
 			for name, r in fr.joints do
-				P[name] = R.CFrame.Angles(r[1], r[2], r[3])
+				-- ([rx, ry, rz] or [rx, ry, rz, tx, ty, tz]: a joint moved as well as turned, e.g. Root)
+				P[name] = (r[4] and R.CFrame.new(r[4], r[5], r[6]) or R.CFrame.new()) * R.CFrame.Angles(r[1], r[2], r[3])
 			end
 		end
 		if fr.neck then

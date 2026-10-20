@@ -289,6 +289,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   living-room curtain, the hiding spot's view) → "it could smell me." (he creeps across the gap) →
   "i held my breath." (he leans down to the gap, reel 33's pitch trick; the curtain torn away on the
   22.15 s hit) → RUN. down the front hall.
+  **Story #3** (`reel35`, `someone_lives_story_3.mp4`, 20 Oct): Lily's room (the v101 tea party):
+  "my little sister / set a place for a guest." → "we thought he was / imaginary." (the empty chair)
+  → "her music box opened." (rig on MusicBoxLid, axis x) → "the door creaked." (her door's rig) →
+  "he came for tea." (him folded on the floor at her tea table: film2 `joints` with a Root
+  translation, `[rx,ry,rz,tx,ty,tz]`) → "and he saw me." (head turns, mouth opens) → "so i hid in her
+  tent." (the camera at the tipi's flap, two canvas `extras` framing it: the store tipi is one-sided)
+  → "he knew i was there." → "don't. move." (his face folds down into the flap: from a flap at
+  eye height 1.75 he stands ~10.5 studs out, pitch -1.36) → RUN. into the upstairs hall.
 - **Every reel says plainly it's a new Roblox game, with the name** (19 Oct, the owner: the story
   reel "is barely advertising a new Roblox game to play… make sure people clearly see that"): a red
   **NEW ROBLOX HORROR GAME** tag + the name on screen from the first frame to the last clip, and an
