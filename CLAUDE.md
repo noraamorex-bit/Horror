@@ -270,6 +270,15 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   (his head turns right round) → "so i hid." → "i didn't breathe." → "it stopped." → the doors torn
   open on 22.15 s → "RUN." (up the stairs on all fours). Tools: `comp_story.mjs`; store art from the same
   renders: `reel33/stills.py icon|thumb` → `marketing/attic/icon_v99_*.png`, `thumbnail_v99_1920.png`.
+  **Story #2** (`reel34`, `someone_lives_story_2.mp4`, 20 Oct): same format, branded, the v102 creature
+  (his mouth opens; visible in the moonlit dark). "something has been / eating our food." → the fridge
+  door swings open (film2 rig on the left leaf; its insides are `extras`, hidden while shut with
+  `hideExtras`): "mom's lasagna was gone. / licked clean." → "the back door was open." (rig on its
+  Panel) → "it never left." (wet prints between the island and the table) → "it stood in the dark."
+  (living room) → "and it smiled." (close-up, the jaw opening in stop-motion) → "so i hid." (behind the
+  living-room curtain, the hiding spot's view) → "it could smell me." (he creeps across the gap) →
+  "i held my breath." (he leans down to the gap, reel 33's pitch trick; the curtain torn away on the
+  22.15 s hit) → RUN. down the front hall.
 - **Every reel says plainly it's a new Roblox game, with the name** (19 Oct, the owner: the story
   reel "is barely advertising a new Roblox game to play… make sure people clearly see that"): a red
   **NEW ROBLOX HORROR GAME** tag + the name on screen from the first frame to the last clip, and an
