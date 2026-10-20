@@ -69,7 +69,7 @@ local ok, err = pcall(function()
 	local hl = H.unwrap(pg):FindFirstChild("HalloweenLine", true)
 	assert(hl, "the Halloween line")
 	if Cat.halloweenLive(os.time()) then
-		assert(hl.Visible and string.find(hl.Text, "7", 1, true) and string.find(hl.Text, "Candy Corn at 15", 1, true), "candy and the next reward: " .. hl.Text)
+		assert(hl.Visible and string.find(hl.Text, "7", 1, true) and string.find(hl.Text, "Candy Corn (15)", 1, true), "candy and the next reward: " .. hl.Text)
 	end
 	local row = H.unwrap(pg):FindFirstChild("StarterRow", true)
 	assert(row and row.Visible, "the Starter Pack at the top of the shop")
