@@ -236,6 +236,7 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 			CanSpectate = #inPlay() > 0,
 			ReturnToLobby = ctx.Reserved == true,
 			Coins = coins,
+			AdminNight = ctx.Admin ~= nil and ctx.Admin.uncredited(player) or nil,
 		})
 	end)
 end
@@ -293,12 +294,20 @@ function Ending.trigger(kind: string)
 		p:SetAttribute("Fate", fate)
 	end
 
+	-- (an admin panel pass night pays nothing and counts for nothing: AdminService.uncredited)
+	local credited = {}
+	for _, p in ctx.Util.sessionPlayers() do
+		if not (ctx.Admin and ctx.Admin.uncredited(p)) then
+			table.insert(credited, p)
+		end
+	end
+
 	-- badges (Config.Badges; 0 = not set up yet)
 	if ctx.Badges then
 		ctx.Badges.onEnding(kind)
 	else
 		local badges = ctx.Config.Badges or {}
-		for _, p in ctx.Util.sessionPlayers() do
+		for _, p in credited do
 			for _, id in { badges.FirstNight, badges[kind] } do
 				if type(id) == "number" and id > 0 then
 					task.spawn(function()
@@ -313,7 +322,7 @@ function Ending.trigger(kind: string)
 
 	-- fastest wins: everyone still standing at a good ending (escapers were timed on the way out)
 	local seconds = ctx.Director.elapsedSeconds and math.floor(ctx.Director.elapsedSeconds()) or 0
-	for _, p in ctx.Util.sessionPlayers() do
+	for _, p in credited do
 		if not bad and not p:GetAttribute("Escaped") and not p:GetAttribute("Dead") and seconds > 0 then
 			p:SetAttribute("WinTime", seconds)
 			if ctx.Stats and ctx.Stats.recordWin(p, seconds) then
@@ -325,7 +334,7 @@ function Ending.trigger(kind: string)
 	-- saved stats; who saw this ending for the first time
 	local firstFor = {}
 	if ctx.Stats then
-		local ok, firsts = pcall(ctx.Stats.recordNight, ctx.Util.sessionPlayers(), kind)
+		local ok, firsts = pcall(ctx.Stats.recordNight, credited, kind)
 		if ok then
 			for userId in firsts do
 				table.insert(firstFor, userId)
@@ -341,7 +350,7 @@ function Ending.trigger(kind: string)
 			firstSet[id] = true
 		end
 		local seconds2 = ctx.Director.elapsedSeconds and ctx.Director.elapsedSeconds() or 0
-		for _, p in ctx.Util.sessionPlayers() do
+		for _, p in credited do
 			local ok, c = pcall(ctx.Economy.nightRewards, p, {
 				Seconds = seconds2,
 				Survived = p:GetAttribute("Escaped") ~= nil or (not bad and not p:GetAttribute("Dead") and not p:GetAttribute("Captured")),
@@ -352,10 +361,10 @@ function Ending.trigger(kind: string)
 				coinsFor[p] = c
 			end
 		end
-		pcall(ctx.Economy.nightEnded, ctx.Util.sessionPlayers(), kind, firstSet)
+		pcall(ctx.Economy.nightEnded, credited, kind, firstSet)
 		-- the secret ending's own title (not in any crate)
 		if kind == "NotYourFamily" then
-			for _, p in ctx.Util.sessionPlayers() do
+			for _, p in credited do
 				if not p:GetAttribute("Dead") and ctx.Economy.grantCosmetic(p, "Title_Family") then
 					ctx.Remotes.Notify:FireClient(p, "Title unlocked: Not Your Family (equip it in the lobby LOCKER)", "done")
 				end
@@ -389,6 +398,7 @@ function Ending.trigger(kind: string)
 			ReturnToLobby = ctx.Reserved == true,
 			InGame = p:GetAttribute("InGame") == true,
 			Coins = coinsFor[p],
+			AdminNight = ctx.Admin ~= nil and ctx.Admin.uncredited(p) or nil,
 			Again = stayers[p] == true or nil, -- (already said yes from their own card)
 		})
 	end

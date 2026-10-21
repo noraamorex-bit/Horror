@@ -4,6 +4,11 @@
 	for anyone in this family. Built into the night's World folder, so the next night starts clean.
 
 		Signs.footprints(parent) -> Folder
+
+	And (v106) the bathroom mirror after you brush your teeth: the glass steams up, and in the steam,
+	written with a finger from the other side of you, a line (Story.Mirror).
+
+		Signs.mirror(glass, viewer, text, hold?)
 ]]
 
 local Signs = {}
@@ -66,6 +71,58 @@ function Signs.footprints(parent: Instance): Folder
 	end
 	folder.Parent = parent
 	return folder
+end
+
+-- steam on a mirror, and words wiped into it (shown from the side the viewer is on)
+function Signs.mirror(glass: BasePart, viewer: Vector3, text: string, hold: number?)
+	if glass:FindFirstChild("MirrorWriting") then
+		return
+	end
+	local TweenService = game:GetService("TweenService")
+	local gui = Instance.new("SurfaceGui")
+	gui.Name = "MirrorWriting"
+	gui.Face = glass.CFrame.LookVector:Dot(viewer - glass.Position) >= 0 and Enum.NormalId.Front or Enum.NormalId.Back
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 80
+	gui.LightInfluence = 1
+	gui.Adornee = glass
+	local fog = Instance.new("Frame")
+	fog.Size = UDim2.fromScale(1, 1)
+	fog.BackgroundColor3 = Color3.fromRGB(226, 230, 232)
+	fog.BackgroundTransparency = 1
+	fog.BorderSizePixel = 0
+	fog.Parent = gui
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Position = UDim2.fromScale(0.5, 0.5)
+	label.Size = UDim2.fromScale(0.86, 0.7)
+	label.Rotation = -4
+	label.Text = text
+	label.TextScaled = true
+	label.TextWrapped = true
+	pcall(function()
+		label.Font = Enum.Font.PermanentMarker
+	end)
+	label.TextColor3 = Color3.fromRGB(62, 70, 76)
+	label.TextTransparency = 1
+	label.Parent = fog
+	gui.Parent = glass
+	TweenService:Create(fog, TweenInfo.new(2.4), { BackgroundTransparency = 0.42 }):Play()
+	task.delay(2.3, function()
+		if label.Parent then
+			TweenService:Create(label, TweenInfo.new(1.6), { TextTransparency = 0.15 }):Play()
+		end
+	end)
+	task.delay(hold or 45, function()
+		if gui.Parent then
+			TweenService:Create(fog, TweenInfo.new(6), { BackgroundTransparency = 1 }):Play()
+			TweenService:Create(label, TweenInfo.new(6), { TextTransparency = 1 }):Play()
+			task.wait(6.5)
+			gui:Destroy()
+		end
+	end)
+	return gui
 end
 
 return Signs

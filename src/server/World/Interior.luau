@@ -1381,6 +1381,16 @@ function Interior.build(ctx, root: Instance, refs)
 				task.delay(3, function()
 					ctx.Director.think(player, "Huh. My phone's got one bar of signal by that window. Nowhere else in the house gets any.")
 				end)
+				-- (v106: the steam on the mirror, and what's written in it)
+				local m = hbath:FindFirstChild("Mirror")
+				local glass = m and m:FindFirstChild("Mirror")
+				local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+				if glass and glass:IsA("BasePart") and root and root:IsA("BasePart") then
+					task.delay(1.2, function()
+						local lines = ctx.Story.Mirror
+						require(script.Parent.Signs).mirror(glass, root.Position, lines[math.random(1, #lines)])
+					end)
+				end
 			end
 		end
 	end)

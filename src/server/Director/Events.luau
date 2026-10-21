@@ -461,6 +461,96 @@ Events.List = {
 		end,
 	},
 	---------------------------------------------------------------------------
+	-- v106 (the owner: "make it scarier, like actually creepy"): the mimic. From upstairs (or the
+	-- basement), in the voice of the friend standing right next to you, someone calls you by name
+	-- to come up. Alone, it's Mom's voice, and Mom is two states away. (Client Voices plays it
+	-- from that spot, with a far-off echo; Story.Mimic.)
+	{
+		Id = "Mimic",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 3,
+		Tension = 18,
+		Once = true,
+		Cond = function(ctx)
+			if ctx.Intruder.isInHouse() then
+				return nil
+			end
+			local players = ctx.Util.activePlayers()
+			for _, p in players do
+				local root = ctx.Util.getRoot(p)
+				if not root or p:GetAttribute("Hiding") then
+					continue
+				end
+				local floor = floorOf(ctx, root)
+				local want = floor == "Upstairs" and "Ground" or "Upstairs"
+				-- a spot on the other floor, not too far, with nobody there
+				local best, bestD = nil, math.huge
+				for _, n in ctx.Layout.Nodes do
+					if ctx.Rooms.floorOf(n.Pos) == want then
+						local d = (n.Pos - root.Position).Magnitude
+						local empty = true
+						for _, o in players do
+							local r = ctx.Util.getRoot(o)
+							if r and (r.Position - n.Pos).Magnitude < 18 then
+								empty = false
+							end
+						end
+						if empty and d > 16 and d < 34 and d < bestD then
+							best, bestD = n.Pos, d
+						end
+					end
+				end
+				if best then
+					-- whose voice: a friend right here with you (or Mom)
+					local friend = nil
+					for _, o in players do
+						local r = o ~= p and ctx.Util.getRoot(o)
+						if r and (r.Position - root.Position).Magnitude < 22 and o:GetAttribute("Role") then
+							friend = o
+						end
+					end
+					return { Player = p, From = best, Up = want == "Upstairs", Friend = friend }
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			local M = ctx.Story.Mimic
+			local p = data.Player
+			local function first(pl: Player): string
+				local n = pl:GetAttribute("RoleName")
+				return type(n) == "string" and string.split(n, " ")[1] or pl.DisplayName
+			end
+			local text, voice
+			local way = data.Up and "Up" or "Down"
+			if data.Friend then
+				local lines = M.Friend[way]
+				text = string.format(lines[math.random(1, #lines)], first(p))
+				voice = data.Friend:GetAttribute("Role")
+			else
+				local lines = M.Mom[way]
+				text = lines[math.random(1, #lines)]
+				voice = "Mom"
+			end
+			ctx.Remotes.HisVoice:FireClient(p, text, {
+				Voice = voice,
+				From = data.From + V(0, 3, 0),
+				Range = 60,
+				Caption = (data.Up and "[From upstairs] " or "[From downstairs] ") .. "\"" .. text .. "\"",
+			})
+			task.delay(4.5, function()
+				ctx.PlayerState.addNerve(p, -10)
+				if data.Friend then
+					local f = first(data.Friend)
+					D.think(p, string.format(M.ThoughtFriend, f, data.Up and "upstairs" or "downstairs", f))
+				else
+					D.think(p, M.ThoughtMom)
+				end
+			end)
+			D.logTruth("Mimic")
+		end,
+	},
+	---------------------------------------------------------------------------
 	{
 		Id = "Floorboard",
 		DuringHunt = true, -- ambience, not him

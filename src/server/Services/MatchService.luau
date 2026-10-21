@@ -87,6 +87,7 @@ function Match.isOpen(): (boolean, number)
 	end
 	local early = waiting or (if D.lateJoinOpen then D.lateJoinOpen() else D.getAct() == "Evening")
 	local open = startedShort and early and D.elapsedSeconds() < (L.JoinOpenFor or 420) and not (D.isSkipping and D.isSkipping())
+		and not workspace:GetAttribute("AdminUsed") -- (a stranger never lands in an admin panel night)
 		and n >= 1 and n < ctx.Config.MaxPlayers
 	return open, n
 end

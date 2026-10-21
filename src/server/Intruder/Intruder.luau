@@ -261,6 +261,7 @@ local function setState(name: string, data: any?)
 	end
 end
 
+
 local function park()
 	if S.Model then
 		S.Nav:stop()
@@ -300,6 +301,41 @@ end
 local function now()
 	return os.clock()
 end
+
+--[[
+	What he says (v106; Story.HisLines): a line in his voice for everyone near him (client Voices:
+	only heard within earshot, quieter through walls). Only once he's hunting in the house, never
+	twice in a row, at least Gap s apart (force: a moment that shouldn't wait, like a grab).
+]]
+local function speak(kind: string, force: boolean?): boolean
+	local L = ctx.Story.HisLines
+	local lines = L and L[kind]
+	if not lines or #lines == 0 or S.Mode ~= "Hunt" or not S.InHouse or not S.Model then
+		return false
+	end
+	local t = now()
+	S.SpokeAt = S.SpokeAt or {}
+	if not force and t - (S.LastSpoke or -1e9) < L.Gap then
+		return false
+	end
+	if t - (S.SpokeAt[kind] or -1e9) < (L.Every[kind] or 15) then
+		return false
+	end
+	local i = math.random(1, #lines)
+	if lines[i] == S.LastLine and #lines > 1 then
+		i = i % #lines + 1
+	end
+	S.LastLine = lines[i]
+	S.LastSpoke = t
+	S.SpokeAt[kind] = t
+	S.Spoken = (S.Spoken or 0) + 1
+	local remote = ctx.Remotes.HisVoice
+	if remote then
+		remote:FireAllClients(lines[i], kind)
+	end
+	return true
+end
+Intruder._speak = speak -- (tests)
 
 local function pos(): Vector3
 	return S.Root.Position
@@ -502,6 +538,7 @@ local function tryGrab(target: Player): boolean
 	end
 	target:SetAttribute("CaughtHow", "Open")
 	if ctx.Capture.capture(target) then
+		speak("Grab", true)
 		S.Memory[target] = nil
 		S.HuntTarget = nil
 		afterCapture(target)
@@ -623,6 +660,11 @@ local function startChase(target: Player)
 	setState("Chase", { Target = target, LastSeen = now() })
 	S.HuntTarget = target
 	ctx.Director.addTension(20)
+	task.delay(0.9, function()
+		if S.State == "Chase" and S.Data.Target == target then
+			speak("Found")
+		end
+	end)
 	-- the moment he sees you: a sting only you hear, the screen jolts
 	if now() - (S.StungAt[target] or -1e9) > 18 then
 		S.StungAt[target] = now()
@@ -1380,6 +1422,7 @@ STATES.Chase = function(_, visible)
 	elseif now() - d.LastSeen > I.ChaseLoseSightTime then
 		-- lost sight: back on the trail (Figure brain: he runs to where you were and listens)
 		S.HuntTarget = t
+		speak("Lost")
 		if figure() then
 			charge(d.LastPos or r.Position, t)
 		else
@@ -1861,6 +1904,7 @@ inspect = function(spot)
 	setState("Inspect", { Spot = spot, Phase = "Approach" })
 	S.HuntTarget = nil
 	S.Nav:goTo(spot.Exit.Position, { Speed = tune().InvestigateSpeed, Tolerance = 2.5 })
+	speak("Inspect")
 end
 
 local function ripOut(who: Player, spot)
@@ -1988,6 +2032,10 @@ STATES.Closet = function()
 		local r = outInTheOpen(p)
 		if r and math.abs(r.Position.Y - exit.Y) < 8 then
 			local dist = (r.Position - exit).Magnitude
+			if dist < (SURPRISE.Warn + SURPRISE.Burst) / 2 and d.Warned and not d.Spoke then
+				d.Spoke = true
+				speak("Closet", true)
+			end
 			if dist < SURPRISE.Warn and not d.Warned then
 				d.Warned = true
 				ctx.Audio.playAt(ctx.Hiding.sound(spot, true), spot.Position, { Pitch = 0.7, CaptionText = "[A creak... from a hiding place close by]", CaptionRange = 18 })
@@ -2038,6 +2086,13 @@ local function standBehind(): boolean
 						placeAt(floor + V(0, 1, 0), r.Position)
 						S.Root.Anchored = true
 						setState("Stalk", { Target = p, Start = now(), Until = now() + SURPRISE.StalkWait })
+						-- (a couple of seconds in: "Turn around.")
+						local mine = S.Data
+						task.delay(2.2, function()
+							if S.State == "Stalk" and S.Data == mine then
+								speak("Behind", true)
+							end
+						end)
 						-- (his breathing, right there; a joint cracks)
 						ctx.Audio.playAt("ManWhisper", S.Head.Position, { CaptionRange = 14 })
 						if ctx.Director.logTruthRaw and not S.LoggedStalk then
@@ -2151,6 +2206,14 @@ STATES.Inspect = function(_, visible)
 			ctx.Audio.playAt("ManWhisper", spot.Position, { CaptionText = "[Something right outside. Listening.]", CaptionRange = 18 })
 			local who = ctx.Hiding.occupant(spot)
 			d.Occupant = who
+			if who then
+				-- (listening at your door, and he says so)
+				task.delay(1.2, function()
+					if S.State == "Inspect" and S.Data == d then
+						speak("Heart", true)
+					end
+				end)
+			end
 			if who and ctx.Heartbeat then
 				ctx.Heartbeat.begin(who, dur, function()
 					if S.State == "Inspect" and S.Data == d then
@@ -2668,6 +2731,16 @@ local function think(dt: number)
 	if S.Mode == "Hunt" and (state == "Patrol" or state == "Search" or state == "Investigate" or state == "Prowl" or state == "Charge") then
 		if listenForBreath(dt) then
 			return
+		end
+	end
+	-- murmuring to himself while he looks for you, when you're close enough to hear (v106)
+	if S.Mode == "Hunt" and #visible == 0 and (state == "Patrol" or state == "Search" or state == "Investigate" or state == "CheckSpot" or state == "Prowl") then
+		S.MurmurClock = (S.MurmurClock or 3) - dt
+		if S.MurmurClock <= 0 then
+			S.MurmurClock = 3.5
+			if minPlayerDistance(pos()) < 32 and math.random() < 0.4 then
+				speak("Murmur")
+			end
 		end
 	end
 	-- now and then, a surprise instead of the plain patrol (v104; never while he's lying low: that's

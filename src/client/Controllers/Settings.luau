@@ -1,6 +1,7 @@
 --[[
-	Settings — music volume, sound volume and camera shake, saved with your stats
-	(Remotes.SaveSettings; the server mirrors them back as SetMusic / SetSfx / SetShake).
+	Settings — music volume, sound volume, voices (text-to-speech: client Voices) and camera
+	shake, saved with your stats (Remotes.SaveSettings; the server mirrors them back as SetMusic /
+	SetSfx / SetShake / SetVoice).
 
 	Every sound goes through one of two SoundGroups: music (the score and stings) or effects
 	(everything else, his footsteps included), so the sliders cover sounds made anywhere.
@@ -30,7 +31,7 @@ local sfxGroup: SoundGroup
 local panel: Frame
 local rows: { [string]: { [number]: TextButton } } = {}
 local shakeButton: TextButton
-local current = { Music = 1, Sfx = 1, Shake = true }
+local current = { Music = 1, Sfx = 1, Shake = true, Voice = 1 }
 
 local function sort(s: Instance)
 	if s:IsA("Sound") and s.SoundGroup == nil then
@@ -60,7 +61,7 @@ end
 local function save()
 	apply()
 	refresh()
-	ctx.Remotes.SaveSettings:FireServer(current.Music, current.Sfx, current.Shake)
+	ctx.Remotes.SaveSettings:FireServer(current.Music, current.Sfx, current.Shake, current.Voice)
 end
 
 -- the saved values, once the server has loaded them
@@ -75,6 +76,10 @@ local function fromAttributes()
 	if type(sh) == "boolean" then
 		current.Shake = sh
 	end
+	local v = player:GetAttribute("SetVoice")
+	if type(v) == "number" then
+		current.Voice = v
+	end
 	apply()
 	if panel then
 		refresh()
@@ -83,6 +88,11 @@ end
 
 function Settings.shakeOn(): boolean
 	return current.Shake
+end
+
+-- 0..1: how loud the text-to-speech voices are
+function Settings.voice(): number
+	return current.Voice
 end
 
 function Settings.open()
@@ -139,7 +149,7 @@ local function build()
 		UI.stroke(b, Color3.new(1, 1, 1), 1, 0.7)
 		return b
 	end
-	for order, spec in { { "Music", "Music" }, { "Sfx", "Sounds" } } do
+	for order, spec in { { "Music", "Music" }, { "Sfx", "Sounds" }, { "Voice", "Voices" } } do
 		local key = spec[1]
 		local right = row(order, spec[2])
 		rows[key] = {}
@@ -155,7 +165,7 @@ local function build()
 			rows[key][i] = b
 		end
 	end
-	local shakeRow = row(3, "Camera shake")
+	local shakeRow = row(4, "Camera shake")
 	shakeButton = pill(shakeRow, "ON", 1, 90)
 	shakeButton.Activated:Connect(function()
 		current.Shake = not current.Shake
@@ -188,7 +198,7 @@ function Settings.start()
 	end
 	build()
 	fromAttributes()
-	for _, a in { "SetMusic", "SetSfx", "SetShake" } do
+	for _, a in { "SetMusic", "SetSfx", "SetShake", "SetVoice" } do
 		player:GetAttributeChangedSignal(a):Connect(fromAttributes)
 	end
 end

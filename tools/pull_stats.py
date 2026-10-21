@@ -270,10 +270,6 @@ def report_nights(nights):
     invited = sum(1 for n in started for p in (n.get("P") or {}).values()
                   if any(ev[1] == "Joined" and len(ev) > 2 and ev[2] == "invite" for ev in p.get("Ev") or []))
     print(f"  late arrivals who joined a night in progress: {joined} (brought by a friend's invite: {invited})")
-    # (v105) the friend on a night alone: taken at the blackout, freed in the boiler room
-    mates = Counter(ev[2] for n in started for p in (n.get("P") or {}).values() for ev in p.get("Ev") or [] if ev[1] == "Mate" and len(ev) > 2)
-    if mates:
-        print(f"  the friend on nights alone (v105): {dict(mates)}")
     # (v100) how he got about: wedged / step-backs / slips / failed routes, per night, and A* time
     navs = [n["Nav"] for n in started if n.get("Nav")]
     if navs:

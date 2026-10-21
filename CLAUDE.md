@@ -36,8 +36,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 
 - **Never spend Robux.** Badges only from the free quota: `tools/mkbadge.sh <Key>` (checks the quota,
   `expectedCost=0`). Icons in `marketing/badges/`, names in `tools/badges.tsv`.
-- **Admin tools are only for the owner** — UserId **915496194** (`Config.Admins`), checked on the server
-  for every command. Nobody else, ever.
+- **The full admin panel is only for the owner** — UserId **915496194** (`Config.Admins`), checked on the
+  server for every command. **Admin panel pass (v106**, the owner: "a new gamepass for 249 Robux called
+  admin panel… except maybe not the coins part and some other unfair stuff"): id 2044988494, 249 R$;
+  buyers get the panel in a night without COINS/SHOP (no coins, candy, passes, paid gear, Become Him,
+  saved credits) and no free revive; anything that changes the night only when everyone else in the
+  server is a friend or has the pass; a night it's used on pays nothing and counts for nothing
+  (`Admin.uncredited`: coins, quests, titles, badges, candy, nights, boards) and strangers can't
+  match into it. Lobby: no panel for buyers.
 - **The owner is left off all leaderboards.**
 - **Revives are Robux only** (10 R$ product since 11 Oct; 25 R$ sold 0 of 35 deaths). No coin revive — it would kill Robux revive sales.
 - Git: develop on the designated branch, `git push -u origin <branch>`. **No PRs unless asked.** No model
@@ -72,7 +78,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 **Pacing / story**
 - It's a horror game, not a chore simulator: few tasks, multi-step, no dead time. No "stay together"
   task that solo can't do.
-- Friends speak in dialogue boxes (not texts). Pizza delivery with two dialogue choices; delivery man is
+- Friends speak in dialogue boxes (not texts), **out loud (v106: Roblox text-to-speech, client
+  `Voices`, `Story.Voices`)**: the delivery man, friends' chatter, your picked lines, your thoughts
+  (quieter). Voices setting in Settings. **Anyone in the conversation can answer the delivery man:
+  the first click moves it on** (v106). Pizza delivery with two dialogue choices; delivery man is
   a normal Roblox avatar in a red pizza shirt, creepy not goofy.
 - Mom texts about the news → phone chat with replies → "watch the news" task; the TV has a real news
   presenter with text-to-speech (no laugh track). TV voice only heard when you can see the TV.
@@ -105,9 +114,6 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   your sprint, but chasing you round something low (a table, a bed, the kitchen island; never a wall,
   never another floor) he pounces over it (`leapOver`/`leap`, 3 s apart); run dry and you're
   **winded** (no sprint until 35%: `Movement.WindedRecover`, red bar).
-- **A friend on nights alone (v105)**: a night that starts with one player gets an NPC friend (whichever
-  of Riley/Morgan/Casey/Jamie the player isn't): follows, chats, Talk prompt; taken at the blackout;
-  freeing them in the boiler room sends them next door (help in 35 s). Never with 2+.
 - **Surprises in the hunt (v104**, a player: "no surprise factor"): from a minute in, every 75-120 s
   he either waits in an empty hiding spot near someone (a creak at 15 studs, bursts out at 7.5) or
   appears behind someone alone (turn round: he screams and chases; don't: gone in 7 s). 0.7 s
@@ -119,6 +125,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   upstairs. Spawn him far away").
 - Never stuck on doors/walls (NavGrid survey + navigator).
 - Footsteps clearly audible and louder the closer he is.
+- **He talks (v106**, the owner: "make it scarier, like actually creepy"): his voice (TTS, slowed and
+  pitched down, reverb; only heard near him, quieter through walls) during the hunt only
+  (`Intruder.speak`, `Story.HisLines`): murmurs while he searches near you, "There you are." /
+  "Found you.", "I can hear your heart." at your hiding spot, "Turn around." when he's behind you,
+  "Come closer..." from a closet, "We're a family now." when he grabs you. Also **the mimic** (act
+  II-III event: a friend's voice, or Mom's, calling you to the other floor) and **the mirror** (after
+  brushing teeth the bathroom mirror steams up: "I WATCH YOU SLEEP").
 - **Look (v99, the owner: "look at the Locust or Threshold games… their monster is actually creepy"):**
   a ~10-ft black jointed mannequin (ball joints, ribcage, long two-jointed fingers, pale nails), a
   long porcelain mask with big round sockets, pinprick pupils and a stretched toothy grin, wet black
@@ -347,17 +360,23 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
-- **21 Oct (v105)**, "improve the game further", from the v104 logs (67 nights): (1) **solo nights**
-  13 of 15 abandoned, new solo players leaving in seconds → **a friend who made it** on nights that
-  start alone (`Director/Companion`, GDD "Solo nights"): follows, talks, taken at the blackout, freed in
-  the boiler room → Mrs. Okafor calls the police; (2) 23 of 45 captures in the upstairs bathroom after
+- **21 Oct (v106)**, the owner: "Remove that npc thing. Add a new gamepass for 249 Robux called admin
+  panel… let both players chat with the guy… text to speech to almost everything… Make it scarier."
+  Done: the v105 NPC friend removed; anyone can answer a dialogue; the Admin panel pass (see Hard
+  rules); TTS voices + a Voices setting; his voice lines, the mimic, the mirror (see The intruder).
+  Can't hear the voices here (TTS only runs in the real client): check the volumes and that his
+  voice reads as creepy, not silly. Next: `--since=106`: AdminPanel events / pass sales, quits right
+  after the mimic, captures after his lines.
+
+- **21 Oct (v105)**, "improve the game further", from the v104 logs (67 nights): (1) solo nights 13 of 15
+  abandoned → an NPC friend for nights alone was built, then **removed at the owner's request**
+  ("Remove that npc thing"): don't add NPC companions; (2) 23 of 45 captures in the upstairs bathroom after
   the 911 call → the whole group at the window gets the head start + a linen cupboard there;
   (3) live nav logged ~32 failed routes/night (0 in the sim) → routes to a goal he can't stand on end as
   near as he can get, and failures are logged by kind and room (`FailGrid_<Room>`, pull_stats);
   (4) surprises sooner (35 s, every 55-90 s). MatchService: 0 of 114 joined a night in progress, but
   traffic is so low that overlaps are rare (couldn't read MemoryStore: the key lacks the scope).
-  Next: `--since=105`: solo nights (abandoned? `Mate` events, Help:Companion), bathroom captures,
-  failed routes by room, surprised/player.
+  Next: `--since=105`: bathroom captures, failed routes by room, surprised/player.
 
 - **20 Oct (v104)**, the owner forwarded a review: "Unpolished, unnecessary mobile UI for pc players,
   most loopable enemy in horror games, no surprise factor to scare you, 'horror game' but almost no

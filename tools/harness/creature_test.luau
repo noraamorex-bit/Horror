@@ -153,6 +153,38 @@ local ok, err = pcall(function()
 	assert(fig and fig[5] == "Stare" and math.abs(fig[3].Position.Y - 17.6) < 0.01 and sound, "the hall figure, at the far end, and a whisper")
 	print("scares ok")
 
+	-- v106: the mimic: a friend's voice (or Mom's) calling you from the other floor
+	assert(found.Mimic and found.Mimic.Once and Story.Truths.Mimic, "the mimic is scheduled, once, with its truth")
+	local me = H.wrap(R.Instance.new("Player"))
+	me:SetAttribute("RoleName", "Jamie Whitaker")
+	local pal = H.wrap(R.Instance.new("Player"))
+	pal:SetAttribute("Role", "Tinkerer")
+	pal:SetAttribute("RoleName", "Riley Chen")
+	fired = {}
+	found.Mimic.Run(ctx, D, { Player = me, From = V(4, 16, 0), Up = true, Friend = pal })
+	local call = nil
+	for _, f in fired do if f[1] == "HisVoice" then call = f end end
+	assert(call and call[2] == me and string.find(call[3], "Jamie") and call[4].Voice == "Tinkerer", "in Riley's voice, calling Jamie: " .. tostring(call and call[3]))
+	assert(call[4].From.Y > 16 and string.sub(call[4].Caption, 1, 15) == "[From upstairs]", "from upstairs")
+	assert(Story.Voices.Profiles[call[4].Voice], "a voice that exists")
+	fired = {}
+	found.Mimic.Run(ctx, D, { Player = me, From = V(4, 2, 0), Up = false })
+	call = nil
+	for _, f in fired do if f[1] == "HisVoice" then call = f end end
+	assert(call and call[4].Voice == "Mom" and Story.Voices.Profiles.Mom and string.find(call[4].Caption, "downstairs"), "alone: Mom, from downstairs")
+	print("mimic ok:", call[3])
+
+	-- v106: the bathroom mirror steams up, words in the steam, on the side you're standing
+	local glass = H.Instance.new("Part")
+	glass.CFrame = R.CFrame.new(0, 5, 0)
+	local gui = Signs.mirror(glass, V(0, 5, -4), "I WATCH YOU SLEEP")
+	assert(gui and H.unwrap(glass):FindFirstChild("MirrorWriting"), "the writing")
+	local label = H.unwrap(gui):FindFirstChildWhichIsA("TextLabel", true)
+	assert(label and label.Text == "I WATCH YOU SLEEP", "what it says")
+	assert(Signs.mirror(glass, V(0, 5, -4), "AGAIN") == nil, "once at a time")
+	assert(#Story.Mirror >= 1 and #Story.HisLines.Murmur >= 6, "lines to say")
+	print("mirror ok")
+
 	-- the new sounds
 	local Sounds = H.load("RS/Shared/Sounds")
 	for _, s in { "Screech", "BoneCrack1", "BoneCrack2", "ClawStep", "CreatureWhisper", "GlassTap", "HouseCreak1", "HouseCreak2" } do

@@ -2,9 +2,10 @@
 	DialogueService — conversations with a character, shown in a dialogue box.
 
 	Dialogue.run({ Script = Story.Dialogue.X, Chooser = player, Audience = { players } }) -> { choice keys }
-	Blocks until the conversation ends. Only the Chooser picks lines (two options per turn);
-	everyone in the Audience reads along. If the chooser doesn't pick in time, the first
-	option is taken so the night keeps moving.
+	Blocks until the conversation ends. Anyone in the Audience can pick a line (two options per
+	turn): the first click moves it on, and that player says it (v106, the owner: "let both players
+	chat with the guy and it just moves on when someone clicks something"). If nobody picks in
+	time, the first option is taken so the night keeps moving.
 
 	Dialogue.say({ {Speaker = player, Text = "..."}, ... }, audience) -> bool
 	Players talking among themselves: the same box, no choices, and it leaves the controls
@@ -68,7 +69,7 @@ function Dialogue.say(lines, audience): boolean
 				Ambient = true,
 			})
 		else
-			-- (a friend who isn't a player: Director/Companion, { Name = "Riley" })
+			-- (a speaker who isn't a player: { Name = "..." })
 			send(audience, { Speaker = speaker.Name, Text = line.Text, Ambient = true })
 		end
 		task.wait(lineTime(line.Text))
@@ -94,7 +95,7 @@ function Dialogue.run(opts)
 		end
 	end
 	local node = script.Nodes[script.Start]
-	current = { Chooser = chooser, Options = nil, Picked = nil }
+	current = { Chooser = chooser, Audience = audience, Options = nil, Picked = nil, By = nil }
 	while node do
 		local nextNode = nil
 		for i, text in node.Lines do
@@ -113,6 +114,7 @@ function Dialogue.run(opts)
 				Choices = options,
 				ChooserId = chooser.UserId,
 				ChooserName = chooser.DisplayName,
+				Anyone = options ~= nil or nil, -- (anyone listening can answer)
 				Timeout = options and CHOICE_TIMEOUT or nil,
 			})
 			if opts.OnLine then
@@ -121,20 +123,30 @@ function Dialogue.run(opts)
 			if options then
 				current.Options = options
 				current.Picked = nil
+				current.By = nil
 				local deadline = os.clock() + CHOICE_TIMEOUT
-				while not current.Picked and not current.Cancel and os.clock() < deadline and chooser.Parent do
+				local function anyoneThere(): boolean
+					for _, p in audience do
+						if p.Parent then
+							return true
+						end
+					end
+					return false
+				end
+				while not current.Picked and not current.Cancel and os.clock() < deadline and anyoneThere() do
 					task.wait(0.1)
 				end
 				local pick = current.Picked or 1
+				local by: Player = current.By or chooser
 				current.Options = nil
 				local choice = node.Choices[pick]
 				table.insert(path, choice.Next)
-				-- the player's own line
+				-- the line, said by whoever picked it
 				send(audience, {
-					Speaker = chooser.DisplayName,
+					Speaker = by.DisplayName,
 					IsPlayer = true,
 					Text = choice.Say,
-					ChooserId = chooser.UserId,
+					ChooserId = by.UserId,
 				})
 				task.wait(lineTime(choice.Say) * 0.8)
 				nextNode = script.Nodes[choice.Next]
@@ -179,11 +191,16 @@ end
 
 function Dialogue.start()
 	ctx.Remotes.DialogueChoice.OnServerEvent:Connect(function(player, index)
-		if not current or current.Chooser ~= player or not current.Options then
+		if not current or not current.Options or current.Picked then
+			return
+		end
+		-- (anyone listening; the first click wins)
+		if current.Chooser ~= player and not table.find(current.Audience or {}, player) then
 			return
 		end
 		if type(index) == "number" and current.Options[index] then
 			current.Picked = index
+			current.By = player
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(p)

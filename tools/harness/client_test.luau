@@ -36,7 +36,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -158,6 +158,18 @@ local ok, err = pcall(function()
 	player:SetAttribute("Battery", 50)
 	R.Chapter.OnClientEvent:Fire("I. Friday Night", "sub")
 	ctx.Notice.show({ Title = "You are Casey Brooks", Body = "x" })
+	-- v106 Voices: who sounds like what; lines and his voice never break anything (silent here)
+	do
+		local Vo = mods.Voices
+		assert(Vo.forSpeaker("Delivery man") == "Delivery" and Vo.forSpeaker("Nobody") == "Default", "speaker voices")
+		assert(Vo.forPlayer(nil) == "Default", "no player: the default voice")
+		R.Dialogue.OnClientEvent:Fire({ Speaker = "Delivery man", Text = "Nice house. Big. Lots of places to be.", Choices = { "Thanks.", "Here's the money." }, ChooserId = 1, Anyone = true })
+		R.Dialogue.OnClientEvent:Fire(nil)
+		R.HisVoice.OnClientEvent:Fire("I can hear you breathing.", "Murmur")
+		R.HisVoice.OnClientEvent:Fire("Sweetie?", { Voice = "Mom", From = H.roblox.Vector3.new(0, 18, 0), Range = 60, Caption = "[From upstairs] \"Sweetie?\"" })
+		Vo.say("[A stage direction] \"Hello.\"", "Him", { Channel = "Him" })
+		print("voices ok")
+	end
 	R.Thought.OnClientEvent:Fire("Mom left me a list of chores.", "journal")
 	R.Thought.OnClientEvent:Fire("A flashlight.", "light")
 	print("notice open:", ctx.Notice.isOpen())

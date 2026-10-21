@@ -17,3 +17,5 @@ api 2039534472 -F "isForSale=true"
 api 2006193593 -F "price=25" -F "description=Choose who you play every night, and what you start with: Jamie's flashlight, Riley's toolkit, Morgan's energy drinks or Casey's firecrackers."
 api 2036510399 -F "description=Everything in one: +50% coins every night, a VIP tag, pick your role, every flashlight colour, Marathon stamina and a battery that never dies."
 api 2006721483 -F "description=Start every night with a flashlight in your pocket, plus a spray can to keep him back." # ("pepper spray" comes back filtered)
+# v106 (21 Oct): the admin panel pass (created with POST .../game-passes, id 2044988494, 249 R$)
+api 2044988494 -F "isForSale=true" -F "imageFile=@admin_panel.png;type=image/png"

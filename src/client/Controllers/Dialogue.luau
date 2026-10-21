@@ -1,9 +1,9 @@
 --[[
 	Dialogue — the conversation box at the bottom of the screen.
 
-	The server sends one line at a time: who is speaking, the text (typed out), and on the last
-	line of a turn two things you could say back. Only the player who answered picks; everyone
-	else reads along. Press 1 / 2 or tap a choice.
+	The server sends one line at a time: who is speaking, the text (typed out and said out loud:
+	client Voices), and on the last line of a turn two things you could say back. Anyone there
+	can pick (v106): the first click moves it on. Press 1 / 2 or tap a choice.
 ]]
 
 local Players = game:GetService("Players")
@@ -100,7 +100,8 @@ local function show(line)
 		panel.Position = UDim2.new(0.5, 0, 1, -28)
 		panel.Size = UDim2.new(0.62, 0, 0, 0)
 	end
-	local mine = line.ChooserId == player.UserId
+	-- (v106: anyone listening can answer; the first click moves it on)
+	local mine = line.ChooserId == player.UserId or line.Anyone == true
 	if line.Ambient then
 		local me = line.SpeakerId == player.UserId
 		speakerLabel.Text = me and "YOU" or string.upper(line.Speaker or "")
@@ -123,6 +124,27 @@ local function show(line)
 		textLabel.TextColor3 = Color3.fromRGB(240, 236, 228)
 	end
 	speakerLabel.Visible = speakerLabel.Text ~= ""
+	-- said out loud (client Voices): a friend in their role's voice, the man at the door in his
+	if ctx.Voices and line.Speaker ~= "" then
+		local voice
+		if line.Ambient or line.IsPlayer then
+			local id = tonumber(line.SpeakerId or line.ChooserId)
+			local who = nil
+			for _, p in Players:GetPlayers() do
+				if p.UserId == id then
+					who = p
+				end
+			end
+			voice = ctx.Voices.forPlayer(who)
+		else
+			voice = ctx.Voices.forSpeaker(line.Speaker)
+		end
+		ctx.Voices.say(line.Text, voice)
+		-- (the answers you might give, ready in your voice)
+		for _, c in (line.Choices or {}) do
+			ctx.Voices.prefetch(c, ctx.Voices.forPlayer(player))
+		end
+	end
 	typeOut((line.IsPlayer or line.Ambient) and ("\"" .. line.Text .. "\"") or line.Text)
 	-- choices
 	local choices = line.Choices

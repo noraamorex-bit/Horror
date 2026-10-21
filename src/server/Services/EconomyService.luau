@@ -554,6 +554,10 @@ end
 -- a title earned by doing something in the game (Cat.Special, How): granted once, with a note
 function Economy.achieve(player: Player, id: string): boolean
 	local c = Cat.cosmetic(id)
+	-- (titles are earned: not on an admin panel pass night)
+	if ctx.Admin and ctx.Admin.uncredited(player) then
+		return false
+	end
 	if not c or not Economy.grantCosmetic(player, id) then
 		return false
 	end
@@ -627,7 +631,8 @@ end
 -- something a quest counts happened (stat names: Economy.Quests[].Stat)
 function Economy.track(player: Player, stat: string, n: number?)
 	local d = docs[player.UserId]
-	if not d then
+	-- (no quest progress on an admin panel pass night)
+	if not d or (ctx.Admin and ctx.Admin.uncredited(player)) then
 		return
 	end
 	n = n or 1
@@ -690,6 +695,10 @@ end
 	`newEnding` adds the bonus for an ending they hadn't seen (it can come after the rest).
 ]]
 function Economy.nightRewards(player: Player, info): any
+	-- (an admin panel pass night pays nothing)
+	if ctx.Admin and ctx.Admin.uncredited(player) then
+		return nil
+	end
 	local N = Cat.Night
 	info = info or {}
 	local lines = {}

@@ -31,7 +31,7 @@ local ORDER = if mode == "Lobby"
 	then { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "LobbyHub", "Admin", "Diagnostics", "ChatTags", "Creature" }
 	else {
 		"UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Settings", "Atmosphere", "Dread", "Acoustics", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear",
-		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Admin", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Diagnostics", "ChatTags",
+		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Diagnostics", "ChatTags",
 	}
 
 local modules = {}

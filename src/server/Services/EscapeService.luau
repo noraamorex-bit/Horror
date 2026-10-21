@@ -78,7 +78,7 @@ function Escape.callForHelp(method: string, player: Player?)
 	end
 	local H = ctx.Config.Help
 	local eta = (method == "Car" and H.CarResponse) or (method == "Neighbor" and H.NeighborResponse)
-		or ((method == "Okafor" or method == "Companion") and (H.OkaforResponse or H.PhoneResponse)) or H.PhoneResponse
+		or (method == "Okafor" and (H.OkaforResponse or H.PhoneResponse)) or H.PhoneResponse
 	local hard = ctx.Config.Difficulty and ctx.Config.Difficulty.Hard
 	if workspace:GetAttribute("Difficulty") == "Hard" and hard and hard.PoliceMultiplier then
 		eta = math.floor(eta * hard.PoliceMultiplier + 0.5)
@@ -88,7 +88,7 @@ function Escape.callForHelp(method: string, player: Player?)
 	workspace:SetAttribute("HelpMethod", method)
 
 	-- the way out that worked is done; the other routes (and the search) simply stop mattering
-	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone" }, Neighbor = { "Neighbor" }, Car = { "Car" }, Okafor = {}, Companion = {} }
+	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone" }, Neighbor = { "Neighbor" }, Car = { "Car" }, Okafor = {} }
 	for _, id in used[method] or { "Call911" } do
 		ctx.Objectives.complete(id)
 	end

@@ -175,10 +175,6 @@ Story.Tasks = {
 	Trap = { Title = "(Optional) Lock him in the basement", Steps = {
 		{ Key = "Lock", Text = "Lure him down, then lock the basement door", Target = "Door_Basement" },
 	} },
-	-- (v105: a night alone, the friend who made it: Director/Companion)
-	FreeCompanion = { Title = "(Optional) Free your friend", Steps = {
-		{ Key = "Free", Text = "They're tied up in the boiler room. Cut them loose: they'll run next door for help", Target = "Boiler" },
-	} },
 	Rescue = { Title = "Free your friend", Steps = {
 		{ Key = "Free", Text = "Cut them loose in the boiler room", Target = "Boiler" },
 	} },
@@ -264,41 +260,6 @@ Story.Documents = {
 ---------------------------------------------------------------------------
 -- (They wait for a quiet moment: never on top of a thought line or a conversation.)
 -- sent only on a solo night, a little after it starts
--- v105: a night alone isn't alone any more: one friend made it before Creek Road flooded
--- (Director/Companion). %s is their name.
-Story.Companion = {
-	Arrive = "Made it! Creek Road's flooding. The others turned back. It's just us tonight.",
-	Breaker = "Great. The power's out. The breaker's in the garage, right? Stay here, I'll flip it.",
-	Taken = "%s?! That scream...",
-	Below = "It came from under the house. The basement. They took %s down there.",
-	Freed = "He... he went back upstairs. I'm going next door, Mrs. Okafor has a phone. HIDE!",
-	Help = "%s made it next door. Mrs. Okafor's calling the police. Just stay alive.",
-	Chatter = {
-		Evening = {
-			{ At = 45, Text = "Your house is so creepy at night. No offence." },
-			{ At = 120, Text = "Okay, what are we watching? Nothing with clowns." },
-			{ At = 190, Text = "Is it me, or is your attic, like... loud?" },
-		},
-		SmallThings = {
-			{ At = 35, Text = "Did you hear that? Upstairs. Like someone walking." },
-			{ At = 100, Text = "I'm checking every door twice. Don't laugh." },
-			{ At = 165, Text = "That's the third time the floor creaked. Same spot. Right above us." },
-		},
-	},
-	React = {
-		PlateCrash = "WHAT was that?! Something fell in the kitchen. Things don't just fall.",
-		CeilingThud = "That came from the ceiling. Tell me you heard that.",
-		WindSlam = "Jeez! Just the wind. Right? Right?",
-		FootstepsUpstairs = "Someone's walking upstairs. We're both down here.",
-		TVAlert = "Wait. Turn that up. Isn't that near here?",
-	},
-	Talk = {
-		Evening = { "Pizza first. Then the movie. Then I'm sleeping on your couch.", "Your mom left you a whole list? Mine just says 'don't die'.", "If anything weird happens, I'm blaming you." },
-		SmallThings = { "I'm not scared. I'm just standing really close to you.", "Who leaves the windows open in a storm?", "Can we keep the lights on. All of them." },
-		SomeoneElse = { "Stay close. Please.", "I don't like this. I really don't like this." },
-	},
-}
-
 Story.SoloTexts = {
 	{ From = "Riley", Body = "creek rd is literally underwater. we had to turn around 😭" },
 	{ From = "Morgan", Body = "so sorry!! next weekend for sure. stay dry, don't get murdered lol" },
@@ -535,6 +496,90 @@ Story.TVVoice = {
 	},
 }
 
+--[[
+	Who sounds like what (client Voices, Roblox text-to-speech; v106). Voice ids as above;
+	Pitch / Speed tune each one so friends don't share a voice; Volume is the base level (the
+	Voices setting scales it). Friends speak in their role's voice, your thoughts in yours (at
+	Thought). Him: slowed and pitched down through a long reverb, only heard within Max studs of
+	him (full inside Full, Wall = how much a wall in between leaves).
+]]
+Story.Voices = {
+	Profiles = {
+		Default = { Voice = "3", Pitch = 1, Speed = 1, Volume = 1.4 },
+		Host = { Voice = "3", Pitch = 1.08, Speed = 1.04, Volume = 1.4 }, -- Jamie
+		Tinkerer = { Voice = "4", Pitch = 1.06, Speed = 1.05, Volume = 1.4 }, -- Riley
+		Runner = { Voice = "2", Pitch = 1.1, Speed = 1.08, Volume = 1.4 }, -- Morgan
+		Observer = { Voice = "1", Pitch = 1.1, Speed = 0.98, Volume = 1.4 }, -- Casey
+		-- (flat and a touch too slow: something's off about him)
+		Delivery = { Voice = "3", Pitch = 0.84, Speed = 0.86, Volume = 1.5 },
+		Him = { Voice = "1", Pitch = 0.7, Speed = 0.7, Volume = 2.4, Effects = "Him", Shift = 0.68 },
+		Mom = { Voice = "4", Pitch = 0.96, Speed = 0.9, Volume = 1.6 },
+	},
+	Speakers = { ["Delivery man"] = "Delivery" },
+	Thought = 0.65,
+	Him = { Full = 9, Max = 44, Wall = 0.45 },
+}
+
+-- what's written in the steam on the upstairs bathroom mirror after you brush your teeth (v106)
+Story.Mirror = { "I WATCH YOU SLEEP", "YOUR BED IS WARM", "I SAW YOU BRUSH", "GOODNIGHT" }
+
+--[[
+	What he says (v106, the owner: "make it scarier, like actually creepy"). Spoken by the server
+	(Intruder.speak) in his voice (Story.Voices.Him), only during the hunt, never twice in a row,
+	at least Gap seconds apart (per kind: Every).
+		Murmur   searching or patrolling with someone close he can't see
+		Found    he's seen you (the chase starts)
+		Lost     you got away from him
+		Inspect  at a hiding spot, before he looks in
+		Heart    the heartbeat minigame: he's listening at your door
+		Grab     he's got you
+		Behind   standing behind someone alone (a surprise: turn round)
+		Closet   waiting in a hiding spot as someone comes near
+]]
+Story.HisLines = {
+	Gap = 9,
+	Every = { Murmur = 22, Found = 14, Lost = 18, Inspect = 16, Heart = 30, Grab = 0, Behind = 0, Closet = 0 },
+	Murmur = {
+		"I know you're in here.",
+		"Come out, come out... wherever you are.",
+		"I can hear you breathing.",
+		"I can smell you.",
+		"Ready or not.",
+		"You left the door open for me.",
+		"I watched you sleep last night.",
+		"I've been here the whole time.",
+		"This is my house too.",
+		"Don't you want to play?",
+		"Your mother isn't coming home.",
+		"I just want to be a family.",
+	},
+	Found = { "There you are.", "Found you.", "Don't run.", "I see you.", "Hello." },
+	Lost = { "You can't hide forever.", "I'll find you.", "I always find them.", "We have all night." },
+	Inspect = { "Are you in here?", "Is this where you hide?", "Peekaboo...", "Knock knock." },
+	Heart = { "I can hear your heart.", "Shhh. I know you're there.", "So close..." },
+	Grab = { "Shhh. Shhh. Shhh.", "We're a family now.", "Mine.", "There. That's better." },
+	Behind = { "Turn around.", "Don't look.", "Right behind you." },
+	Closet = { "Come closer...", "In here." },
+}
+
+--[[
+	The mimic (v106, Events "Mimic", act II-III before he's in for good): from somewhere upstairs,
+	in a friend's voice (or, alone, Mom's, who's out of state till Sunday), someone calls you up.
+	%s = your first name.
+]]
+Story.Mimic = {
+	Friend = {
+		Up = { "%s... come upstairs. I need to show you something.", "Hey. %s. Up here. Quick.", "%s? Can you come up here?" },
+		Down = { "%s... come downstairs. I need to show you something.", "Hey. %s. Down here. Quick.", "%s? Can you come down here?" },
+	},
+	Mom = {
+		Up = { "Sweetie? I'm home early. Come up to my room.", "Honey, come upstairs. Mommy's home." },
+		Down = { "Sweetie? I'm home early. Come down to the kitchen.", "Honey, come downstairs. Mommy's home." },
+	},
+	ThoughtFriend = "That was %s's voice. From %s. But %s is right here...", -- (name, upstairs/downstairs, name)
+	ThoughtMom = "Mom? ...Mom's two states away until Sunday.",
+}
+
 ---------------------------------------------------------------------------
 -- Dialogue. Each node: Speaker + Lines, then either Choices ({ Say, Next }) or Next, or End.
 -- Speaker "" is narration.
@@ -668,6 +713,7 @@ Story.Truths = {
 	FigureWindow = "The figure at the window was Curtis. He went out the garage side door to move his van before anyone noticed it, and stopped when he saw you.",
 	DogBark = "Biscuit was barking at Curtis walking along the side yard.",
 	YardFigure = "The thing standing in the yard in the lightning was Curtis, out of the attic for the night, watching which lights were on.",
+	Mimic = "The voice that called you upstairs was Curtis. He'd been listening through the ceiling all evening: long enough to learn your names, and how your friends say them.",
 	HallStare = "The shape at the end of the hall was Curtis. He had come down the attic ladder to look at you, and went back up when the lights flickered.",
 	TVAlert = "The TV changed on its own because an Emergency Alert System broadcast (a real flash-flood warning) overrode the channel.",
 	Flicker = "The lights flickered because of the storm. Not everything was him.",

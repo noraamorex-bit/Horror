@@ -275,6 +275,9 @@ local function showCard(opts)
 	end
 	-- the night's coins: the total counts up, the reasons underneath (EconomyService.nightRewards)
 	local coins = opts.Coins
+	if opts.AdminNight then
+		line({ Text = "Admin panel night: no coins or records", TextSize = 14, TextColor3 = UI.Color.Dim })
+	end
 	if type(coins) == "table" and (tonumber(coins.Total) or 0) > 0 then
 		local total = line({ Text = "", Font = UI.Font.Bold, TextSize = 30, TextColor3 = GOLD })
 		local parts = {}
@@ -647,6 +650,7 @@ local function onResult(payload)
 		Spectate = payload.CanSpectate,
 		ReturnToLobby = payload.ReturnToLobby,
 		Coins = payload.Coins,
+		AdminNight = payload.AdminNight,
 	})
 end
 
@@ -679,6 +683,7 @@ local function onEnding(payload)
 			ReturnToLobby = payload.ReturnToLobby,
 			RestartIn = payload.RestartIn,
 			Coins = payload.Coins,
+			AdminNight = payload.AdminNight,
 			Again = payload.Again,
 		})
 		task.delay(8, function()

@@ -21,6 +21,10 @@ function Badges.award(player: Player, key: string)
 	if type(id) ~= "number" or id <= 0 or not player.Parent then
 		return
 	end
+	-- (no badges on an admin panel pass night)
+	if ctx.Admin and ctx.Admin.uncredited(player) then
+		return
+	end
 	task.spawn(function()
 		pcall(function()
 			if not BadgeService:UserHasBadgeAsync(player.UserId, id) then

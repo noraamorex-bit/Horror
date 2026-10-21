@@ -377,6 +377,9 @@ Config.Shop = {
 	Passes = {
 		-- (14 Oct: the owner wants Robux for all-ages access. Every pass does more now, the pepper spray
 		-- pass is a taser, and VIP bundles the perks)
+		-- v106 (21 Oct, the owner): the admin panel, most of what the owner's has (not coins, passes,
+		-- paid items or revives); a night it's used on pays no coins and counts for no board
+		{ Key = "AdminPanel", Id = 2044988494, Price = 249, Name = "Admin panel", Desc = "Run the night: skip acts, set off scares, boss him around, god mode, teleport, pick the ending. (No coins on nights you use it.)" },
 		{ Key = "Rocket", Id = 2039534472, Price = 99, Name = "Rocket Launcher", Desc = "Start every night with a rocket launcher: 2 rockets. A hit blows him off his feet, then he limps away." },
 		{ Key = "VIP", Id = 2036510399, Price = 99, Name = "VIP", Desc = "Everything in one: +50% coins every night, a VIP tag, pick your role, every flashlight colour, Marathon stamina and a battery that never dies." },
 		{ Key = "PepperSpray", Id = 2006030307, Price = 49, Name = "Taser", Desc = "Start every night with a taser: 3 shots. A hit stuns him, then slows him right down." },

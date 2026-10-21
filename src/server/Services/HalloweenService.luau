@@ -88,9 +88,15 @@ function Halloween.place(root: Instance)
 			if model then
 				model:Destroy()
 			end
-			local total = ctx.Economy and ctx.Economy.addCandy(player, 1) or 0
+			-- (an admin panel pass night: the candy's gone, nothing counted)
+			local credited = not (ctx.Admin and ctx.Admin.uncredited(player))
+			local total = credited and ctx.Economy and ctx.Economy.addCandy(player, 1) or 0
 			if ctx.Audio then
 				ctx.Audio.playAt("Pickup", at, { Caption = false })
+			end
+			if not credited then
+				ctx.Remotes.Notify:FireClient(player, "🍬 Candy doesn't count on an admin panel night.", "info")
+				return
 			end
 			local nxt = Cat.nextCandyReward(total)
 			local left = 0

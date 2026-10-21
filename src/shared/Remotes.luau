@@ -39,6 +39,7 @@ local NAMES = {
 	"Throw", -- (from, to, fuse) a firecracker flying through the air
 	"SprayFx", -- (from, dir) a cloud of pepper spray
 	"Monster", -- (state | nil) "Become him": you're him now ({Active, Captures, GrabReady, ...})
+	"HisVoice", -- (text) he says something (client Voices: only heard near him)
 
 	-- client -> server
 	"Movement", -- ({Sprint, Crouch})

@@ -14,6 +14,9 @@
 		ENDINGS   trigger any ending
 		COINS     give yourself coins (saved like any others); the only tab in the lobby
 	A line of live debug (act, his state, difficulty, police timer) sits under the pill.
+
+	The Admin panel pass (v106, Pass_AdminPanel): the same panel in a night, without SHOP, COINS
+	and the free revive (the server refuses those too); nothing in the lobby.
 ]]
 
 local Players = game:GetService("Players")
@@ -33,6 +36,10 @@ local current = "NIGHT"
 local info = { Rooms = {}, Events = {}, Endings = {}, Acts = { "Evening", "SmallThings", "SomeoneElse", "Guest" } }
 local xray: Highlight? = nil
 local built = false
+-- a pass holder, not the owner
+local function limited(): boolean
+	return not player:GetAttribute("IsAdmin")
+end
 
 local function send(cmd: string, arg: string?)
 	status.Text = "…"
@@ -159,7 +166,9 @@ RENDER.ME = function()
 	btn(r, "Full battery", function() send("me", "battery") end)
 	btn(r, "Full nerve + stamina", function() send("me", "heal") end)
 	btn(r, "Free me", function() send("me", "free") end)
-	btn(r, "Revive me (free)", function() send("me", "revive") end)
+	if not limited() then
+		btn(r, "Revive me (free)", function() send("me", "revive") end)
+	end
 	section("TELEPORT", 2)
 	local r2 = row(3)
 	for _, room in info.Rooms do
@@ -296,19 +305,21 @@ local function build()
 		Name = "AdminPanel",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(540, 520),
+		Size = UDim2.new(0.96, 0, 0.86, 0),
 		BackgroundColor3 = Color3.fromRGB(12, 12, 15),
 		BackgroundTransparency = 0.05,
 		Visible = false,
 		ZIndex = 40,
 		Parent = UI.Top,
 	})
+	-- (a phone's screen: never wider than it)
+	UI.new("UISizeConstraint", { MaxSize = Vector2.new(540, 520), Parent = panel })
 	UI.corner(panel, 12)
 	UI.stroke(panel, Color3.fromRGB(255, 200, 120), 1.5, 0.5)
 	UI.padding(panel, 14)
 	UI.modal(panel)
 	local head = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, Parent = panel })
-	UI.label({ Size = UDim2.new(1, -40, 1, 0), Text = "ADMIN  ·  owner only", Font = UI.Font.Bold, TextSize = 18, TextColor3 = Color3.fromRGB(255, 200, 120), TextXAlignment = Enum.TextXAlignment.Left, Parent = head })
+	UI.label({ Size = UDim2.new(1, -40, 1, 0), Text = limited() and "ADMIN PANEL" or "ADMIN  ·  owner only", Font = UI.Font.Bold, TextSize = 18, TextColor3 = Color3.fromRGB(255, 200, 120), TextXAlignment = Enum.TextXAlignment.Left, Parent = head })
 	local close = UI.new("TextButton", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.fromOffset(30, 30), Text = "✕", Font = UI.Font.Bold, TextSize = 16, TextColor3 = UI.Color.Text, BackgroundColor3 = Color3.fromRGB(30, 30, 36), Parent = head })
 	UI.corner(close, 8)
 	close.Activated:Connect(function()
@@ -321,8 +332,9 @@ local function build()
 		current = "COINS"
 		debugLine.Visible = false
 	end
-	for i, name in (lobby and { "COINS" } or { "NIGHT", "HIM", "ME", "SHOP", "EVENTS", "ENDINGS", "COINS" }) do
-		local b = UI.new("TextButton", { Size = UDim2.fromOffset(67, 32), Text = name, Font = UI.Font.Bold, TextSize = 12, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
+	local names = lobby and { "COINS" } or (limited() and { "NIGHT", "HIM", "ME", "EVENTS", "ENDINGS" } or { "NIGHT", "HIM", "ME", "SHOP", "EVENTS", "ENDINGS", "COINS" })
+	for i, name in names do
+		local b = UI.new("TextButton", { Size = UDim2.new(1 / #names, -6, 0, 32), Text = name, Font = UI.Font.Bold, TextSize = 12, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
 		UI.corner(b, 8)
 		b.Activated:Connect(function()
 			show(name)
@@ -366,6 +378,9 @@ local function build()
 		end
 	end)
 	ctx.Remotes.Admin:FireServer("info")
+	if limited() then
+		status.Text = "Nights you use this on pay no coins and don't count for records."
+	end
 
 	-- live debug line
 	local acc = 0
@@ -396,14 +411,15 @@ function Admin.init(c)
 end
 
 function Admin.start()
-	if player:GetAttribute("IsAdmin") then
-		build()
-	end
-	player:GetAttributeChangedSignal("IsAdmin"):Connect(function()
-		if player:GetAttribute("IsAdmin") then
+	local function check()
+		-- (the pass: only in a night's server, never the lobby)
+		if player:GetAttribute("IsAdmin") or (player:GetAttribute("Pass_AdminPanel") and ctx.Mode ~= "Lobby") then
 			build()
 		end
-	end)
+	end
+	check()
+	player:GetAttributeChangedSignal("IsAdmin"):Connect(check)
+	player:GetAttributeChangedSignal("Pass_AdminPanel"):Connect(check)
 end
 
 return Admin

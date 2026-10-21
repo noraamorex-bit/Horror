@@ -20,7 +20,7 @@ local function setup()
 	ctx.Layout = H.load("Server/World/Layout")
 	local fired = {}
 	ctx.Remotes = setmetatable({}, { __index = function(t, k)
-		local r = { FireClient = function(_, p, a) table.insert(fired, { k, p, a }) end, FireAllClients = function() end, OnServerEvent = H.signal() }
+		local r = { FireClient = function(_, p, a, b) table.insert(fired, { k, p, a, b }) end, FireAllClients = function() end, OnServerEvent = H.signal() }
 		rawset(t, k, r)
 		return r
 	end })
@@ -183,6 +183,44 @@ local ok, err = pcall(function()
 	H.flush(ctx.Config.Firecracker.Fuse + 0.2)
 	assert(#bangs == 1 and bangs[1].Radius == ctx.Config.Firecracker.Noise and (bangs[1].Position - land).Magnitude < 0.1, "bang, where it landed")
 	print("drink + firecracker ok")
+	-- v106: the Admin panel pass: the panel without the coins / shop / free revives; what changes
+	-- the night only with friends; a night it changes pays nothing, for everyone in it
+	local buyer = mkPlayer("Buyer", 4242)
+	buyer:SetAttribute("Pass_AdminPanel", true)
+	H.services.Players.GetPlayers = function() return { owner, rando, buyer } end
+	local friends = {}
+	rawset(buyer, "IsFriendsWith", function(_, id) return friends[id] == true end)
+	assert(not ctx.Admin.isAdmin(buyer) and ctx.Admin.hasPass(buyer), "the pass is not the owner")
+	cmd(buyer, "info")
+	local infoData = nil
+	for _, f in fired do if f[1] == "AdminReply" and f[2] == buyer and type(f[4]) == "table" then infoData = f[4] end end
+	cmd(buyer, "coins", "5000"); assert((bank[buyer] or 0) == 0 and lastReply(buyer) == "Not in the admin panel pass.", "no coins with the pass")
+	for _, c in { { "give", "Rocket" }, { "pass", "VIP" }, { "candy", "5" }, { "becomehim" }, { "rocketcredit" }, { "revivecredit" } } do
+		cmd(buyer, c[1], c[2]); assert(lastReply(buyer) == "Not in the admin panel pass.", "pass can't: " .. c[1])
+	end
+	assert(not buyer:GetAttribute("Item_Rocket") and not buyer:GetAttribute("Pass_VIP"), "nothing paid for free")
+	cmd(buyer, "me", "revive"); assert(lastReply(buyer) == "Revives are Robux only.", "no free revive")
+	assert(not buyer:GetAttribute("AdminUsed"), "refused commands don't count")
+	cmd(buyer, "me", "items")
+	assert(buyer:GetAttribute("Item_Flashlight") == 1 and not buyer:GetAttribute("Item_Taser") and not buyer:GetAttribute("Item_PepperSpray"), "the free items only")
+	assert(buyer:GetAttribute("AdminUsed") == true and not ws:GetAttribute("AdminUsed"), "a personal command: only their own night pays nothing")
+	assert(ctx.Admin.uncredited(buyer) and not ctx.Admin.uncredited(rando), "uncredited: just the buyer")
+	-- a stranger (rando) in the server: nothing that changes their night
+	local frozen = ctx.Intruder.adminIsFrozen()
+	cmd(buyer, "ai", "freeze")
+	assert(ctx.Intruder.adminIsFrozen() == frozen and lastReply(buyer):find("Only with friends"), "not with a stranger here: " .. tostring(lastReply(buyer)))
+	cmd(buyer, "me", "ghost"); assert(buyer:GetAttribute("AdminGhost") == true, "own tools still work")
+	-- now they're friends: the whole panel, and the night pays nothing for anyone
+	friends[12345] = true
+	cmd(buyer, "ai", "freeze")
+	assert(ctx.Intruder.adminIsFrozen() ~= frozen, "with friends: him too: " .. tostring(lastReply(buyer)))
+	assert(ws:GetAttribute("AdminUsed") == true and ctx.Admin.uncredited(rando), "the night pays nothing for everyone in it")
+	local told = 0
+	for _, f in fired do if f[1] == "Notify" and type(f[3]) == "string" and f[3]:find("is using the admin panel") then told += 1 end end
+	assert(told == 3, "everyone is told, once: " .. told)
+	cmd(buyer, "ai", "freeze")
+	print("admin panel pass ok", infoData and infoData.Limited)
+	assert(infoData and infoData.Limited == true, "the pass's panel is told it's limited")
 	cmd(owner, "ending", "Sirens"); assert(ctx.Ending.isOver(), "ending")
 	print("admin ok")
 end)

@@ -127,7 +127,7 @@ end
 
 function PlayerState.resetPlayer(player: Player)
 	rushUntil[player] = nil
-	for _, attr in { "Rush", "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead", "WinTime", "NewBest", "Revives", "NightCounted" } do
+	for _, attr in { "Rush", "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead", "WinTime", "NewBest", "Revives", "NightCounted", "AdminUsed" } do
 		player:SetAttribute(attr, nil)
 	end
 	-- (last night's coin boosts, clues read and the secret ending's state)

@@ -6,6 +6,15 @@
 	Only for the people in Config.Admins (and the experience's owner, and anyone in Studio).
 	Every command is checked here, on the server, against the player's UserId: the client panel
 	only exists for admins, but even a hand-made remote call from anyone else does nothing.
+
+	The Admin panel pass (v106, 249 R$, Config.Shop.Passes AdminPanel; the owner: "exactly what I
+	have except maybe not the coins part and some other unfair stuff"): in a night, everything
+	but the COINS and SHOP tabs (no coins, candy, passes, paid gear, become him, saved credits or
+	free revives). What it changes for the whole night (acts, events, endings, him, help,
+	cutscenes) only works when everyone else in the server is a friend or has the panel too, so
+	nobody matched into a stranger's night gets their night skipped. A night it changes pays no
+	coins and counts for nothing (Admin.uncredited: no coins, quests, titles, badges, candy, nights
+	or boards), for everyone in it; personal ones (god, ghost, items...) only for the player.
 ]]
 
 local Players = game:GetService("Players")
@@ -30,6 +39,45 @@ function Admin.isAdmin(player: Player): boolean
 		return true
 	end
 	return RunService:IsStudio()
+end
+
+-- what a pass holder can't use (the owner's "coins part and some other unfair stuff")
+local OWNER_ONLY = { coins = true, candy = true, pass = true, give = true, becomehim = true, rocketcredit = true, revivecredit = true }
+-- what changes the night for everyone in it
+local NIGHT_WIDE = { start = true, act = true, nextact = true, restartact = true, restart = true, event = true, ending = true, help = true, finale = true, police = true, ai = true, cut = true }
+
+function Admin.hasPass(player: Player): boolean
+	return player:GetAttribute("Pass_AdminPanel") == true
+end
+
+-- no coins, titles, badges or records for this player's night (a pass holder's panel was used)
+function Admin.uncredited(player: Player): boolean
+	if workspace:GetAttribute("AdminUsed") or player:GetAttribute("AdminUsed") then
+		return true
+	end
+	-- (god / ghost stay on between nights)
+	return (player:GetAttribute("AdminGod") or player:GetAttribute("AdminGhost")) and not Admin.isAdmin(player) or false
+end
+
+-- everyone else in the server: a friend, an admin or another pass holder?
+local friendCache: { [string]: boolean } = {}
+local function strangersHere(player: Player): boolean
+	for _, o in Players:GetPlayers() do
+		if o ~= player and not Admin.isAdmin(o) and not Admin.hasPass(o) then
+			local key = player.UserId .. ":" .. o.UserId
+			-- (only "yes" is kept: they may become friends mid-night)
+			if not friendCache[key] then
+				local ok, yes = pcall(function()
+					return player:IsFriendsWith(o.UserId)
+				end)
+				if not ok or yes ~= true then
+					return true
+				end
+				friendCache[key] = true
+			end
+		end
+	end
+	return false
 end
 
 local ITEMS = { "Flashlight", "Walkie", "PepperSpray", "HouseKeys", "CarKeys", "BasementKey", "ElectricalTape", "Poker", "Multitool", "Scissors", "Batteries" }
@@ -190,13 +238,17 @@ COMMANDS.me = function(player, arg)
 		return "Only during a night you're in."
 	end
 	if arg == "items" then
-		for item, n in GEAR do
-			if not ctx.Inventory.has(player, item) then
-				ctx.Inventory.give(player, item, n)
+		local owner = player:GetAttribute("IsAdmin") == true
+		if owner then
+			for item, n in GEAR do
+				if not ctx.Inventory.has(player, item) then
+					ctx.Inventory.give(player, item, n)
+				end
 			end
 		end
 		for _, item in ITEMS do
-			if not ctx.Inventory.has(player, item) then
+			-- (the spray is Head start's: pass holders get the free things only)
+			if not ctx.Inventory.has(player, item) and (owner or item ~= "PepperSpray") then
 				ctx.Inventory.give(player, item, 1)
 			end
 		end
@@ -359,15 +411,40 @@ function Admin.start()
 			player:SetAttribute("IsAdmin", true)
 		end
 	end
+	-- the first time a pass holder's panel changes the night: everyone hears it pays nothing
+	local function taint(player: Player, nightWide: boolean)
+		if Admin.isAdmin(player) then
+			return
+		end
+		player:SetAttribute("AdminUsed", true)
+		if nightWide and not workspace:GetAttribute("AdminUsed") then
+			workspace:SetAttribute("AdminUsed", true)
+			for _, p in Players:GetPlayers() do
+				ctx.Remotes.Notify:FireClient(p, player.DisplayName .. " is using the admin panel: no coins or records tonight.", "info")
+			end
+		end
+		if ctx.Journey then
+			ctx.Journey.event(player, "AdminPanel")
+		end
+	end
 	for _, p in Players:GetPlayers() do
 		mark(p)
 	end
 	Players.PlayerAdded:Connect(mark)
 	ctx.Remotes.Admin.OnServerEvent:Connect(function(player, cmd, arg)
-		if not Admin.isAdmin(player) then
-			return -- (not the owner: ignored)
+		local owner = Admin.isAdmin(player)
+		if not owner and not Admin.hasPass(player) then
+			return -- (not the owner and no pass: ignored)
 		end
 		if type(cmd) ~= "string" or (arg ~= nil and type(arg) ~= "string") then
+			return
+		end
+		if not owner and (not ctx.Director or OWNER_ONLY[cmd]) then
+			reply(player, "Not in the admin panel pass.")
+			return
+		end
+		if not owner and cmd == "me" and arg == "revive" then
+			reply(player, "Revives are Robux only.")
 			return
 		end
 		if cmd == "info" and not ctx.Director then
@@ -393,6 +470,7 @@ function Admin.start()
 				Events = ctx.Director.adminEventIds(),
 				Endings = endings,
 				Acts = ctx.Director.ActOrder,
+				Limited = not owner or nil,
 			})
 			return
 		end
@@ -401,7 +479,14 @@ function Admin.start()
 			reply(player, "Unknown command.")
 			return
 		end
+		if not owner and NIGHT_WIDE[cmd] and strangersHere(player) then
+			reply(player, "Only with friends: someone in this server isn't your friend. (Your own tools still work: ME tab.)")
+			return
+		end
 		local ok, result = pcall(fn, player, arg)
+		if ok and not owner and cmd ~= "events" and inNight() then
+			taint(player, NIGHT_WIDE[cmd] == true)
+		end
 		reply(player, ok and tostring(result or "Done.") or ("Error: " .. tostring(result)))
 	end)
 end

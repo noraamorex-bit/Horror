@@ -4,6 +4,8 @@
 	for whatever you're playing on (keyboard, touch or gamepad).
 ]]
 
+local Players = game:GetService("Players")
+
 local Thoughts = {}
 local ctx
 
@@ -104,6 +106,10 @@ local function run()
 			break
 		end
 		line.Text = item.Text
+		-- (your inner voice, quietly: client Voices)
+		if ctx.Voices then
+			ctx.Voices.say(item.Text, ctx.Voices.forPlayer(Players.LocalPlayer), { Channel = "Thought", Volume = ctx.Story.Voices.Thought })
+		end
 		tip.Text = hintText(item.Hint)
 		tip.Visible = tip.Text ~= ""
 		frame.Visible = true

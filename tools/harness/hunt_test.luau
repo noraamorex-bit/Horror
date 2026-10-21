@@ -9,7 +9,8 @@ local ok, err = pcall(function()
 	ctx.Util = H.load("RS/Shared/Util")
 	ctx.Builder = H.load("Server/World/Builder")
 	ctx.Layout = H.load("Server/World/Layout")
-	ctx.Remotes = setmetatable({}, { __index = function() return { FireClient = function() end, FireAllClients = function() end, OnServerEvent = H.signal() } end })
+	local voiced = {} -- (v106: what he said: {text, kind})
+	ctx.Remotes = setmetatable({}, { __index = function(_, k) return { FireClient = function() end, FireAllClients = function(_, a, b) if k == "HisVoice" then table.insert(voiced, { a, b }) end end, OnServerEvent = H.signal() } end })
 	local ORDER = { "Audio=AudioService", "Noise=NoiseService", "Interaction=InteractionService", "Inventory=InventoryService", "Power=PowerService", "Doors=DoorService", "PlayerState=PlayerStateService", "Hiding=HidingService", "Capture=CaptureService", "Objectives=ObjectiveService", "Dialogue=DialogueService", "Phone=PhoneService", "Escape=EscapeService", "Chat=ChatService", "Ending=EndingService" }
 	local names = {}
 	for _, name in ORDER do
@@ -26,6 +27,7 @@ local ok, err = pcall(function()
 	ctx.restart = function() print("restart called") end
 	for _, k in names do if ctx[k].start then ctx[k].start() end end
 	print("started")
+	assert(not ctx.Intruder._speak("Murmur", true), "he says nothing before the hunt")
 	local R = H.roblox
 	-- a controllable clock: waits advance it, so spawned loops run straight through
 	local T = 5000
@@ -369,6 +371,27 @@ local ok, err = pcall(function()
 	local e2 = ctx.Intruder._state().EntrySpot
 	local d2 = math.min((e2 - aRoot.Position).Magnitude, (e2 - bRoot.Position).Magnitude)
 	print("11 with them at the hatch he came in at", e2, ("%.0f studs away"):format(d2))
+	-- v106: he talks during the hunt (a grab always), never the same line twice in a row
+	local kinds = {}
+	for i, v in voiced do
+		kinds[v[2]] = (kinds[v[2]] or 0) + 1
+		assert(type(v[1]) == "string" and v[1] ~= "", "a line")
+		assert(i == 1 or voiced[i - 1][1] ~= v[1], "never the same line twice in a row: " .. v[1])
+	end
+	local list = {}
+	for k, n in kinds do table.insert(list, k .. "=" .. n) end
+	table.sort(list)
+	print("12 he said", #voiced, "lines:", table.concat(list, " "))
+	assert((kinds.Grab or 0) >= 1, "a grab comes with a line")
+	local st = ctx.Intruder._state()
+	if st.Mode == "Hunt" and st.InHouse then
+		st.LastSpoke, st.SpokeAt = -1e9, {}
+		assert(ctx.Intruder._speak("Murmur"), "a murmur")
+		assert(not ctx.Intruder._speak("Lost"), "not right after another line (Gap)")
+		assert(ctx.Intruder._speak("Behind", true), "a moment that can't wait")
+		assert(not ctx.Intruder._speak("Behind", true) or ctx.Story.HisLines.Every.Behind == 0, "per kind")
+		print("   speak gating ok")
+	end
 	assert(e2 ~= hatch and d2 >= 45, "not down the hatch on top of them")
 end)
 print(ok and "HUNT OK" or ("HUNT FAIL: " .. tostring(err)))
