@@ -11,6 +11,11 @@
 // hud (reel 36, "simulate gameplay"): the game's own HUD drawn over the footage, as on a phone:
 //   { obj: 'objective text', sel: hotbar slot (1-based), stam: 0..1 (the sprint bar), hb: seconds into
 //     the heartbeat minigame, hbHint, notice: 'text', chat: [[name, colour, message], ...] }
+// (reel 37) more of the game's HUD: meter: {label, v (0..1), col} (the call / breath bar), cap: a sound
+//   caption ("[A voice, close] ..."), police: 'Police: 1:52' (under the objective), cnt: {slot: 'n'}
+//   (an item's count right now), prompt: {x, y, action, object, key, p} (a ProximityPrompt at x,y on the
+//   1080x1920 frame, its ring filled to p); and per frame: vm: {item: 'taser', kick} (the taser held
+//   bottom right), zap: {from: [x, y], to: [x, y], k} (the shot: a jagged bolt and a flash).
 // scareI (frames since the scare began): the first 3 pixelated and blown out, then the real frame,
 // shaking, punched in, with a red flash.
 import { chromium } from 'playwright';
@@ -104,11 +109,30 @@ body.brand #card { top:282px; }
 #note { position:absolute; left:0; right:0; top:1236px; text-align:center; }
 #noteB { display:inline-block; background:rgba(8,8,10,.75); color:#fff; font-family:O; font-size:34px; padding:14px 30px; border-radius:12px; }
 #redf { background:#c0101a; mix-blend-mode:multiply; opacity:0; }
+#police { margin-top:8px; font-family:O; font-size:28px; color:#9fd0ff; }
+#meter { position:absolute; left:0; right:0; top:1072px; text-align:center; }
+#meterB { display:inline-block; width:540px; background:rgba(8,8,10,.66); border-radius:12px; padding:10px 18px 14px; box-sizing:border-box; }
+#meterL { font-family:O; font-size:28px; color:#fff; text-align:left; }
+#meterT { margin-top:8px; height:12px; border-radius:6px; background:rgba(255,255,255,.18); overflow:hidden; }
+#meterF { height:100%; border-radius:6px; }
+#cap { position:absolute; left:0; right:0; top:1160px; text-align:center; }
+#capB { display:inline-block; max-width:900px; background:rgba(8,8,10,.62); color:#e9e9e2; font-family:O; font-size:34px; padding:10px 24px; border-radius:10px; }
+#prompt { position:absolute; width:340px; height:104px; }
+#prK { position:absolute; left:0; top:0; width:104px; height:104px; }
+#prK svg { position:absolute; inset:0; }
+#prKey { position:absolute; inset:0; text-align:center; font-family:O; font-size:42px; line-height:104px; color:#fff; }
+#prBox { position:absolute; left:112px; top:12px; height:80px; padding:0 22px; border-radius:10px; background:rgba(20,20,24,.72); white-space:nowrap; }
+#prO { font-family:OR; font-size:24px; color:#cfcfd6; margin-top:9px; }
+#prA { font-family:O; font-size:34px; color:#fff; line-height:38px; }
+#zap { opacity:1; }
+#vm { position:absolute; left:640px; top:1300px; width:520px; height:620px; opacity:0; }
 </style></head><body>
 <img id="base"/>
 <canvas id="pix" width="54" height="96"></canvas>
 <div class="l" id="vig"></div>
 <canvas class="l" id="rain" width="540" height="960" style="width:1080px;height:1920px"></canvas>
+<canvas class="l" id="zap" width="1080" height="1920"></canvas>
+<div id="vm"><svg viewBox="0 0 260 310" width="520" height="620"><g transform="rotate(-28 150 200)"><path d="M70 120h120l18 14v26H70z" fill="#f2c82a" stroke="#111" stroke-width="5"/><rect x="70" y="132" width="120" height="10" fill="#1d1d1f"/><path d="M92 158h52l-12 110H78z" fill="#232326" stroke="#111" stroke-width="5"/><path d="M78 268c40 10 70 30 90 60l-110 0z" fill="#c8946c" stroke="#3a2a20" stroke-width="4"/><path d="M196 122l22 -14M196 156l22 14" stroke="#8fd3ff" stroke-width="7" stroke-linecap="round"/></g></svg></div>
 <canvas class="l" id="grain" width="360" height="640" style="width:1080px;height:1920px"></canvas>
 <div class="o hk sh" id="h1"><span class="y" id="w1">PEAK</span> <span class="r" id="w2">ROBLOX</span></div>
 <div class="o hk sh" id="h2">HORROR GAME</div>
@@ -118,11 +142,14 @@ body.brand #card { top:282px; }
 <div class="o sh" id="low">${T.low}</div>
 <div class="o sh" id="thought"></div>
 <div class="o" id="glt">${T.glitch}</div>
-<div class="o" id="hud"><div id="chat"></div><div id="obj"><div id="objL">OBJECTIVE</div><div id="objT"></div></div>
+<div class="o" id="hud"><div id="chat"></div><div id="obj"><div id="objL">OBJECTIVE</div><div id="objT"></div><div id="police"></div></div>
 <div id="stam"><div id="stamF"></div></div>
 <div id="hot">${T.items.map(([k, c], j) => `<div class="slot" id="slot${j + 1}"><div class="k">${j + 1}</div>${ICON[k] || ''}<div class="c">${c}</div></div>`).join('')}</div>
 <div id="hb"><div id="hbLane"></div><div id="hbHalves"></div><div id="hbHeart">♥</div><div id="hbMiss">· · ·</div><div id="hbHint"></div></div>
-<div id="note"><span id="noteB"></span></div></div>
+<div id="note"><span id="noteB"></span></div>
+<div id="meter"><div id="meterB"><div id="meterL"></div><div id="meterT"><div id="meterF"></div></div></div></div>
+<div id="cap"><span id="capB"></span></div>
+<div id="prompt"><div id="prK"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="40" fill="rgba(20,20,24,.78)"/><circle cx="52" cy="52" r="44" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="6"/><circle id="prRing" cx="52" cy="52" r="44" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="0 999" transform="rotate(-90 52 52)" stroke-linecap="round"/></svg><div id="prKey">E</div></div><div id="prBox"><div id="prO"></div><div id="prA"></div></div></div></div>
 <div class="l" id="redf"></div>
 <div class="o" id="brand"><div id="tag">${T.tag}</div></div>
 <div class="o sh" id="bname">${T.name.replace('attic.', '<span class="r">attic.</span>')}</div>
@@ -146,7 +173,26 @@ function hud(fr, f) {
   if (!h) return;
   $('obj').style.display = h.obj ? 'block' : 'none';
   if (h.obj) $('objT').innerHTML = h.obj;
-  for (let j = 1; j <= ${T.items.length}; j++) $('slot' + j).classList.toggle('on', h.sel === j);
+  for (let j = 1; j <= ${T.items.length}; j++) {
+    $('slot' + j).classList.toggle('on', h.sel === j);
+    const c = $('slot' + j).querySelector('.c');
+    if (!c.dataset.d) c.dataset.d = c.textContent;
+    c.textContent = h.cnt && h.cnt[j] !== undefined ? h.cnt[j] : c.dataset.d;
+  }
+  $('police').style.display = h.police ? 'block' : 'none';
+  if (h.police) $('police').textContent = h.police;
+  $('meter').style.display = h.meter ? 'block' : 'none';
+  if (h.meter) { $('meterL').textContent = h.meter.label; $('meterF').style.width = (100 * h.meter.v) + '%'; $('meterF').style.background = h.meter.col || '#8fc8ff'; }
+  $('cap').style.display = h.cap ? 'block' : 'none';
+  if (h.cap) $('capB').textContent = h.cap;
+  $('prompt').style.display = h.prompt ? 'block' : 'none';
+  if (h.prompt) {
+    const pr = h.prompt;
+    $('prompt').style.left = (pr.x - 52) + 'px'; $('prompt').style.top = (pr.y - 52) + 'px';
+    $('prKey').textContent = pr.key || 'E'; $('prO').textContent = pr.object || ''; $('prA').textContent = pr.action;
+    const L = 2 * Math.PI * 44;
+    $('prRing').setAttribute('stroke-dasharray', (L * Math.max(0, Math.min(1, pr.p || 0))) + ' ' + L);
+  }
   $('hot').style.display = h.sel ? 'flex' : 'none';
   $('stam').style.display = h.stam === undefined ? 'none' : 'block';
   if (h.stam !== undefined) $('stamF').style.width = (100 * h.stam) + '%';
@@ -185,6 +231,36 @@ window.setFrame = (f, fr) => {
   for (const id of ['h1','h2','h3','part','card','low','thought','glt','endTop','endSub','brand','bname','e2']) $(id).style.opacity = 0;
   hud(fr, f);
   $('redf').style.opacity = 0;
+  // the taser in your hand, and the shot
+  const vm = $('vm');
+  vm.style.opacity = fr.vm && !fr.scare ? 1 : 0;
+  if (fr.vm) vm.style.transform = 'translate(' + (fr.vm.kick || 0) * 30 + 'px,' + (fr.vm.kick || 0) * 50 + 'px) rotate(' + (fr.vm.kick || 0) * -6 + 'deg)';
+  const zc = $('zap').getContext('2d'); zc.clearRect(0, 0, 1080, 1920);
+  if (fr.zap) {
+    const [x0, y0] = fr.zap.from, [x1, y1] = fr.zap.to, k = fr.zap.k ?? 1;
+    zc.globalCompositeOperation = 'lighter';
+    for (const [w, col] of [[26, 'rgba(70,140,255,' + 0.35 * k + ')'], [10, 'rgba(150,210,255,' + 0.8 * k + ')'], [3, 'rgba(255,255,255,' + k + ')']]) {
+      for (let s = 0; s < 2; s++) {
+        zc.beginPath(); zc.moveTo(x0, y0);
+        const n = 11;
+        for (let j = 1; j < n; j++) {
+          const t = j / n, jit = 46 * Math.sin(t * Math.PI);
+          zc.lineTo(x0 + (x1 - x0) * t + (rnd(f * 7 + j * 3 + s * 50) - .5) * jit, y0 + (y1 - y0) * t + (rnd(f * 11 + j * 5 + s * 70) - .5) * jit);
+        }
+        zc.lineTo(x1, y1); zc.strokeStyle = col; zc.lineWidth = w; zc.lineJoin = 'round'; zc.stroke();
+      }
+    }
+    // sparks where it lands, and a cold flash over everything
+    for (let j = 0; j < 22; j++) {
+      const a = rnd(f + j * 13) * Math.PI * 2, r = 20 + rnd(j * 7 + f) * 110 * k;
+      zc.beginPath(); zc.moveTo(x1, y1); zc.lineTo(x1 + Math.cos(a) * r, y1 + Math.sin(a) * r);
+      zc.strokeStyle = 'rgba(200,230,255,' + 0.9 * k + ')'; zc.lineWidth = 3; zc.stroke();
+    }
+    const g = zc.createRadialGradient(x1, y1, 0, x1, y1, 520);
+    g.addColorStop(0, 'rgba(170,215,255,' + 0.55 * k + ')'); g.addColorStop(1, 'rgba(60,110,255,0)');
+    zc.fillStyle = g; zc.fillRect(0, 0, 1080, 1920);
+    zc.globalCompositeOperation = 'source-over';
+  }
   if (BRAND && fr.section !== 'end') $('brand').style.opacity = 1;
   if (BRAND && fr.section === 'hook') $('bname').style.opacity = 1;
   // footage: dark, a little crushed, a touch of chromatic edge
