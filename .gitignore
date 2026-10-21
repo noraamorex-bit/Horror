@@ -19,3 +19,4 @@ tools/harness/zz_*.luau
 
 # pull_stats default output (player data: never commit)
 stats_dump.json*
+marketing/reel_source/*/edit.json
