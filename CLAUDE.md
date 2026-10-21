@@ -348,6 +348,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   flashlight), the turn-round lunge on 22.15 s; RUN. Glitch "he saw you". Portrait frames: friends
   10-15 studs away and fov ~70, or they fill the frame; his face glow near a ceiling makes a halo
   (glow 0.25 there). `reel38/probe.sh <frames>` renders single frames at full size.
+  **Part 4** (`reel39`, `peak_gameplay_part4.mp4`, 21 Oct): same style as Part 3 (real avatars, little
+  text). The upstairs hall → Jamie opens the linen closet, he's folded up inside and bursts out (jolt) →
+  the chase down the hall, Riley and Jamie dive aside → **the ROCKET LAUNCHER** (the pass in action:
+  comp_peak `vm: {item: 'rocket', kick, loaded}` on your shoulder, `rocket: {from, to, k}` trail projected
+  to him, `boom: {at, k}`; film2 per-frame `burst` light paints the hall orange) → he's down; into Lily's
+  play tent → through the flap: Riley crouched by the tea chair, he comes in and lifts Riley away (jolt)
+  → he comes back, folds down to the flap, his face at the gap on 22.15 s → RUN. Glitch "he came back".
+  Hotbar text.items flashlight + rocket. Caption: `he came back game in comments` + the hashtags.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
@@ -398,9 +406,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
-- **21 Oct (reel 38)**: the gameplay series Part 3 with real Roblox avatars, little text, four scares
-  (see Marketing). Next reel: Part 4 in the same style (ideas: the mimic calling you upstairs, the
-  mirror "I WATCH YOU SLEEP", the rocket launcher, Become Him from his side).
+- **21 Oct (reels 38-39)**: the gameplay series Parts 3 and 4 with real Roblox avatars, little text,
+  several scares; Part 4 shows the rocket launcher pass (see Marketing). Next reel: Part 5 in the same
+  style (ideas: the taser up close, the shower, Become Him from his side, the heartbeat minigame, the
+  secret ending's dinner with real avatars).
 
 - **21 Oct (v109 = place version 108)**, the owner: "only 3 items got in hot bar and rest sit in
   inventory. Increase hot bar size." Roblox's hotbar can't show more than 3 on a phone, so it's
