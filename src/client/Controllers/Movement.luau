@@ -162,6 +162,11 @@ function Movement.start()
 	end
 
 	local slowSeconds, fpsClock, frames = 0, 0, 0
+	-- (v107) a device that stays under LOW_FPS for LOW_FOR seconds goes light for the rest of the
+	-- session: thinner rain and mist, no dust (Player attribute LowPerf, local only; reported in Perf).
+	-- A few phones that quit mid-night sat at 8-20 fps
+	local LOW_FPS, LOW_FOR = 28, 4
+	local lowSeconds = 0
 	RunService.RenderStepped:Connect(function(dt)
 		-- frame rate once a second: three slow seconds in a row with the light on → no more shadows
 		fpsClock += dt
@@ -172,6 +177,13 @@ function Movement.start()
 			if localBeam.Shadows and localBeam.Enabled then
 				slowSeconds = fps < 40 and slowSeconds + 1 or 0
 				if slowSeconds >= 3 then
+					localBeam.Shadows = false
+				end
+			end
+			if not player:GetAttribute("LowPerf") then
+				lowSeconds = fps < LOW_FPS and lowSeconds + 1 or 0
+				if lowSeconds >= LOW_FOR then
+					player:SetAttribute("LowPerf", true)
 					localBeam.Shadows = false
 				end
 			end
@@ -215,7 +227,7 @@ function Movement.start()
 		end
 		-- (indoors only: outside it's raining)
 		local wantDust = on and ctx.Mode ~= "Lobby" and ctx.Rooms.isInside(cam.CFrame.Position)
-		dust.Rate = wantDust and (ctx.UI.isTouch() and 14 or 26) or 0
+		dust.Rate = (wantDust and not player:GetAttribute("LowPerf")) and (ctx.UI.isTouch() and 14 or 26) or 0
 		-- the server's copy (so others see your beam) stays off for you, and aims with your pitch
 		local head = char:FindFirstChild("Head")
 		local mount = head and head:FindFirstChild("FlashlightMount") :: Attachment?

@@ -758,20 +758,21 @@ Story.RoomThoughts = {
 
 Story.Thoughts = {
 	Intro = {
+		-- (v107: the first task comes straight after this line, the journal after that: phone players
+		-- took 47 s to the first task, PC 19 s, opening the journal first because the thought said so)
 		Host = {
-			"Mom left me a couple of things to do. It's in my journal.|journal",
 			"Parents gone for the weekend, friends over. This is going to be a good night.",
 		},
 		Guest = {
-			"Jamie's mom left us a couple of things to do. I should check the journal.|journal",
 			"Pizza, a movie, no parents. This is going to be a good night.",
 		},
 	},
 	-- a solo night: the friends never make it
 	SoloIntro = {
-		"Mom left me a couple of things to do. It's in my journal.|journal",
 		"Parents gone for the weekend. The storm's bad. Hope the others make it.",
 	},
+	-- (after the first task's line: where the rest of the list is)
+	JournalTip = "Mom left a couple more things to do. They're in my journal.|journal",
 	SoloFriendsStuck = "They're not coming. It's just me tonight. Just me and the storm.",
 	Objectives = {
 		OrderPizza = "I'm starving. Mom keeps the pizza menu on the fridge.",

@@ -178,9 +178,37 @@ function Atmosphere.init(c)
 	ctx.Atmosphere = Atmosphere
 end
 
+-- a thinner storm for a slow device (once)
+local lightened = false
+function Atmosphere.lighten()
+	if lightened then
+		return
+	end
+	lightened = true
+	local rain = workspace:FindFirstChild("ClientRain")
+	for _, e in rain and rain:GetDescendants() or {} do
+		if e:IsA("ParticleEmitter") then
+			e.Rate *= 0.35
+		end
+	end
+	if mist then
+		mist.Rate = math.min(mist.Rate, 3)
+	end
+	if splash then
+		splash.Rate *= 0.3
+	end
+end
+
 function Atmosphere.start()
 	buildRain()
 	buildMist()
+	-- (v107) a slow device (client Movement sets LowPerf): a thinner storm
+	local player = game:GetService("Players").LocalPlayer
+	player:GetAttributeChangedSignal("LowPerf"):Connect(function()
+		if player:GetAttribute("LowPerf") then
+			Atmosphere.lighten()
+		end
+	end)
 	flash = Instance.new("ColorCorrectionEffect")
 	flash.Name = "Lightning"
 	flash.Parent = Lighting

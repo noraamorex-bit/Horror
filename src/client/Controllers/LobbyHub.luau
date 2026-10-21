@@ -42,7 +42,7 @@ local function render(state)
 		queueStatus.Text = "This circle is full. Try another one."
 	else
 		-- (every circle counts down from 10 the moment someone steps in; 3 once it's full)
-		queueStatus.Text = state.Countdown and ("Starting in " .. tostring(state.Countdown) .. "... step off to cancel") or "Starting soon..."
+		queueStatus.Text = state.Countdown and ("Starting in " .. tostring(state.Countdown) .. "... walk away to cancel") or "Starting soon..."
 	end
 end
 

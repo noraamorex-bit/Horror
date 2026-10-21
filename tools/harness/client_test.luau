@@ -158,6 +158,20 @@ local ok, err = pcall(function()
 	player:SetAttribute("Battery", 50)
 	R.Chapter.OnClientEvent:Fire("I. Friday Night", "sub")
 	ctx.Notice.show({ Title = "You are Casey Brooks", Body = "x" })
+	-- v107: a slow device goes light: a thinner storm, no dust
+	do
+		local ws = H.unwrap(H.workspaceRoot)
+		local mistPart = ws:FindFirstChild("ClientMist")
+		local mist = mistPart and mistPart:FindFirstChildWhichIsA("ParticleEmitter")
+		local rain = ws:FindFirstChild("ClientRain")
+		local e = rain and rain:FindFirstChildWhichIsA("ParticleEmitter", true)
+		local r0 = e and e.Rate
+		mods.Atmosphere.lighten()
+		mods.Atmosphere.lighten() -- (once only)
+		assert(mist and mist.Rate <= 3, "thinner mist: " .. tostring(mist and mist.Rate))
+		assert(e and e.Rate < r0, "thinner rain")
+		print("low perf mode ok")
+	end
 	-- v106 Voices: who sounds like what; lines and his voice never break anything (silent here)
 	do
 		local Vo = mods.Voices

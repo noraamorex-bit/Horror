@@ -75,6 +75,7 @@ local function perfOf(p: Player): any
 	return {
 		Dev = s.Dev,
 		Q = s.Q,
+		Low = s.Low, -- (v107: the device went into its light mode, client Movement)
 		MemMax = s.MemMax and math.floor(s.MemMax) or nil,
 		FpsMin = round(s.FpsMin),
 		FpsAvg = s.N > 0 and round(s.FpsSum / s.N) or nil,
@@ -318,6 +319,16 @@ function Journey.lobbyQueued(p: Player, size: number)
 	end
 end
 
+-- (v107) a lobby moment worth counting on this visit: "Off" (stepped off a circle they'd queued
+-- in, before it went), "TpFail" (Roblox's teleport failed: retried), "MatchSlow" (the open-night
+-- lookup ran out of time)
+function Journey.lobbyMark(p: Player, key: string)
+	local s = lobby[p]
+	if s then
+		s[key] = (s[key] or 0) + 1
+	end
+end
+
 function Journey.lobbyTeleport(p: Player, joined: boolean?)
 	local s = lobby[p]
 	if s then
@@ -345,6 +356,9 @@ local function lobbyLeave(p: Player)
 		Queued = s.Queued,
 		Q = s.Q,
 		Tp = s.Tp,
+		Off = s.Off,
+		TpFail = s.TpFail,
+		MatchSlow = s.MatchSlow,
 		Perf = perfOf(p),
 	})
 end
@@ -427,6 +441,9 @@ function Journey.start()
 		end
 		if q and q == q then
 			s.Q = math.floor(q)
+		end
+		if info.Low == true then
+			s.Low = true
 		end
 		-- the device's script errors (client Diagnostics): kept small and clean
 		if type(info.Err) == "table" then

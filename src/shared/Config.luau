@@ -340,7 +340,7 @@ Config.Director = {
 Config.Thoughts = {
 	Duration = 5, -- seconds each line stays on screen
 	IdleHint = 35, -- seconds without progress before they remind themselves of the next task
-	FirstHint = 12, -- seconds into the night before the first task nudge
+	FirstHint = 3, -- seconds into the night before the first task nudge (it queues behind the opening line)
 	QuietGap = 4, -- seconds of quiet after a thought or conversation before a text or banter comes in
 }
 

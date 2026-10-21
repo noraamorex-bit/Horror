@@ -137,6 +137,13 @@ def report_lobby(lobby):
     late = [v for v in visits if v.get("Late")]
     tp = [v for v in visits if v.get("Tp") is not None]
     print(f"  joined a night in progress (MatchService, v78+): {len(late)} of {len(tp)} teleports")
+    # (v107) stepped off a circle after queuing, teleports that failed (retried), open-night lookups that timed out
+    off = [v for v in visits if v.get("Off")]
+    fail = [v for v in visits if v.get("TpFail")]
+    slow = [v for v in visits if v.get("MatchSlow")]
+    qnt = [v for v in visits if v.get("Queued") is not None and v.get("Tp") is None]
+    print(f"  queued but never sent: {len(qnt)} of {len([v for v in visits if v.get('Queued') is not None])}  "
+          f"(v107+: stepped off after queuing {len(off)}, teleport failed {len(fail)}, match lookup timed out {len(slow)})")
 
 
 def report_nights(nights):

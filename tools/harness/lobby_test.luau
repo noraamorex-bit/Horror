@@ -162,6 +162,40 @@ local ok, err = pcall(function()
 	Lobby._invited(other)
 	assert(#teleports == before + 1, "not an invite: stays in the lobby")
 	print("invites ok")
+	-- (v107) once queued, a nudge off the circle doesn't cancel it; walking right away does
+	L.Countdown = 10
+	ctx.Match = { find = function() return nil end }
+	for _, gone in { a, b } do -- (the pair sent from Pad2 earlier has left: it's free)
+		rawset(gone, "Parent", nil)
+		table.remove(players, table.find(players, gone))
+	end
+	hb:Fire(0.3)
+	local q, rq = makePlayer("Queued")
+	local pad2c = lobby:FindFirstChild("Pad2").CFrame.Position
+	rq.CFrame = roblox.CFrame.new(pad2c + roblox.Vector3.new(0, 3, 0))
+	hb:Fire(0.3)
+	assert(string.find(lastQueue(), "Starting 1/2"), "queued: " .. tostring(lastQueue()))
+	rq.CFrame = roblox.CFrame.new(pad2c + roblox.Vector3.new(9, 3, 0)) -- (off the ring, still close)
+	hb:Fire(0.3)
+	assert(string.find(lastQueue(), "Starting 1/2"), "a nudge off the ring: still queued, got " .. tostring(lastQueue()))
+	rq.CFrame = roblox.CFrame.new(pad2c + roblox.Vector3.new(25, 3, 0))
+	hb:Fire(0.3)
+	local gone = true
+	for i = #fired, math.max(1, #fired - 3), -1 do if fired[i] == "Queue:Starting 1/2" then gone = false end end
+	assert(fired[#fired] == "Queue:nil" or gone, "walked away: no longer queued, got " .. tostring(fired[#fired]))
+	-- but a newcomer has to actually stand in it
+	local w, rw = makePlayer("Walker")
+	rw.CFrame = roblox.CFrame.new(pad2c + roblox.Vector3.new(9, 3, 0))
+	hb:Fire(0.3)
+	assert(fired[#fired] == "Queue:nil", "near isn't in: " .. tostring(fired[#fired]))
+	print("sticky queue ok")
+	-- (v107) the open-night lookup hanging (MemoryStore) never holds the circle: a fresh house after MATCH_WAIT
+	ctx.Match = { find = function() coroutine.yield() return "too-late" end }
+	local t0 = os.clock()
+	assert(Lobby._findWithin(1, 0.3, {}) == nil and os.clock() - t0 < 1.5, "gave up on the lookup in time")
+	ctx.Match = { find = function() return "night-9" end }
+	assert(Lobby._findWithin(1, 0.3, {}) == "night-9", "a quick answer is used")
+	print("match lookup timeout ok")
 end)
 print(ok and "LOBBY OK" or ("LOBBY FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

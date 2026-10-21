@@ -539,7 +539,25 @@ Director._state = function()
 end
 Director._beginVote = beginVote
 
+-- everyone here on their very first night? (nil while someone's saved stats are still loading)
+local function firstNightsOnly(): boolean?
+	for _, p in Players:GetPlayers() do
+		local n = p:GetAttribute("StatNights")
+		if n == nil then
+			return nil
+		end
+		if (tonumber(n) or 0) >= 1 then
+			return false
+		end
+	end
+	return true
+end
+Director._firstNightsOnly = firstNightsOnly -- (tests)
+
 -- a group's own server: start as soon as the whole group has arrived (or after a timeout)
+-- (v107: a brand-new solo player sat through a 4 s countdown, a 12 s vote with nothing to choose and
+-- the result before anything happened; 14 of 25 act I quits were in the night's first 30 s, nearly
+-- all of them new players alone. So: 1 s once everyone's here, and no vote on a first night)
 local function arrivalTick()
 	local players = Players:GetPlayers()
 	if #players == 0 then
@@ -548,17 +566,32 @@ local function arrivalTick()
 	state.FirstArrival = state.FirstArrival or os.clock()
 	local expected = math.max(state.Expected or 1, 1)
 	if not state.Countdown then
-		if #players >= expected or os.clock() - state.FirstArrival >= ctx.Config.Lobby.ArrivalTimeout then
-			state.Countdown = 4
+		if #players >= expected then
+			state.Countdown = 1
+		elseif os.clock() - state.FirstArrival >= ctx.Config.Lobby.ArrivalTimeout then
+			state.Countdown = 3
 		end
 	else
 		state.Countdown -= 1
 	end
 	broadcastLobby()
 	if state.Countdown and state.Countdown <= 0 then
-		beginVote()
+		local fresh = firstNightsOnly()
+		if fresh == nil and os.clock() - state.FirstArrival < 6 then
+			return -- (their saved stats are a moment away)
+		end
+		if fresh ~= false then
+			-- (nothing to vote on: NIGHTMARE is locked, and HARD is no first night)
+			state.Countdown = nil
+			setDifficulty("Normal")
+			startGame(false)
+		else
+			beginVote()
+		end
 	end
 end
+
+Director._arrivalTick = arrivalTick -- (tests)
 
 local function lobbyTick()
 	if voteTick() then
@@ -621,7 +654,7 @@ function Director.startAct(name: string, cause: Player?)
 	ctx.Escape.refreshLandline()
 	setGap()
 
-	state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint + 10
+	state.NextHintAt = os.clock() + 22 -- (later acts: their own lines first)
 	local actLines = ctx.Story.Thoughts.Acts[name]
 	-- (act III's lines come with the blackout itself: lightsOut below)
 	if actLines and not skipping and name ~= "SomeoneElse" then
@@ -667,7 +700,16 @@ function Director.startAct(name: string, cause: Player?)
 			ctx.Journey.plan(NightPlan.key(chores))
 		end
 		ctx.Intruder.setMode("Offstage")
+		-- (the first task straight after the opening line; the journal after that)
 		state.NextHintAt = os.clock() + ctx.Config.Thoughts.FirstHint
+		if not skipping and ctx.Story.Thoughts.JournalTip then
+			local myNight = state
+			task.delay(ctx.Config.Thoughts.FirstHint + 1, function()
+				if state == myNight and state.Act == "Evening" then
+					Director.think(nil, ctx.Story.Thoughts.JournalTip)
+				end
+			end)
+		end
 		local session = ctx.Util.sessionPlayers()
 		local solo = #session == 1
 		for _, p in session do

@@ -214,4 +214,21 @@ function Match.find(count: number): string?
 	return nil
 end
 
+-- (lobby) places claimed by a lookup that came back too late go back (LobbyServer.findWithin)
+function Match.release(accessCode: string, count: number)
+	local m = getMap()
+	if not m then
+		return
+	end
+	pcall(function()
+		m:UpdateAsync(accessCode, function(old)
+			if type(old) == "table" and tonumber(old.n) then
+				old.n = math.max(0, old.n - count)
+				return old
+			end
+			return nil
+		end, TTL)
+	end)
+end
+
 return Match

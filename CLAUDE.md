@@ -373,6 +373,20 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **21 Oct (v107 = place version 106)**, the owner: "Deeply analyze game statistics and improve the game." Logs v104-v105
+  (94 nights, 238 lobby visits): brand-new players queued 93% but only 71% got teleported (37 of 168
+  stepped off the ring on a phone or waited on a hung MatchService lookup); new solo players waited
+  ~20 s (countdown + a vote with nothing to choose) and 14 of 25 act I quits were in the first 30 s;
+  phones reached the first task in 47 s (PC 19 s), phones quit mid-night 53% (PC 12%), solo nights
+  81% no ending; sales: Become Him opened 49 times, bought 0 (50 R$), Pick your role 0/18, revive 2/8;
+  joins in progress are rare because traffic is low (not a bug). HallBath captures fell after v105
+  (26 of 57 → 2 of 12, small sample). Done: sticky queue + lookup timeout + teleport retry (lobby),
+  no countdown/vote for first nights, the first task before the journal (GDD "From PLAY to the first
+  task, fast"), a light mode for slow devices (thinner rain/mist, no dust under 28 fps for 4 s;
+  logged as Perf.Low). **Published as place version 106** (logs say 106). Owner to decide: Become Him at
+  25 R$ (Creator Hub → the product's price). Next: `--since=106`: "queued but never sent" and its Off/TpFail/MatchSlow, act I quits in the first 30 s,
+  phone time to OrderPizza:Menu.
+
 - **21 Oct (reel 37)**: the gameplay series Part 2 (see Marketing). Next reel: Part 3 (ideas: the
   mimic calling you upstairs, the mirror "I WATCH YOU SLEEP", hiding under a bed while he says "I can
   hear you breathing", the rocket launcher, Become Him from his side).
@@ -610,7 +624,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 105).
+  (last published: version 106; the notes' "v107" = place version 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

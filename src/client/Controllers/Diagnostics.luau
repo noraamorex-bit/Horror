@@ -88,6 +88,7 @@ function Diagnostics.start()
 					Mem = okM and mem or nil,
 					Fps = math.floor(fps * 10 + 0.5) / 10,
 					Q = quality(),
+					Low = game:GetService("Players").LocalPlayer:GetAttribute("LowPerf") == true or nil,
 					Err = #errors > 0 and errors or nil,
 				})
 			end)
