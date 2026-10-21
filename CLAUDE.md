@@ -333,6 +333,21 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   (`flash`) + a sky colour (`bg`), not film2's `lightning` (it lights the room). His face glow
   (`glow`) lights ceilings/floors near him: keep it low (0.5-2) when he's near a surface.
   Caption: `he heard the call game in comments` + the hashtags.
+  **Part 3** (`reel38`, `peak_gameplay_part3.mp4`, 21 Oct; the owner on Part 2: "too much text… reduce
+  text, increase gameplay and scares. Try using actual Roblox characters instead of your blocky thing"):
+  **real Roblox avatars** in Roblox's own catalog items (film2 `avatar_rbx.js` + `avatar_items.luau`: the
+  classic shirt/pants templates mapped onto the R15 block body, the classic head with real face decals
+  (Smile, ZOMG, Uh Oh, :-o), real hair meshes on their attachments; spec avatar `rbx: { cache, skin,
+  shirt, pants, faces, hats }`, per-frame `face`): Riley = Pal Hair (bacon hair) + Blue and Black
+  Motorcycle Shirt + Black Jeans, yellow skin; Jamie = Orange Beanie with Black Hair + Denim Jacket with
+  White Hoodie + Black Jeans with White Shoes. **Text cut to the hook, the tag + NAME line
+  (`cardLines: 1`), the glitch line and the end card; HUD only the hotbar and the stamina bar.**
+  **Four scares**: he climbs onto the kitchen island and pounces (comp_peak `jolt`: punched in, shaking,
+  red flash, a hit + screech in audio.py), he grabs Riley in the front hall, he takes Jamie while you
+  hide under the master bed (seen through the slit: his legs, Jamie lifted away kicking, the dropped
+  flashlight), the turn-round lunge on 22.15 s; RUN. Glitch "he saw you". Portrait frames: friends
+  10-15 studs away and fov ~70, or they fill the frame; his face glow near a ceiling makes a halo
+  (glow 0.25 there). `reel38/probe.sh <frames>` renders single frames at full size.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
@@ -382,6 +397,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **21 Oct (reel 38)**: the gameplay series Part 3 with real Roblox avatars, little text, four scares
+  (see Marketing). Next reel: Part 4 in the same style (ideas: the mimic calling you upstairs, the
+  mirror "I WATCH YOU SLEEP", the rocket launcher, Become Him from his side).
 
 - **21 Oct (v109 = place version 108)**, the owner: "only 3 items got in hot bar and rest sit in
   inventory. Increase hot bar size." Roblox's hotbar can't show more than 3 on a phone, so it's
