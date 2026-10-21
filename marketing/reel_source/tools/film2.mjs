@@ -1,7 +1,7 @@
 // node film.mjs world.json creature_frames.json spec.json outdir [from] [to]
 // spec: { W, H, shots: { name: { center:[x,y,z], lampRadius, maxLamps, lights:[{p,col,b,r}] } },
 //         frames: [{ f, shot, cam:{pos,look,fov,roll}, lamps, ambient, moon, lightning, fog, bg, exposure,
-//                    flash:{i, pos, target, angle}, creature: true|false, radius, hide:[names | {near:[x,z], r}] }] }
+//                    flash:{i, pos, target, angle}, burst:{pos, col, i, r}, creature: true|false, radius, hide:[names | {near:[x,z], r}] }] }
 import { chromium } from 'playwright';
 import fs from 'fs';
 import { loadProps } from '../../../tools/assets/propload.mjs';
@@ -223,6 +223,8 @@ for (const fr of spec.frames) {
       window.MOON = add(new T.DirectionalLight(0x9fb4d8, 0.05)); window.MOON.position.set(-60, 90, -80);
       window.BOLT = add(new T.DirectionalLight(0xc8d8ff, 0)); window.BOLT.position.set(30, 120, -160);
       window.FLASH = add(new T.SpotLight(0xfff2dc, 0, 110, 0.42, 0.55, 1.1)); add(window.FLASH.target);
+      // (reel 39) a burst of light for a frame or two: an explosion (fr.burst: { pos, col, i, r })
+      window.BURST = add(new T.PointLight(0xff9a3c, 0, 40, 1.4));
       const c = shotCfg.center;
       const ls = window.LIGHTS.map(l => ({ l, d: Math.hypot(l.p[0] - c[0], l.p[1] - c[1], l.p[2] - c[2]) }))
         .filter(x => x.d < (shotCfg.lampRadius || 50)).sort((a, b) => a.d - b.d).slice(0, shotCfg.maxLamps ?? 14);
@@ -262,6 +264,10 @@ for (const fr of spec.frames) {
       window.FLASH.intensity = fl.i; window.FLASH.angle = fl.angle || 0.42;
       window.FLASH.position.set(...fl.pos); window.FLASH.target.position.set(...fl.target); window.FLASH.target.updateMatrixWorld();
     } else window.FLASH.intensity = 0;
+    if (fr.burst && fr.burst.i > 0) {
+      window.BURST.intensity = fr.burst.i; window.BURST.distance = fr.burst.r || 40;
+      window.BURST.color.set(fr.burst.col || '#ff9a3c'); window.BURST.position.set(...fr.burst.pos);
+    } else window.BURST.intensity = 0;
     if (window.DOOR && window.DOOR.length) {
       const h = shotCfg.door.hinge, a = fr.door || 0;
       const R = shotCfg.door.axis === 'x' ? new T.Matrix4().makeRotationX(a) : shotCfg.door.axis === 'z' ? new T.Matrix4().makeRotationZ(a) : new T.Matrix4().makeRotationY(a);

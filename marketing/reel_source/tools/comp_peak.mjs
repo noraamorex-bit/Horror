@@ -16,6 +16,8 @@
 //   (an item's count right now), prompt: {x, y, action, object, key, p} (a ProximityPrompt at x,y on the
 //   1080x1920 frame, its ring filled to p); and per frame: vm: {item: 'taser', kick} (the taser held
 //   bottom right), zap: {from: [x, y], to: [x, y], k} (the shot: a jagged bolt and a flash).
+// (reel 39) vm: {item: 'rocket', kick, loaded} (the rocket launcher on your shoulder, muzzle at 637, 1286),
+//   rocket: {from, to, k} (the rocket in flight, its smoke trail), boom: {at, k} (the blast).
 // (reel 38) jolt: 0..1 on a frame: a mid-reel scare (punched in, shaking, a red flash; no pixels).
 // scareI (frames since the scare began): the first 3 pixelated and blown out, then the real frame,
 // shaking, punched in, with a red flash.
@@ -32,6 +34,7 @@ const T = Object.assign({ name: 'someone lives in our attic.', score: '10.5/10',
   brand: true, tag: 'NEW ROBLOX HORROR GAME', items: [['flashlight', ''], ['taser', '3']] }, edit.text || {});
 const ICON = {
   flashlight: '<svg viewBox="0 0 64 64"><g transform="rotate(-40 32 32)"><rect x="24" y="22" width="16" height="34" rx="3" fill="#3a3a42" stroke="#111" stroke-width="2"/><path d="M20 8h24l-4 15H24z" fill="#55555f" stroke="#111" stroke-width="2"/><rect x="22" y="5" width="20" height="5" rx="2" fill="#fff3c4"/><rect x="29" y="30" width="6" height="8" rx="1" fill="#c9c9cf"/></g></svg>',
+  rocket: '<svg viewBox="0 0 64 64"><g transform="rotate(-35 32 32)"><rect x="6" y="24" width="46" height="14" rx="3" fill="#5a6a32" stroke="#111" stroke-width="2"/><path d="M52 24l8 7-8 7z" fill="#c8302a" stroke="#111" stroke-width="2"/><rect x="20" y="38" width="6" height="12" fill="#2a2a2a" stroke="#111" stroke-width="2"/><rect x="4" y="22" width="5" height="18" fill="#2a2a2a"/></g></svg>',
   taser: '<svg viewBox="0 0 64 64"><g transform="rotate(-20 32 32)"><path d="M8 20h40l6 5v8H8z" fill="#f2c82a" stroke="#111" stroke-width="2"/><path d="M14 33h14l-4 22H12z" fill="#222" stroke="#111" stroke-width="2"/><rect x="8" y="24" width="40" height="4" fill="#222"/><path d="M54 22l6-4M54 30l6 4" stroke="#8fd3ff" stroke-width="3"/></g></svg>',
 };
 
@@ -127,12 +130,23 @@ body.brand #card { top:282px; }
 #prA { font-family:O; font-size:34px; color:#fff; line-height:38px; }
 #zap { opacity:1; }
 #vm { position:absolute; left:640px; top:1300px; width:520px; height:620px; opacity:0; }
+#vmr { position:absolute; left:0; top:0; width:1080px; height:1920px; opacity:0; }
 </style></head><body>
 <img id="base"/>
 <canvas id="pix" width="54" height="96"></canvas>
 <div class="l" id="vig"></div>
 <canvas class="l" id="rain" width="540" height="960" style="width:1080px;height:1920px"></canvas>
 <canvas class="l" id="zap" width="1080" height="1920"></canvas>
+<div id="vmr"><svg viewBox="0 0 1080 1920" width="1080" height="1920"><defs><linearGradient id="tubeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7d8c4a"/><stop offset=".45" stop-color="#5a6a32"/><stop offset="1" stop-color="#2c3418"/></linearGradient></defs>
+<g id="vmrG" transform="translate(1180 1900) rotate(-131.5)">
+<rect x="-40" y="-78" width="860" height="156" rx="14" fill="url(#tubeG)" stroke="#111" stroke-width="8"/>
+<rect x="760" y="-92" width="70" height="184" rx="10" fill="#22261a" stroke="#111" stroke-width="8"/>
+<rect x="300" y="-78" width="40" height="156" fill="#3a4422" stroke="#111" stroke-width="5"/>
+<rect x="420" y="-138" width="90" height="62" rx="6" fill="#1c1c1c" stroke="#111" stroke-width="6"/>
+<rect x="350" y="74" width="60" height="130" rx="10" fill="#1d1d1f" stroke="#111" stroke-width="6"/>
+<rect x="335" y="150" width="96" height="96" rx="14" fill="#e8c9a0" stroke="#3a2a20" stroke-width="6"/>
+<g id="vmrTip"><path d="M830 -50 L930 0 L830 50 Z" fill="#c8302a" stroke="#111" stroke-width="6"/></g>
+</g></svg></div>
 <div id="vm"><svg viewBox="0 0 260 310" width="520" height="620"><g transform="rotate(-28 150 200)"><path d="M70 120h120l18 14v26H70z" fill="#f2c82a" stroke="#111" stroke-width="5"/><rect x="70" y="132" width="120" height="10" fill="#1d1d1f"/><path d="M92 158h52l-12 110H78z" fill="#232326" stroke="#111" stroke-width="5"/><path d="M78 268c40 10 70 30 90 60l-110 0z" fill="#c8946c" stroke="#3a2a20" stroke-width="4"/><path d="M196 122l22 -14M196 156l22 14" stroke="#8fd3ff" stroke-width="7" stroke-linecap="round"/></g></svg></div>
 <canvas class="l" id="grain" width="360" height="640" style="width:1080px;height:1920px"></canvas>
 <div class="o hk sh" id="h1"><span class="y" id="w1">PEAK</span> <span class="r" id="w2">ROBLOX</span></div>
@@ -237,7 +251,45 @@ window.setFrame = (f, fr) => {
   vm.style.opacity = fr.vm && !fr.scare ? 1 : 0;
   // (mirrored: held in the right hand, its prongs at (797, 1528) aiming up and left, into the frame)
   if (fr.vm) vm.style.transform = 'scaleX(-1) translate(' + (fr.vm.kick || 0) * -30 + 'px,' + (fr.vm.kick || 0) * 50 + 'px) rotate(' + (fr.vm.kick || 0) * -6 + 'deg)';
+  // (reel 39) the rocket launcher on your shoulder, its muzzle at (637, 1286); vm: {item: 'rocket', kick, loaded}
+  const vmr = $('vmr');
+  vmr.style.opacity = fr.vm && fr.vm.item === 'rocket' && !fr.scare ? 1 : 0;
+  vm.style.opacity = fr.vm && fr.vm.item !== 'rocket' && !fr.scare ? 1 : 0;
+  if (fr.vm && fr.vm.item === 'rocket') {
+    const kk = fr.vm.kick || 0;
+    vmr.style.transform = 'translate(' + kk * 40 + 'px,' + kk * 70 + 'px) rotate(' + kk * 3 + 'deg)';
+    $('vmrTip').style.display = fr.vm.loaded === false ? 'none' : 'inline';
+  }
   const zc = $('zap').getContext('2d'); zc.clearRect(0, 0, 1080, 1920);
+  // the rocket in flight: a smoke trail from the muzzle and a burning head (rocket: {from, to, k})
+  if (fr.rocket) {
+    const [x0, y0] = fr.rocket.from, [x1, y1] = fr.rocket.to, k = fr.rocket.k;
+    const hx = x0 + (x1 - x0) * k, hy = y0 + (y1 - y0) * k;
+    for (let j = 0; j < 40; j++) {
+      const t = j / 40 * k, x = x0 + (x1 - x0) * t + (rnd(j * 3 + f) - .5) * 30 * t, y = y0 + (y1 - y0) * t + (rnd(j * 5 + f) - .5) * 30 * t;
+      const r = 26 + 70 * (k - t) + 20 * rnd(j);
+      const g = zc.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(200,200,205,' + (0.22 * (1 - (k - t))) + ')'); g.addColorStop(1, 'rgba(160,160,170,0)');
+      zc.fillStyle = g; zc.fillRect(x - r, y - r, 2 * r, 2 * r);
+    }
+    zc.globalCompositeOperation = 'lighter';
+    const g = zc.createRadialGradient(hx, hy, 0, hx, hy, 90);
+    g.addColorStop(0, 'rgba(255,250,220,1)'); g.addColorStop(0.3, 'rgba(255,170,60,.9)'); g.addColorStop(1, 'rgba(255,90,20,0)');
+    zc.fillStyle = g; zc.fillRect(hx - 90, hy - 90, 180, 180);
+    zc.globalCompositeOperation = 'source-over';
+  }
+  // the blast: a fireball where it hit and an orange flash over everything (boom: {at, k})
+  if (fr.boom) {
+    const [bx, by] = fr.boom.at, k = fr.boom.k;
+    zc.globalCompositeOperation = 'lighter';
+    const R = 260 + 420 * (1 - k);
+    const g = zc.createRadialGradient(bx, by, 0, bx, by, R);
+    g.addColorStop(0, 'rgba(255,245,210,' + k + ')'); g.addColorStop(0.25, 'rgba(255,170,60,' + 0.95 * k + ')');
+    g.addColorStop(0.6, 'rgba(230,80,20,' + 0.6 * k + ')'); g.addColorStop(1, 'rgba(120,20,0,0)');
+    zc.fillStyle = g; zc.fillRect(0, 0, 1080, 1920);
+    zc.fillStyle = 'rgba(255,140,60,' + 0.25 * k + ')'; zc.fillRect(0, 0, 1080, 1920);
+    zc.globalCompositeOperation = 'source-over';
+  }
   if (fr.zap) {
     const [x0, y0] = fr.zap.from, [x1, y1] = fr.zap.to, k = fr.zap.k ?? 1;
     zc.globalCompositeOperation = 'lighter';
@@ -269,6 +321,7 @@ window.setFrame = (f, fr) => {
   let filt = 'contrast(1.1) saturate(.85) brightness(' + (fr.bright || 1.35) + ')';
   $('base').style.filter = filt;
   $('base').style.transform = 'none';
+  if (fr.boom) { const k = fr.boom.k; $('base').style.transform = 'translate(' + (rnd(f) - .5) * 70 * k + 'px,' + (rnd(f + 3) - .5) * 70 * k + 'px) scale(' + (1 + 0.08 * k) + ')'; }
   $('pix').style.opacity = 0;
   // the scare: pixelated, grey, blown out, shaking
   if (fr.scare && fr.scareI !== undefined && fr.scareI >= 3) {
