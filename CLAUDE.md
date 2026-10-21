@@ -396,8 +396,8 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   (26 of 57 → 2 of 12, small sample). Done: sticky queue + lookup timeout + teleport retry (lobby),
   no countdown/vote for first nights, the first task before the journal (GDD "From PLAY to the first
   task, fast"), a light mode for slow devices (thinner rain/mist, no dust under 28 fps for 4 s;
-  logged as Perf.Low). **Published as place version 106** (logs say 106). Owner to decide: Become Him at
-  25 R$ (Creator Hub → the product's price). Next: `--since=106`: "queued but never sent" and its Off/TpFail/MatchSlow, act I quits in the first 30 s,
+  logged as Perf.Low). **Published as place version 106** (logs say 106). Become Him went to 25 R$ in
+  v108. Next: `--since=106`: "queued but never sent" and its Off/TpFail/MatchSlow, act I quits in the first 30 s,
   phone time to OrderPizza:Menu.
 
 - **21 Oct (reel 37)**: the gameplay series Part 2 (see Marketing). Next reel: Part 3 (ideas: the
