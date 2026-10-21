@@ -211,12 +211,16 @@ local ok, err = pcall(function()
 		ctx.Hiding.enter(a, hs)
 		local hrp = H.unwrap(ctx.World.folder()):FindFirstChild("Curtis", true):FindFirstChild("HumanoidRootPart")
 		local function arrive()
+			-- (holding their breath: what's tested is the head start, not a lucky "he heard you
+			-- breathing" roll on the way, which sent him to CheckSpot now and then, v104 too)
+			a:SetAttribute("HoldingBreath", true)
 			I._charge(hs.Exit.Position, a)
 			for _ = 1, 30 do
 				hrp.CFrame = R.CFrame.new(hs.Exit.Position + R.Vector3.new(0, 2.5, 0))
 				tick(0.1)
 				if I.getState() ~= "Charge" or ctx.Intruder._state().Data.Searching then break end
 			end
+			a:SetAttribute("HoldingBreath", nil)
 			return I.getState()
 		end
 		ctx.Intruder.spare(a, 10)
@@ -335,6 +339,12 @@ local ok, err = pcall(function()
 		if a:GetAttribute("Hiding") then ctx.Hiding.exit(a) end
 		if b:GetAttribute("Hiding") then ctx.Hiding.exit(b) end
 		ctx.Capture.release(a); ctx.Capture.release(b)
+		-- (back on their feet: the earlier steps' grabs can leave both dead, and then there's
+		-- nobody out in the open for him to drift toward; v104 failed that way too)
+		for _, pl in { a, b } do
+			pl:SetAttribute("Dead", nil)
+			pl:SetAttribute("Captured", nil)
+		end
 		st.Spared[a] = nil
 		st.Spared[b] = nil
 		local spot = R.Vector3.new(-30, 4, 24) -- (downstairs, one corner)
@@ -356,7 +366,7 @@ local ok, err = pcall(function()
 		st.LastContact = T - 120
 		local quiet = nearShare()
 		print(("13 patrols passing them: just met him %.2f, a quiet two minutes %.2f"):format(fresh, quiet))
-		assert(quiet > fresh + 0.15, "after a quiet while he drifts toward them")
+		assert(quiet > fresh + 0.15, string.format("after a quiet while he drifts toward them (active %d; a dead %s captured %s, b dead %s captured %s)", #ctx.Util.activePlayers(), tostring(a:GetAttribute("Dead")), tostring(a:GetAttribute("Captured")), tostring(b:GetAttribute("Dead")), tostring(b:GetAttribute("Captured"))))
 	end
 	-- someone standing right under the garage hatch: he comes in somewhere else, far off
 	ctx.Capture.release(a); ctx.Capture.release(b)
