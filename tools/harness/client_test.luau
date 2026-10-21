@@ -497,6 +497,7 @@ local ok, err = pcall(function()
 		R.UseItem.FireServer = function(_, item, aim) used = { item, aim } end
 		local t = H.Instance.new("Tool")
 		t:SetAttribute("ItemId", "Taser")
+		t.TextureId = "rbxassetid://2"
 		ctx.Gear.use(t)
 		assert(used and used[1] == "Taser", "a click on the taser asks the server to fire it")
 		-- (v100) in your hand: one line above the hotbar with what's left
@@ -522,6 +523,54 @@ local ok, err = pcall(function()
 		ctx.Gear._refresh()
 		local box = H.unwrap(pg):FindFirstChild("HeldItem", true)
 		assert(box and box.Visible, "shown above the hotbar")
+		-- (v109) our own hotbar: every item gets a slot (Roblox's showed 3 on a phone), in the bar's
+		-- order, the one in your hand outlined, with what's left on it
+		do
+			local bp = H.Instance.new("Backpack")
+			bp.Parent = player
+			local made = {}
+			for _, id in { "Firecracker", "NightVision", "Rocket", "Flashlight", "EnergyDrink", "PepperSpray" } do
+				local x = H.Instance.new("Tool")
+				x.Name = id
+				x:SetAttribute("ItemId", id)
+				x:SetAttribute("Count", id == "Firecracker" and 2 or nil)
+				x.TextureId = "rbxassetid://1"
+				x.Parent = bp
+				table.insert(made, x)
+			end
+			player:SetAttribute("NVLeft", 60)
+			ctx.Gear._refresh()
+			local list = ctx.Gear._tools()
+			assert(#list == 7, "all seven items: " .. #list)
+			local want = { "Flashlight", "Taser", "PepperSpray", "Rocket", "EnergyDrink", "Firecracker", "NightVision" }
+			for i, x in list do
+				assert(x:GetAttribute("ItemId") == want[i], "the bar's order: " .. i .. " " .. tostring(x:GetAttribute("ItemId")))
+			end
+			local bar = ctx.Gear._bar()
+			assert(bar and bar.Visible, "the hotbar is drawn")
+			local shownSlots = 0
+			for _, c in bar:GetChildren() do
+				if c:IsA("ImageButton") and c.Visible then
+					shownSlots += 1
+				end
+			end
+			assert(shownSlots == 7, "a slot for every item, not 3: " .. shownSlots)
+			local s2 = bar:FindFirstChild("Slot2")
+			assert(s2:FindFirstChildOfClass("UIStroke").Thickness == 2, "the taser in your hand is outlined")
+			assert(bar:FindFirstChild("Slot1"):FindFirstChildOfClass("UIStroke").Thickness == 1, "the others aren't")
+			assert(bar:FindFirstChild("Slot6"):FindFirstChild("Count").Text == "x2", "firecrackers left: x2")
+			assert(bar:FindFirstChild("Slot7"):FindFirstChild("Count").Text == "60s", "the goggles' charge")
+			assert(s2:FindFirstChild("Icon").Image ~= nil, "each slot has its picture")
+			player:SetAttribute("Hiding", true)
+			ctx.Gear._refresh()
+			assert(not bar.Visible, "hidden while hiding")
+			player:SetAttribute("Hiding", nil)
+			for _, x in made do x:Destroy() end
+			ctx.Gear._refresh()
+			assert(#ctx.Gear._tools() == 1, "the slots go with the items")
+			player:SetAttribute("NVLeft", nil)
+			print("custom hotbar ok")
+		end
 		t.Parent = nil
 		ctx.Gear._refresh()
 		assert(not box.Visible, "gone when nothing's in your hand")

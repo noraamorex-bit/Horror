@@ -76,6 +76,23 @@ player:SetAttribute("InGame", true)
 player:SetAttribute("Role", "Observer")
 player:SetAttribute("RoleName", "Casey Brooks")
 player:SetAttribute("Item_Flashlight", 1)
+-- (v109) a full set of items in our own hotbar (client Gear), the taser in your hand
+do
+	local bp = H.Instance.new("Backpack")
+	bp.Parent = player
+	local me = H.Instance.new("Model", H.workspaceRoot)
+	H.unwrap(player).Character = H.unwrap(me)
+	for _, id in { "Flashlight", "Taser", "PepperSpray", "Rocket", "EnergyDrink", "Firecracker", "NightVision" } do
+		local t = H.Instance.new("Tool")
+		t.Name = id
+		t:SetAttribute("ItemId", id)
+		t:SetAttribute("Label", id)
+		t:SetAttribute("Count", (id == "Taser" and 3) or (id == "Firecracker" and 2) or nil)
+		t.TextureId = "rbxassetid://1"
+		t.Parent = id == "Taser" and me or bp
+	end
+	player:SetAttribute("NVLeft", 60)
+end
 player:SetAttribute("Battery", 72)
 player:SetAttribute("Nerve", 80)
 player:SetAttribute("Stamina", 100)
@@ -193,5 +210,5 @@ for _, g in H.unwrap(pg):GetChildren() do
 		table.insert(out, node(g))
 	end
 end
-fs.writeFile(OUT, serde.encode("json", { scene = SCENE, touch = touch, guis = out }))
+fs.writeFile(OUT, serde.encode("json", { scene = SCENE, touch = touch, hotbar = false, guis = out }))
 print("wrote " .. OUT .. " (" .. #out .. " screens)")

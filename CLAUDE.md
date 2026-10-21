@@ -71,7 +71,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **PC is not a big phone (v104**, a player: "unnecessary mobile UI for pc"): with mouse and keyboard
   the HUD stays ~real size (`UI.rescale`; touch/console keep the big one), the heartbeat shows Q / E key
   caps, no "tap" wording. Look at layouts with `ui_dump.luau` + `tools/assets/ui_preview.mjs`.
-- **Usable items are Roblox tools in the default hotbar** (equip, click / tap to use; v94, the owner).
+- **Usable items are Roblox tools in the hotbar** (equip, click / tap to use; v94, the owner). **Our own
+  hotbar since v109** (the owner: "only 3 items got in hotbar"; Roblox's shows 3 on a phone): client
+  `Gear` draws a slot for every item, sized to fit; Roblox's backpack stays off.
   Touch buttons are only SPRINT and CROUCH (plus BREATH/LEAVE/STRUGGLE in context).
 - Secret-ending HUD is one slim bar at the top (it was "way too big" before).
 
@@ -381,6 +383,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **21 Oct (v109 = place version 108)**, the owner: "only 3 items got in hot bar and rest sit in
+  inventory. Increase hot bar size." Roblox's hotbar can't show more than 3 on a phone, so it's
+  replaced by our own (see HUD; GDD "Our own hotbar"). Can't see the real client here: check on a
+  phone that all slots show, the taps equip, and nothing overlaps the thumbstick / jump button.
+
 - **21 Oct (v108 = place version 107)**: the pass prices + three new passes (see Economy, v108). Can't
   see the green grade in the real client here: check that Night Vision reads well (not too bright) on
   a phone. Next: `pull_stats.py` `== SALES` bought / asked for NightVision, DoubleCoins, Silent and
@@ -637,7 +644,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 107; the notes' "v108" = place version 107, "v107" = 106).
+  (last published: version 108; the notes' "v109" = place version 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

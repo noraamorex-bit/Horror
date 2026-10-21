@@ -54,8 +54,8 @@ for _, name in ORDER do
 	end
 end
 
--- Core UI: no health bar and no reset (it would break captures and hiding). The backpack (hotbar)
--- is only for the house, where client Gear shows it while you can use your items
+-- Core UI: no health bar and no reset (it would break captures and hiding). Roblox's backpack
+-- (hotbar) stays off: in the house client Gear draws its own, with room for every item
 task.spawn(function()
 	if mode == "Lobby" then
 		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
