@@ -5,6 +5,7 @@
 import { chromium } from 'playwright';
 import fs from 'fs';
 import { loadProps } from '../../../tools/assets/propload.mjs';
+import { decodeMesh } from '../../../tools/assets/mesh.mjs';
 const [,, worldPath, crPath, specPath, outDir, fromArg, toArg] = process.argv;
 const world = JSON.parse(fs.readFileSync(worldPath, 'utf8'));
 const cr = JSON.parse(fs.readFileSync(crPath, 'utf8'));
@@ -105,13 +106,30 @@ if (props) {
     window.S.updateMatrixWorld(true);
   }, [{ holders: world.holders }, props.models, props.meshes, props.textures]);
 }
-// staged Roblox avatars (spec.avatars), with a phone in their hands if asked
+// staged Roblox avatars (spec.avatars), with a phone in their hands if asked. An avatar with "rbx" is
+// dressed in real catalog items (avatar_rbx.js): its files are read here and passed in as data
+// (rbx: { skin, shirt, pants, faces: [png], hats: [item json from avatar_items.luau] }, all from rbx.cache)
 if (spec.avatars && spec.avatars.length) {
   await page.addScriptTag({ path: 'avatar.js' });
-  await page.evaluate((avatars) => {
+  await page.addScriptTag({ path: 'avatar_rbx.js' });
+  const dataUrl = (f) => f && fs.existsSync(f) ? 'data:image/png;base64,' + fs.readFileSync(f).toString('base64') : null;
+  for (const a of spec.avatars) {
+    if (!a.rbx) continue;
+    const C = a.rbx.cache, X = a.rbx;
+    const hats = [];
+    for (const id of X.hats || []) {
+      const it = JSON.parse(fs.readFileSync(`${C}/${id}.json`, 'utf8'));
+      const m = await decodeMesh(new Uint8Array(fs.readFileSync(`${C}/${it.mesh}.bin`)));
+      hats.push({ mesh: { pos: Array.from(m.pos), nrm: Array.from(m.nrm), uv: Array.from(m.uv), idx: Array.from(m.idx) },
+                  texture: it.texture ? dataUrl(`${C}/${it.texture}.bin`) : null, scale: it.scale, offset: it.offset, attachCF: it.attachCF, attachment: it.attachment });
+    }
+    a.rbx = { skin: X.skin, shirt: dataUrl(X.shirt && `${C}/${X.shirt}.bin`), pants: dataUrl(X.pants && `${C}/${X.pants}.bin`),
+              faces: (X.faces || []).map(f => dataUrl(`${C}/${f}.bin`)), hats };
+  }
+  await page.evaluate(async (avatars) => {
     const T = THREE;
     for (const a of avatars) {
-      const g = window.buildAvatar(a);
+      const g = a.rbx ? await window.buildRobloxAvatar(a) : window.buildAvatar(a);
       g.position.set(...a.pos); g.rotation.order = "YXZ"; g.rotation.set(a.pitch || 0, a.yaw || 0, 0);
       window.S.add(g); g.updateMatrixWorld(true);
       (window.AV = window.AV || []).push(g);
@@ -259,6 +277,7 @@ for (const fr of spec.frames) {
         const g = window.AV[a.i]; if (!g) continue;
         g.visible = true; g.position.set(...a.pos); g.rotation.set(a.pitch || 0, a.yaw || 0, 0);
         if (a.pose) window.poseAvatar(g, a.pose);
+        if (a.face !== undefined && g.userData.setFace) g.userData.setFace(a.face);
       }
     } else if (window.AV) for (const g of window.AV) g.visible = true;
     // creature

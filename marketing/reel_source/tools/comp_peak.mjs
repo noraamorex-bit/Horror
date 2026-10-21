@@ -16,6 +16,7 @@
 //   (an item's count right now), prompt: {x, y, action, object, key, p} (a ProximityPrompt at x,y on the
 //   1080x1920 frame, its ring filled to p); and per frame: vm: {item: 'taser', kick} (the taser held
 //   bottom right), zap: {from: [x, y], to: [x, y], k} (the shot: a jagged bolt and a flash).
+// (reel 38) jolt: 0..1 on a frame: a mid-reel scare (punched in, shaking, a red flash; no pixels).
 // scareI (frames since the scare began): the first 3 pixelated and blown out, then the real frame,
 // shaking, punched in, with a red flash.
 import { chromium } from 'playwright';
@@ -287,6 +288,14 @@ window.setFrame = (f, fr) => {
     const s = 1.08 + 0.06 * Math.sin(f * 2.1);
     p.style.transform = 'translate(' + (rnd(f) - .5) * 40 + 'px,' + (rnd(f + 3) - .5) * 40 + 'px) scale(' + s + ')';
   } else $('pix').style.transform = 'none';
+  // (reel 38) a jolt: a smaller scare mid-reel, him bursting in: the frame punched in and shaking, a
+  // red flash (fr.jolt 0..1, fading over a few frames), no pixels
+  if (fr.jolt && !fr.scare) {
+    const k = fr.jolt;
+    $('base').style.transform = 'translate(' + (rnd(f) - .5) * 60 * k + 'px,' + (rnd(f + 3) - .5) * 60 * k + 'px) scale(' + (1 + 0.14 * k) + ') rotate(' + (rnd(f + 9) - .5) * 3 * k + 'deg)';
+    $('base').style.filter = 'contrast(' + (1.1 + 0.4 * k) + ') saturate(' + (0.85 - 0.3 * k) + ') brightness(' + ((fr.bright || 1.35) + 0.5 * k) + ')';
+    $('redf').style.opacity = 0.42 * k;
+  }
   // the hook, word by word
   if (fr.section === 'hook') {
     const lt = fr.i / 30;
