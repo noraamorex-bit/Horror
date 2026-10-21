@@ -16,3 +16,6 @@ tools/assets/package-lock.json
 .claude/worktrees/
 tools/harness/navgrid_*.txt
 tools/harness/zz_*.luau
+
+# pull_stats default output (player data: never commit)
+stats_dump.json*
