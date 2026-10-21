@@ -83,6 +83,8 @@ local ok, err = pcall(function()
 	ctx.Config.Intruder.AmbushChance = 1
 	ctx.Director.startAct("SomeoneElse")
 	I.setMode("Hunt")
+	-- (no v104 surprises in here: they move him about on their own clock; leap_test covers them)
+	ctx.Intruder._state().NextSurprise = math.huge
 	print("placed at", I.position(), "alex", aRoot.Position, ctx.Util.getRoot(a) and ctx.Util.getRoot(a).Position)
 	tick(0.3)
 	-- he comes in far from everyone (the owner: "why does he spawn upstairs. Spawn him far away")

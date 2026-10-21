@@ -360,6 +360,8 @@ local ok, err = pcall(function()
 		for _, g in got do if g.From == "Riley" then first = first or (g.T - t0) end end
 		return first
 	end
+	-- (the texts are for a night alone without the v105 friend: companion_test covers that one)
+	ctx.Config.Companion = false
 	local soloAt = soloNight(nil, nil)
 	assert(soloAt and soloAt < 30, "PLAY SOLO: the friends text at 24 s, got " .. tostring(soloAt))
 	local openAt = soloNight(60, nil)
@@ -367,6 +369,7 @@ local ok, err = pcall(function()
 	local joined = soloNight(60, 40)
 	assert(joined == nil, "someone joined: no 'we had to turn around'")
 	ctx.Match = nil
+	ctx.Config.Companion = nil
 	print(("solo texts: %.0f s, %.0f s once closed, none after a join ok"):format(soloAt, openAt))
 end)
 print(ok and "HUNTGOAL OK" or ("HUNTGOAL FAIL: " .. tostring(err)))
