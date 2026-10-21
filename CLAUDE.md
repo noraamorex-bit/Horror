@@ -310,6 +310,19 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   the friends, notice, heartbeat lane), the **brand** (red tag every clip, name under it on the hook,
   the search-bar end card; `text.brand`, default on) and a stronger scare (`scareI`: 3 pixelated frames,
   then the real frame punched in, shaking, red flash). Fonts now from `marketing/fonts` (Outfit added).
+  **Part 2** (`reel37`, `peak_gameplay_part2.mp4`, 21 Oct; the owner: "Make the next reel. I want it to be
+  perfect."): same format and track; the 911 call at the bathroom window (call bar), a lightning flash:
+  him standing on the garage roof right outside the glass (the roof is 3 studs under the sill) → the
+  call goes through ("Police: 2:00" counting under the objective), running footsteps, the door bursts
+  open, "[A voice, close] There you are." → he charges, the taser (held bottom right, mirrored; the bolt
+  drawn to where he is on screen, projected from the shot's camera in edit.py) → into the shower (the
+  translucent curtain) → Riley runs for it, "Riley was caught!" → boiler room: Riley zip-tied, the
+  "Cut free" ProximityPrompt filling → "We're a family now." → turn round to the doorway → the lunge on
+  22.15 s → RUN, glitch "he heard the call". comp_peak gained: `meter`, `cap`, `police`, `cnt`,
+  `prompt`, per-frame `vm` and `zap` (header). Lightning seen through a window: a spotlight outside
+  (`flash`) + a sky colour (`bg`), not film2's `lightning` (it lights the room). His face glow
+  (`glow`) lights ceilings/floors near him: keep it low (0.5-2) when he's near a surface.
+  Caption: `he heard the call game in comments` + the hashtags.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
@@ -359,6 +372,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **21 Oct (reel 37)**: the gameplay series Part 2 (see Marketing). Next reel: Part 3 (ideas: the
+  mimic calling you upstairs, the mirror "I WATCH YOU SLEEP", hiding under a bed while he says "I can
+  hear you breathing", the rocket launcher, Become Him from his side).
 
 - **21 Oct (v106)**, the owner: "Remove that npc thing. Add a new gamepass for 249 Robux called admin
   panel… let both players chat with the guy… text to speech to almost everything… Make it scarier."

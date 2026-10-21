@@ -184,7 +184,7 @@ def s_taser(i, k):
         cr = {"pos": p, "yaw": facing(p, WIN_EYE), "gait": "Chase", "phase": r * 7 * RUN, "t": stop(i), "jaw": 0.95}
     else:
         cr = {"pos": STUN, "yaw": facing(STUN, WIN_EYE), "gait": "Stunned", "t": (i - ZAP) / 30, "jaw": 0.9}
-    look = lerp([16.0, U + 5.6, 1.0], [STUN[0], U + 3.4, STUN[2]], ease(i / ZAP))
+    look = lerp([16.0, U + 7.0, 1.0], [STUN[0], U + 6.6, STUN[2]], ease(i / ZAP))
     # Riley dives out of the way, to the left (the vanity side)
     r = ease(i / 18)
     rp = lerp([25.6, U, -1.4], [29.0, U, -5.0], r)

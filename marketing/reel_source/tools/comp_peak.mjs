@@ -117,7 +117,7 @@ body.brand #card { top:282px; }
 #meterF { height:100%; border-radius:6px; }
 #cap { position:absolute; left:0; right:0; top:1160px; text-align:center; }
 #capB { display:inline-block; max-width:900px; background:rgba(8,8,10,.62); color:#e9e9e2; font-family:O; font-size:34px; padding:10px 24px; border-radius:10px; }
-#prompt { position:absolute; width:340px; height:104px; }
+#prompt { position:absolute; width:340px; height:104px; transform:scale(1.3); transform-origin:52px 52px; }
 #prK { position:absolute; left:0; top:0; width:104px; height:104px; }
 #prK svg { position:absolute; inset:0; }
 #prKey { position:absolute; inset:0; text-align:center; font-family:O; font-size:42px; line-height:104px; color:#fff; }
@@ -234,7 +234,8 @@ window.setFrame = (f, fr) => {
   // the taser in your hand, and the shot
   const vm = $('vm');
   vm.style.opacity = fr.vm && !fr.scare ? 1 : 0;
-  if (fr.vm) vm.style.transform = 'translate(' + (fr.vm.kick || 0) * 30 + 'px,' + (fr.vm.kick || 0) * 50 + 'px) rotate(' + (fr.vm.kick || 0) * -6 + 'deg)';
+  // (mirrored: held in the right hand, its prongs at (797, 1528) aiming up and left, into the frame)
+  if (fr.vm) vm.style.transform = 'scaleX(-1) translate(' + (fr.vm.kick || 0) * -30 + 'px,' + (fr.vm.kick || 0) * 50 + 'px) rotate(' + (fr.vm.kick || 0) * -6 + 'deg)';
   const zc = $('zap').getContext('2d'); zc.clearRect(0, 0, 1080, 1920);
   if (fr.zap) {
     const [x0, y0] = fr.zap.from, [x1, y1] = fr.zap.to, k = fr.zap.k ?? 1;

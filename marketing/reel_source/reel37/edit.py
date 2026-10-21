@@ -45,8 +45,8 @@ def police(f):
     left = max(0, 120 - (f - CALLED) / FPS)
     return "Police: %d:%02d" % (int(left) // 60, int(left) % 60)
 
-STUN_CHEST = [24.0, U + 4.2, 0.6]
-RILEY_CHEST = [-37.2, B + 3.6, 19.0]
+STUN_CHEST = [24.0, U + 6.4, 0.6]
+RILEY_CHEST = [-37.2, B + 5.5, 19.0]
 VOICE = "[A voice, close] "
 
 def frame(f, name, i):
@@ -59,14 +59,14 @@ def frame(f, name, i):
     if f < CALLED:
         h["meter"] = {"label": "Calling 911 - keep the signal", "v": min(1.0, 0.1 + 0.9 * f / CALLED), "col": "#8fc8ff"}
     if name == "card":
-        if 15 <= i < 62: h["notice"] = "Police are on the way"
-        if 30 <= i < 64: h["cap"] = "[Running footsteps, in the hall]"
+        if 14 <= i < 36: h["notice"] = "Police are on the way"
+        if 38 <= i < 70: h["cap"] = "[Running footsteps, in the hall]"
         if i >= 86: h["cap"] = VOICE + "There you are."
     if name == "taser":
         h["cnt"] = {2: "3" if i < 24 else "2"}
         fr["vm"] = {"kick": max(0.0, 1 - (i - 24) / 6) if i >= 24 else 0.0}
         if 24 <= i < 30:
-            fr["zap"] = {"from": [778, 1452], "to": project(f, STUN_CHEST), "k": 1 - (i - 24) / 7}
+            fr["zap"] = {"from": [797, 1528], "to": project(f, STUN_CHEST), "k": 1 - (i - 24) / 7}
         if i >= 30: h["cap"] = "Taser: 2 left"
     if name in ("in", "caught", "boiler", "cut", "free", "turn", "run"):
         h["cnt"] = {2: "2"}
@@ -81,7 +81,7 @@ def frame(f, name, i):
         if i < 54:
             h["prompt"] = {"action": "Cut free", "object": "Riley", "key": "E", "p": p}
             x, y = project(f, RILEY_CHEST)
-            h["prompt"]["x"], h["prompt"]["y"] = x + 120, y
+            h["prompt"]["x"], h["prompt"]["y"] = x + 150, y
         else:
             h["notice"] = "You cut Riley free"
     if name == "free":
