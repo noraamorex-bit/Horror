@@ -13,6 +13,7 @@ local Players = game:GetService("Players")
 
 local Events = require(script.Parent.Events)
 local Delivery = require(script.Parent.Delivery)
+local Companion = require(script.Parent.Companion)
 local NightPlan = require(script.Parent.NightPlan)
 local lastChores: { string }? = nil -- this server's last night's chores (the next night draws others)
 local Perception = require(script.Parent.Parent.Intruder.Perception)
@@ -59,10 +60,12 @@ end
 function Director.init(c)
 	ctx = c
 	Perception.init(c)
+	Companion.init(c)
 	state = fresh()
 end
 
 function Director.reset()
+	Companion.stop()
 	state = fresh()
 	workspace:SetAttribute("Act", "Lobby")
 	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)
@@ -336,6 +339,7 @@ local function spawnFor(player: Player): CFrame?
 end
 
 function Director.enterLobby()
+	Companion.stop()
 	state = fresh()
 	workspace:SetAttribute("Difficulty", nil)
 	workspace:SetAttribute("Nightmare", nil)
@@ -680,12 +684,17 @@ function Director.startAct(name: string, cause: Player?)
 		-- come, and never come at all once someone has
 		if solo and not skipping then
 			local myState = state
+			-- (v105: one friend made it before the road flooded: an NPC friend for the night, taken
+			-- at the blackout, freed in the boiler room. v104: nights alone abandoned 13 of 15)
+			if ctx.Config.Companion ~= false then
+				Companion.begin(session[1])
+			end
 			-- (v95: 82% of solo nights are abandoned, 27-30% of nights with two or more: a friend
 			-- invited now comes straight into this house: Social.invite / LobbyServer)
 			task.delay(14, function()
 				if state == myState and state.Act == "Evening" and #ctx.Util.sessionPlayers() == 1 then
 					for _, p in ctx.Util.sessionPlayers() do
-						ctx.Remotes.Notify:FireClient(p, "Scared alone? ➕ INVITE A FRIEND (left): they come straight into your house.", "info")
+						ctx.Remotes.Notify:FireClient(p, "More is scarier. ➕ INVITE A FRIEND (left): they come straight into your house.", "info")
 					end
 				end
 			end)
@@ -694,6 +703,10 @@ function Director.startAct(name: string, cause: Player?)
 					task.wait(3)
 				end
 				if state ~= myState or (state.Act ~= "Evening" and state.Act ~= "SmallThings") or #ctx.Util.sessionPlayers() ~= 1 then
+					return
+				end
+				-- (the friend who made it already said why the others aren't here)
+				if Companion.active() then
 					return
 				end
 				for _, t in ctx.Story.SoloTexts do
@@ -723,6 +736,8 @@ function Director.startAct(name: string, cause: Player?)
 			end
 			-- the breaker: all at once, no flicker
 			ctx.Power.setMain(false, "Intruder")
+			-- (a night alone: the friend who made it goes to flip it back on...)
+			Companion.blackout()
 			ctx.Audio.playAt("Breaker", Vector3.new(41, 8, -12.7))
 			ctx.Audio.playAt("PowerDown", Vector3.new(0, 8, 0))
 			ctx.PlayerState.scareNear(Vector3.new(0, 8, 0), 300, 8)
@@ -1499,6 +1514,7 @@ end
 
 -- a spoken reaction to an event, if people are together to say it (once per event per night)
 function Director.reactBanter(id: string)
+	Companion.react(id)
 	local react = ctx.Story.Banter and ctx.Story.Banter.React
 	local scene = react and react[id]
 	if not scene or state.BanterDone["React" .. id] or (ctx.Dialogue and ctx.Dialogue.isActive()) then
@@ -1512,6 +1528,9 @@ function Director.reactBanter(id: string)
 end
 
 function Director.banterTick(actTime: number)
+	if Companion.active() and Director.isQuiet() then
+		Companion.chatter(state.Act, actTime / math.max(ctx.Config.TimeScale, 0.01))
+	end
 	local scenes = ctx.Story.Banter and ctx.Story.Banter[state.Act]
 	if not scenes or not Director.isQuiet() then
 		return

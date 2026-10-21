@@ -687,7 +687,7 @@ local function startHunt()
 	end
 	S.LastHuntAt = now()
 	S.LastContact = S.LastContact or now()
-	S.NextSurprise = S.NextSurprise or now() + 60
+	S.NextSurprise = S.NextSurprise or now() + 35
 	S.Waves += 1
 	local justEntered = S.JustEntered
 	S.JustEntered = nil
@@ -1889,7 +1889,9 @@ end
 	  behind them, breathing. Turn round and he screams and comes for you; don't, and after a few
 	  seconds he's gone again (a whisper, the breathing stops).
 ]]
-local SURPRISE = { Gap = { 75, 120 }, Retry = 10, ClosetWait = 40, Warn = 15, Burst = 7.5, StalkWait = 7 }
+-- (v105: the v104 logs had 0.07 surprises per player: the hunt runs ~3 minutes, so a first one at a
+-- minute and then every 75-120 s rarely came round. Sooner, and a little more often.)
+local SURPRISE = { Gap = { 55, 90 }, Retry = 8, ClosetWait = 40, Warn = 15, Burst = 7.5, StalkWait = 7 }
 
 local function nextSurprise()
 	S.NextSurprise = now() + SURPRISE.Gap[1] + math.random() * (SURPRISE.Gap[2] - SURPRISE.Gap[1])

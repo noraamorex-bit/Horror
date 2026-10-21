@@ -175,6 +175,10 @@ Story.Tasks = {
 	Trap = { Title = "(Optional) Lock him in the basement", Steps = {
 		{ Key = "Lock", Text = "Lure him down, then lock the basement door", Target = "Door_Basement" },
 	} },
+	-- (v105: a night alone, the friend who made it: Director/Companion)
+	FreeCompanion = { Title = "(Optional) Free your friend", Steps = {
+		{ Key = "Free", Text = "They're tied up in the boiler room. Cut them loose: they'll run next door for help", Target = "Boiler" },
+	} },
 	Rescue = { Title = "Free your friend", Steps = {
 		{ Key = "Free", Text = "Cut them loose in the boiler room", Target = "Boiler" },
 	} },
@@ -260,6 +264,41 @@ Story.Documents = {
 ---------------------------------------------------------------------------
 -- (They wait for a quiet moment: never on top of a thought line or a conversation.)
 -- sent only on a solo night, a little after it starts
+-- v105: a night alone isn't alone any more: one friend made it before Creek Road flooded
+-- (Director/Companion). %s is their name.
+Story.Companion = {
+	Arrive = "Made it! Creek Road's flooding. The others turned back. It's just us tonight.",
+	Breaker = "Great. The power's out. The breaker's in the garage, right? Stay here, I'll flip it.",
+	Taken = "%s?! That scream...",
+	Below = "It came from under the house. The basement. They took %s down there.",
+	Freed = "He... he went back upstairs. I'm going next door, Mrs. Okafor has a phone. HIDE!",
+	Help = "%s made it next door. Mrs. Okafor's calling the police. Just stay alive.",
+	Chatter = {
+		Evening = {
+			{ At = 45, Text = "Your house is so creepy at night. No offence." },
+			{ At = 120, Text = "Okay, what are we watching? Nothing with clowns." },
+			{ At = 190, Text = "Is it me, or is your attic, like... loud?" },
+		},
+		SmallThings = {
+			{ At = 35, Text = "Did you hear that? Upstairs. Like someone walking." },
+			{ At = 100, Text = "I'm checking every door twice. Don't laugh." },
+			{ At = 165, Text = "That's the third time the floor creaked. Same spot. Right above us." },
+		},
+	},
+	React = {
+		PlateCrash = "WHAT was that?! Something fell in the kitchen. Things don't just fall.",
+		CeilingThud = "That came from the ceiling. Tell me you heard that.",
+		WindSlam = "Jeez! Just the wind. Right? Right?",
+		FootstepsUpstairs = "Someone's walking upstairs. We're both down here.",
+		TVAlert = "Wait. Turn that up. Isn't that near here?",
+	},
+	Talk = {
+		Evening = { "Pizza first. Then the movie. Then I'm sleeping on your couch.", "Your mom left you a whole list? Mine just says 'don't die'.", "If anything weird happens, I'm blaming you." },
+		SmallThings = { "I'm not scared. I'm just standing really close to you.", "Who leaves the windows open in a storm?", "Can we keep the lights on. All of them." },
+		SomeoneElse = { "Stay close. Please.", "I don't like this. I really don't like this." },
+	},
+}
+
 Story.SoloTexts = {
 	{ From = "Riley", Body = "creek rd is literally underwater. we had to turn around 😭" },
 	{ From = "Morgan", Body = "so sorry!! next weekend for sure. stay dry, don't get murdered lol" },
@@ -685,7 +724,7 @@ Story.Thoughts = {
 	-- a solo night: the friends never make it
 	SoloIntro = {
 		"Mom left me a couple of things to do. It's in my journal.|journal",
-		"Parents gone for the weekend. Riley and the others should be here any minute.",
+		"Parents gone for the weekend. The storm's bad. Hope the others make it.",
 	},
 	SoloFriendsStuck = "They're not coming. It's just me tonight. Just me and the storm.",
 	Objectives = {

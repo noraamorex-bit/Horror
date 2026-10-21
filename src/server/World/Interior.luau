@@ -1419,6 +1419,11 @@ function Interior.build(ctx, root: Instance, refs)
 	ctx.Interaction.document(base, "WetShower", { Action = "Look", Object = "Shower", Distance = 8 }, function()
 		ctx.Director.logTruth("WetShower")
 	end)
+	-- (v105: a second place to hide by the window. The v104 logs: 23 of 45 captures were in this
+	-- bathroom, 5-35 s after the 911 call: friends at the window with nowhere to go but the one shower)
+	do
+		wardrobe(hbath, "Bathroom linen cupboard", 18, 5.5, 22.6, 7.9, U, NZ, "HallBath", WHITE_WOOD)
+	end
 	Kit.towel(hbath, F(27.8, U + 5.6, -5.55, PZ), 2.6, Color3.fromRGB(230, 200, 120))
 	Kit.rug(hbath, F(31.2, U, 5.2, PX), 3.2, 2.4, Color3.fromRGB(110, 130, 150))
 

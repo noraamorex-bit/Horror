@@ -57,15 +57,20 @@ function Dialogue.say(lines, audience): boolean
 		if me.Cancel then
 			break
 		end
-		local speaker: Player = line.Speaker
-		local roleName = speaker:GetAttribute("RoleName")
-		send(audience, {
-			-- friends go by first name ("Riley Chen" -> "Riley")
-			Speaker = type(roleName) == "string" and string.split(roleName, " ")[1] or speaker.DisplayName,
-			SpeakerId = speaker.UserId,
-			Text = line.Text,
-			Ambient = true,
-		})
+		local speaker = line.Speaker
+		if typeof(speaker) == "Instance" then
+			local roleName = (speaker :: Player):GetAttribute("RoleName")
+			send(audience, {
+				-- friends go by first name ("Riley Chen" -> "Riley")
+				Speaker = type(roleName) == "string" and string.split(roleName, " ")[1] or (speaker :: Player).DisplayName,
+				SpeakerId = (speaker :: Player).UserId,
+				Text = line.Text,
+				Ambient = true,
+			})
+		else
+			-- (a friend who isn't a player: Director/Companion, { Name = "Riley" })
+			send(audience, { Speaker = speaker.Name, Text = line.Text, Ambient = true })
+		end
 		task.wait(lineTime(line.Text))
 	end
 	send(audience, nil)

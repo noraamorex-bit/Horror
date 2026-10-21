@@ -78,7 +78,7 @@ function Escape.callForHelp(method: string, player: Player?)
 	end
 	local H = ctx.Config.Help
 	local eta = (method == "Car" and H.CarResponse) or (method == "Neighbor" and H.NeighborResponse)
-		or (method == "Okafor" and (H.OkaforResponse or H.PhoneResponse)) or H.PhoneResponse
+		or ((method == "Okafor" or method == "Companion") and (H.OkaforResponse or H.PhoneResponse)) or H.PhoneResponse
 	local hard = ctx.Config.Difficulty and ctx.Config.Difficulty.Hard
 	if workspace:GetAttribute("Difficulty") == "Hard" and hard and hard.PoliceMultiplier then
 		eta = math.floor(eta * hard.PoliceMultiplier + 0.5)
@@ -88,7 +88,7 @@ function Escape.callForHelp(method: string, player: Player?)
 	workspace:SetAttribute("HelpMethod", method)
 
 	-- the way out that worked is done; the other routes (and the search) simply stop mattering
-	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone" }, Neighbor = { "Neighbor" }, Car = { "Car" }, Okafor = {} }
+	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone" }, Neighbor = { "Neighbor" }, Car = { "Car" }, Okafor = {}, Companion = {} }
 	for _, id in used[method] or { "Call911" } do
 		ctx.Objectives.complete(id)
 	end
@@ -109,11 +109,19 @@ function Escape.callForHelp(method: string, player: Player?)
 			player:SetAttribute("JustCalled", nil)
 		end)
 		local grace = if workspace:GetAttribute("Difficulty") == "Hard" then (H.CallerGraceHard or 0) else (H.CallerGrace or 0)
-		if grace > 0 and ctx.Intruder and ctx.Intruder.spare then
-			ctx.Intruder.spare(player, grace)
-		end
-		if ctx.Director and ctx.Director.think then
-			ctx.Director.think(player, "He heard that. He's coming. HIDE. NOW.|hide")
+		-- (everyone at the window with the caller, not just the caller: v104 logs, 23 of 45 captures
+		-- were in that bathroom 5-35 s after the call, mostly friends caught in the open)
+		local here = ctx.Util.getRoot(player)
+		for _, p in ctx.Util.activePlayers() do
+			local r = ctx.Util.getRoot(p)
+			if p == player or (here and r and (r.Position - here.Position).Magnitude < 14) then
+				if grace > 0 and ctx.Intruder and ctx.Intruder.spare then
+					ctx.Intruder.spare(p, grace)
+				end
+				if ctx.Director and ctx.Director.think then
+					ctx.Director.think(p, "He heard that. He's coming. HIDE. NOW. The shower, the cupboard, anywhere.|hide")
+				end
+			end
 		end
 	end
 

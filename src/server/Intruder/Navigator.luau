@@ -80,8 +80,17 @@ function Navigator:_step()
 	end
 end
 
-function Navigator:_fail()
+function Navigator:_fail(kind: string?)
 	self.Stats.Fail += 1
+	-- (where: the night log sums these, so the next stats pass can see which goals can't be reached)
+	local goal = self.Goal
+	local where = "?"
+	if goal then
+		local room = self.ctx and self.ctx.Rooms and self.ctx.Rooms.find(goal)
+		where = room and room.Name or (inGrid(goal) and "House" or "Outside")
+	end
+	local key = "Fail" .. (kind or "") .. "_" .. where
+	self.Stats[key] = (self.Stats[key] or 0) + 1
 	self.Waypoints = nil
 	self.Failed = true
 	self.Arrived = true
@@ -109,10 +118,16 @@ function Navigator:_planGrid(): boolean
 			table.insert(path, 1, near)
 		end
 	end
+	if not path and (self.Reach or 0) < 6 then
+		-- (v105: the goal itself is somewhere he can't stand: on a bed, in a gap between furniture,
+		-- up the attic ladder. Go as near as he can get instead of failing: live nights logged ~32
+		-- failed routes each, a chase re-planning the same impossible route every second)
+		path = NavGrid.findPath(from, goal, 6)
+	end
 	self.Stats.Plans += 1
 	self.Stats.PlanMs += (os.clock() - t0) * 1000
 	if not path then
-		self:_fail()
+		self:_fail("Grid")
 		return true
 	end
 	self.Waypoints = path
@@ -153,7 +168,7 @@ function Navigator:_compute()
 			self.LastProgress = os.clock()
 			self:_step()
 		else
-			self:_fail()
+			self:_fail("PF")
 		end
 	end)
 end

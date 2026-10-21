@@ -303,6 +303,10 @@ local okRun, err = pcall(function()
 		local list = {}
 		for k, v in stats.states do table.insert(list, k .. "=" .. math.floor(v)) end
 		print("time in states: " .. table.concat(list, " "))
+		do
+			local ns = S.Nav.Stats
+			print(("nav: plans %d, failed %d, wedged %d, step-backs %d, slips %d"):format(ns.Plans, ns.Fail, ns.Wedged, ns.StepBack, ns.Slip))
+		end
 		if process.args[4] == "trace" then print(table.concat(trace, "\n")) end
 		assert(worstIdle < 3, "stalled")
 	end

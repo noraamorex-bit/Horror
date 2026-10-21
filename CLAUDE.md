@@ -105,6 +105,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   your sprint, but chasing you round something low (a table, a bed, the kitchen island; never a wall,
   never another floor) he pounces over it (`leapOver`/`leap`, 3 s apart); run dry and you're
   **winded** (no sprint until 35%: `Movement.WindedRecover`, red bar).
+- **A friend on nights alone (v105)**: a night that starts with one player gets an NPC friend (whichever
+  of Riley/Morgan/Casey/Jamie the player isn't): follows, chats, Talk prompt; taken at the blackout;
+  freeing them in the boiler room sends them next door (help in 35 s). Never with 2+.
 - **Surprises in the hunt (v104**, a player: "no surprise factor"): from a minute in, every 75-120 s
   he either waits in an empty hiding spot near someone (a creak at 15 studs, bursts out at 7.5) or
   appears behind someone alone (turn round: he screams and chases; don't: gone in 7 s). 0.7 s
@@ -344,6 +347,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **21 Oct (v105)**, "improve the game further", from the v104 logs (67 nights): (1) **solo nights**
+  13 of 15 abandoned, new solo players leaving in seconds → **a friend who made it** on nights that
+  start alone (`Director/Companion`, GDD "Solo nights"): follows, talks, taken at the blackout, freed in
+  the boiler room → Mrs. Okafor calls the police; (2) 23 of 45 captures in the upstairs bathroom after
+  the 911 call → the whole group at the window gets the head start + a linen cupboard there;
+  (3) live nav logged ~32 failed routes/night (0 in the sim) → routes to a goal he can't stand on end as
+  near as he can get, and failures are logged by kind and room (`FailGrid_<Room>`, pull_stats);
+  (4) surprises sooner (35 s, every 55-90 s). MatchService: 0 of 114 joined a night in progress, but
+  traffic is so low that overlaps are rare (couldn't read MemoryStore: the key lacks the scope).
+  Next: `--since=105`: solo nights (abandoned? `Mate` events, Help:Companion), bathroom captures,
+  failed routes by room, surprised/player.
+
 - **20 Oct (v104)**, the owner forwarded a review: "Unpolished, unnecessary mobile UI for pc players,
   most loopable enemy in horror games, no surprise factor to scare you, 'horror game' but almost no
   audio for it." → "Improve the game." Done: audio gains + Dread, the leap + winded, the two hunt
@@ -558,7 +573,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 104).
+  (last published: version 105).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
