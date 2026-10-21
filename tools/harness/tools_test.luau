@@ -61,7 +61,7 @@ local ok, err = pcall(function()
 		assert(t:GetAttribute("ItemId") == item and #t.ToolTip > 10, item .. ": knows what it is and says how to use it")
 		-- (v100) a picture in the hotbar, and the count for the line above it
 		assert(string.match(t.TextureId, "^rbxassetid://%d+$"), item .. ": has its hotbar icon")
-		assert(t:GetAttribute("Label") and (item == "Flashlight" or t:GetAttribute("Count") == 2), item .. ": its name and what's left")
+		assert(t:GetAttribute("Label") and (item == "Flashlight" or item == "NightVision" or t:GetAttribute("Count") == 2), item .. ": its name and what's left")
 	end
 	local icons = {}
 	for _, item in ctx.Tools.Items do
@@ -97,6 +97,36 @@ local ok, err = pcall(function()
 	local said = false
 	for _, c in captions do if c:find("Save your shots") then said = true end end
 	assert(said, "and they're told to save it for him")
+	-- v108, the Night Vision pass: the goggles, one tool without a count; a click turns them on while
+	-- there's charge, putting them away turns them off, the charge drains and they die at 0
+	ctx.Inventory.give(p, "NightVision", 1)
+	local nv = tool("NightVision")
+	assert(nv and nv.Name == "Night vision" and nv:GetAttribute("Count") == nil, "the goggles: " .. tostring(nv and nv.Name))
+	p:SetAttribute("NVLeft", 0)
+	ctx.Remotes.UseItem.OnServerEvent:Fire(p, "NightVision")
+	assert(not p:GetAttribute("NightVision"), "no charge: they stay off")
+	p:SetAttribute("NVLeft", ctx.Config.NightVision.Seconds)
+	ctx.Remotes.UseItem.OnServerEvent:Fire(p, "NightVision")
+	assert(p:GetAttribute("NightVision") == true, "click: on")
+	rawget(nv, "__signals").Unequipped:Fire()
+	assert(not p:GetAttribute("NightVision"), "put away: off")
+	ctx.Remotes.UseItem.OnServerEvent:Fire(p, "NightVision")
+	p:SetAttribute("NVLeft", 0.4)
+	ctx.PlayerState.drainNightVision(p, 0.3)
+	assert(p:GetAttribute("NightVision") == true and math.abs(p:GetAttribute("NVLeft") - 0.1) < 1e-6, "draining")
+	ctx.PlayerState.drainNightVision(p, 0.5)
+	assert(p:GetAttribute("NVLeft") == 0 and not p:GetAttribute("NightVision"), "out of charge: off")
+	p:SetAttribute("NightVision", nil)
+	p:SetAttribute("NVLeft", nil)
+	-- v108, Silent Steps: footsteps carry half as far, and you hold your breath 50% longer
+	local walk = ctx.PlayerState.stepRadius(p, false, false, nil)
+	local sprint = ctx.PlayerState.stepRadius(p, false, true, nil)
+	local hold = ctx.Hiding._breathMax(p)
+	p:SetAttribute("Pass_Silent", true)
+	assert(ctx.PlayerState.stepRadius(p, false, false, nil) == walk * 0.5 and ctx.PlayerState.stepRadius(p, false, true, nil) == sprint * 0.5, "silent steps")
+	assert(ctx.Hiding._breathMax(p) == hold * 1.5, "a longer breath")
+	p:SetAttribute("Pass_Silent", nil)
+	assert(walk == ctx.Config.Noise.Walk, "without it, the usual")
 	-- a new character: the tools come back
 	ctx.Inventory.clear(p)
 	assert(tool("Flashlight") == nil and tool("Rocket") == nil, "cleared: no tools")

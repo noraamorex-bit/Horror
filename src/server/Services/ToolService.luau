@@ -16,7 +16,7 @@ local Players = game:GetService("Players")
 local Tools = {}
 local ctx
 
-Tools.Items = { "Flashlight", "Taser", "PepperSpray", "Rocket", "EnergyDrink", "Firecracker" }
+Tools.Items = { "Flashlight", "Taser", "PepperSpray", "Rocket", "EnergyDrink", "Firecracker", "NightVision" }
 local IS_TOOL = {}
 for _, k in Tools.Items do
 	IS_TOOL[k] = true
@@ -33,6 +33,8 @@ local INFO = {
 	Rocket = { Name = "Rocket launcher", Icon = 13577018040, Unit = "rocket", Tip = "Click where he is: knocks him flat. It's LOUD." },
 	EnergyDrink = { Name = "Energy drink", Icon = 9307558976, Tip = "Click to drink: 10 s of sprinting that never tires you." },
 	Firecracker = { Name = "Firecracker", Icon = 13590809075, Tip = "Click where to throw it: the bang draws him away." },
+	-- (v108, the Night Vision pass: "Night Vision Button On" by The Art Of Battles, public domain)
+	NightVision = { Name = "Night vision", Icon = 114274096276149, Tip = "Click to see in the dark. 60 seconds of charge a night." },
 }
 Tools.Info = INFO -- (tests)
 
@@ -115,6 +117,13 @@ local function build(item: string): Tool
 		handle.Material = Enum.Material.Metal
 		piece(tool, handle, "Top", Vector3.new(0.3, 0.06, 0.3), CFrame.new(0, 0.38, 0), Color3.fromRGB(200, 200, 205), Enum.Material.Metal)
 		piece(tool, handle, "Stripe", Vector3.new(0.37, 0.14, 0.37), CFrame.new(0, 0.05, 0), Color3.fromRGB(20, 20, 24))
+	elseif item == "NightVision" then
+		handle.Size = Vector3.new(0.7, 0.3, 0.3)
+		handle.Color = dark
+		for _, x in { -0.18, 0.18 } do
+			piece(tool, handle, "Tube", Vector3.new(0.22, 0.22, 0.34), CFrame.new(x, 0, -0.28), Color3.fromRGB(36, 38, 36), Enum.Material.Metal)
+			piece(tool, handle, "Lens", Vector3.new(0.18, 0.18, 0.04), CFrame.new(x, 0, -0.46), Color3.fromRGB(90, 255, 120), Enum.Material.Neon)
+		end
 	elseif item == "Firecracker" then
 		handle.Size = Vector3.new(0.22, 0.22, 0.8)
 		handle.Color = Color3.fromRGB(200, 30, 30)
@@ -160,6 +169,8 @@ local function wire(p: Player, tool: Tool, item: string)
 	tool.Unequipped:Connect(function()
 		if item == "Flashlight" then
 			ctx.PlayerState.setFlashlight(p, false)
+		elseif item == "NightVision" and ctx.PlayerState.setNightVision then
+			ctx.PlayerState.setNightVision(p, false)
 		end
 	end)
 end
@@ -190,8 +201,8 @@ function Tools.refresh(p: Player, item: string)
 		tool.Parent = backpack
 	end
 	local name = INFO[item].Name
-	tool.Name = (item == "Flashlight" or n <= 1) and name or (name .. " (" .. n .. ")")
-	tool:SetAttribute("Count", item ~= "Flashlight" and n or nil)
+	tool.Name = (item == "Flashlight" or item == "NightVision" or n <= 1) and name or (name .. " (" .. n .. ")")
+	tool:SetAttribute("Count", (item ~= "Flashlight" and item ~= "NightVision") and n or nil)
 end
 
 function Tools.refreshAll(p: Player)

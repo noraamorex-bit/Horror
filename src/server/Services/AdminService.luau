@@ -359,6 +359,9 @@ COMMANDS.pass = function(player, arg)
 			ctx.Inventory.give(player, "Taser", ctx.Config.Taser.Charges)
 		elseif pass.Key == "HeadStart" then
 			ctx.Inventory.give(player, "PepperSpray", 1)
+		elseif pass.Key == "NightVision" and not ctx.Inventory.has(player, "NightVision") then
+			player:SetAttribute("NVLeft", ctx.Config.NightVision.Seconds)
+			ctx.Inventory.give(player, "NightVision", 1)
 		end
 	end
 	return pass.Name .. (on and ": ON (this server, not saved)" or ": OFF")

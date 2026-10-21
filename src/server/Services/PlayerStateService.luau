@@ -127,7 +127,7 @@ end
 
 function PlayerState.resetPlayer(player: Player)
 	rushUntil[player] = nil
-	for _, attr in { "Rush", "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead", "WinTime", "NewBest", "Revives", "NightCounted", "AdminUsed" } do
+	for _, attr in { "Rush", "Role", "RoleName", "Crouching", "Sprinting", "FlashlightOn", "Hiding", "Captured", "Escaped", "HoldingBreath", "Fate", "HideView", "Calling", "CallProgress", "SeesIntruder", "Breath", "StruggleProgress", "Dead", "WinTime", "NewBest", "Revives", "NightCounted", "AdminUsed", "NightVision", "NVLeft" } do
 		player:SetAttribute(attr, nil)
 	end
 	-- (last night's coin boosts, clues read and the secret ending's state)
@@ -226,6 +226,14 @@ function PlayerState.assignRoles(players: { Player })
 				end
 			end)
 		end
+		-- the Night Vision pass (v108): the goggles, with the night's charge
+		if p:GetAttribute("Pass_NightVision") then
+			p:SetAttribute("NVLeft", ctx.Config.NightVision.Seconds)
+			p:SetAttribute("NightVision", nil)
+			if not ctx.Inventory.has(p, "NightVision") then
+				ctx.Inventory.give(p, "NightVision", 1)
+			end
+		end
 		-- the head start pass: a flashlight in your pocket from the first minute, and a can of pepper spray
 		if p:GetAttribute("Pass_HeadStart") then
 			if not ctx.Inventory.has(p, "Flashlight") then
@@ -237,6 +245,44 @@ function PlayerState.assignRoles(players: { Player })
 		if ctx.Economy then
 			ctx.Economy.applyLoadout(p)
 		end
+	end
+end
+
+-- the Night Vision pass (v108): on while there's charge left (NVLeft seconds a night, drained in
+-- slowTick); the client draws it (NightVision attribute: client Gear)
+function PlayerState.setNightVision(player: Player, on: boolean): boolean
+	if on then
+		if (tonumber(player:GetAttribute("NVLeft")) or 0) <= 0 then
+			ctx.Audio.caption("The goggles are out of charge until tomorrow night.", nil, nil, { player })
+			return false
+		end
+		player:SetAttribute("NightVision", true)
+	else
+		player:SetAttribute("NightVision", nil)
+	end
+	return true
+end
+
+-- how far a footstep carries (the Silent Steps pass, v108: half as far)
+function PlayerState.stepRadius(player: Player, crouch: boolean, sprint: boolean, role: string?): number
+	local N = ctx.Config.Noise
+	local radius = crouch and N.Crouch or (sprint and (role == "Runner" and N.RunnerSprint or N.Sprint) or N.Walk)
+	if player:GetAttribute("Pass_Silent") then
+		radius *= 0.5
+	end
+	return radius
+end
+
+-- the goggles' charge runs down while they're on, and they die at 0
+function PlayerState.drainNightVision(player: Player, dt: number)
+	if not player:GetAttribute("NightVision") then
+		return
+	end
+	local left = math.max(0, (tonumber(player:GetAttribute("NVLeft")) or 0) - dt)
+	player:SetAttribute("NVLeft", left)
+	if left <= 0 then
+		player:SetAttribute("NightVision", nil)
+		ctx.Audio.caption("The goggles die. Out of charge until tomorrow night.", nil, nil, { player })
 	end
 end
 
@@ -450,9 +496,7 @@ local function tick(dt: number)
 		stepClock[player] = (stepClock[player] or 0) + dt
 		if moving and stepClock[player] >= 0.4 then
 			stepClock[player] = 0
-			local radius = crouch and ctx.Config.Noise.Crouch
-				or (sprint and (role == "Runner" and ctx.Config.Noise.RunnerSprint or ctx.Config.Noise.Sprint) or ctx.Config.Noise.Walk)
-			ctx.Noise.emit(root.Position, radius, "Footsteps", player)
+			ctx.Noise.emit(root.Position, PlayerState.stepRadius(player, crouch, sprint, role), "Footsteps", player)
 		end
 	end
 end
@@ -466,6 +510,8 @@ local function slowTick(dt: number)
 		if not root then
 			continue
 		end
+
+		PlayerState.drainNightVision(player, dt)
 
 		-- flashlight battery
 		if player:GetAttribute("FlashlightOn") then
@@ -631,6 +677,8 @@ function PlayerState.start()
 			PlayerState.drink(player)
 		elseif item == "Firecracker" and ctx.Inventory.has(player, "Firecracker") and aimed then
 			PlayerState.throwFirecracker(player, aim.Unit)
+		elseif item == "NightVision" and ctx.Inventory.has(player, "NightVision") then
+			PlayerState.setNightVision(player, not player:GetAttribute("NightVision"))
 		end
 	end)
 

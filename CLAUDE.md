@@ -224,6 +224,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   the 🚀 button says **STOP HIM** and flashes while he chases you. Also fixed: Mom's texts (and her
   replies) wait until a scare is 4 s back (hunt_goal_test caught one landing 2 s after the music box).
 
+- **21 Oct (v108)**, the owner: "Change the gamepass prices and add new ones… maximizing sales." ~8 of
+  2,714 players owned a pass. Prices now: Supporter 10; Pick your role, Marathon, Battery, Colours 15;
+  Head start 19; Silent Steps 29; Taser 39; 2x Coins 39; Night Vision 49; Rocket 79; VIP 99; Admin 249;
+  Become Him 25 (was 50, 0 of 49 bought). New: **Night Vision** (2045276660: goggles, 60 s of green
+  sight a night, offered for a minute after the blackout), **2x Coins** (2045798689: the night's pay
+  doubled), **Silent Steps** (2044448668: half the footstep noise, 50% longer breath). GDD
+  "Monetization (v108)".
+
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
 alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
@@ -372,6 +380,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **21 Oct (v108 = place version 107)**: the pass prices + three new passes (see Economy, v108). Can't
+  see the green grade in the real client here: check that Night Vision reads well (not too bright) on
+  a phone. Next: `pull_stats.py` `== SALES` bought / asked for NightVision, DoubleCoins, Silent and
+  the cheaper tiers; keep the prices that sell more R$ in total, not more units.
 
 - **21 Oct (v107 = place version 106)**, the owner: "Deeply analyze game statistics and improve the game." Logs v104-v105
   (94 nights, 238 lobby visits): brand-new players queued 93% but only 71% got teleported (37 of 168
@@ -624,7 +637,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 106; the notes' "v107" = place version 106).
+  (last published: version 107; the notes' "v108" = place version 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

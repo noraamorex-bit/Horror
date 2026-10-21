@@ -5,6 +5,8 @@
 	• ➕ INVITE A FRIEND while your night can still take players (acts I-II, room left): the invite
 	  brings them straight into this house (Social.invite carries the night's code; the lobby routes them).
 	  While he's chasing or charging within 70 studs of you it flashes and says STOP HIM.
+	• 👁 NIGHT VISION (the pass, v108) for the first minute after the power goes out, if you don't
+	  have it: the moment you'd want it most.
 	• When someone knocks him flat with a rocket, everyone hears about it ("Sam knocked him flat with a
 	  ROCKET LAUNCHER!") and the button pulses for a moment.
 ]]
@@ -18,6 +20,9 @@ local player = Players.LocalPlayer
 
 local rocketButton: TextButton
 local inviteButton: TextButton
+local nvButton: TextButton
+local nvUntil = 0 -- (the night vision offer shows until then: a minute from the blackout)
+local NV_SHOW = 60
 
 local HUNT = { SomeoneElse = true, Guest = true }
 local CHASE = { Chase = true, Charge = true }
@@ -33,6 +38,16 @@ local function refresh()
 	local hunt = HUNT[workspace:GetAttribute("Act") or ""] == true and not workspace:GetAttribute("EndingActive")
 	rocketButton.Visible = p ~= nil and p.Id > 0 and canAct and hunt and not player:GetAttribute("Item_Rocket")
 	rocketButton.Text = (chased and "🚀 STOP HIM  R$ " or "🚀 ROCKET  R$ ") .. tostring(p and p.Price or 25)
+	if nvButton then
+		local nv = nil
+		for _, q in ctx.Config.Shop.Passes or {} do
+			if q.Key == "NightVision" then
+				nv = q
+			end
+		end
+		nvButton.Visible = nv ~= nil and nv.Id > 0 and canAct and hunt and os.clock() < nvUntil and not player:GetAttribute("Pass_NightVision")
+		nvButton.Text = "👁 NIGHT VISION  R$ " .. tostring(nv and nv.Price or 49)
+	end
 	-- while this night can still take players: bring a friend straight into it (Social.invite)
 	if inviteButton then
 		inviteButton.Visible = canAct and workspace:GetAttribute("InviteOpen") == true and workspace:GetAttribute("NightCode") ~= nil
@@ -65,6 +80,15 @@ local function chaseChanged()
 	end
 end
 Offers._chaseChanged = chaseChanged -- (tests)
+
+function Offers._offerNightVision()
+	nvUntil = os.clock() + NV_SHOW
+	refresh()
+	task.delay(NV_SHOW + 0.5, refresh)
+end
+function Offers.isNightVisionShown(): boolean
+	return nvButton ~= nil and nvButton.Visible
+end
 
 function Offers.isRocketShown(): boolean
 	return rocketButton ~= nil and rocketButton.Visible
@@ -138,6 +162,41 @@ function Offers.start()
 	for _, a in { "InGame", "Captured", "Dead", "Escaped", "Monster", "Item_Rocket" } do
 		player:GetAttributeChangedSignal(a):Connect(refresh)
 	end
+	nvButton = UI.new("TextButton", {
+		Name = "NightVisionOffer",
+		Size = UDim2.fromOffset(190, 34),
+		Text = "",
+		Font = UI.Font.Bold,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(214, 255, 220),
+		BackgroundColor3 = Color3.fromRGB(14, 60, 26),
+		BackgroundTransparency = 0.15,
+		AutoButtonColor = true,
+		LayoutOrder = 9,
+		Visible = false,
+		Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
+	})
+	UI.corner(nvButton, 8)
+	UI.stroke(nvButton, Color3.fromRGB(120, 255, 140), 1, 0.5)
+	nvButton.Activated:Connect(function()
+		for _, q in ctx.Config.Shop.Passes or {} do
+			if q.Key == "NightVision" and q.Id > 0 then
+				pcall(function()
+					MarketplaceService:PromptGamePassPurchase(player, q.Id)
+				end)
+			end
+		end
+	end)
+	-- (the power's just gone: the night vision offer for a minute)
+	local lastAct = workspace:GetAttribute("Act")
+	workspace:GetAttributeChangedSignal("Act"):Connect(function()
+		local act = workspace:GetAttribute("Act")
+		if HUNT[act or ""] and not HUNT[lastAct or ""] then
+			Offers._offerNightVision()
+		end
+		lastAct = act
+	end)
+	player:GetAttributeChangedSignal("Pass_NightVision"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("Act"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("EndingActive"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("IntruderState"):Connect(chaseChanged)

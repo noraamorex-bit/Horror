@@ -259,6 +259,20 @@ local ok, err = pcall(function()
 	assert(saved.u77.Chain.N == 4 and E._docs[77].Chain.N == 4, "merge keeps the latest streak")
 	assert(E.owns(p, "Title_NightOwl"), "three nights in a row: Night Owl")
 	print("streak ok")
+	-- v108, the 2x Coins pass: the whole night's pay again, as its own line
+	do
+		p:SetAttribute("Pass_DoubleCoins", true)
+		E.resetNight()
+		local r = E.nightRewards(p, { Seconds = 600, Survived = true })
+		local dbl = nil
+		for _, l in r.Lines do if l.Text == "2x Coins" then dbl = l end end
+		assert(dbl and dbl.Amount > 0 and r.Total == dbl.Amount * 2, "2x coins doubles the night: " .. tostring(r.Total))
+		p:SetAttribute("Pass_DoubleCoins", nil)
+		E.resetNight()
+		local r0 = E.nightRewards(p, { Seconds = 30 })
+		for _, l in r0.Lines do assert(l.Text ~= "2x Coins", "only with the pass") end
+		print("double coins ok")
+	end
 	-- titles a night earns: survived, unseen, a Hard night uncaught
 	local t = H.wrap(R.Instance.new("Player"))
 	rawset(t, "UserId", 55)

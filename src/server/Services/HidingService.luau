@@ -11,6 +11,13 @@ local Anim = require(script.Parent.Parent.World.Anim)
 local Hiding = {}
 local ctx
 
+-- how long you can hold your breath (the Silent Steps pass, v108: 50% longer)
+local function breathMax(player: Player): number
+	return ctx.Config.Hiding.HoldBreathMax * (player:GetAttribute("Pass_Silent") and 1.5 or 1)
+end
+
+Hiding._breathMax = function(p: Player) return breathMax(p) end -- (tests)
+
 local spots = {} -- list
 local occupantOf = {} -- spot -> player
 local spotOf = {} -- player -> spot
@@ -112,7 +119,7 @@ function Hiding.enter(player: Player, spot)
 	player:SetAttribute("NightHides", (tonumber(player:GetAttribute("NightHides")) or 0) + 1)
 	occupantOf[spot] = player
 	spotOf[player] = spot
-	breath[player] = ctx.Config.Hiding.HoldBreathMax
+	breath[player] = breathMax(player)
 	ctx.PlayerState.setFrozen(player, true)
 	char:PivotTo(spot.Inside)
 	setHidden(player, true)
@@ -216,10 +223,10 @@ function Hiding.start()
 						ctx.Noise.emit(spot.Position, 18, "Gasp", player)
 					end
 				else
-					b = math.min(ctx.Config.Hiding.HoldBreathMax, b + dt / ctx.Config.Hiding.HoldBreathRecover)
+					b = math.min(breathMax(player), b + dt / ctx.Config.Hiding.HoldBreathRecover)
 				end
 				breath[player] = b
-				player:SetAttribute("Breath", b / ctx.Config.Hiding.HoldBreathMax)
+				player:SetAttribute("Breath", b / breathMax(player))
 			end
 		end
 	end)

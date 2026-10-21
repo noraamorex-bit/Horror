@@ -798,6 +798,11 @@ function Economy.nightRewards(player: Player, info): any
 		table.insert(lines, { Text = (player:GetAttribute("Pass_VIP") and "VIP" or "Supporter") .. " bonus", Amount = bonus })
 		total += bonus
 	end
+	-- the 2x Coins pass (v108): the whole night's pay again, on top of everything
+	if player:GetAttribute("Pass_DoubleCoins") and total > 0 then
+		table.insert(lines, { Text = "2x Coins", Amount = total })
+		total *= 2
+	end
 	local d = docs[player.UserId]
 	local before = d and Cat.levelOf(d.Earned) or 1
 	if total > 0 then

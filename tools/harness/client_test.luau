@@ -36,7 +36,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -454,6 +454,24 @@ local ok, err = pcall(function()
 			cr:Destroy()
 			me:Destroy() -- (the harness can't set Character back to nil)
 		end
+		-- v108: the night vision offer for a minute after the power goes out, unless you have the pass
+		do
+			local nv = H.unwrap(pg):FindFirstChild("NightVisionOffer", true)
+			assert(nv and not nv.Visible, "no night vision offer before the blackout")
+			ctx.Offers._offerNightVision()
+			assert(nv.Visible and string.find(nv.Text, "NIGHT VISION", 1, true) and string.find(nv.Text, "R$", 1, true), "offered at the blackout: " .. nv.Text)
+			player:SetAttribute("Pass_NightVision", true)
+			refresh()
+			assert(not nv.Visible, "not if you have it")
+			player:SetAttribute("Pass_NightVision", nil)
+			player:SetAttribute("NightVision", true)
+			ctx.NightVision.set(true)
+			assert(ctx.NightVision.isOn(), "the goggles' grade comes on")
+			ctx.NightVision.set(false)
+			assert(not ctx.NightVision.isOn(), "and off")
+			player:SetAttribute("NightVision", nil)
+			print("night vision ok")
+		end
 		ws:SetAttribute("Act", wasAct)
 		player:SetAttribute("InGame", wasIn)
 		refresh()
@@ -491,6 +509,16 @@ local ok, err = pcall(function()
 		assert(ctx.Gear.heldLine() == "TASER  ·  3 SHOTS", "held line: " .. tostring(ctx.Gear.heldLine()))
 		t:SetAttribute("Count", 1)
 		assert(ctx.Gear.heldLine() == "TASER  ·  LAST SHOT", "the last one")
+		t:SetAttribute("ItemId", "NightVision")
+		t:SetAttribute("Label", "Night vision")
+		t:SetAttribute("Unit", nil)
+		t:SetAttribute("Count", nil)
+		player:SetAttribute("NVLeft", 41.3)
+		assert(ctx.Gear.heldLine() == "NIGHT VISION  ·  42 S", "goggles' charge: " .. tostring(ctx.Gear.heldLine()))
+		player:SetAttribute("NVLeft", 0)
+		assert(ctx.Gear.heldLine() == "NIGHT VISION  ·  NO CHARGE", "out of charge")
+		player:SetAttribute("NVLeft", nil)
+		t:SetAttribute("ItemId", "Taser")
 		ctx.Gear._refresh()
 		local box = H.unwrap(pg):FindFirstChild("HeldItem", true)
 		assert(box and box.Visible, "shown above the hotbar")

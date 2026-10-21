@@ -17,6 +17,7 @@ Inventory.Display = {
 	Rocket = "Rocket launcher",
 	EnergyDrink = "Energy drink",
 	Firecracker = "Firecracker",
+	NightVision = "Night vision goggles",
 	HouseKeys = "House keys",
 	CarKeys = "Car keys",
 	BasementKey = "Basement key",

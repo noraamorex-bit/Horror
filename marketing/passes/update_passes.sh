@@ -19,3 +19,16 @@ api 2036510399 -F "description=Everything in one: +50% coins every night, a VIP 
 api 2006721483 -F "description=Start every night with a flashlight in your pocket, plus a spray can to keep him back." # ("pepper spray" comes back filtered)
 # v106 (21 Oct): the admin panel pass (created with POST .../game-passes, id 2044988494, 249 R$)
 api 2044988494 -F "isForSale=true" -F "imageFile=@admin_panel.png;type=image/png"
+# v108 (21 Oct): ~8 of 2,714 players owned a pass. Cheap impulse tiers and three new passes
+# (created with POST .../game-passes; icons from make_v108.py):
+#   Night Vision 2045276660 (49), 2x Coins 2045798689 (39), Silent Steps 2044448668 (29)
+api 2045276660 -F "isForSale=true" -F "imageFile=@night_vision.png;type=image/png"
+api 2045798689 -F "isForSale=true" -F "imageFile=@double_coins.png;type=image/png"
+api 2044448668 -F "isForSale=true" -F "imageFile=@silent_steps.png;type=image/png"
+api 2039534472 -F "price=79"   # Rocket Launcher (99)
+api 2006030307 -F "price=39"   # Taser (49)
+api 2006193593 -F "price=15"   # Pick your role (25)
+api 2005053525 -F "price=15"   # Marathon (20)
+api 2005388315 -F "price=15"   # Long-life battery (25)
+api 2006721483 -F "price=19"   # Head start (25)
+# (the Become Him developer product, 50 -> 25: PATCH .../developer-products/v2/universes/$U/developer-products/3718593338 -F price=25)

@@ -445,6 +445,12 @@ function Shop.start()
 				and not player:GetAttribute("Escaped") and not ctx.Inventory.has(player, "Rocket") then
 				ctx.Inventory.give(player, "Rocket", ctx.Config.Rocket.Charges)
 			end
+			-- (and the goggles, with tonight's charge)
+			if pass.Key == "NightVision" and ctx.Inventory and player:GetAttribute("InGame") and not player:GetAttribute("Dead")
+				and not player:GetAttribute("Escaped") and not ctx.Inventory.has(player, "NightVision") then
+				player:SetAttribute("NVLeft", ctx.Config.NightVision.Seconds)
+				ctx.Inventory.give(player, "NightVision", 1)
+			end
 		end
 	end)
 	local function added(player: Player)

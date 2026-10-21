@@ -380,15 +380,20 @@ Config.Shop = {
 		-- v106 (21 Oct, the owner): the admin panel, most of what the owner's has (not coins, passes,
 		-- paid items or revives); a night it's used on pays no coins and counts for no board
 		{ Key = "AdminPanel", Id = 2044988494, Price = 249, Name = "Admin panel", Desc = "Run the night: skip acts, set off scares, boss him around, god mode, teleport, pick the ending. (No coins on nights you use it.)" },
-		{ Key = "Rocket", Id = 2039534472, Price = 99, Name = "Rocket Launcher", Desc = "Start every night with a rocket launcher: 2 rockets. A hit blows him off his feet, then he limps away." },
+		-- (v108, 21 Oct: about 8 of 2,714 players own a pass. More things worth wanting at a price a small
+		-- balance covers: the cheap ones down to 15-19, the taser 39, the rocket 79; three new ones)
+		{ Key = "NightVision", Id = 2045276660, Price = 49, Name = "Night Vision", Desc = "Night vision goggles every night: see in the dark for 60 seconds. Spot him before he spots you." },
+		{ Key = "DoubleCoins", Id = 2045798689, Price = 39, Name = "2x Coins", Desc = "Double the coins from every night you play. Stacks with VIP." },
+		{ Key = "Rocket", Id = 2039534472, Price = 79, Name = "Rocket Launcher", Desc = "Start every night with a rocket launcher: 2 rockets. A hit blows him off his feet, then he limps away." },
 		{ Key = "VIP", Id = 2036510399, Price = 99, Name = "VIP", Desc = "Everything in one: +50% coins every night, a VIP tag, pick your role, every flashlight colour, Marathon stamina and a battery that never dies." },
-		{ Key = "PepperSpray", Id = 2006030307, Price = 49, Name = "Taser", Desc = "Start every night with a taser: 3 shots. A hit stuns him, then slows him right down." },
+		{ Key = "PepperSpray", Id = 2006030307, Price = 39, Name = "Taser", Desc = "Start every night with a taser: 3 shots. A hit stuns him, then slows him right down." },
+		{ Key = "Silent", Id = 2044448668, Price = 29, Name = "Silent Steps", Desc = "Your footsteps make half the noise, and you can hold your breath 50% longer while hiding." },
 		{ Key = "Supporter", Id = 2008280313, Price = 10, Name = "Supporter", Desc = "+20% coins every night, a SUPPORTER tag, a gold flashlight and a star on the donation board." },
 		{ Key = "Colours", Id = 2005832310, Price = 15, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
-		{ Key = "ChooseRole", Id = 2006193593, Price = 25, Name = "Pick your role", Desc = "Choose who you play every night, and what you start with: Jamie's flashlight, Riley's toolkit, Morgan's energy drinks or Casey's firecrackers." },
-		{ Key = "Marathon", Id = 2005053525, Price = 20, Name = "Marathon", Desc = "Sprint for longer and get your breath back twice as fast." },
-		{ Key = "Battery", Id = 2005388315, Price = 25, Name = "Long-life battery", Desc = "Your flashlight never runs out." },
-		{ Key = "HeadStart", Id = 2006721483, Price = 25, Name = "Head start", Desc = "Start every night with a flashlight in your pocket, plus a spray can to keep him back." },
+		{ Key = "ChooseRole", Id = 2006193593, Price = 15, Name = "Pick your role", Desc = "Choose who you play every night, and what you start with: Jamie's flashlight, Riley's toolkit, Morgan's energy drinks or Casey's firecrackers." },
+		{ Key = "Marathon", Id = 2005053525, Price = 15, Name = "Marathon", Desc = "Sprint for longer and get your breath back twice as fast." },
+		{ Key = "Battery", Id = 2005388315, Price = 15, Name = "Long-life battery", Desc = "Your flashlight never runs out." },
+		{ Key = "HeadStart", Id = 2006721483, Price = 19, Name = "Head start", Desc = "Start every night with a flashlight in your pocket, plus a spray can to keep him back." },
 	},
 	-- bought on the spot after you die: back into this night, somewhere away from him
 	-- (Price: the default the product is set to on Roblox, shown until the live price loads; the card
@@ -396,7 +401,7 @@ Config.Shop = {
 	-- 40 R$ with a far bigger brand. 10 R$ = the cheapest pass, an impulse buy for a leftover balance)
 	Revive = { Id = 3716706476, Price = 10, Window = 15, Grace = 10 },
 	-- co-op only, bought again every night: you become him for the rest of the night (MonsterService)
-	BecomeHim = { Id = 3718593338, Price = 50 },
+	BecomeHim = { Id = 3718593338, Price = 25 }, -- (v108: 50 → 25: opened 49 times, bought 0 at 50)
 	-- one rocket for this night only (the hunt): for anyone without the pass, bought on the spot
 	RocketNight = { Id = 3718739690, Price = 25 },
 	-- one time only, for everyone who hasn't had it: coins, a rocket for the next night and a revive
@@ -477,6 +482,10 @@ Config.Monster = {
 	ListenTime = 7, -- the heartbeat minigame for whoever's inside
 	TaserStun = 6,
 }
+
+-- the Night Vision pass (v108): goggles in the hotbar, a green view of the dark for this many seconds
+-- a night (on and off as you like; client NightVision)
+Config.NightVision = { Seconds = 60 }
 
 -- the taser (the old pepper spray pass): aim and shoot. A hit stuns him, then he limps after you slowly
 Config.Taser = {

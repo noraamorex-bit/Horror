@@ -110,6 +110,10 @@ function Gear.heldLine(): string?
 	elseif n == 1 and tool:GetAttribute("Unit") then
 		label ..= "  ·  LAST " .. string.upper(tostring(tool:GetAttribute("Unit")))
 	end
+	if tool:GetAttribute("ItemId") == "NightVision" then
+		local left = math.ceil(tonumber(player:GetAttribute("NVLeft")) or 0)
+		label ..= left > 0 and ("  ·  " .. left .. " S") or "  ·  NO CHARGE"
+	end
 	return label
 end
 
