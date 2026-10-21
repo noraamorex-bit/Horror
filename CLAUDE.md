@@ -365,10 +365,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   Done: the v105 NPC friend removed; anyone can answer a dialogue; the Admin panel pass (see Hard
   rules); TTS voices + a Voices setting; his voice lines, the mimic, the mirror (see The intruder).
   Can't hear the voices here (TTS only runs in the real client): check the volumes and that his
-  voice reads as creepy, not silly. Next: `--since=106`: AdminPanel events / pass sales, quits right
+  voice reads as creepy, not silly. **Published as place version 105** (the v105 work was never
+  published on its own, so "v106" in these notes = place version 105 in the logs). Next: `--since=105`: AdminPanel events / pass sales, quits right
   after the mimic, captures after his lines.
 
-- **21 Oct (v105)**, "improve the game further", from the v104 logs (67 nights): (1) solo nights 13 of 15
+- **21 Oct (v105, unpublished; went live inside place version 105 with v106)**, "improve the game further", from the v104 logs (67 nights): (1) solo nights 13 of 15
   abandoned → an NPC friend for nights alone was built, then **removed at the owner's request**
   ("Remove that npc thing"): don't add NPC companions; (2) 23 of 45 captures in the upstairs bathroom after
   the 911 call → the whole group at the window gets the head start + a linen cupboard there;
