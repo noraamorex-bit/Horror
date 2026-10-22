@@ -423,7 +423,15 @@ local function showCard(opts)
 		local starter = st and st.Id > 0 and player:GetAttribute("StarterOffer") == true
 		local beHim = opts.ReturnToLobby and opts.RestartIn and him and him.Id > 0 and #Players:GetPlayers() >= 2
 			and ctx.MonsterUI ~= nil
-		if starter or beHim then
+		-- (v110: the passes were almost never seen, the shop being in the lobby where players spend
+		-- half a minute: 2x Coins is offered here, where the night's coins are paid)
+		local dbl = nil
+		for _, ps in ctx.Config.Shop.Passes or {} do
+			if ps.Key == "DoubleCoins" and ps.Id > 0 and not player:GetAttribute("Pass_DoubleCoins") then
+				dbl = ps
+			end
+		end
+		if starter or beHim or dbl then
 			order += 1
 			local offers = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, Parent = col })
 			UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = offers })
@@ -453,6 +461,13 @@ local function showCard(opts)
 						MarketplaceService:PromptProductPurchase(player, st.Id)
 					end)
 				end).Name = "StarterOffer"
+			end
+			if dbl and not (starter and beHim) then
+				offer("💰 2x COINS EVERY NIGHT  ·  R$ " .. tostring(dbl.Price), Color3.fromRGB(40, 36, 18), Color3.fromRGB(255, 226, 120), 3, function()
+					pcall(function()
+						MarketplaceService:PromptGamePassPurchase(player, dbl.Id)
+					end)
+				end).Name = "DoubleCoinsOffer"
 			end
 			if beHim then
 				local saved = (tonumber(player:GetAttribute("MonsterCredits")) or 0) > 0

@@ -104,6 +104,14 @@ function Intro.play()
 	end)
 	task.delay(DURATION, function()
 		conn:Disconnect()
+		-- (v110: back in your own eyes facing the way you stand: the night starts facing the fridge and
+		-- the pizza menu on it, the first task; the street shot looked somewhere else entirely)
+		local char = player.Character
+		local head = char and char:FindFirstChild("Head") :: BasePart?
+		local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if head and root then
+			cam.CFrame = CFrame.lookAt(head.Position, head.Position + root.CFrame.LookVector)
+		end
 		cam.CameraType = prevType == Enum.CameraType.Scriptable and Enum.CameraType.Custom or prevType
 		for _, b in bars do
 			b:Destroy()

@@ -25,6 +25,7 @@ Config.Lobby = {
 	-- first two acts, until bedtime, and never past this many seconds. (v78 logs: 150 s caught 1 of 68
 	-- teleports, while 44 of 57 lone departures had someone else leave the lobby within 8 minutes.)
 	JoinOpenFor = 420,
+	ReadyWait = 12, -- game server: wait this long at most for everyone's client to finish loading (v110)
 	ArrivalTimeout = 20, -- game server: start without stragglers after this long (v87: 21 players left a
 	-- server whose night never started, within 2-17 s of arriving; latecomers can still join the night)
 	ReturnDelay = 35, -- game server: seconds on the ending screen before the next night starts (LOBBY to leave)
@@ -403,11 +404,11 @@ Config.Shop = {
 	-- co-op only, bought again every night: you become him for the rest of the night (MonsterService)
 	BecomeHim = { Id = 3718593338, Price = 25 }, -- (v108: 50 → 25: opened 49 times, bought 0 at 50)
 	-- one rocket for this night only (the hunt): for anyone without the pass, bought on the spot
-	RocketNight = { Id = 3718739690, Price = 25 },
+	RocketNight = { Id = 3718739690, Price = 15 }, -- (v110: 25 -> 15, 0 of 10 bought at 25)
 	-- one time only, for everyone who hasn't had it: coins, a rocket for the next night and a revive
 	-- (worth 25 + 25 + 10 R$+ bought apart). Offered at the top of the SHOP and on the result card.
 	-- Id 0 = the product isn't made on Roblox yet: hidden everywhere.
-	Starter = { Id = 0, Price = 19, Coins = 500, Rockets = 1, Revives = 1 },
+	Starter = { Id = 3721088307, Price = 19, Coins = 500, Rockets = 1, Revives = 1 },
 	-- the passes VIP includes (it sets their attributes too)
 	VIPIncludes = { "Colours", "Marathon", "Battery", "ChooseRole" },
 	Donations = {

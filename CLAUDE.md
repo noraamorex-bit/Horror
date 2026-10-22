@@ -211,7 +211,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **15 Oct (v92)**, the owner: 240/250 highly engaged, 300 of 1,000 R$: "capitalize more", roles
   were "so useless", "add a rocket launcher or something people will buy", everything in the admin
   panel. **Rocket Launcher** pass (2039534472, 99 R$: 2 rockets a night, knocked flat 7 s then slowed
-  20 s; a miss is a big noise) and **Rocket (tonight)** product (3718739690, 25 R$, a button during
+  20 s; a miss is a big noise) and **Rocket (tonight)** product (3718739690, 15 R$ since v110, a button during
   the hunt). **Roles start with items** (Jamie flashlight+keys, Riley multitool+tape, Morgan 2 energy
   drinks, Casey 2 firecrackers that lure him); Pick your role 25 R$, in VIP. Sales logged in
   `Sales_v1` (pull_stats prints them). Admin SHOP tab. Head Start's description had been filtered ("pepper spray" gets hashed on the pass page).
@@ -220,8 +220,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   Pick your role, donations, 2 revives of 74 deaths), falling; no data on how often anything was offered.
   Done: **funnel** (every purchase window: `Ask:<key>` in Sales_v1 + `Ask` in the night log; pull_stats
   prints bought / asked); **Starter Pack** (`Config.Shop.Starter`, 19 R$ once: 500 coins + a rocket + a
-  revive; top of the SHOP and a small button on the result card) **is off until the product exists**
-  (`Id = 0`: making it on Roblox was blocked here, the owner makes it or allows the API call);
+  revive; top of the SHOP and a small button on the result card); **live since v110**
+  (product 3721088307, made through the API);
   **😈 BE HIM NEXT NIGHT** on a group's result card (bought now, used when the next night opens);
   the 🚀 button says **STOP HIM** and flashes while he chases you. Also fixed: Mom's texts (and her
   replies) wait until a scare is 4 s back (hunt_goal_test caught one landing 2 s after the music box).
@@ -405,6 +405,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **22 Oct (v110 = place version 109)**, the owner: "Analyze all game statistics and improve the game… gamepass
+  prices and purchases." Logs since 106 (241 nights, 560 lobby visits, 11.2k visits, 18 up / 26 down):
+  first-nighters quit mid-night 54% (v104 27%), act I quits in the first minute 22% of players (was 8%),
+  phones 68%; 65 of 123 act I quitters never found the menu on the fridge (phones median 55 s to it);
+  20 left while loading. Sales 560 R$: Become Him 4/76 at 25 (keep), revive 3/11, Pick your role 0/18,
+  Rocket (tonight) 0/10 at 25; no pass sold since v108 (passes are only in the lobby shop; median lobby
+  visit 28 s). Done: spawn in the kitchen facing the fridge, the night waits for every client (12 s max),
+  the intro hands the camera over facing forward; Starter Pack live (19 R$), Rocket (tonight) 15 R$, a
+  2x Coins offer on the result card. Other prices kept (too few sales to tell). Next: `--since=109`:
+  first-step time on phones, act I quits in the first minute, Ask/bought for Starter, DoubleCoins, RocketNight.
 
 - **21 Oct (reels 38-39)**: the gameplay series Parts 3 and 4 with real Roblox avatars, little text,
   several scares; Part 4 shows the rocket launcher pass (see Marketing). Next reel: Part 5 in the same
@@ -672,7 +683,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 108; the notes' "v109" = place version 108, "v108" = 107, "v107" = 106).
+  (last published: version 109; the notes' "v110" = place version 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

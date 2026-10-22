@@ -61,6 +61,7 @@ local ok, err = pcall(function()
 	-- a veteran among them: the vote, as before
 	local v, n = mkPlayer("Vet"), mkPlayer("New2")
 	v:SetAttribute("StatNights", 3); n:SetAttribute("StatNights", 0)
+	v:SetAttribute("ClientReady", true); n:SetAttribute("ClientReady", true)
 	H.services.Players.GetPlayers = function() return { v, n } end
 	D._state().Expected = 2
 	D._arrivalTick()
@@ -77,6 +78,10 @@ local ok, err = pcall(function()
 	D._arrivalTick(); D._arrivalTick(); D._arrivalTick()
 	assert(ws:GetAttribute("Act") ~= "Evening" and D._firstNightsOnly() == nil, "waits for the stats")
 	a:SetAttribute("StatNights", 0)
+	-- (v110: and for their client to be up)
+	D._arrivalTick(); D._arrivalTick()
+	assert(ws:GetAttribute("Act") ~= "Evening", "waits for the client to load")
+	a:SetAttribute("ClientReady", true)
 	D._arrivalTick()
 	assert(ws:GetAttribute("Act") == "Evening", "a first night starts at once: " .. tostring(ws:GetAttribute("Act")))
 	assert(D._state().Vote == nil and ws:GetAttribute("Difficulty") == "Normal", "no vote, Normal")

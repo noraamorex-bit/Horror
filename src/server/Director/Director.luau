@@ -332,7 +332,8 @@ local function spawnFor(player: Player): CFrame?
 	end
 	local spawns = L.LobbySpawns
 	local i = math.random(1, #spawns)
-	return CFrame.lookAt(spawns[i], spawns[i] + Vector3.new(-1, 0, 0))
+	local look = L.SpawnLook and Vector3.new(L.SpawnLook.X, spawns[i].Y, L.SpawnLook.Z) or (spawns[i] + Vector3.new(-1, 0, 0))
+	return CFrame.lookAt(spawns[i], look)
 end
 
 function Director.enterLobby()
@@ -576,6 +577,15 @@ local function arrivalTick()
 	end
 	broadcastLobby()
 	if state.Countdown and state.Countdown <= 0 then
+		-- (v110: not before everyone's client is up, a few seconds at most: v107 started first nights
+		-- the moment the last player arrived, while phones were still on the loading screen, and the
+		-- opening shot and the first task's thoughts went to nobody; quits in act I's first minute went
+		-- from 8% to 22% of players)
+		for _, p in players do
+			if not p:GetAttribute("ClientReady") and os.clock() - state.FirstArrival < (ctx.Config.Lobby.ReadyWait or 12) then
+				return
+			end
+		end
 		local fresh = firstNightsOnly()
 		if fresh == nil and os.clock() - state.FirstArrival < 6 then
 			return -- (their saved stats are a moment away)

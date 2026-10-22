@@ -320,6 +320,12 @@ local ok, err = pcall(function()
 		S.Players.GetPlayers = wasGet
 		R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 30, ReturnToLobby = true })
 		assert(not find("StarterOffer"), "once bought, it's gone")
+		-- v110: 2x Coins on the card for anyone without it (never a third offer in the row)
+		assert(find("DoubleCoinsOffer") and string.find(find("DoubleCoinsOffer").Text, "R$", 1, true), "2x Coins offered on the card")
+		player:SetAttribute("Pass_DoubleCoins", true)
+		R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 30, ReturnToLobby = true })
+		assert(not find("DoubleCoinsOffer"), "not once they have it")
+		player:SetAttribute("Pass_DoubleCoins", nil)
 		st.Id = wasId
 		print("card offers ok")
 	end

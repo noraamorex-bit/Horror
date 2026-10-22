@@ -314,9 +314,14 @@ Layout.RestraintSlots = {
 	{ Pos = Vector3.new(-30, -10, 28.5), Face = Vector3.new(-30, -10, 20) },
 }
 
+-- where the night starts: in the kitchen between the island and the fridge, facing the fridge with
+-- the pizza menu on it (v110: they started in the living room facing the fireplace, 36 studs from the
+-- first task's menu; 65 of 123 act I quitters left before finding it, 38 of them on phones, a median
+-- 37 s in. Phones took 55 s to reach it, PC 21 s)
 Layout.LobbySpawns = {
-	Vector3.new(-22, 4, -10), Vector3.new(-26, 4, -10), Vector3.new(-22, 4, -6), Vector3.new(-26, 4, -6),
+	Vector3.new(-22.0, 4, 20.4), Vector3.new(-25.0, 4, 20.6), Vector3.new(-28.0, 4, 20.4), Vector3.new(-20.6, 4, 22.6),
 }
+Layout.SpawnLook = Vector3.new(-27.1, 4, 27.5)
 
 -- Wall spans that already have a feature on them (no framed pictures there): floor, x0, x1, z0, z1
 Layout.NoArt = {

@@ -1,7 +1,7 @@
 // node film.mjs world.json creature_frames.json spec.json outdir [from] [to]
 // spec: { W, H, shots: { name: { center:[x,y,z], lampRadius, maxLamps, lights:[{p,col,b,r}] } },
 //         frames: [{ f, shot, cam:{pos,look,fov,roll}, lamps, ambient, moon, lightning, fog, bg, exposure,
-//                    flash:{i, pos, target, angle}, burst:{pos, col, i, r}, creature: true|false, radius, hide:[names | {near:[x,z], r}] }] }
+//                    flash:{i, pos, target, angle}, burst:{pos, col, i, r}, creature: true|false, radius, hide:[names | {near:[x,z], r, names?}] }] }
 import { chromium } from 'playwright';
 import fs from 'fs';
 import { loadProps } from '../../../tools/assets/propload.mjs';
@@ -231,7 +231,7 @@ for (const fr of spec.frames) {
       window.LAMPS = ls.map(({ l }) => { const pl = add(new T.PointLight(new T.Color(l.col[0], l.col[1], l.col[2]), 0, l.r * 1.6, 1.4)); pl.position.set(...l.p); pl.userData.b = l.b; return pl; });
       window.XL = (shotCfg.lights || []).map(e => { const pl = add(new T.PointLight(new T.Color(e.col), 0, e.r, e.decay ?? 1.4)); pl.position.set(...e.p); pl.userData.b = e.b; return pl; });
       const cpos = new T.Vector3(...c), r = shotCfg.radius || 1e9;
-      scene.traverse(o => { if (o.isMesh && o.userData.pos) o.visible = o.userData.pos.distanceTo(cpos) < r && !(shotCfg.hide || []).some(h => typeof h === 'string' ? o.userData.name === h : Math.hypot(o.userData.pos.x - h.near[0], o.userData.pos.z - h.near[1]) < h.r); });
+      scene.traverse(o => { if (o.isMesh && o.userData.pos) o.visible = o.userData.pos.distanceTo(cpos) < r && !(shotCfg.hide || []).some(h => typeof h === 'string' ? o.userData.name === h : ((!h.names || h.names.includes(o.userData.name)) && Math.hypot(o.userData.pos.x - h.near[0], o.userData.pos.z - h.near[1]) < h.r)); });
       // see-through parts for this shot (a shower curtain he's a shape behind): { names, near, r, opacity }
       scene.traverse(o => {
         if (!o.isMesh || !o.userData.pos) return;

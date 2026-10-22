@@ -426,6 +426,8 @@ function Journey.start()
 			return -- (rate limit)
 		end
 		s.LastAt = os.clock()
+		-- (the client is up: its controllers have all started. Director waits for this before a night)
+		p:SetAttribute("ClientReady", true)
 		local dev = info.Dev
 		if dev == "Phone" or dev == "Tablet" or dev == "PC" or dev == "Console" then
 			s.Dev = dev
