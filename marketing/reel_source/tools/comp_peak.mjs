@@ -18,6 +18,9 @@
 //   bottom right), zap: {from: [x, y], to: [x, y], k} (the shot: a jagged bolt and a flash).
 // (reel 39) vm: {item: 'rocket', kick, loaded} (the rocket launcher on your shoulder, muzzle at 637, 1286),
 //   rocket: {from, to, k} (the rocket in flight, its smoke trail), boom: {at, k} (the blast).
+// (reel 40) Become Him: hud.mon {caught, lunge: 0..1 (the LUNGE button pressed)} = the YOU ARE HIM bar and the
+// LUNGE / SEARCH buttons; fr.mv = his vision (the game's MonsterVision grade); fr.pings [{at: [x, y], k: 0..1}] =
+// the red rings where a noise came from.
 // (reel 38) jolt: 0..1 on a frame: a mid-reel scare (punched in, shaking, a red flash; no pixels).
 // scareI (frames since the scare began): the first 3 pixelated and blown out, then the real frame,
 // shaking, punched in, with a red flash.
@@ -129,6 +132,16 @@ body.brand #card { top:282px; }
 #prO { font-family:OR; font-size:24px; color:#cfcfd6; margin-top:9px; }
 #prA { font-family:O; font-size:34px; color:#fff; line-height:38px; }
 #zap { opacity:1; }
+#monbar { position:absolute; left:0; right:0; top:384px; text-align:center; }
+#monbarB { display:inline-block; background:rgba(70,6,10,.8); color:#ffdcdc; font-family:O; font-size:34px; padding:12px 28px; border-radius:14px; }
+.mbtn { position:absolute; border-radius:50%; background:rgba(20,20,24,.62); border:4px solid rgba(255,255,255,.35); box-sizing:border-box; text-align:center; color:#fff; }
+.mbtn .i { font-family:O; line-height:1; }
+.mbtn .t { font-family:O; letter-spacing:1px; }
+#mbL { left:796px; top:1420px; width:200px; height:200px; } #mbL .i { font-size:92px; margin-top:28px; } #mbL .t { font-size:30px; }
+#mbS { left:850px; top:1230px; width:148px; height:148px; } #mbS .i { font-size:64px; margin-top:20px; } #mbS .t { font-size:24px; }
+#mvm { background:#ffc8c4; mix-blend-mode:multiply; opacity:0; }
+#mvs { background:#3a0a10; mix-blend-mode:screen; opacity:0; }
+#pings { opacity:1; }
 #vm { position:absolute; left:640px; top:1300px; width:520px; height:620px; opacity:0; }
 #vmr { position:absolute; left:0; top:0; width:1080px; height:1920px; opacity:0; }
 </style></head><body>
@@ -137,6 +150,8 @@ body.brand #card { top:282px; }
 <div class="l" id="vig"></div>
 <canvas class="l" id="rain" width="540" height="960" style="width:1080px;height:1920px"></canvas>
 <canvas class="l" id="zap" width="1080" height="1920"></canvas>
+<div class="l" id="mvm"></div><div class="l" id="mvs"></div>
+<canvas class="l" id="pings" width="1080" height="1920"></canvas>
 <div id="vmr"><svg viewBox="0 0 1080 1920" width="1080" height="1920"><defs><linearGradient id="tubeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7d8c4a"/><stop offset=".45" stop-color="#5a6a32"/><stop offset="1" stop-color="#2c3418"/></linearGradient></defs>
 <g id="vmrG" transform="translate(1180 1900) rotate(-131.5)">
 <rect x="-40" y="-78" width="860" height="156" rx="14" fill="url(#tubeG)" stroke="#111" stroke-width="8"/>
@@ -159,6 +174,8 @@ body.brand #card { top:282px; }
 <div class="o" id="glt">${T.glitch}</div>
 <div class="o" id="hud"><div id="chat"></div><div id="obj"><div id="objL">OBJECTIVE</div><div id="objT"></div><div id="police"></div></div>
 <div id="stam"><div id="stamF"></div></div>
+<div id="monbar"><span id="monbarB"></span></div>
+<div class="mbtn" id="mbS"><div class="i">◎</div><div class="t">SEARCH</div></div><div class="mbtn" id="mbL"><div class="i">»</div><div class="t">LUNGE</div></div>
 <div id="hot">${T.items.map(([k, c], j) => `<div class="slot" id="slot${j + 1}"><div class="k">${j + 1}</div>${ICON[k] || ''}<div class="c">${c}</div></div>`).join('')}</div>
 <div id="hb"><div id="hbLane"></div><div id="hbHalves"></div><div id="hbHeart">♥</div><div id="hbMiss">· · ·</div><div id="hbHint"></div></div>
 <div id="note"><span id="noteB"></span></div>
@@ -209,6 +226,15 @@ function hud(fr, f) {
     $('prRing').setAttribute('stroke-dasharray', (L * Math.max(0, Math.min(1, pr.p || 0))) + ' ' + L);
   }
   $('hot').style.display = h.sel ? 'flex' : 'none';
+  for (const id of ['monbar', 'mbL', 'mbS']) $(id).style.display = h.mon ? 'block' : 'none';
+  if (h.mon) {
+    $('monbarB').textContent = 'YOU ARE HIM · caught ' + (h.mon.caught || 0) + ' · LUNGE · SEARCH';
+    const k = h.mon.lunge || 0, q = h.mon.search || 0;
+    $('mbL').style.background = 'rgba(' + Math.round(20 + 160 * k) + ',' + Math.round(20 + 10 * k) + ',' + Math.round(24 + 10 * k) + ',' + (0.62 + 0.3 * k) + ')';
+    $('mbL').style.transform = 'scale(' + (1 - 0.1 * k) + ')';
+    $('mbS').style.background = 'rgba(' + Math.round(20 + 160 * q) + ',20,24,' + (0.62 + 0.3 * q) + ')';
+    $('mbS').style.transform = 'scale(' + (1 - 0.1 * q) + ')';
+  }
   $('stam').style.display = h.stam === undefined ? 'none' : 'block';
   if (h.stam !== undefined) $('stamF').style.width = (100 * h.stam) + '%';
   $('chat').style.display = h.chat && h.chat.length ? 'block' : 'none';
@@ -319,8 +345,20 @@ window.setFrame = (f, fr) => {
   if (BRAND && fr.section === 'hook') $('bname').style.opacity = 1;
   // footage: dark, a little crushed, a touch of chromatic edge
   let filt = 'contrast(1.1) saturate(.85) brightness(' + (fr.bright || 1.35) + ')';
+  if (fr.mv) filt = 'contrast(1.15) saturate(.12) brightness(' + ((fr.bright || 1.35) + 0.3) + ')';
   $('base').style.filter = filt;
   $('base').style.transform = 'none';
+  $('mvm').style.opacity = fr.mv && !fr.scare ? 1 : 0;
+  $('mvs').style.opacity = fr.mv && !fr.scare ? 0.3 : 0;
+  const pc = $('pings').getContext('2d');
+  pc.clearRect(0, 0, 1080, 1920);
+  for (const pg of (fr.scare ? [] : fr.pings || [])) {
+    const [px, py] = pg.at, k = pg.k;
+    for (const [r0, a0] of [[1, 1], [0.6, 0.6]]) {
+      pc.beginPath(); pc.arc(px, py, (40 + 230 * k) * r0, 0, Math.PI * 2);
+      pc.strokeStyle = 'rgba(255,60,60,' + (a0 * (1 - k)) + ')'; pc.lineWidth = 12 * (1 - 0.5 * k); pc.stroke();
+    }
+  }
   if (fr.boom) { const k = fr.boom.k; $('base').style.transform = 'translate(' + (rnd(f) - .5) * 70 * k + 'px,' + (rnd(f + 3) - .5) * 70 * k + 'px) scale(' + (1 + 0.08 * k) + ')'; }
   $('pix').style.opacity = 0;
   // the scare: pixelated, grey, blown out, shaking
@@ -346,7 +384,7 @@ window.setFrame = (f, fr) => {
   if (fr.jolt && !fr.scare) {
     const k = fr.jolt;
     $('base').style.transform = 'translate(' + (rnd(f) - .5) * 60 * k + 'px,' + (rnd(f + 3) - .5) * 60 * k + 'px) scale(' + (1 + 0.14 * k) + ') rotate(' + (rnd(f + 9) - .5) * 3 * k + 'deg)';
-    $('base').style.filter = 'contrast(' + (1.1 + 0.4 * k) + ') saturate(' + (0.85 - 0.3 * k) + ') brightness(' + ((fr.bright || 1.35) + 0.5 * k) + ')';
+    $('base').style.filter = 'contrast(' + (1.1 + 0.4 * k) + ') saturate(' + (fr.mv ? 0.12 : 0.85 - 0.3 * k) + ') brightness(' + ((fr.bright || 1.35) + (fr.mv ? 0.3 : 0) + 0.5 * k) + ')';
     $('redf').style.opacity = 0.42 * k;
   }
   // the hook, word by word

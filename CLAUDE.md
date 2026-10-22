@@ -356,6 +356,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   play tent → through the flap: Riley crouched by the tea chair, he comes in and lifts Riley away (jolt)
   → he comes back, folds down to the flap, his face at the gap on 22.15 s → RUN. Glitch "he came back".
   Hotbar text.items flashlight + rocket. Caption: `he came back game in comments` + the hashtags.
+  **Part 5** (`reel40`, `peak_gameplay_part5.mp4`, 22 Oct): **Become Him** (the 25 R$ product, the one that
+  sells: 4 of 76): you play him, the camera behind him up under the ceiling (a 10-ft body indoors), his
+  vision (the game's MonsterVision: comp_peak `fr.mv`, desaturated first so the tint reads red-grey, not
+  purple), the YOU ARE HIM bar + LUNGE / SEARCH buttons (`hud.mon {caught, lunge, search}`) and red pings
+  where a noise came from (`fr.pings`, projected in edit.py). Upstairs hall: Riley and Jamie ahead, Riley's
+  flashlight swings onto him, they split; the lunge (jolt) → after Riley into the bathroom, the shower
+  curtain pulled shut → a ping behind it → the curtain ripped open (jolt), Riley lifted kicking ("caught
+  1") → out in the hall the linen closet door eases shut, a ping → Jamie's eyes in the closet: he folds
+  down to the crack, backs off, the doors torn open on 22.15 s → RUN. Glitch "you are him". film2 `hide`
+  takes `{names, near: [x, z], r}` (the bathroom door hidden, not every Panel). Caption: `you are him
+  game in comments` + the hashtags.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
@@ -416,6 +427,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   the intro hands the camera over facing forward; Starter Pack live (19 R$), Rocket (tonight) 15 R$, a
   2x Coins offer on the result card. Other prices kept (too few sales to tell). Next: `--since=109`:
   first-step time on phones, act I quits in the first minute, Ask/bought for Starter, DoubleCoins, RocketNight.
+
+- **22 Oct (reel 40)**: the gameplay series Part 5, Become Him (see Marketing). Next reel: Part 6 (ideas:
+  the taser up close, the heartbeat minigame under the bed, the secret ending's dinner with real avatars).
 
 - **21 Oct (reels 38-39)**: the gameplay series Parts 3 and 4 with real Roblox avatars, little text,
   several scares; Part 4 shows the rocket launcher pass (see Marketing). Next reel: Part 5 in the same
