@@ -367,6 +367,16 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   down to the crack, backs off, the doors torn open on 22.15 s → RUN. Glitch "you are him". film2 `hide`
   takes `{names, near: [x, z], r}` (the bathroom door hidden, not every Panel). Caption: `you are him
   game in comments` + the hashtags.
+  **Part 6** (`reel41`, `peak_gameplay_part6.mp4`, 22 Oct): the garage and **the TASER** (the 39 R$ pass): Riley
+  and Jamie at the side door, the door from the house swings open behind you, him in the doorway, he comes on
+  all fours (jolt) → the taser (comp_peak `vm` + `zap`, the slot's count 3 → 2), he goes down in the rig's
+  `Stunned` gait, his head turns right round → he gets up and goes over the car (an arc of Chase poses
+  in stop-motion steps) onto Riley (jolt) → Riley carried off → into the storage cabinet (rig on its left
+  WardrobeLeaf, hinge z -16.1; the eye right behind the gap at z -18.7) → the heartbeat lane while he
+  stands at it; his mask fills the crack (`Stare` with `duck` 3.4 and neck [0.9, 0, -0.4], ~5 studs out:
+  the `Peek` gait leans him sideways out of a crack's view) → the doors torn open on 22.15 s → RUN.
+  Glitch "he got back up". Caption: `he got back up game in comments` + the hashtags. (In the garage keep
+  cameras off the workbench: x 61.6..65, z -27..-16.)
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
@@ -428,8 +438,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   2x Coins offer on the result card. Other prices kept (too few sales to tell). Next: `--since=109`:
   first-step time on phones, act I quits in the first minute, Ask/bought for Starter, DoubleCoins, RocketNight.
 
-- **22 Oct (reel 40)**: the gameplay series Part 5, Become Him (see Marketing). Next reel: Part 6 (ideas:
-  the taser up close, the heartbeat minigame under the bed, the secret ending's dinner with real avatars).
+- **22 Oct (reels 40-41)**: the gameplay series Part 5 (Become Him) and Part 6 (the garage, the taser, the
+  heartbeat at the cabinet; see Marketing). Next reel: Part 7 (ideas: the secret ending's dinner with real
+  avatars, Night Vision in the dark house, the 911 call at the window with friends, NIGHTMARE mode).
 
 - **21 Oct (reels 38-39)**: the gameplay series Parts 3 and 4 with real Roblox avatars, little text,
   several scares; Part 4 shows the rocket launcher pass (see Marketing). Next reel: Part 5 in the same
