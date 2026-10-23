@@ -150,7 +150,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   animation** (`shared/SkinPose`, client `Creature`): blended gaits, all fours in the chase, feet
   planted by FK, the head following you, the maw tearing open in the scream/jumpscare. Needs
   **Rojo 7.5.1+**. Previews: `tools/creature/pose_dump.luau` + `skinview.mjs`; test `skin_test`.
-  GDD "The creature, v112". (The reels' film2 still renders the old mannequin.)
+  GDD "The creature, v112". Reels: film2 draws it from `tools/creature/skin_frames.luau` (reel 43 on).
 
 **Audio**
 - **v104** (a player: '"horror game" but almost no audio'): every sound file was measured
@@ -267,7 +267,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   What didn't: other stories in the same format (jake's sleepover 7.5K), gameplay montages, HUDs, text
   overload, many small scares. **Rule: every new reel is a chapter of the attic mystery in #2's exact
   format (`comp_cantplay.mjs`, #2's slots and track), with a caption that leaves him still in the house.**
-  Reel 42 = #11, its sequel: "he isn't up there anymore 👀".
+  Reel 42 = #11, its sequel: "he isn't up there anymore 👀". Reel 43 = #12 (`cant_play_alone_12.mp4`, 23 Oct):
+  he's living in the house now (the TV on by itself, him at the top of the stairs, watching from the bedroom
+  doorway, crawling down the upstairs hall, the lights out, behind the sofa: the maw tears open on the hit;
+  RUN down the stairs), the **first reel with the v112 creature** (film2 draws the skinned mesh from
+  `tools/creature/skin_frames.luau`, the game's own SkinPose). Caption: `he's not hiding anymore 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -466,7 +470,7 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   `LobbyPulse_v1`, MatchService `LobbyNow`), the notice at 7 s (was 14) says anyone who presses PLAY
   lands here; **footsteps cross the ceiling ~20 s in** (`Director.ceilingSteps`, `Config.Director.CeilingSteps`;
   the first minute had nothing in it). Next: `--since=112`: solo early quits (want well under 60 of 114),
-  first-night finish rate by size; reel 43 (#12) with the new creature (film2 still draws the mannequin).
+  first-night finish rate by size; reel 44 = #13, the next chapter (film2 now draws the new creature: frames from `tools/creature/skin_frames.luau`).
 
 - **23 Oct (v112 = place version 111)**, the owner: "36% rating right now. Seriously improve the build, map,
   monster, jumpscare and everything… high tier blender level work… perfect cutscenes." Done: the skinned
