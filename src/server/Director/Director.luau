@@ -165,6 +165,42 @@ end
 -- Inner monologue
 ---------------------------------------------------------------------------
 -- players: a list, a single Player, or nil for everyone in the night
+-- footsteps crossing the ceiling right above one player (the floor above theirs: the attic, from
+-- upstairs), slow and heavy, then nothing; the line comes after
+function Director.ceilingSteps(): boolean
+	local Y = ctx.Layout.Y
+	for _, p in ctx.Util.activePlayers() do
+		local root = ctx.Util.getRoot(p)
+		local floor = root and ctx.Rooms.floorOf(root.Position)
+		local above = (floor == "Ground" and Y.Upstairs) or (floor == "Upstairs" and Y.Attic) or nil
+		if root and above then
+			local look = root.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z)
+			dir = dir.Magnitude > 0.1 and dir.Unit or Vector3.new(1, 0, 0)
+			-- (from behind you, over your head, on ahead of you)
+			local start = Vector3.new(root.Position.X, above + 0.5, root.Position.Z) - dir * 7
+			task.spawn(function()
+				for i = 0, 6 do
+					ctx.Audio.playAt(i == 0 and "FootstepsAbove" or "Footstep", start + dir * (i * 2.4), {
+						Caption = i == 0,
+						CaptionText = "[Slow footsteps cross the ceiling above you]",
+						Pitch = 0.78,
+						Range = 60,
+						Volume = 0.9,
+					})
+					task.wait(0.82 + (i == 4 and 0.5 or 0))
+				end
+				ctx.Audio.playAt("HouseCreak1", start + dir * 16, { Caption = false, Range = 50 })
+				Director.logTruth("CeilingSteps")
+				task.wait(1.4)
+				Director.think(p, ctx.Story.Thoughts.Events.CeilingSteps)
+			end)
+			return true
+		end
+	end
+	return false
+end
+
 function Director.think(players, line: string?, alongside: boolean?)
 	if not line then
 		return
@@ -728,6 +764,17 @@ function Director.startAct(name: string, cause: Player?)
 				Director.think(p, line)
 			end
 		end
+		-- (v113) the first minute had nothing in it: 21 of 45 act I quits came in the first 30 s,
+		-- with him offstage and only chores on screen. ~20 s in, slow footsteps cross the ceiling right
+		-- over whoever's on their own floor, and stop: the game's name, in the first minute
+		if not skipping then
+			local myNight = state
+			task.delay(ctx.Config.Director.CeilingSteps or 20, function()
+				if state == myNight and state.Act == "Evening" then
+					Director.ceilingSteps()
+				end
+			end)
+		end
 		-- alone: the friends text that the flooded road turned them back. A lone player from a group
 		-- circle may still get company (MatchService), so then the texts wait until nobody else can
 		-- come, and never come at all once someone has
@@ -735,10 +782,13 @@ function Director.startAct(name: string, cause: Player?)
 			local myState = state
 			-- (v95: 82% of solo nights are abandoned, 27-30% of nights with two or more: a friend
 			-- invited now comes straight into this house: Social.invite / LobbyServer)
-			task.delay(14, function()
+			-- (v113: lone first-nighters left within 20 s, half of them to look for players in the
+			-- lobby: say straight away that players are being found for this house)
+			task.delay(7, function()
 				if state == myState and state.Act == "Evening" and #ctx.Util.sessionPlayers() == 1 then
+					local open = ctx.Match and ctx.Match.isOpen()
 					for _, p in ctx.Util.sessionPlayers() do
-						ctx.Remotes.Notify:FireClient(p, "More is scarier. ➕ INVITE A FRIEND (left): they come straight into your house.", "info")
+						ctx.Remotes.Notify:FireClient(p, open and ctx.Story.SoloFinding or ctx.Story.SoloInvite, "info")
 					end
 				end
 			end)

@@ -78,6 +78,35 @@ local ok, err = pcall(function()
 			assert(dist <= pr.MaxActivationDistance - 0.5, name .. " out of reach from spawn " .. i)
 		end
 	end
+	-- (v113) ~20 s in, footsteps cross the ceiling over a player on the ground floor (the floor above),
+	-- and over one upstairs (the attic); in the basement, nothing
+	local played = {}
+	local realPlay = ctx.Audio.playAt
+	ctx.Audio.playAt = function(name, pos, opts)
+		table.insert(played, { name, pos })
+		return realPlay(name, pos, opts)
+	end
+	local sp = L.LobbySpawns[1]
+	if not char:FindFirstChildOfClass("Humanoid") then
+		local hum = H.Instance.new("Humanoid", char)
+		hum.Health = 100
+	end
+	rootPart.CFrame = H.roblox.CFrame.new(sp)
+	assert(ctx.Director.ceilingSteps(), "ceiling steps over the kitchen")
+	-- (the harness doesn't run the rest of a spawned loop: the first step is enough)
+	assert(#played >= 1 and played[1][1] == "FootstepsAbove", "the steps start")
+	for _, e in played do
+		if e[1] == "Footstep" or e[1] == "FootstepsAbove" then
+			assert(math.abs(e[2].Y - (L.Y.Upstairs + 0.5)) < 0.01, "on the floor above")
+		end
+	end
+	rootPart.CFrame = H.roblox.CFrame.new(sp.X, L.Y.Basement + 3, sp.Z)
+	assert(not ctx.Director.ceilingSteps(), "nothing over the basement")
+	ctx.Audio.playAt = realPlay
+	assert(ctx.Story.Thoughts.Events.CeilingSteps and ctx.Story.Truths.CeilingSteps, "its line and its truth")
+	assert(ctx.Story.SoloFinding and ctx.Story.SoloInvite, "the solo notices")
+	rootPart.CFrame = H.roblox.CFrame.new(sp)
+	print("ceiling steps ok:", #played, "sounds")
 	status("start")
 	press("Landline")
 	press("PizzaMenu")

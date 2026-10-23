@@ -27,6 +27,45 @@ local code: string? = nil -- (game server) this server's access code
 local cap: number? = nil -- (game server) the size of the circle it came from
 local party: number? = nil -- (game server) how many came over together to start the night
 local listed = false
+-- (v113) every lobby server's head count, so a lone night can say how many might join it
+local PULSE_NAME = "LobbyPulse_v1"
+local pulseMap = nil
+local lobbyNowAt = 0
+
+local function getPulse()
+	if not pulseMap then
+		local ok, m = pcall(function()
+			return MemoryStoreService:GetSortedMap(PULSE_NAME)
+		end)
+		if ok then
+			pulseMap = m
+		end
+	end
+	return pulseMap
+end
+
+-- how many players are in lobbies right now (every lobby server's last pulse), or nil
+local function lobbyNow(): number?
+	local m = getPulse()
+	if not m then
+		return nil
+	end
+	local ok, items = pcall(function()
+		return m:GetRangeAsync(Enum.SortDirection.Ascending, 100)
+	end)
+	if not ok or type(items) ~= "table" then
+		return nil
+	end
+	local total = 0
+	for _, item in items do
+		local v = item.value
+		if type(v) == "table" and tonumber(v.n) and os.time() - (tonumber(v.at) or 0) < 25 then
+			total += v.n
+		end
+	end
+	return total
+end
+Match._lobbyNow = lobbyNow -- (tests)
 
 local function getMap()
 	if not map then
@@ -106,6 +145,13 @@ local function publish()
 	-- (on screen: "others can still join your night". v87 logs: alone in a group circle's night,
 	-- 23 of 52 left within 45 s, while another group teleported within a minute half the time)
 	workspace:SetAttribute("OpenNight", open and string.format("%d/%d", n, ctx.Config.MaxPlayers) or nil)
+	-- (v113: alone and open, the HUD says how many are in the lobby right now, every ~16 s)
+	if open and n == 1 and os.clock() - lobbyNowAt > 15 then
+		lobbyNowAt = os.clock()
+		workspace:SetAttribute("LobbyNow", lobbyNow())
+	elseif not open or n > 1 then
+		workspace:SetAttribute("LobbyNow", nil)
+	end
 	if open then
 		-- (places a lobby just claimed stay taken until those players arrive)
 		listed = pcall(function()
@@ -168,6 +214,21 @@ end
 ---------------------------------------------------------------------------
 -- Lobby
 ---------------------------------------------------------------------------
+-- (v113) this lobby's head count, every few seconds, for the lone nights' "N in the lobby"
+function Match.startLobby()
+	task.spawn(function()
+		while true do
+			local m = getPulse()
+			if m then
+				pcall(function()
+					m:SetAsync(game.JobId ~= "" and game.JobId or "studio", { n = #Players:GetPlayers(), at = os.time() }, 25)
+				end)
+			end
+			task.wait(8)
+		end
+	end)
+end
+
 -- a night with room for `count` more; claims the places (so two lobbies don't fill the same one
 -- twice) and returns its access code, or nil
 function Match.find(count: number): string?

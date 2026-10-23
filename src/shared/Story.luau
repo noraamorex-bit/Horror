@@ -260,6 +260,10 @@ Story.Documents = {
 ---------------------------------------------------------------------------
 -- (They wait for a quiet moment: never on top of a thought line or a conversation.)
 -- sent only on a solo night, a little after it starts
+-- (v113) alone at the start of a night (Director): players being found for this house, or not
+Story.SoloFinding = "Finding players for your house. Anyone who presses PLAY now lands here. Start without them, they'll catch up."
+Story.SoloInvite = "More is scarier. ➕ INVITE A FRIEND (left): they come straight into your house."
+
 Story.SoloTexts = {
 	{ From = "Riley", Body = "creek rd is literally underwater. we had to turn around 😭" },
 	{ From = "Morgan", Body = "so sorry!! next weekend for sure. stay dry, don't get murdered lol" },
@@ -694,6 +698,7 @@ Story.Truths = {
 	WarmMug = "The coffee was Curtis's. He made it at 8:15 and left it in the sink when he heard the car.",
 	HatchStuck = "The attic hatch was stuck because Curtis had bungee-corded it shut from above.",
 	CordSwing = "The hatch cord was swinging because Curtis had just climbed up and pulled the hatch closed behind him.",
+	CeilingSteps = "The footsteps over your head in the first minute were Curtis. He'd heard the front door and come to listen.",
 	FootstepsUpstairs = "The footsteps upstairs were Curtis, crossing from Lily's room to the hatch. He'd been watching you from the top of the stairs.",
 	DoorAjar = "The door that opened was Curtis, moving between rooms while nobody was looking.",
 	FoodMissing = "The lasagna was eaten by Curtis. He hadn't eaten since Thursday.",
@@ -810,6 +815,7 @@ Story.Thoughts = {
 	},
 	Events = {
 		FootstepsUpstairs = "Footsteps... upstairs? But we're all down here.",
+		CeilingSteps = "...That came from the ceiling. Nobody's up there. Right?",
 		DoorAjar = "Was that door open before?",
 		CordSwing = "Why is the attic cord swinging on its own?",
 		FigureWindow = "There was someone out there. Right outside the window.",

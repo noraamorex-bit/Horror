@@ -455,6 +455,19 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **23 Oct (v113 = place version 112)**, the owner (screenshot: First Night badge won yesterday 67, "300 at
+  one point. Do better."). The badge follows traffic × conversion. Daily lobby visits 981 (12 Oct) → 377
+  (22 Oct); first-nighters who finished: 22% on 21 Oct → 14% on 22 Oct (the v110 prompt regression, fixed
+  in v111). By place version, first-nighters who finished: 104 70%, 108 47%, 109 52%, 110 75% (n=20).
+  **Solo is the leak**: group first nights finish 55-83%, solo ~11% (114 solo player-nights on 108-110,
+  60 left within 60 s); 20 of 38 lone quitters went straight back to the lobby (half then played a group
+  night): they wanted players. Done: alone in an open night the HUD reads like matchmaking ("Finding
+  players... 0:23 · N in the lobby": lobby servers pulse their head count into MemoryStore
+  `LobbyPulse_v1`, MatchService `LobbyNow`), the notice at 7 s (was 14) says anyone who presses PLAY
+  lands here; **footsteps cross the ceiling ~20 s in** (`Director.ceilingSteps`, `Config.Director.CeilingSteps`;
+  the first minute had nothing in it). Next: `--since=112`: solo early quits (want well under 60 of 114),
+  first-night finish rate by size; reel 43 (#12) with the new creature (film2 still draws the mannequin).
+
 - **23 Oct (v112 = place version 111)**, the owner: "36% rating right now. Seriously improve the build, map,
   monster, jumpscare and everything… high tier blender level work… perfect cutscenes." Done: the skinned
   creature + smooth procedural animation (see The intruder, v112), the jumpscare on his maw, cutscenes shot
@@ -757,7 +770,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 111; the notes' "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 112; the notes' "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

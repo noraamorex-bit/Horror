@@ -335,6 +335,7 @@ Config.Director = {
 	AfterBedtime = 5, -- (v94: 12; the owner wanted less waiting before the blackout)
 	BedtimeMinAct = 150, -- (but act II still runs at least this long: its scares need room)
 	AfterScare = 30, -- ...and this long after the last scare
+	CeilingSteps = 20, -- (v113) seconds into the Evening: footsteps cross the ceiling over someone
 }
 
 -- Inner monologue: the character thinking out loud about what to do next

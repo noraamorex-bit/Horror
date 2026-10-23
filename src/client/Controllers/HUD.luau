@@ -386,6 +386,7 @@ local meterFrame: Frame
 local meterFill: Frame
 local meterLabel: TextLabel
 local etaLabel: TextLabel
+local openSince: number? = nil -- (alone in an open night: when the "finding players" clock started)
 local etaBox: Frame
 local hintBox: Frame
 local inventoryTop: Frame
@@ -677,8 +678,21 @@ local function update()
 		lastEtaSecond = whole
 	elseif workspace:GetAttribute("OpenNight") and player:GetAttribute("InGame") then
 		-- a night that started short: others can still join it (MatchService)
-		etaLabel.Text = "Others can join your night · " .. tostring(workspace:GetAttribute("OpenNight"))
+		if #Players:GetPlayers() == 1 then
+			-- (v113: alone, it reads like matchmaking: 36 of 38 lone first-nighters left, most within
+			-- 20 s, half of them to go and find players in the lobby; another player queues about once
+			-- a minute and is sent here)
+			openSince = openSince or os.clock()
+			local lobbyN = tonumber(workspace:GetAttribute("LobbyNow"))
+			local dots = string.rep(".", 1 + math.floor(os.clock() * 2) % 3)
+			etaLabel.Text = "Finding players" .. dots .. "  " .. ctx.Util.formatSeconds(os.clock() - openSince)
+				.. ((lobbyN and lobbyN > 0) and ("  ·  " .. lobbyN .. " in the lobby") or "")
+		else
+			openSince = nil
+			etaLabel.Text = "Others can join your night · " .. tostring(workspace:GetAttribute("OpenNight"))
+		end
 	else
+		openSince = nil
 		etaLabel.Text = ""
 	end
 

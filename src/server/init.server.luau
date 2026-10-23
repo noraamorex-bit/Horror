@@ -93,6 +93,7 @@ if mode == "Lobby" then
 	local LobbyAdmin = require(Services.AdminService)
 	LobbyAdmin.init(ctx)
 	LobbyAdmin.start()
+	Match.startLobby()
 	require(script.Lobby.LobbyServer).run(ctx)
 	return
 end
