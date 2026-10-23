@@ -276,6 +276,8 @@ for (const fr of spec.frames) {
     }
     // extras taken away on this frame (fr.hideExtras: points; anything of an extra within 1 stud)
     for (const m of (window.EXTRAS || [])) m.visible = !(fr.hideExtras || []).some(p => Math.hypot(m.position.x - p[0], m.position.y - p[1] - 0.22, m.position.z - p[2]) < 1.0);
+    // (reel 42) or by their index in spec.extras (fr.hideIdx), for props that sit close together
+    if (fr.hideIdx) for (const j of fr.hideIdx) if (window.EXTRAS && window.EXTRAS[j]) window.EXTRAS[j].visible = false;
     // avatars moved and posed per frame (fr.av: [{ i, pos, yaw, pose }]); with fr.av, the ones not listed hide
     if (fr.av && window.AV) {
       for (const g of window.AV) g.visible = false;

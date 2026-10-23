@@ -105,7 +105,7 @@ window.setFrame = (f, fr, cuts) => {
   const t = f / 30, sec = fr.section, lt = fr.i / 30;
   for (const id of ALL) $(id).style.opacity = 0;
   // ---------- the footage
-  let filt = 'contrast(1.15) saturate(.95) brightness(1.45)';
+  let filt = 'contrast(1.15) saturate(.95) brightness(' + (fr.bright || 1.45) + ')';   // (reel 42: fr.bright lifts a dark clip)
   let zoom = 1 + 0.06 * fr.k;
   if (sec === 'hook') filt = 'contrast(1.15) saturate(.7) brightness(.85)';
   if (sec === 'card') { filt = 'contrast(1.1) saturate(.55) brightness(.5)'; zoom = 1.02 + 0.04 * fr.k; }

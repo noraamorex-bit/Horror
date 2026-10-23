@@ -240,6 +240,26 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Marketing (Instagram reels)
 
+- **WHAT THE NUMBERS SAY (23 Oct, the owner's screenshot; build every reel from this):**
+  | reel | views | sends |
+  |---|---|---|
+  | #2 "you can't play alone" (`cant_play_alone_2.mp4`, 4 Oct, caption "he's still up there 👀") | **314K** | **26K** |
+  | PEAK Part 1 (13 Oct) | 63K | 4.4K |
+  | PEAK Part 5, "he was right outside the curtain" (15 Oct) | 24K | 2.7K |
+  | PEAK Part 9, "he left you tied up down here" | 8.2K | 296 |
+  | #N "never sleep over at jake's" (5 Oct) | 7.5K | 457 |
+  | PEAK Part 7, candy trail | 5.4K | 236 |
+  | PEAK "peak roblox horror game t..." (12 Oct) | 5.4K | 284 |
+  | the gameplay series with HUDs and avatars (reels 36-41, 20-22 Oct) | under 5.4K each | |
+  What won: **the game's own premise as a mystery told night by night** ("night 1: footsteps in the
+  ceiling" → "night 4: the food goes missing" → "night 9: we found the hatch" → "someone's been sleeping up
+  here" → "photos. of us." → "he's been counting the days." → "and tonight he's coming down."), the
+  case-file card (TITLE / FEAR LEVEL 10/10 / SQUAD 1-4 / GOAL), a caption that implies he's still there
+  (people send it to a friend: 8% send rate), real dread before one big scare, no HUD, no friends on screen.
+  What didn't: other stories in the same format (jake's sleepover 7.5K), gameplay montages, HUDs, text
+  overload, many small scares. **Rule: every new reel is a chapter of the attic mystery in #2's exact
+  format (`comp_cantplay.mjs`, #2's slots and track), with a caption that leaves him still in the house.**
+  Reel 42 = #11, its sequel: "he isn't up there anymore 👀".
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -426,6 +446,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **23 Oct (v111 = place version 110, reel 42)**, the owner: "Game statistics have dropped and also the reel views…
+  construct much better reels… elite game design." Reels: see Marketing, WHAT THE NUMBERS SAY (#2's
+  attic-mystery format is the only big winner; the HUD gameplay series flopped). Reel 42 = #11 in #2's exact
+  format, its sequel: `cant_play_alone_11.mp4`, caption `he isn't up there anymore 👀 game in comments`.
+  Logs since 109 (~1 day: 197 lobby visits, 71 nights, 11.6k visits, 18 up / 29 down): first-nighters quit
+  mid-night 44% (was 54%); 33 of 48 of those quits in act I, 21 of 45 act I quits in the first 30 s; solo
+  nights 90% no ending, 15 of 34 lone players gone within 26 s (new, queued for "2 players", landed alone);
+  **v110 regression: time to the first task doubled** (the menu's prompt didn't reach the new spawn). Sales
+  610 R$ total: Become Him 6/83 (the earner), nothing else since v108. Done: menu/note reach 10 + test; the
+  short-circle line in the lobby. Next: `--since=110`: time to OrderPizza:Menu (want back to ~12 s), act I
+  quits in the first 30 s, solo arrivals' quit times; reel 43 = #12, the next chapter of the attic story.
 
 - **22 Oct (v110 = place version 109)**, the owner: "Analyze all game statistics and improve the game… gamepass
   prices and purchases." Logs since 106 (241 nights, 560 lobby visits, 11.2k visits, 18 up / 26 down):
@@ -708,7 +740,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 109; the notes' "v110" = place version 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 110; the notes' "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

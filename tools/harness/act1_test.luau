@@ -59,6 +59,25 @@ local ok, err = pcall(function()
 		end
 		print(label, table.concat(lines, " | "))
 	end
+	-- (v111) the first task has to be in reach where you land: from every spawn, the menu's and the
+	-- note's prompts show without a step (v110 put the spawns 5 studs from the fridge, but the menu sits
+	-- 9.4 up and its prompt reached 6: you stood facing a fridge with nothing to press)
+	local L = ctx.Layout
+	for _, name in { "PizzaMenu", "FridgeNote" } do
+		local pr
+		for _, d in world:GetDescendants() do
+			if d:IsA("ProximityPrompt") and d.Parent and d.Parent.Name == name then
+				pr = d
+			end
+		end
+		assert(pr, "no prompt on " .. name)
+		for i, sp in L.LobbySpawns do
+			local pp = pr.Parent.CFrame.Position
+			local dist = math.sqrt((pp.X - sp.X) ^ 2 + (pp.Y - sp.Y) ^ 2 + (pp.Z - sp.Z) ^ 2)
+			print(string.format("  %s from spawn %d: %.1f studs (reach %.1f)", name, i, dist, pr.MaxActivationDistance))
+			assert(dist <= pr.MaxActivationDistance - 0.5, name .. " out of reach from spawn " .. i)
+		end
+	end
 	status("start")
 	press("Landline")
 	press("PizzaMenu")

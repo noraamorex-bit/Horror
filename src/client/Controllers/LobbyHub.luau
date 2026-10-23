@@ -43,6 +43,11 @@ local function render(state)
 	else
 		-- (every circle counts down from 10 the moment someone steps in; 3 once it's full)
 		queueStatus.Text = state.Countdown and ("Starting in " .. tostring(state.Countdown) .. "... walk away to cancel") or "Starting soon..."
+		-- (v111) a short circle goes anyway (the owner's rule), so say so: 15 of 34 lone players left
+		-- their house within 26 s, nearly all brand new: they'd queued for "2 players" and landed alone
+		if state.Countdown and state.Size > 1 and state.Count < state.Size then
+			queueStatus.Text = "Starting in " .. tostring(state.Countdown) .. "... the next player to queue joins your house"
+		end
 	end
 end
 
