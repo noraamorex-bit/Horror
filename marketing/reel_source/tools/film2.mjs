@@ -19,6 +19,21 @@ if (spec.props && world.holders) {
   props = await loadProps(world, spec.props.cache);
   world.swapped = world.holders.filter(h => props.models[String(h.entry.Id)]).map(h => h.key);
 }
+// (v112) the skinned creature: a creature file from tools/creature/skin_frames.luau ("skin") draws the
+// game's real mesh, posed by SkinPose, instead of the old part-built figure. Its mesh and maps are
+// fetched into spec.skinCache (default ./cache_skin)
+let skinData = null;
+if (cr.skin) {
+  const { execFileSync } = await import('child_process');
+  const cache = spec.skinCache || 'cache_skin';
+  fs.mkdirSync(cache, { recursive: true });
+  const ids = { mesh: '17737123792', color: '17737123793', normal: '17737124050', rough: '17737123673' };
+  for (const id of Object.values(ids)) if (!fs.existsSync(`${cache}/${id}.bin`)) execFileSync('python3', ['../../../tools/assets/fetch.py', cache, id], { stdio: 'pipe' });
+  const m = await decodeMesh(new Uint8Array(fs.readFileSync(`${cache}/${ids.mesh}.bin`)));
+  const img = (id) => 'data:image/png;base64,' + fs.readFileSync(`${cache}/${id}.bin`).toString('base64');
+  skinData = { mesh: { pos: Array.from(m.pos), nrm: Array.from(m.nrm), uv: Array.from(m.uv), idx: Array.from(m.idx), skin: { bones: m.skin.bones, skinIndex: Array.from(m.skin.skinIndex), skinWeight: Array.from(m.skin.skinWeight) } },
+    tex: { color: img(ids.color), normal: img(ids.normal), rough: img(ids.rough) }, info: cr.skin };
+}
 const photos = (spec.photos || []).map(p => 'data:image/png;base64,' + fs.readFileSync(p).toString('base64'));
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
@@ -98,7 +113,40 @@ await page.evaluate(([world, cr, W, H]) => {
   window.SHOT = null;
   // the photos on his wall: real pictures of the family's rooms
   window.PHOTOS = [];
-}, [world, { parts: cr.parts }, W, H]);
+}, [world, { parts: cr.parts || [] }, W, H]);
+if (skinData) {
+  await page.evaluate(async (sd) => {
+    const T = THREE;
+    const loader = new T.TextureLoader();
+    const load = async (u, srgb) => { const t = await loader.loadAsync(u); if (srgb) t.colorSpace = T.SRGBColorSpace; t.flipY = false; return t; };
+    const [cmap, nmap, rmap] = await Promise.all([load(sd.tex.color, true), load(sd.tex.normal), load(sd.tex.rough)]);
+    const mesh = sd.mesh;
+    const uv = new Float32Array(mesh.uv); for (let i = 1; i < uv.length; i += 2) uv[i] = 1 - uv[i];
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(mesh.pos, 3));
+    g.setAttribute('normal', new T.Float32BufferAttribute(mesh.nrm, 3));
+    g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+    g.setAttribute('skinIndex', new T.Uint16BufferAttribute(mesh.skin.skinIndex, 4));
+    g.setAttribute('skinWeight', new T.Float32BufferAttribute(mesh.skin.skinWeight, 4));
+    g.setIndex(mesh.idx);
+    const mat = new T.MeshStandardMaterial({ map: cmap, normalMap: nmap, roughnessMap: rmap, roughness: 1, metalness: 0 });
+    const cf = (a) => new T.Matrix4().set(a[3], a[4], a[5], a[0], a[6], a[7], a[8], a[1], a[9], a[10], a[11], a[2], 0, 0, 0, 1);
+    const outer = new T.Group(); window.S.add(outer);
+    const inner = new T.Group(); inner.position.set(0, sd.info.half, 0); outer.add(inner);
+    const tb = {};
+    for (const b of sd.info.bones) { const o = new T.Bone(); o.name = b.name; o.matrixAutoUpdate = false; o.userData.rest = cf(b.rest); o.matrix.copy(o.userData.rest); tb[b.name] = o; }
+    for (const b of sd.info.bones) (b.parent ? tb[b.parent] : inner).add(tb[b.name]);
+    const ordered = mesh.skin.bones.map(b => tb[b.name] || new T.Bone());
+    const inverses = mesh.skin.bones.map(b => { const r = b.rot; return new T.Matrix4().set(r[0], r[1], r[2], b.pos[0], r[3], r[4], r[5], b.pos[1], r[6], r[7], r[8], b.pos[2], 0, 0, 0, 1).invert(); });
+    const sk = new T.SkinnedMesh(g, mat);
+    sk.frustumCulled = false; sk.castShadow = true;
+    inner.add(sk);
+    outer.updateMatrixWorld(true);
+    sk.bind(new T.Skeleton(ordered, inverses), new T.Matrix4()); // (vertices are in the mesh's own space)
+    outer.visible = false;
+    window.SKIN = { outer, inner, sk, tb, cf, scale: sd.info.scale };
+  }, skinData);
+}
 if (props) {
   await page.addScriptTag({ path: '../../../tools/assets/propscene.js' });
   await page.evaluate(async ([stage, models, meshes, textures]) => {
@@ -289,10 +337,27 @@ for (const fr of spec.frames) {
       }
     } else if (window.AV) for (const g of window.AV) g.visible = true;
     // creature
-    window.CRG.visible = !!crFrame;
-    if (crFrame) crFrame.forEach((c, i) => window.place(window.CR[i].mesh, c, window.CR[i].gi));
-    if (crFrame && window.GLOW_I >= 0) { const g = crFrame[window.GLOW_I]; window.GLOW.position.set(g[0], g[1], g[2]); window.GLOW.intensity = fr.glow ?? 6; }
-    else window.GLOW.intensity = 0;
+    const SK = window.SKIN;
+    if (SK) {
+      // (the skinned creature: where he stands, then every bone's rest times its Transform)
+      SK.outer.visible = !!crFrame;
+      window.CRG.visible = false;
+      if (crFrame) {
+        const r = crFrame.root;
+        SK.outer.position.set(r[0], r[1], r[2]); SK.outer.rotation.set(0, r[3], 0); SK.outer.scale.setScalar(SK.scale);
+        for (const name in SK.tb) {
+          const b = SK.tb[name], t = crFrame.tr[name];
+          b.matrix.copy(b.userData.rest); if (t) b.matrix.multiply(SK.cf(t));
+        }
+        SK.outer.updateMatrixWorld(true);
+        window.GLOW.position.set(...crFrame.glow); window.GLOW.intensity = fr.glow ?? 6;
+      } else window.GLOW.intensity = 0;
+    } else {
+      window.CRG.visible = !!crFrame;
+      if (crFrame) crFrame.forEach((c, i) => window.place(window.CR[i].mesh, c, window.CR[i].gi));
+      if (crFrame && window.GLOW_I >= 0) { const g = crFrame[window.GLOW_I]; window.GLOW.position.set(g[0], g[1], g[2]); window.GLOW.intensity = fr.glow ?? 6; }
+      else window.GLOW.intensity = 0;
+    }
     const cam = new T.PerspectiveCamera(fr.cam.fov || 60, window.W / window.H, 0.05, 3000);
     cam.position.set(...fr.cam.pos); cam.lookAt(new T.Vector3(...fr.cam.look));
     if (fr.cam.roll) cam.rotateZ(fr.cam.roll);
