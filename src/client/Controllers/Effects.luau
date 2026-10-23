@@ -286,16 +286,23 @@ function Effects.jumpscare(head: BasePart?)
 	local t0 = os.clock()
 	local jerk = CFrame.identity
 	local nextJerk = 0
+	-- (v112) the skinned body: the camera on the maw splitting open from his face down his chest
+	local focus = ctx.Creature and ctx.Creature.focusFor(head)
+	local far, near = 3.6, 1.3
+	if focus then
+		far, near = 5.6, 2.3
+		cam.FieldOfView = 55
+	end
 	while os.clock() - t0 < 0.95 and head.Parent do
 		-- right in front of his face as it lunges at you (fast, then the last stretch slow), the
-		-- picture jerking from one angle to the next like the stop-motion of his body
+		-- picture jerking from one angle to the next
 		local k = (os.clock() - t0) / 0.95
-		local reach = 3.6 - 2.3 * (1 - (1 - math.min(k * 1.6, 1)) ^ 3)
+		local reach = far - (far - near) * (1 - (1 - math.min(k * 1.6, 1)) ^ 3)
 		if os.clock() >= nextJerk then
 			nextJerk = os.clock() + 0.06 + math.random() * 0.06
 			jerk = CFrame.Angles(0, 0, (math.random() - 0.5) * 0.35)
 		end
-		local hcf = head.CFrame
+		local hcf = focus and focus() or head.CFrame
 		cam.CFrame = CFrame.lookAt(hcf.Position + hcf.LookVector * reach + Vector3.new(0, 0.05, 0), hcf.Position) * jerk
 		task.wait()
 	end
@@ -345,6 +352,9 @@ function Effects.figure(cf: CFrame, duration: number, gait: string?)
 			local jaws = Pose and Pose.jawMeshes(copy) or {}
 			local function pose()
 				local tt = os.clock() - t0 + 0.6
+				if ctx.Creature and ctx.Creature.poseCopy(copy, gait or "Stare", tt, seed) then
+					return
+				end
 				local P = Pose and Pose.get(gait or "Stare", 0, tt, seed) or {}
 				for name, m in motors do
 					m.Transform = P[name] or CFrame.identity
@@ -357,7 +367,7 @@ function Effects.figure(cf: CFrame, duration: number, gait: string?)
 			copy.Parent = workspace
 			task.spawn(function()
 				while copy.Parent and os.clock() - t0 < duration do
-					task.wait(1 / 16 + math.random() * 0.03)
+					task.wait()
 					pose()
 				end
 			end)

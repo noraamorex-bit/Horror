@@ -14,6 +14,7 @@ local RunService = game:GetService("RunService")
 local Creature = {}
 local ctx
 local Pose
+local Skin
 
 local model: Model? = nil
 local motors: { [string]: Motor6D } = {}
@@ -25,6 +26,36 @@ local lookClock = 0
 local jawList = {}
 local jaw = 0
 local screamUntil = 0
+-- (v112) the skinned body: its rig (SkinPose.rig), the gait it's blending out of, how far along
+local skin = nil
+local skinFromGait = ""
+local skinGait = ""
+local skinBlend = 1
+local look = { 0, 0 }
+local scream = 0
+local skinRigs: { [Instance]: any } = setmetatable({}, { __mode = "k" }) :: any
+
+-- the skeleton of a model's skinned body (cached), or nil if it's the part-built figure
+local function skinOf(m: Instance): any
+	local cached = skinRigs[m]
+	if cached ~= nil then
+		return cached or nil
+	end
+	local body = m:FindFirstChild("Body")
+	local rig = false
+	if body and body:IsA("MeshPart") and m:GetAttribute("Skinned") then
+		local ok, r = pcall(Skin.rig, body)
+		rig = ok and r or false
+	end
+	skinRigs[m] = rig
+	return rig or nil
+end
+
+local function applySkin(rig, pose)
+	for bone, cf in Skin.transforms(rig, pose) do
+		bone.Transform = cf
+	end
+end
 
 local function bind(m: Model?)
 	model = m
@@ -32,10 +63,13 @@ local function bind(m: Model?)
 	current = {}
 	root = nil
 	jawList = {}
+	skin = nil
+	skinGait = ""
 	if not m then
 		return
 	end
 	jawList = Pose.jawMeshes(m)
+	skin = skinOf(m)
 	-- (v102: in the house he wears a faint pale outline and fill wherever you can actually see
 	-- him, never through walls, so he reads in the dark; not in the lobby, where he's a shape in
 	-- the fog)
@@ -123,12 +157,45 @@ end
 function Creature.init(c)
 	ctx = c
 	Pose = ctx.CreaturePose
+	Skin = ctx.SkinPose
 	ctx.Creature = Creature
 end
 
 -- his mouth wide open for a moment (the jumpscare)
 function Creature.scream(duration: number)
 	screamUntil = os.clock() + duration
+end
+
+-- (v112) where the jumpscare camera looks, as a function returning a frame that faces out of
+-- him: the skinned body's maw (from the face down the throat), following its bones; nil for the
+-- part-built figure (the camera uses its Head)
+function Creature.focusFor(part: Instance?): (() -> CFrame)?
+	local m = part and part:FindFirstAncestorOfClass("Model")
+	local rig = m and skinOf(m)
+	if not rig then
+		return nil
+	end
+	local body = (m :: Model):FindFirstChild("Body") :: BasePart
+	local neck = body:FindFirstChild("spine_004_2", true) :: Bone?
+	local head = body:FindFirstChild("spine_006_0", true) :: Bone?
+	if not neck or not head then
+		return nil
+	end
+	return function()
+		local at = neck.TransformedWorldCFrame.Position:Lerp(head.TransformedWorldCFrame.Position, 0.35)
+		local fwd = body.CFrame.LookVector
+		return CFrame.lookAt(at, at + Vector3.new(fwd.X, 0, fwd.Z))
+	end
+end
+
+-- (v112) pose a copy of him (a figure only you see): true if it has the skinned body
+function Creature.poseCopy(copy: Instance, gait: string, t: number, seed: number): boolean
+	local rig = skinOf(copy)
+	if not rig then
+		return false
+	end
+	applySkin(rig, Skin.get(gait, 0, t, seed, { Scale = Skin.Scale }))
+	return true
 end
 
 function Creature.start()
@@ -161,45 +228,93 @@ function Creature.start()
 		elseif gait == "Chase" and speed < 2 then
 			gait = "Reach"
 		end
-		phase += speed * dt * Pose.phaseRate(gait)
 		local t = os.clock()
-		local target = Pose.get(gait, phase, t, seed)
-		-- he has to stoop under door frames and low ceilings: bend at the hips and knees
-		duckClock -= dt
-		if duckClock <= 0 then
-			duckClock = 0.1
-			rayParams.FilterDescendantsInstances = { model }
-			local top = root.Position.Y + 4.6 -- the top of his head, walking hunched (Rig.Height 9.9 standing)
-			local hit = workspace:Raycast(root.Position, Vector3.new(0, 5.4, 0), rayParams)
-				or workspace:Raycast(root.Position + root.CFrame.LookVector * 1.6, Vector3.new(0, 5.4, 0), rayParams)
-			duckWant = hit and math.clamp(top - hit.Position.Y + 0.35, 0, 3.0) or 0
-		end
-		duck += (duckWant - duck) * (1 - math.exp(-dt * 10))
-		if duck > 0.02 then
-			local root0 = target.Root or CFrame.identity
-			target.Root = CFrame.new(0, -duck * 0.45, 0) * root0 * CFrame.Angles(-duck * 0.3, 0, 0)
-			target.Neck = (target.Neck or CFrame.identity) * CFrame.Angles(duck * 0.25, 0, 0)
-			for _, hip in { "LeftHip", "RightHip" } do
-				target[hip] = (target[hip] or CFrame.identity) * CFrame.Angles(duck * 0.3, 0, 0)
+		if skin then
+			phase += speed * dt * Skin.phaseRate(gait)
+			-- (v112) the skinned body: smooth, every frame, blending from one gait into the next
+			if gait ~= skinGait then
+				if skinGait ~= "" then
+					skinFromGait = skinGait
+					skinBlend = 0
+				end
+				skinGait = gait
 			end
-		end
-		-- played back like stop-motion: each pose held for a few frames, then the next (12-18 a
-		-- second, unevenly), so his limbs jerk from one position to the next like a puppet's
-		-- while he glides along
-		frameHold -= dt
-		if frameHold <= 0 then
-			frameHold = 1 / 18 + math.random() * (1 / 12 - 1 / 18)
-			for name, motor in motors do
-				local want = target[name] or CFrame.identity
-				local cur = current[name] or CFrame.identity
-				cur = cur:Lerp(want, 0.8)
-				current[name] = cur
-				motor.Transform = cur
+			-- stooping under door frames and low ceilings
+			duckClock -= dt
+			if duckClock <= 0 then
+				duckClock = 0.1
+				rayParams.FilterDescendantsInstances = { model }
+				local top = root.Position.Y + 4.4 -- (the top of his head, hunched)
+				local hit = workspace:Raycast(root.Position, Vector3.new(0, 5.4, 0), rayParams)
+					or workspace:Raycast(root.Position + root.CFrame.LookVector * 1.6, Vector3.new(0, 5.4, 0), rayParams)
+				duckWant = hit and math.clamp(top - hit.Position.Y + 0.35, 0, 3.0) or 0
 			end
-			-- the mouth: snapping between positions with everything else
-			local want = os.clock() < screamUntil and 1 or Pose.jaw(gait, t, seed)
-			jaw += (want - jaw) * 0.7
-			Pose.setJaw(jawList, jaw)
+			duck += (duckWant - duck) * (1 - math.exp(-dt * 8))
+			-- his head turns to follow you when you're near and he isn't running
+			local wantYaw, wantPitch = 0, 0
+			local rel = root.CFrame:PointToObjectSpace(cam.CFrame.Position)
+			if dist < 45 and gait ~= "Chase" and gait ~= "Stunned" and rel.Z < 2 then
+				wantYaw = math.clamp(math.atan2(-rel.X, -rel.Z), -1.3, 1.3)
+				wantPitch = math.clamp(math.atan2(rel.Y - 3.6, math.sqrt(rel.X * rel.X + rel.Z * rel.Z)), -0.6, 0.5)
+			end
+			local kl = 1 - math.exp(-dt * 3.5)
+			look[1] += (wantYaw - look[1]) * kl
+			look[2] += (wantPitch - look[2]) * kl
+			local screaming = os.clock() < screamUntil
+			scream += ((screaming and 1 or 0) - scream) * (1 - math.exp(-dt * (screaming and 30 or 4)))
+			local opts = { Look = look, Duck = math.clamp(duck / 1.6, 0, 1.6), Scream = scream }
+			local P = Skin.sample(gait, phase, t, seed, opts)
+			if skinBlend < 1 then
+				skinBlend = math.min(1, skinBlend + dt / 0.3)
+				local w = skinBlend * skinBlend * (3 - 2 * skinBlend)
+				P = Skin.blend(Skin.sample(skinFromGait, phase, t, seed, opts), P, w)
+			end
+			-- (far off, a few times a second is plenty)
+			frameHold -= dt
+			if dist < 70 or frameHold <= 0 then
+				frameHold = 1 / 12
+				applySkin(skin, Skin.toPose(P, Skin.Scale))
+			end
+		else
+			phase += speed * dt * Pose.phaseRate(gait)
+			local target = Pose.get(gait, phase, t, seed)
+			-- he has to stoop under door frames and low ceilings: bend at the hips and knees
+			duckClock -= dt
+			if duckClock <= 0 then
+				duckClock = 0.1
+				rayParams.FilterDescendantsInstances = { model }
+				local top = root.Position.Y + 4.6 -- the top of his head, walking hunched (Rig.Height 9.9 standing)
+				local hit = workspace:Raycast(root.Position, Vector3.new(0, 5.4, 0), rayParams)
+					or workspace:Raycast(root.Position + root.CFrame.LookVector * 1.6, Vector3.new(0, 5.4, 0), rayParams)
+				duckWant = hit and math.clamp(top - hit.Position.Y + 0.35, 0, 3.0) or 0
+			end
+			duck += (duckWant - duck) * (1 - math.exp(-dt * 10))
+			if duck > 0.02 then
+				local root0 = target.Root or CFrame.identity
+				target.Root = CFrame.new(0, -duck * 0.45, 0) * root0 * CFrame.Angles(-duck * 0.3, 0, 0)
+				target.Neck = (target.Neck or CFrame.identity) * CFrame.Angles(duck * 0.25, 0, 0)
+				for _, hip in { "LeftHip", "RightHip" } do
+					target[hip] = (target[hip] or CFrame.identity) * CFrame.Angles(duck * 0.3, 0, 0)
+				end
+			end
+			-- played back like stop-motion: each pose held for a few frames, then the next (12-18 a
+			-- second, unevenly), so his limbs jerk from one position to the next like a puppet's
+			-- while he glides along
+			frameHold -= dt
+			if frameHold <= 0 then
+				frameHold = 1 / 18 + math.random() * (1 / 12 - 1 / 18)
+				for name, motor in motors do
+					local want = target[name] or CFrame.identity
+					local cur = current[name] or CFrame.identity
+					cur = cur:Lerp(want, 0.8)
+					current[name] = cur
+					motor.Transform = cur
+				end
+				-- the mouth: snapping between positions with everything else
+				local want = os.clock() < screamUntil and 1 or Pose.jaw(gait, t, seed)
+				jaw += (want - jaw) * 0.7
+				Pose.setJaw(jawList, jaw)
+			end
 		end
 
 		-- what it's like to be near him

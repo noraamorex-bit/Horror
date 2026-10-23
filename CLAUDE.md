@@ -143,6 +143,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   Previews: the creature studio in the scratchpad (`cstudio/run.sh <gaits> lit|dark`, film2).
   v100: tapered limbs, jointed fingers, a mouth that opens (gaping as he runs, screaming in the
   jumpscare); stills can hide parts (`hideParts`) and set joints (`joints`) in creature_frames2.
+- **v112 look (the owner, at a 36% rating: "Reword the monster… proper animation… blender level"):**
+  a sculpted, textured **skinned mesh** (`assets/Creature.rbxm`, Creator Store 17737124382: pale,
+  skinless, the face and chest splitting into a vertical maw of teeth; 68 bones) replaces the
+  mannequin's look (`Rig.skin`; the part figure stays as the invisible frame). **Smooth procedural
+  animation** (`shared/SkinPose`, client `Creature`): blended gaits, all fours in the chase, feet
+  planted by FK, the head following you, the maw tearing open in the scream/jumpscare. Needs
+  **Rojo 7.5.1+**. Previews: `tools/creature/pose_dump.luau` + `skinview.mjs`; test `skin_test`.
+  GDD "The creature, v112". (The reels' film2 still renders the old mannequin.)
 
 **Audio**
 - **v104** (a player: '"horror game" but almost no audio'): every sound file was measured
@@ -447,6 +455,15 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **23 Oct (v112 = place version 111)**, the owner: "36% rating right now. Seriously improve the build, map,
+  monster, jumpscare and everything… high tier blender level work… perfect cutscenes." Done: the skinned
+  creature + smooth procedural animation (see The intruder, v112), the jumpscare on his maw, cutscenes shot
+  like a film (lens, handheld drift, autofocus DOF, grade, per-shot sound/scream; He comes down = 3 shots).
+  Can't see the real client here: check on a phone that he loads (not the old mannequin), stands on the
+  floor, his gallop reads, the head-follow isn't silly, the jumpscare framing, and his frame rate. Next:
+  `--since=111`: rating trend, quits right after first seeing him, phone fps with him on screen; move
+  film2 (reels/store art) to the new creature; the house lighting pass (not done this round).
+
 - **23 Oct (v111 = place version 110, reel 42)**, the owner: "Game statistics have dropped and also the reel views…
   construct much better reels… elite game design." Reels: see Marketing, WHAT THE NUMBERS SAY (#2's
   attic-mystery format is the only big winner; the HUD gameplay series flopped). Reel 42 = #11 in #2's exact
@@ -732,7 +749,7 @@ keeping goes in the repo.
   `curl -sL https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau -o globalTypes.d.luau`
   (gitignored-worthy, don't commit); tools in `/root/bin`. A fresh container may lack them: download
   the release zips (the API is blocked, direct downloads work) into /root/bin:
-  `github.com/rojo-rbx/rojo/releases/download/v7.4.4/rojo-7.4.4-linux-x86_64.zip`,
+  `github.com/rojo-rbx/rojo/releases/download/v7.5.1/rojo-7.5.1-linux-x86_64.zip` (7.5.1 or newer: 7.4.4 silently drops Content-typed properties such as the creature's MeshContent and SurfaceAppearance maps),
   `github.com/lune-org/lune/releases/download/v0.10.4/lune-0.10.4-linux-x86_64.zip`,
   `github.com/JohnnyMorganz/luau-lsp/releases/download/1.53.0/luau-lsp-linux-x86_64.zip`).
 - **Tests** (Lune harness, runs straight from the repo): `cd tools/harness && ./runall.sh` — every
@@ -740,7 +757,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 110; the notes' "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 111; the notes' "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

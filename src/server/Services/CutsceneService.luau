@@ -9,7 +9,10 @@
 		Players = { Player }?,  -- default: everyone in the night who isn't out of it
 		Freeze = true?,         -- hold the players still while it plays (default true)
 		HoldIntruder = true?,   -- and him (default true)
+		Gait = "Stare"?,        -- how he stands meanwhile
 	})
+	A shot can also take Fov / FovTo (the lens), Shake (handheld, 0..1+), Sound (a sound name,
+	played as the shot starts) and Scream (true or a delay: his maw tears open).
 
 	While a shared cutscene plays nobody can be caught: he's held where he stands.
 ]]
@@ -66,7 +69,7 @@ function Cutscene.play(spec): number
 		busyUntil = math.max(busyUntil, os.clock() + total)
 	end
 	if spec.HoldIntruder ~= false and shared and ctx.Intruder and ctx.Intruder.hold then
-		ctx.Intruder.hold(total)
+		ctx.Intruder.hold(total, spec.Gait)
 	end
 	local frozen = {}
 	if spec.Freeze ~= false then
@@ -113,14 +116,21 @@ function Cutscene.lightsOut(cut: () -> ())
 	task.delay(t > 0 and 2.3 or 0, cut)
 end
 
--- The first hunt: in the garage, under the hatch, he's standing there.
+-- The first hunt: in the garage, under the hatch, he's standing there. (v112) Three shots: the
+-- garage from the door, him a shape under the hatch; low at his feet, the camera tilting up the
+-- length of him; his face, the head turning to you (it follows the camera), and the maw tearing
+-- open down his chest.
 function Cutscene.heComesDown(at: Vector3)
-	local face = at + V(0, 5.2, 0)
+	-- (`at` is the entry marker, 3 studs over the floor; standing hunched his face is ~8.3 up)
+	local fl = at - V(0, 3, 0)
+	local face = fl + V(0, 8.3, 0)
 	Cutscene.play({
 		Name = "HeComesDown",
+		Gait = "Stare",
 		Shots = {
-			{ From = look(at + V(-6, 3, -17), face), To = look(at + V(-4.5, 2.6, -13), face), Time = 2.6 },
-			{ From = look(at + V(3, 3.4, -7), face), To = look(at + V(1.4, 3.2, -4.2), face), Time = 2.2 },
+			{ From = look(fl + V(-6, 6.5, -17), fl + V(0, 6, 0)), To = look(fl + V(-4.5, 6.1, -13), fl + V(0, 6.6, 0)), Time = 2.6, Fov = 50, FovTo = 44 },
+			{ From = look(fl + V(1.8, 0.9, -5.2), fl + V(0, 2.2, 0)), To = look(fl + V(1.3, 1.1, -4.6), face), Time = 2.4, Fov = 62, Shake = 0.8 },
+			{ From = look(fl + V(0.9, 7.6, -5.4), face), To = look(fl + V(0.5, 7.9, -3.8), face), Time = 2.3, Fov = 46, FovTo = 40, Scream = 1.2, Shake = 0.6 },
 		},
 		Subtitle = "",
 	})

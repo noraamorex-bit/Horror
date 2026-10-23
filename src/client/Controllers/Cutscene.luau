@@ -3,10 +3,15 @@
 	going out, him under the garage hatch, you tied to the pipes. Letterbox bars, a slow camera
 	move per shot, a line of subtitle; the HUD and touch buttons step aside while it plays.
 	Afterwards the camera goes back to whatever it was doing (your eyes, or a hiding spot).
+
+	(v112) Shot like a film: the bars slide in, the lens per shot (Fov), a handheld drift (Shake),
+	depth of field that focuses on whatever's in the middle of the frame, a colder grade, and per
+	shot a sound (Sound) or him screaming (Scream).
 ]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 
 local Cutscene = {}
 local ctx
@@ -64,8 +69,28 @@ local function play(payload)
 	end
 	hudVisible(false)
 	cam.CameraType = Enum.CameraType.Scriptable
-	local top = UI.new("Frame", { Name = "CutTop", Size = UDim2.new(1, 0, 0.12, 0), BackgroundColor3 = Color3.new(0, 0, 0), ZIndex = 30, Parent = UI.Top })
-	local bottom = UI.new("Frame", { Name = "CutBottom", AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0.14, 0), BackgroundColor3 = Color3.new(0, 0, 0), ZIndex = 30, Parent = UI.Top })
+	local oldFov = cam.FieldOfView
+	local top = UI.new("Frame", { Name = "CutTop", Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 30, Parent = UI.Top })
+	local bottom = UI.new("Frame", { Name = "CutBottom", AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 30, Parent = UI.Top })
+	UI.tween(top, 0.6, { Size = UDim2.new(1, 0, 0.12, 0) })
+	UI.tween(bottom, 0.6, { Size = UDim2.new(1, 0, 0.14, 0) })
+	-- the lens: a shallow depth of field and a colder, harder grade
+	local dof = Instance.new("DepthOfFieldEffect")
+	dof.Name = "CutsceneDOF"
+	dof.FarIntensity = 0.4
+	dof.NearIntensity = 0.5
+	dof.InFocusRadius = 6
+	dof.FocusDistance = 12
+	dof.Parent = Lighting
+	local grade = Instance.new("ColorCorrectionEffect")
+	grade.Name = "CutsceneGrade"
+	grade.Contrast = 0.12
+	grade.Saturation = -0.18
+	grade.TintColor = Color3.fromRGB(232, 238, 255)
+	grade.Parent = Lighting
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { player.Character :: any }
 	local sub = UI.label({
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
@@ -92,11 +117,50 @@ local function play(payload)
 		end
 		local from, to, dur = shot.From, shot.To, shot.Time or 3
 		if typeof(from) == "CFrame" and typeof(to) == "CFrame" then
+			local fov0 = type(shot.Fov) == "number" and shot.Fov or 58
+			local fov1 = type(shot.FovTo) == "number" and shot.FovTo or fov0
+			local shake = type(shot.Shake) == "number" and shot.Shake or 0.5
+			if type(shot.Sound) == "string" and ctx.Effects then
+				local snd = ctx.Effects.localSound(shot.Sound)
+				if snd then
+					snd:Play()
+					game:GetService("Debris"):AddItem(snd, 12)
+				end
+			end
+			if shot.Scream and ctx.Creature then
+				task.delay(type(shot.Scream) == "number" and shot.Scream or 0, function()
+					ctx.Creature.scream(1.4)
+					if ctx.Effects then
+						ctx.Effects.shake(0.9, 0.6)
+						local snd = ctx.Effects.localSound("Screech")
+						if snd then
+							snd:Play()
+							game:GetService("Debris"):AddItem(snd, 8)
+						end
+					end
+				end)
+			end
 			local t0 = os.clock()
+			local seed = math.random() * 100
 			while os.clock() - t0 < dur and mine == token and not workspace:GetAttribute("EndingActive") do
 				local k = math.clamp((os.clock() - t0) / dur, 0, 1)
-				local e = k * k * (3 - 2 * k)
-				cam.CFrame = from:Lerp(to, e)
+				-- (smootherstep: the move starts and settles without a jolt)
+				local e = k * k * k * (k * (k * 6 - 15) + 10)
+				local tt = os.clock() - t0 + seed
+				-- a camera operator's hands: slow drift, a little breathing
+				local drift = CFrame.Angles(
+					(math.noise(tt * 0.35, seed) * 0.9 + math.noise(tt * 1.3, seed + 5) * 0.25) * 0.025 * shake,
+					(math.noise(seed + 11, tt * 0.3) * 0.9 + math.noise(seed + 2, tt * 1.1) * 0.25) * 0.03 * shake,
+					math.noise(tt * 0.25, seed + 7) * 0.02 * shake
+				)
+				local cf = from:Lerp(to, e) * drift
+				cam.CFrame = cf
+				cam.FieldOfView = fov0 + (fov1 - fov0) * e
+				-- autofocus on what's in the middle of the frame
+				local hit = workspace:Raycast(cf.Position, cf.LookVector * 80, params)
+				local want = hit and (hit.Position - cf.Position).Magnitude or 40
+				dof.FocusDistance += (want - dof.FocusDistance) * 0.15
+				dof.InFocusRadius = math.clamp(dof.FocusDistance * 0.35, 2, 14)
 				RunService.RenderStepped:Wait()
 			end
 		end
@@ -104,6 +168,9 @@ local function play(payload)
 	if mine ~= token then
 		top:Destroy()
 		bottom:Destroy()
+		dof:Destroy()
+		grade:Destroy()
+		cam.FieldOfView = oldFov
 		return
 	end
 	if ctx.Effects then
@@ -112,6 +179,9 @@ local function play(payload)
 	task.wait(0.3)
 	top:Destroy()
 	bottom:Destroy()
+	dof:Destroy()
+	grade:Destroy()
+	cam.FieldOfView = oldFov
 	playing = false
 	hudVisible(true)
 	if not workspace:GetAttribute("EndingActive") then
@@ -141,6 +211,12 @@ function Cutscene.start()
 				local f = ctx.UI.Top:FindFirstChild(n)
 				if f then
 					f:Destroy()
+				end
+			end
+			for _, n in { "CutsceneDOF", "CutsceneGrade" } do
+				local e = Lighting:FindFirstChild(n)
+				if e then
+					e:Destroy()
 				end
 			end
 		end

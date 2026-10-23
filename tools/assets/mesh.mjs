@@ -152,14 +152,54 @@ export async function decodeMesh(buf) {
     const hs = dv.getUint16(o, true);
     const nv = dv.getUint32(o + 4, true), nf = dv.getUint32(o + 8, true);
     const nLods = dv.getUint16(o + 12, true), nBones = dv.getUint16(o + 14, true);
+    const namesSize = dv.getUint32(o + 16, true), nSubsets = dv.getUint16(o + 20, true);
     o += hs;
     const v = readVerts(dv, o, nv, 40);
     o += nv * 40;
-    if (nBones > 0) o += nv * 8;
+    // (skinned meshes) per vertex: 4 bone slots (indices into its subset's bone list) + 4 weights /255
+    let env = null;
+    if (nBones > 0) { env = new Uint8Array(buf.buffer, buf.byteOffset + o, nv * 8).slice(); o += nv * 8; }
     const idx = readFaces(dv, o, nf);
     o += nf * 12;
     const lods = []; for (let i = 0; i < nLods; i++) lods.push(dv.getUint32(o + i * 4, true));
-    return finish(v.pos, v.nrm, v.uv, lod0(idx, lods));
+    o += nLods * 4;
+    const out = finish(v.pos, v.nrm, v.uv, lod0(idx, lods));
+    if (nBones > 0) {
+      // the bone table: name, parent, and its bind frame in mesh space (CFrame order: x y z, then R00..R22)
+      const bones = [];
+      for (let i = 0; i < nBones; i++) {
+        const b = o + i * 60;
+        const r = []; for (let k = 0; k < 9; k++) r.push(dv.getFloat32(b + 12 + k * 4, true));
+        bones.push({ nameAt: dv.getUint32(b, true), parent: dv.getUint16(b + 4, true), rot: r,
+                     pos: [dv.getFloat32(b + 48, true), dv.getFloat32(b + 52, true), dv.getFloat32(b + 56, true)] });
+      }
+      o += nBones * 60;
+      const names = buf.subarray(o, o + namesSize);
+      for (const b of bones) { let e = b.nameAt; while (e < names.length && names[e] !== 0) e++; b.name = new TextDecoder().decode(names.subarray(b.nameAt, e)); }
+      o += namesSize;
+      const subsets = [];
+      for (let i = 0; i < nSubsets; i++) {
+        const b = o + i * 72;
+        const n = dv.getUint32(b + 16, true), list = [];
+        for (let k = 0; k < Math.min(n, 26); k++) list.push(dv.getUint16(b + 20 + k * 2, true));
+        subsets.push({ vertsBegin: dv.getUint32(b + 8, true), vertsLength: dv.getUint32(b + 12, true), bones: list });
+      }
+      // resolve every vertex's 4 influences to global bone indices
+      const skinIndex = new Uint16Array(nv * 4), skinWeight = new Float32Array(nv * 4);
+      for (const sub of subsets) {
+        for (let vi = sub.vertsBegin; vi < sub.vertsBegin + sub.vertsLength && vi < nv; vi++) {
+          let tot = 0;
+          for (let k = 0; k < 4; k++) {
+            const w = env[vi * 8 + 4 + k] / 255;
+            skinIndex[vi * 4 + k] = sub.bones[env[vi * 8 + k]] ?? 0;
+            skinWeight[vi * 4 + k] = w; tot += w;
+          }
+          if (tot > 0) for (let k = 0; k < 4; k++) skinWeight[vi * 4 + k] /= tot;
+        }
+      }
+      out.skin = { bones: bones.map(b => ({ name: b.name, parent: b.parent === 0xffff ? -1 : b.parent, rot: b.rot, pos: b.pos })), skinIndex, skinWeight };
+    }
+    return out;
   }
   throw new Error('unknown mesh ' + head);
 }

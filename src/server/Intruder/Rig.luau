@@ -363,7 +363,93 @@ function Rig.build(Builder): Model
 	hum.Parent = model
 	model:SetAttribute("Creature", true)
 	game:GetService("CollectionService"):AddTag(model, "Creature")
+	local ok, err = pcall(Rig.skin, model, root, upperTorso)
+	if not ok then
+		warn("[Rig] the skinned body didn't load, keeping the part-built one: " .. tostring(err))
+	end
 	return model
+end
+
+-- (v112) the real body: a sculpted, textured, skinned mesh with a full skeleton
+-- (ReplicatedStorage.Assets.Creature.Body, from assets/Creature.rbxm). It takes over the look:
+-- the part-built figure above stays as the invisible frame everything else already relies on
+-- (the joints, Head for the jumpscare, Eyes, the lights), and the clients drive its bones
+-- (client/Controllers/Creature, shared/SkinPose). Without the asset (the test harness) the
+-- part-built figure is what you see.
+Rig.SkinScale = 0.72 -- (the mesh is 13.66 tall: about 9.8 studs standing, the old figure's 9.9)
+
+local function skinAsset(): Instance?
+	local assets = game:GetService("ReplicatedStorage"):FindFirstChild("Assets")
+	local c = assets and assets:FindFirstChild("Creature")
+	-- (typeof: the test harness answers every lookup with a stand-in table)
+	return (c and typeof(c) == "Instance" and c:FindFirstChild("Body")) and c or nil
+end
+
+-- a bone's frame in the body's space, at rest
+local function restOf(bone: Instance): CFrame
+	local cf = (bone :: Bone).CFrame
+	local p = bone.Parent
+	while p and p:IsA("Bone") do
+		cf = p.CFrame * cf
+		p = p.Parent
+	end
+	return cf
+end
+
+function Rig.skin(model: Model, root: BasePart, upperTorso: BasePart): boolean
+	local src = skinAsset()
+	if not src then
+		return false
+	end
+	local wrap = (src :: Model):Clone()
+	-- (scales the mesh and moves its bones with it)
+	wrap:ScaleTo(Rig.SkinScale)
+	local body = wrap:FindFirstChild("Body") :: MeshPart
+	body.Name = "Body"
+	body.Anchored = false
+	body.CanCollide = false
+	body.CanQuery = false
+	body.CanTouch = false
+	body.Massless = true
+	body.CastShadow = true
+	-- feet on the floor (the mesh is centred on its own middle; its bottom is the soles)
+	body.CFrame = root.CFrame * CFrame.new(0, -Rig.RootY + body.Size.Y / 2, 0)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = root
+	weld.Part1 = body
+	weld.Parent = body
+	body.Parent = model
+	wrap:Destroy()
+	-- the part-built figure goes invisible
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d ~= body then
+			d.Transparency = 1
+			d.CastShadow = false
+		end
+	end
+	-- its lights move onto the bones: the cold glow in front of the face, the faint one off the chest
+	local k = Rig.SkinScale
+	local head = body:FindFirstChild("spine_006_0", true)
+	local chest = body:FindFirstChild("spine_003_51", true)
+	local glowPart = model:FindFirstChild("FaceGlow", true)
+	local glow = glowPart and glowPart:FindFirstChildOfClass("PointLight")
+	if head and glow then
+		local at = Instance.new("Bone")
+		at.Name = "FaceLight"
+		at.CFrame = restOf(head):Inverse() * CFrame.new(0, 5.75 * k, -2.0 * k)
+		at.Parent = head
+		glow.Parent = at
+	end
+	local aura = upperTorso:FindFirstChild("Aura")
+	if chest and aura then
+		local at = Instance.new("Bone")
+		at.Name = "ChestLight"
+		at.CFrame = restOf(chest):Inverse() * CFrame.new(0, 3.0 * k, -2.4 * k)
+		at.Parent = chest
+		aura.Parent = at
+	end
+	model:SetAttribute("Skinned", true)
+	return true
 end
 
 return Rig

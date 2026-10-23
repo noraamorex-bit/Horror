@@ -2534,6 +2534,9 @@ local function gaitFor(speed: number): string
 	if st == "Puppet" and S.PuppetGait then
 		return S.PuppetGait
 	end
+	if S.HoldGait and now() < (S.HoldUntil or 0) then
+		return S.HoldGait
+	end
 	if st == "Stunned" then
 		return "Stunned"
 	elseif st == "CheckSpot" and S.Data.Phase == "Open" then
@@ -2907,8 +2910,10 @@ function Intruder.grace(player: Player, seconds: number)
 end
 
 -- a cutscene is playing: he stays exactly where he is for a while
-function Intruder.hold(seconds: number)
+function Intruder.hold(seconds: number, gait: string?)
 	S.HoldUntil = math.max(S.HoldUntil or 0, now() + seconds)
+	-- (how he stands while a cutscene holds him: v112, Stare turns his head to the camera)
+	S.HoldGait = gait
 	if S.Nav then
 		S.Nav:stop()
 	end
