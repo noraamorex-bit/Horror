@@ -378,6 +378,49 @@ end
 -- part-built figure is what you see.
 Rig.SkinScale = 0.72 -- (the mesh is 13.66 tall: about 9.8 studs standing, the old figure's 9.9)
 
+-- (v114, the owner: the skinned body was "a bit too much. Make it simpler but not that simple") it
+-- wears the porcelain mask and the wet black hair again (the Head part and what's welded to it; the
+-- clients keep them on the body's head bone), and the body lost its raw, bloody colour map
+-- (tools/creature/plain_skin.luau): charcoal, with the sculpted detail of its normal map. The body and
+-- its animation stay, the gore goes
+Rig.MaskParts = {
+	Mask = true, EyeHole = true, EyeRim = true, Glint = true, Maw = true, Mouth = true, Tooth = true,
+	LowerTooth = true, Crack = true, Streak = true, Hair = true, Fringe = true,
+}
+-- (the new skull is bigger and further forward than the old head: its face is ~0.65 studs out at 9.1 up)
+Rig.MaskScale = 1.2
+Rig.MaskOffset = Vector3.new(0, -0.08, -0.42)
+Rig.SkinColor = Color3.fromRGB(52, 49, 49)
+
+-- the mask and hair grown to fit the new skull (scaled about the head's centre); returns the parts that
+-- stay visible (the Head part and everything on it but the old neck)
+function Rig.maskLayout(model: Model): { [BasePart]: boolean }
+	local keep: { [BasePart]: boolean } = {}
+	local head = model:FindFirstChild("Head") :: BasePart?
+	if not head then
+		return keep
+	end
+	keep[head] = true
+	local hcf = head.CFrame
+	local k = Rig.MaskScale
+	for _, d in model:GetDescendants() do
+		if d:IsA("WeldConstraint") and d.Part0 == head and d.Part1 and Rig.MaskParts[d.Part1.Name] then
+			local p = d.Part1 :: BasePart
+			keep[p] = true
+			local rel = hcf:ToObjectSpace(p.CFrame)
+			d.Enabled = false
+			-- (the hair keeps its own strip size, only spread to the bigger skull: grown, it read as boards)
+			if p.Name ~= "Hair" and p.Name ~= "Fringe" then
+				p.Size *= k
+			end
+			p.CFrame = hcf * CFrame.new(rel.Position * k) * rel.Rotation
+			d.Enabled = true
+		end
+	end
+	head.Size *= k
+	return keep
+end
+
 local function skinAsset(): Instance?
 	local assets = game:GetService("ReplicatedStorage"):FindFirstChild("Assets")
 	local c = assets and assets:FindFirstChild("Creature")
@@ -420,13 +463,20 @@ function Rig.skin(model: Model, root: BasePart, upperTorso: BasePart): boolean
 	weld.Parent = body
 	body.Parent = model
 	wrap:Destroy()
-	-- the part-built figure goes invisible
+	-- the part-built figure goes invisible, but for the mask and the hair on its head
+	local head = model:FindFirstChild("Head") :: BasePart?
+	local keep = Rig.maskLayout(model)
 	for _, d in model:GetDescendants() do
-		if d:IsA("BasePart") and d ~= body then
+		if d:IsA("BasePart") and d ~= body and not keep[d] then
 			d.Transparency = 1
 			d.CastShadow = false
 		end
 	end
+	local neck = head and head:FindFirstChild("Neck") :: Motor6D?
+	if neck then
+		neck.C0 += Rig.MaskOffset
+	end
+	body.Color = Rig.SkinColor
 	-- its lights move onto the bones: the cold glow in front of the face, the faint one off the chest
 	local k = Rig.SkinScale
 	local head = body:FindFirstChild("spine_006_0", true)
@@ -449,6 +499,7 @@ function Rig.skin(model: Model, root: BasePart, upperTorso: BasePart): boolean
 		aura.Parent = at
 	end
 	model:SetAttribute("Skinned", true)
+	model:SetAttribute("Masked", head ~= nil)
 	return true
 end
 

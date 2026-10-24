@@ -8,7 +8,10 @@
 	                   "opts": { "Look": [yaw, pitch], "Duck": 0..1.6, "Scream": 0..1, ... } }, ...]
 	Out: { skin = { scale, bones = [{ name, parent, rest }] }, frames = { [f] = { root = {x, y, z, yaw},
 	       tr = { [bone] = {12} }, glow = {x, y, z} } } }
-	Run from the repo root: lune run tools/creature/skin_frames.luau in.json out.json
+	Run from the repo root: lune run tools/creature/skin_frames.luau in.json out.json [mask.json]
+	(v114) With mask.json (tools/harness/mask_dump.luau) he wears the porcelain mask and the hair, kept on
+	the posed head bone exactly as the client does (client Creature), and the body gets the server's plain colour:
+	parts = the mask's parts (film2's part format), each frame's "parts" their frames.
 ]]
 local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
@@ -21,6 +24,7 @@ local env = { CFrame = CFrame, Vector3 = Vector3, math = math, table = table, st
 	ipairs = ipairs, type = type, typeof = typeof, pcall = pcall, error = error, setmetatable = setmetatable, tostring = tostring,
 	tonumber = tonumber, print = print, assert = assert, select = select, next = next }
 local SkinPose = luau.load(fs.readFile("src/shared/SkinPose.luau"), { debugName = "SkinPose", environment = env })()
+local CreaturePose = luau.load(fs.readFile("src/shared/CreaturePose.luau"), { debugName = "CreaturePose", environment = env })()
 local SCALE = SkinPose.Scale
 
 local model = roblox.deserializeModel(fs.readFile("assets/Creature.rbxm"))[1]
@@ -58,6 +62,20 @@ local function restOf(name)
 end
 local faceRest = restOf("spine_006_0"):Inverse() * CFrame.new(0, 5.75, -2.0)
 
+local function scaled(c)
+	return CFrame.new(c.Position * SCALE) * (c - c.Position)
+end
+local function cfOf(a)
+	return CFrame.new(a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12])
+end
+local mask = process.args[3] and serde.decode("json", fs.readFile(process.args[3])) or nil
+local bodyOffset = CFrame.new(0, half * SCALE, 0) -- (the body's centre above his feet, in studs)
+local relHead
+if mask then
+	-- the Head part relative to the head bone, at rest (in studs, model space)
+	relHead = (bodyOffset * scaled(restOf("spine_006_0"))):Inverse() * cfOf(mask.head)
+end
+
 local frames = serde.decode("json", fs.readFile(process.args[1]))
 local out = {}
 for _, f in frames do
@@ -74,7 +92,30 @@ for _, f in frames do
 	local place = CFrame.new(feet) * CFrame.Angles(0, yaw, 0)
 	local face = (posed("spine_006_0", byBone) * faceRest).Position
 	local g = place:PointToWorldSpace((face + Vector3.new(0, half, 0)) * SCALE)
-	out[tostring(f.f)] = { root = { feet.X, feet.Y, feet.Z, yaw }, tr = tr, glow = { g.X, g.Y, g.Z } }
+	local fr = { root = { feet.X, feet.Y, feet.Z, yaw }, tr = tr, glow = { g.X, g.Y, g.Z } }
+	if mask then
+		local headCF = place * bodyOffset * scaled(posed("spine_006_0", byBone)) * relHead
+		local open = math.clamp((pose.Mouth or 0) * 1.2, 0, 1)
+		fr.parts = {}
+		for i, p in mask.parts do
+			local cf = headCF * cfOf(mask.rel[i])
+			local off, sc = CreaturePose.jawOffset(p.n, open)
+			if off then
+				cf = cf * CFrame.new(off.X, off.Y, off.Z)
+			end
+			local c = { cf:GetComponents() }
+			if sc then
+				for j = 0, 2 do
+					c[4 + j * 3] *= sc.X
+					c[5 + j * 3] *= sc.Y
+					c[6 + j * 3] *= sc.Z
+				end
+			end
+			fr.parts[i] = c
+		end
+	end
+	out[tostring(f.f)] = fr
 end
-fs.writeFile(process.args[2], serde.encode("json", { skin = { scale = SCALE, half = half, bones = bones }, frames = out }))
+fs.writeFile(process.args[2], serde.encode("json", { skin = { scale = SCALE, half = half, bones = bones, color = mask and mask.color or nil },
+	parts = mask and mask.parts or nil, frames = out }))
 print("skin_frames:", #frames, "frames")

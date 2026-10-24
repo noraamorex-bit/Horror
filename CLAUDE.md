@@ -151,6 +151,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   planted by FK, the head following you, the maw tearing open in the scream/jumpscare. Needs
   **Rojo 7.5.1+**. Previews: `tools/creature/pose_dump.luau` + `skinview.mjs`; test `skin_test`.
   GDD "The creature, v112". Reels: film2 draws it from `tools/creature/skin_frames.luau` (reel 43 on).
+- **v114 (the owner: the v112 monster was "a bit too much. Make it simpler but not that simple"):** the
+  sculpted body and its animation stay, the gore goes: no colour map (`tools/creature/plain_skin.luau`:
+  charcoal `Rig.SkinColor` + the normal map's sculpted detail), and he wears the **porcelain mask and wet
+  hair** again (`Rig.MaskParts` / `Rig.maskLayout`: the part-built Head and what's welded to it, 1.2x,
+  moved onto the new face by `Rig.MaskOffset`; the client turns the Neck joint so they ride the head
+  bone, `Creature` applySkin). The chest maw only opens in the scream; his mouth is the mask's again.
+  Reels: `tools/harness/mask_dump.luau` → `skin_frames.luau ... mask.json` (third argument).
 
 **Audio**
 - **v104** (a player: '"horror game" but almost no audio'): every sound file was measured
@@ -458,6 +465,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **24 Oct (v114 = place version 113)**, the owner: the new monster is "a bit too much. Make it simpler but
+  not that simple." Done: the body without its bloody colour map (charcoal + sculpted normal detail), the
+  porcelain mask and hair back on his head, the chest maw only in the scream (see The intruder, v114).
+  Can't see the real client: check on a phone that the mask sits on his face (not floating or inside the
+  head) while he walks, runs on all fours and turns his head, and that the body reads charcoal, not
+  black. Reel 43 still shows the v112 look (rendered before this change).
 
 - **23 Oct (v113 = place version 112)**, the owner (screenshot: First Night badge won yesterday 67, "300 at
   one point. Do better."). The badge follows traffic × conversion. Daily lobby visits 981 (12 Oct) → 377
@@ -774,7 +788,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 112; the notes' "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 113; the notes' "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

@@ -469,10 +469,11 @@ function SkinPose.sample(gait: string, phase: number, t: number, seed: number?, 
 	local scream = o.Scream or 0
 	if scream > 0 then
 		local sh = sin(t * 53) * 0.6 + sin(t * 37) * 0.4
-		set(P, "Spine", 0.1 * scream)
-		set(P, "Chest", (0.25 + 0.05 * sh) * scream)
-		set(P, "Neck", 0.3 * scream)
-		set(P, "Head", (0.35 + 0.1 * sh) * scream, 0, 0.1 * sh * scream)
+		-- (v114: the mask on, he screams straight at you, not at the ceiling)
+		set(P, "Spine", 0.05 * scream)
+		set(P, "Chest", (0.12 + 0.05 * sh) * scream)
+		set(P, "Neck", -0.12 * scream)
+		set(P, "Head", (-0.08 + 0.08 * sh) * scream, 0, 0.1 * sh * scream)
 		set(P, "LArm", 0.6 * scream, 0, (-1.3 + 0.1 * sh) * scream)
 		set(P, "RArm", 0.6 * scream, 0, (1.3 - 0.1 * sh) * scream)
 		set(P, "LFore", 0.5 * scream)
@@ -481,6 +482,7 @@ function SkinPose.sample(gait: string, phase: number, t: number, seed: number?, 
 		P.CurlR = P.CurlR + (0.05 - P.CurlR) * scream
 		P.Mouth = P.Mouth + (1.05 - P.Mouth) * scream
 	end
+	P.Scream = scream
 	P.T = t
 	return P
 end
@@ -503,7 +505,7 @@ function SkinPose.blend(a: { [string]: any }, b: { [string]: any }, w: number): 
 	end
 	local ra, rb = a.Root or { 0, 0, 0 }, b.Root or { 0, 0, 0 }
 	out.Root = { ra[1] + (rb[1] - ra[1]) * w, ra[2] + (rb[2] - ra[2]) * w, ra[3] + (rb[3] - ra[3]) * w }
-	for _, k in { "CurlL", "CurlR", "Mouth", "Twitch", "Plant" } do
+	for _, k in { "CurlL", "CurlR", "Mouth", "Twitch", "Plant", "Scream" } do
 		local x, y = a[k] or 0, b[k] or 0
 		out[k] = x + (y - x) * w
 	end
@@ -520,11 +522,12 @@ function SkinPose.toPose(P: { [string]: any }, scale: number?): { [string]: any 
 			pose[j] = A(v[1], v[2], v[3])
 		end
 	end
-	local mouth = P.Mouth or 0
-	if mouth > 0 then
-		-- (the breast bones pull the vertical maw open)
-		pose.LBreast = A(0, 0.62 * mouth, 0)
-		pose.RBreast = A(0, -0.62 * mouth, 0)
+	-- (the breast bones pull the vertical maw in his chest open: v114, only when he screams; the rest
+	-- of the time his mouth is the mask's, pose.Mouth)
+	local maw = P.Scream or 0
+	if maw > 0 then
+		pose.LBreast = A(0, 0.66 * maw, 0)
+		pose.RBreast = A(0, -0.66 * maw, 0)
 	end
 	local r = P.Root
 	if r then
@@ -535,6 +538,7 @@ function SkinPose.toPose(P: { [string]: any }, scale: number?): { [string]: any 
 	pose.T = P.T
 	pose.Twitch = P.Twitch
 	pose.Plant = P.Plant
+	pose.Mouth = P.Mouth
 	return pose
 end
 

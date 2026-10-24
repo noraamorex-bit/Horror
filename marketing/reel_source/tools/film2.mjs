@@ -130,6 +130,8 @@ if (skinData) {
     g.setAttribute('skinWeight', new T.Float32BufferAttribute(mesh.skin.skinWeight, 4));
     g.setIndex(mesh.idx);
     const mat = new T.MeshStandardMaterial({ map: cmap, normalMap: nmap, roughnessMap: rmap, roughness: 1, metalness: 0 });
+    // (v114: the body without its colour map, tools/creature/plain_skin.luau: the part's colour + the normal map)
+    if (sd.info.color) { mat.map = null; mat.roughnessMap = null; mat.roughness = 0.62; mat.color = new T.Color(`rgb(${sd.info.color[0]},${sd.info.color[1]},${sd.info.color[2]})`); }
     const cf = (a) => new T.Matrix4().set(a[3], a[4], a[5], a[0], a[6], a[7], a[8], a[1], a[9], a[10], a[11], a[2], 0, 0, 0, 1);
     const outer = new T.Group(); window.S.add(outer);
     const inner = new T.Group(); inner.position.set(0, sd.info.half, 0); outer.add(inner);
@@ -341,7 +343,9 @@ for (const fr of spec.frames) {
     if (SK) {
       // (the skinned creature: where he stands, then every bone's rest times its Transform)
       SK.outer.visible = !!crFrame;
-      window.CRG.visible = false;
+      // (v114: the porcelain mask and hair on his head: the part meshes, placed per frame)
+      window.CRG.visible = !!(crFrame && crFrame.parts);
+      if (crFrame && crFrame.parts) crFrame.parts.forEach((c, i) => window.CR[i] && window.place(window.CR[i].mesh, c, window.CR[i].gi));
       if (crFrame) {
         const r = crFrame.root;
         SK.outer.position.set(r[0], r[1], r[2]); SK.outer.rotation.set(0, r[3], 0); SK.outer.scale.setScalar(SK.scale);

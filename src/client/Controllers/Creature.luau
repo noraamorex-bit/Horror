@@ -47,6 +47,15 @@ local function skinOf(m: Instance): any
 		local ok, r = pcall(Skin.rig, body)
 		rig = ok and r or false
 	end
+	-- (v114) the porcelain mask and hair (the part-built Head and what's welded to it) ride the head
+	-- bone: where the Head part sits relative to the bone at rest, both worked out from rest frames
+	local head = m:FindFirstChild("Head")
+	local neck = head and head:FindFirstChild("Neck")
+	local bone = body and body:FindFirstChild("spine_006_0", true)
+	if rig and m:GetAttribute("Masked") and neck and neck:IsA("Motor6D") and neck.Part0 and bone and bone:IsA("Bone") then
+		local restHead = neck.Part0.CFrame * neck.C0 * neck.C1:Inverse()
+		rig.Mask = { Neck = neck, Bone = bone, Rel = bone.WorldCFrame:ToObjectSpace(restHead), Jaw = Pose.jawMeshes(m) }
+	end
 	skinRigs[m] = rig
 	return rig or nil
 end
@@ -54,6 +63,17 @@ end
 local function applySkin(rig, pose)
 	for bone, cf in Skin.transforms(rig, pose) do
 		bone.Transform = cf
+	end
+	local mk = rig.Mask
+	if mk then
+		-- the neck joint turned so the Head part lands where the posed head bone puts it
+		local neck: Motor6D = mk.Neck
+		local p0 = neck.Part0
+		if p0 then
+			local want = mk.Bone.TransformedWorldCFrame * mk.Rel
+			neck.Transform = neck.C0:Inverse() * p0.CFrame:Inverse() * want * neck.C1
+		end
+		Pose.setJaw(mk.Jaw, math.clamp((pose.Mouth or 0) * 1.2, 0, 1))
 	end
 end
 
@@ -181,8 +201,10 @@ function Creature.focusFor(part: Instance?): (() -> CFrame)?
 	if not neck or not head then
 		return nil
 	end
+	local mask = (m :: Model):GetAttribute("Masked") and (m :: Model):FindFirstChild("Head") :: BasePart?
 	return function()
-		local at = neck.TransformedWorldCFrame.Position:Lerp(head.TransformedWorldCFrame.Position, 0.35)
+		-- (v114: his face is the mask again; before, the maw down his throat)
+		local at = mask and mask.Position or neck.TransformedWorldCFrame.Position:Lerp(head.TransformedWorldCFrame.Position, 0.35)
 		local fwd = body.CFrame.LookVector
 		return CFrame.lookAt(at, at + Vector3.new(fwd.X, 0, fwd.Z))
 	end

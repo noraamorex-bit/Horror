@@ -15,7 +15,27 @@ local ok, err = pcall(function()
 	local model = R.deserializeModel(fs.readFile("../../assets/Creature.rbxm"))[1]
 	local body = model:FindFirstChild("Body")
 	assert(body and body.ClassName == "MeshPart", "the body is a MeshPart")
-	assert(body:FindFirstChildOfClass("SurfaceAppearance"), "it has its textures")
+	local sa = body:FindFirstChildOfClass("SurfaceAppearance")
+	assert(sa, "it has its surface")
+	-- (v114: the raw, bloody colour map is gone; the sculpted detail of the normal map stays)
+	assert(tostring(sa.ColorMapContent) == "Content(None)", "no colour map: " .. tostring(sa.ColorMapContent))
+	assert(tostring(sa.NormalMapContent):find("17737124050"), "the normal map kept")
+	-- (v114) the porcelain mask and hair go on the new head: everything on the old Head but its neck and
+	-- the light's anchor, grown to fit the bigger skull
+	local Builder = H.load("Server/World/Builder")
+	local m = H.unwrap(Rig.build(Builder))
+	local head = m:FindFirstChild("Head")
+	local s0 = head.Size.X
+	local keep = Rig.maskLayout(m)
+	local n, names = 0, {}
+	for p in keep do
+		n += 1
+		names[p.Name] = true
+	end
+	assert(names.Mask and names.Hair and names.Head and names.Maw, "the mask, the hair and the jaw kept")
+	assert(not names.NeckBone and not names.Knuckle and not names.FaceGlow, "not the old neck or the light's anchor")
+	assert(math.abs(head.Size.X - s0 * Rig.MaskScale) < 1e-4, "grown to fit")
+	print("mask: " .. n .. " parts kept")
 	local bones = {}
 	for _, d in body:GetDescendants() do
 		if d.ClassName == "Bone" then bones[d.Name] = d end
