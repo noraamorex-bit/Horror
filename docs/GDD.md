@@ -291,7 +291,8 @@ The Director plays low-intensity events. Each one needs conditions to be met, fo
 *He knows you know.*
 The intruder **hunts**. Objectives change to escape and survival:
 - **Call 911.** Either splice the cut line at the junction box outside (electrical tape, then the **wires puzzle**) and use the landline, or find the one flickering bar of cell signal at the upstairs bathroom window and hold a 15-second call. Talking makes noise.
-- **Reach Mrs. Okafor's house.** Knock, then survive 15 seconds on her porch in the rain until she opens the door.
+- **Reach Mrs. Okafor's house.** Knock, then survive 20 seconds on her porch in the rain until she opens the door.
+- **No quick exits (v116,** a player: "way too short, I escaped in 3 mins"): the car and her door only work once the hunt has run 2 minutes (`Help.ExitsAfter` 120 s, about as long as the 911 call + the police). Before that the car cranks, floods and dies ("Give it a minute") and nobody answers her door ("She's asleep. Knock again in a minute"); both are loud and he comes to see. (Logs: escapes 3-48 s after the blackout: car keys taken from the hook in act I were kept, and her door answered from the first second.)
 - **Escape in the car.** The car keys are in the attic nest (or the spare set is in dad's locked office). The garage door needs power, or the loud manual release.
 - **Lock him in the basement.** Lure him down and lock the basement door (house keys or the basement key from the mudroom). This buys time and changes the ending.
 - **Free your friends.** Anyone captured is zip-tied in the boiler room. Friends can free them with a 5-second hold, faster with the multitool or scissors. A captive can struggle free alone, but slowly and loudly.

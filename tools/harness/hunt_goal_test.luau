@@ -368,6 +368,44 @@ local ok, err = pcall(function()
 	assert(joined == nil, "someone joined: no 'we had to turn around'")
 	ctx.Match = nil
 	print(("solo texts: %.0f s, %.0f s once closed, none after a join ok"):format(soloAt, openAt))
+
+	-- (v116, "I escaped in 3 mins") the car and Mrs. Okafor's door only work once the hunt has run
+	-- Config.Help.ExitsAfter: before that the car floods and nobody answers the door
+	for _, k in { "Ending", "Escape" } do
+		if ctx[k].reset then ctx[k].reset() end
+	end
+	local runner, rroot = mkPlayer("Runner")
+	H.services.Players.GetPlayers = function() return { runner } end
+	local realAct2, realHunt = ctx.Director.getAct, ctx.Director.huntSeconds
+	local huntT = 30
+	ctx.Director.getAct = function() return "Guest" end
+	ctx.Director.huntSeconds = function() return huntT end
+	local caps = {}
+	local realCap = ctx.Audio.caption
+	ctx.Audio.caption = function(text, ...) table.insert(caps, text); return realCap(text, ...) end
+	local knock, drive = nil, nil
+	for _, d in H.unwrap(ctx.World.folder()):GetDescendants() do
+		if d:IsA("ProximityPrompt") and d.ActionText == "Knock" then knock = H.wrap(d) end
+		if d:IsA("ProximityPrompt") and d.ActionText == "Drive" then drive = H.wrap(d) end
+	end
+	assert(knock and drive, "the knock and drive prompts exist")
+	ctx.Inventory.give(runner, "CarKeys", 1)
+	H.task.spawn(function() rawget(drive, "__signals").Triggered:Fire(runner) end) -- (the handler waits)
+	H.flush(2)
+	assert(not runner:GetAttribute("Escaped"), "too early: the car doesn't start")
+	assert(string.find(caps[#caps] or "", "Flooded"), "and says why: " .. tostring(caps[#caps]))
+	rroot.CFrame = R.CFrame.new(ctx.Layout.Outside.NeighborPorch)
+	H.task.spawn(function() rawget(knock, "__signals").Triggered:Fire(runner) end) -- (the handler waits)
+	H.flush(ctx.Config.Help.NeighborWait + 2)
+	assert(not runner:GetAttribute("Escaped"), "too early: nobody answers her door")
+	assert(string.find(caps[#caps] or "", "Nobody comes"), "and says so: " .. tostring(caps[#caps]))
+	huntT = ctx.Config.Help.ExitsAfter + 1
+	H.task.spawn(function() rawget(knock, "__signals").Triggered:Fire(runner) end) -- (the handler waits)
+	H.flush(ctx.Config.Help.NeighborWait + 2)
+	assert(runner:GetAttribute("Escaped") == "Neighbor", "later: she lets you in, got " .. tostring(runner:GetAttribute("Escaped")))
+	ctx.Audio.caption = realCap
+	ctx.Director.getAct, ctx.Director.huntSeconds = realAct2, realHunt
+	print(("exits open after %d s of the hunt ok"):format(ctx.Config.Help.ExitsAfter))
 end)
 print(ok and "HUNTGOAL OK" or ("HUNTGOAL FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

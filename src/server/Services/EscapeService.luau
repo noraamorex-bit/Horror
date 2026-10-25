@@ -619,6 +619,12 @@ function Escape.returnCarKeysToNest()
 	ctx.Interaction.pickup(p, "CarKeys", { Object = "Car keys (Honda)" })
 end
 
+-- the car and next door only work once the hunt has run a while (Config.Help.ExitsAfter)
+function Escape.exitsOpen(): boolean
+	local after = (ctx.Config.Help.ExitsAfter or 0) * math.max(ctx.Config.TimeScale, 0.25)
+	return not ctx.Director.huntSeconds or ctx.Director.huntSeconds() >= after
+end
+
 ---------------------------------------------------------------------------
 -- The car
 ---------------------------------------------------------------------------
@@ -637,6 +643,17 @@ function Escape.setupCar(carModel: Model, driverDoor: BasePart, seats: { Seat })
 		local act = ctx.Director.getAct()
 		if act ~= "SomeoneElse" and act ~= "Guest" then
 			ctx.Audio.caption("You have your learner's permit and a flood warning. Not tonight. Not unless you have to.", nil, nil, { player })
+			return
+		end
+		if not Escape.exitsOpen() then
+			-- too soon: it cranks, coughs and dies, and the whole street heard it
+			local at = carModel:GetPivot().Position
+			ctx.Audio.playAt("CarEngine", at, { Duration = 1.6, Caption = false })
+			ctx.Noise.emit(at, ctx.Config.Noise.Knock, "Car", player)
+			if ctx.Intruder then
+				ctx.Intruder.onExitAttempt(at, player)
+			end
+			ctx.Audio.caption("The engine coughs and dies. Flooded. Give it a minute, then try again.", nil, nil, { player })
 			return
 		end
 		if not state.GarageOpen then
@@ -733,6 +750,14 @@ function Escape.setupNeighbor(doorPart: BasePart)
 		ctx.Audio.playAt("DogBark", pos + Vector3.new(0, 0, 10))
 		if ctx.Intruder then
 			ctx.Intruder.onExitAttempt(pos, player)
+		end
+		if not Escape.exitsOpen() then
+			-- too soon: she's asleep and the storm drowns it out (and he heard the knocking)
+			ctx.Audio.caption("Biscuit goes wild inside. No lights.", pos, 30)
+			task.wait(4)
+			state.Knocking = false
+			ctx.Audio.caption("Nobody comes. She's asleep. Knock again in a minute.", nil, nil, { player })
+			return
 		end
 		local wait = ctx.Config.Help.NeighborWait
 		local lines = {

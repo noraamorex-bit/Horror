@@ -200,6 +200,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   forgiving, Hard is tight.
 - Chat: name tags ★ (supporter) and the equipped title in its colour; no level (the owner asked).
   Level and nights survived are in the server's player list (leaderstats; not for the owner).
+- **No quick exits (v116**, a player: "escaped in 3 mins"): the car and Mrs. Okafor's door only work 120 s into
+  the hunt (`Config.Help.ExitsAfter`; before: car floods, nobody answers, both loud). NeighborWait 20 s.
 - FASTEST WINS: skip-to-the-blackout nights never count, nor any win under 6:00 (`Config.MinBoardWin`);
   old entries like that are removed (the owner saw a 0:51).
 - "Secret ending: found by N players" is one small line at the bottom of the NIGHTS SURVIVED board
@@ -477,6 +479,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **25 Oct (v116 = place version 115)**, the owner: a comment said "way too short, I escaped in 3 mins". The board
+  already only counts wins of 6:00+ and never skip-to-blackout nights. Logs: escapes 3-48 s after the blackout
+  (car keys taken off the hook in act I were kept; Mrs. Okafor answered from the first second). Done: car and
+  her door only work 120 s into the hunt (`Help.ExitsAfter`), her wait 20 s (see Retention). Next: `--since=115`:
+  time from the blackout to each escape kind, quits while knocking early.
 
 - **25 Oct (v115 = place version 114, reel 44)**, the owner: "Add something like this [Jumpscare Everyone]
   for 10 Robux or smth. Also make next reel." Done: Jumpscare Everyone (see Economy, v115). Reel 44 = #13
@@ -807,7 +815,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 114; the notes' "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 115; the notes' "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

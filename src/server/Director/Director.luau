@@ -120,6 +120,11 @@ function Director.elapsedSeconds(): number
 	return elapsed()
 end
 
+-- seconds since the blackout act began (0 before it)
+function Director.huntSeconds(): number
+	return state.HuntStart and (os.clock() - state.HuntStart) or 0
+end
+
 function Director.elapsedString(): string
 	return ctx.Util.formatSeconds(elapsed())
 end
@@ -685,6 +690,9 @@ function Director.startAct(name: string, cause: Player?)
 	state.Act = name
 	state.ActStart = os.clock()
 	state.ActEnding = false
+	if name == "SomeoneElse" then
+		state.HuntStart = state.ActStart
+	end
 	workspace:SetAttribute("Act", name)
 	if ctx.Telemetry then
 		ctx.Telemetry.act(name)

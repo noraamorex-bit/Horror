@@ -313,7 +313,11 @@ Config.Help = {
 	CallerGrace = 10, -- (v87: 6 s ran out just as he arrived; most bathroom captures followed a call)
 	CallerGraceHard = 0,
 	LandlineCallDuration = 6,
-	NeighborWait = 15,
+	NeighborWait = 20, -- (was 15)
+	-- (v116, a player: "way too short, I escaped in 3 mins": the car and her door worked from the first
+	-- second of the hunt; keys grabbed before the blackout meant a drive-off 3 s in) the car won't start
+	-- and Mrs. Okafor doesn't wake until the hunt has run this long. Calling 911 is ~130 s anyway.
+	ExitsAfter = 120,
 	JunctionRepair = 10,
 }
 
