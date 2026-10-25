@@ -35,13 +35,12 @@ local ok, err = pcall(function()
 	assert(Stats.recordWin(p, 1200) == false and p:GetAttribute("StatBest") == 900, "slower win keeps best")
 	assert(Stats.recordWin(p, 640) == true and p:GetAttribute("StatBest") == 640, "faster win is new best")
 	assert(Stats.recordWin(p, 0) == false, "zero ignored")
-	-- too fast to be a real night (the owner: a 0:51 on the board), and skip-to-the-blackout nights
-	assert(Stats.recordWin(p, 51) == false and p:GetAttribute("StatBest") == 640, "0:51 doesn't count")
-	assert(Stats.recordWin(p, 359) == false, "under 6:00 doesn't count")
+	-- (v117, the owner) no time floor: only skip-to-the-blackout nights never count
 	ctx.Director = { isSkipping = function() return true end }
 	assert(Stats.recordWin(p, 500) == false and p:GetAttribute("StatBest") == 640, "a night that started at the blackout doesn't count")
 	ctx.Director = { isSkipping = function() return false end }
 	assert(Stats.recordWin(p, 500) == true and p:GetAttribute("StatBest") == 500, "a full night does")
+	assert(Stats.recordWin(p, 359) == true and p:GetAttribute("StatBest") == 359, "and under 6:00 counts too")
 	ctx.Director = nil
 	print("fastest ok")
 	-- out early (escaped while friends play on): the night counts now, and only once

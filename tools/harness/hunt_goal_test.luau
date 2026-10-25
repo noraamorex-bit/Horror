@@ -376,10 +376,11 @@ local ok, err = pcall(function()
 	end
 	local runner, rroot = mkPlayer("Runner")
 	H.services.Players.GetPlayers = function() return { runner } end
-	local realAct2, realHunt = ctx.Director.getAct, ctx.Director.huntSeconds
-	local huntT = 30
+	local realAct2, realHunt, realEl = ctx.Director.getAct, ctx.Director.huntSeconds, ctx.Director.elapsedSeconds
+	local huntT, nightT = 30, 900
 	ctx.Director.getAct = function() return "Guest" end
 	ctx.Director.huntSeconds = function() return huntT end
+	ctx.Director.elapsedSeconds = function() return nightT end
 	local caps = {}
 	local realCap = ctx.Audio.caption
 	ctx.Audio.caption = function(text, ...) table.insert(caps, text); return realCap(text, ...) end
@@ -399,12 +400,24 @@ local ok, err = pcall(function()
 	H.flush(ctx.Config.Help.NeighborWait + 2)
 	assert(not runner:GetAttribute("Escaped"), "too early: nobody answers her door")
 	assert(string.find(caps[#caps] or "", "Nobody comes"), "and says so: " .. tostring(caps[#caps]))
-	huntT = ctx.Config.Help.ExitsAfter + 1
+	-- the hunt has run long enough, but the night hasn't run Config.MinNight yet: still no answer
+	huntT, nightT = ctx.Config.Help.ExitsAfter + 1, ctx.Config.MinNight - ctx.Config.Help.NeighborWait - 30
+	H.task.spawn(function() rawget(knock, "__signals").Triggered:Fire(runner) end)
+	H.flush(ctx.Config.Help.NeighborWait + 2)
+	assert(not runner:GetAttribute("Escaped"), "too early in the night: nobody answers")
+	nightT = ctx.Config.MinNight - ctx.Config.Help.NeighborWait
 	H.task.spawn(function() rawget(knock, "__signals").Triggered:Fire(runner) end) -- (the handler waits)
 	H.flush(ctx.Config.Help.NeighborWait + 2)
 	assert(runner:GetAttribute("Escaped") == "Neighbor", "later: she lets you in, got " .. tostring(runner:GetAttribute("Escaped")))
 	ctx.Audio.caption = realCap
-	ctx.Director.getAct, ctx.Director.huntSeconds = realAct2, realHunt
+	ctx.Director.getAct, ctx.Director.huntSeconds, ctx.Director.elapsedSeconds = realAct2, realHunt, realEl
+	-- and the police never come before the night has run Config.MinNight
+	ctx.Escape.reset()
+	ctx.Director.elapsedSeconds = function() return 60 end
+	ctx.Escape.callForHelp("Cell", nil)
+	local eta = H.unwrap(H.workspaceRoot):GetAttribute("PoliceETA") - os.clock()
+	assert(math.abs(eta - (ctx.Config.MinNight - 60)) < 1.5, "police held to MinNight, got " .. eta)
+	ctx.Director.elapsedSeconds = realEl
 	print(("exits open after %d s of the hunt ok"):format(ctx.Config.Help.ExitsAfter))
 end)
 print(ok and "HUNTGOAL OK" or ("HUNTGOAL FAIL: " .. tostring(err)))

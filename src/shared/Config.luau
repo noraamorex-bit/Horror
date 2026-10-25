@@ -42,18 +42,19 @@ Config.LobbyCountdown = 10
 Config.TimeScale = 1
 Config.Acts = {
 	-- (kept short: the cozy part sets the mood, but players came for him)
-	Evening = { Min = 2.5, Max = 5 },
-	SmallThings = { Min = 4, Max = 6 },
-	SomeoneElse = { Min = 6, Max = 7 }, -- (9 left nights without a call dragging past 20 minutes)
+	-- (v117, the owner: "the whole game take on average 10 mins and down to 7 mins": logs on v104-111,
+	-- full nights ran 11.5 min on average, 15 at the 90th percentile)
+	Evening = { Min = 2, Max = 4 }, -- (was 2.5 / 5)
+	SmallThings = { Min = 3, Max = 4.5 }, -- (was 4 / 6)
+	SomeoneElse = { Min = 4.5, Max = 5 }, -- (was 6 / 7; 9 left nights without a call dragging past 20 minutes)
 }
+-- no night ends sooner than this (the police, the car and next door wait for it), except a night
+-- that skipped to the blackout
+Config.MinNight = 420
 -- a night where everyone has played before: the build-up acts could run shorter (this much of
 -- their length). Off: the owner found the night too fast; repeat groups can SKIP TO THE BLACKOUT.
 Config.VeteranPace = {}
 Config.HardCapMinutes = 60
--- the FASTEST WINS board (and personal bests) ignore anything faster: a full night can't be won
--- that quickly (the fastest real one in the logs: 7:21, by car), and skip-to-the-blackout nights
--- never count at all (they put a 0:51 on the board)
-Config.MinBoardWin = 360
 
 -- The in-game clock starts at 8:47 PM and runs faster than real time.
 Config.ClockStartMinutes = 20 * 60 + 47
@@ -300,13 +301,13 @@ Config.Capture = {
 Config.Help = {
 	-- (v88-90 logs: once help was called only 7 of 200 players left before the police came, while the
 	-- hunt is the game; nights ran ~11 min against the ~13 the owner wants: a longer hold-out)
-	PhoneResponse = 120, -- (v94: 200 was "too long", the owner; 150 before that)
-	NeighborResponse = 120,
+	PhoneResponse = 100, -- (v117: 120; v94: 200 was "too long", the owner; 150 before that)
+	NeighborResponse = 100,
 	CarResponse = 60,
 	CellCallDuration = 15, -- (Hard)
 	CellCallDurationNormal = 10,
-	OkaforCallsAfter = 100, -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
-	OkaforResponse = 80,
+	OkaforCallsAfter = 60, -- (v117: 100) -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
+	OkaforResponse = 60, -- (v117: 80)
 	-- the call goes through and he hears it (he screams and charges the caller): on Normal the caller
 	-- gets this head start to hide (v81 logs: most upstairs-bathroom captures came 3-12 s after the
 	-- call ended, the caller still at the window). Hard: none.
@@ -317,7 +318,7 @@ Config.Help = {
 	-- (v116, a player: "way too short, I escaped in 3 mins": the car and her door worked from the first
 	-- second of the hunt; keys grabbed before the blackout meant a drive-off 3 s in) the car won't start
 	-- and Mrs. Okafor doesn't wake until the hunt has run this long. Calling 911 is ~130 s anyway.
-	ExitsAfter = 120,
+	ExitsAfter = 90, -- (v117: 120, with the shorter night; Config.MinNight still holds)
 	JunctionRepair = 10,
 }
 
@@ -325,8 +326,8 @@ Config.Help = {
 Config.Director = {
 	Ceiling = { Evening = 25, SmallThings = 65, SomeoneElse = 85, Guest = 100 },
 	Gap = {
-		Evening = { 30, 55 },
-		SmallThings = { 30, 50 },
+		Evening = { 25, 45 }, -- (v117: 30-55, the shorter night)
+		SmallThings = { 25, 42 }, -- (v117: 30-50)
 		SomeoneElse = { 32, 55 },
 		Guest = { 45, 80 },
 	},
@@ -334,11 +335,11 @@ Config.Director = {
 	Lightning = { 20, 50 },
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
 	BeatSpacing = 35, -- a scripted scare waits this long after the last one (one thing at a time)
-	AfterNews = 28, -- act II ends this long after the news was watched at the soonest...
+	AfterNews = 22, -- (v117: 28) -- act II ends this long after the news was watched at the soonest...
 	BedtimeAfterNews = 4, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
 	AfterBedtime = 5, -- (v94: 12; the owner wanted less waiting before the blackout)
-	BedtimeMinAct = 150, -- (but act II still runs at least this long: its scares need room)
-	AfterScare = 30, -- ...and this long after the last scare
+	BedtimeMinAct = 120, -- (v117: 150) -- (but act II still runs at least this long: its scares need room)
+	AfterScare = 22, -- (v117: 30) -- ...and this long after the last scare
 	CeilingSteps = 20, -- (v113) seconds into the Evening: footsteps cross the ceiling over someone
 }
 

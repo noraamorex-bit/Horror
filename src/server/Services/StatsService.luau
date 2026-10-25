@@ -17,14 +17,10 @@ local store = nil
 local board = nil -- OrderedDataStore: nights survived, for the lobby leaderboard
 local fastBoard = nil -- OrderedDataStore: fastest win in seconds (lowest first), for the second sign
 
--- a real night can't be won faster than this: anything quicker came from a night that skipped
--- straight to the blackout (the owner: a 0:51 on the board), so it never counts
-local function minWin(): number
-	return ctx and ctx.Config and ctx.Config.MinBoardWin or 360
-end
+-- (v117, the owner: no time floor on the board; only skip-to-the-blackout nights never count)
 local function validBest(x: number?): number
 	x = tonumber(x) or 0
-	return if x >= minWin() then math.floor(x) else 0
+	return if x > 0 then math.floor(x) else 0
 end
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
@@ -351,9 +347,6 @@ function Stats.recordWin(player: Player, seconds: number): boolean
 	if ctx.Director and ctx.Director.isSkipping and ctx.Director.isSkipping() then
 		return false
 	end
-	if seconds < minWin() then
-		return false
-	end
 	if d.Best > 0 and seconds >= d.Best then
 		return false
 	end
@@ -586,17 +579,6 @@ function Stats.init(c)
 					end)
 				end
 			end
-		end
-		-- (and take off any time too fast to be a real night: skip-to-the-blackout wins)
-		if fastBoard then
-			pcall(function()
-				local pages = fastBoard:GetSortedAsync(true, 100, 0, minWin() - 1)
-				for _, entry in pages:GetCurrentPage() do
-					pcall(function()
-						fastBoard:RemoveAsync(entry.key)
-					end)
-				end
-			end)
 		end
 	end)
 end

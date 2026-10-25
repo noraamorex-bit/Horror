@@ -87,7 +87,10 @@ local ok, err = pcall(function()
 	assert(ctx.Director._voteTick() == false, "vote closed")
 	-- the effects
 	local chase = ctx.Intruder._tune().ChaseSpeed
+	local realEl = ctx.Director.elapsedSeconds
+	ctx.Director.elapsedSeconds = function() return 1e4 end -- (past Config.MinNight)
 	ctx.Escape.callForHelp("Phone", a)
+	ctx.Director.elapsedSeconds = realEl
 	local eta = ws:GetAttribute("PoliceETA") - os.clock()
 	print("chase", normalChase, "->", chase, "police eta", math.floor(eta + 0.5))
 	if MODE == "hard" then

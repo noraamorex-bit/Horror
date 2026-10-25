@@ -83,6 +83,8 @@ function Escape.callForHelp(method: string, player: Player?)
 	if workspace:GetAttribute("Difficulty") == "Hard" and hard and hard.PoliceMultiplier then
 		eta = math.floor(eta * hard.PoliceMultiplier + 0.5)
 	end
+	-- (and never before the night's minimum length: Config.MinNight, unless it skipped to the blackout)
+	eta = math.max(eta, Escape.untilMinNight())
 	state.PoliceETA = os.clock() + eta
 	workspace:SetAttribute("PoliceETA", workspace:GetServerTimeNow() + eta)
 	workspace:SetAttribute("HelpMethod", method)
@@ -619,10 +621,23 @@ function Escape.returnCarKeysToNest()
 	ctx.Interaction.pickup(p, "CarKeys", { Object = "Car keys (Honda)" })
 end
 
--- the car and next door only work once the hunt has run a while (Config.Help.ExitsAfter)
-function Escape.exitsOpen(): boolean
+-- seconds until the night has run Config.MinNight (0 on a night that skipped to the blackout)
+function Escape.untilMinNight(): number
+	local D = ctx.Director
+	if not D or not D.elapsedSeconds or (D.isSkipping and D.isSkipping()) then
+		return 0
+	end
+	return math.max(0, (ctx.Config.MinNight or 0) * math.max(ctx.Config.TimeScale, 0.25) - D.elapsedSeconds())
+end
+
+-- the car and next door only work once the hunt has run a while (Config.Help.ExitsAfter) and the
+-- night will have run Config.MinNight by the time you're out (lead: how long getting out takes)
+function Escape.exitsOpen(lead: number?): boolean
 	local after = (ctx.Config.Help.ExitsAfter or 0) * math.max(ctx.Config.TimeScale, 0.25)
-	return not ctx.Director.huntSeconds or ctx.Director.huntSeconds() >= after
+	if ctx.Director.huntSeconds and ctx.Director.huntSeconds() < after then
+		return false
+	end
+	return Escape.untilMinNight() <= (lead or 0)
 end
 
 ---------------------------------------------------------------------------
@@ -751,7 +766,7 @@ function Escape.setupNeighbor(doorPart: BasePart)
 		if ctx.Intruder then
 			ctx.Intruder.onExitAttempt(pos, player)
 		end
-		if not Escape.exitsOpen() then
+		if not Escape.exitsOpen(ctx.Config.Help.NeighborWait) then
 			-- too soon: she's asleep and the storm drowns it out (and he heard the knocking)
 			ctx.Audio.caption("Biscuit goes wild inside. No lights.", pos, 30)
 			task.wait(4)

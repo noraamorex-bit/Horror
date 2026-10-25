@@ -193,17 +193,20 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Night streak: another night within 15 min of the last pays +25% / +50%. Groups where everyone has
   finished a night can vote ⏩ SKIP TO THE BLACKOUT. 🔔 Remind me (notification opt-in) on the result
   card. Out early, you can already press ANOTHER NIGHT.
-- **Don't rush the night** (owner: a 7-minute night was "too fast"; ~13 min is right; v86's 8-10 min nights were "way too short" and got reverted). Every night
-  gets the full build-up. Act II events take turns: scares 35 s apart, Mom's texts only when nothing
+- **Night length: ~10 min on average, never under 7** (v117, the owner: "I want the whole game to take on
+  average 10 mins and down to 7mins"; this replaces the old "~13 min, don't rush the night": the owner's
+  later word wins). `Config.Acts`, police 100 s, `Config.MinNight` 420 (police/car/next door wait for it,
+  skip nights excepted). Every night still gets the full build-up. Act II events take turns: scares 35 s apart, Mom's texts only when nothing
   else is going on, the TV alert never during the news, a breather before the blackout.
 - The heartbeat minigame must stay passable (logs: 0/22 passes before the fix); Normal is
   forgiving, Hard is tight.
 - Chat: name tags ★ (supporter) and the equipped title in its colour; no level (the owner asked).
   Level and nights survived are in the server's player list (leaderstats; not for the owner).
-- **No quick exits (v116**, a player: "escaped in 3 mins"): the car and Mrs. Okafor's door only work 120 s into
-  the hunt (`Config.Help.ExitsAfter`; before: car floods, nobody answers, both loud). NeighborWait 20 s.
-- FASTEST WINS: skip-to-the-blackout nights never count, nor any win under 6:00 (`Config.MinBoardWin`);
-  old entries like that are removed (the owner saw a 0:51).
+- **No quick exits (v116**, a player: "escaped in 3 mins"): the car and Mrs. Okafor's door only work 90 s into
+  the hunt (`Config.Help.ExitsAfter`, v117) and after MinNight (before: car floods, nobody answers, both loud).
+  NeighborWait 20 s.
+- FASTEST WINS: **only skip-to-the-blackout nights are left out** (and admin-panel nights); no time floor
+  (v117, the owner: "dont just limit the leaderboard time to 6:00").
 - "Secret ending: found by N players" is one small line at the bottom of the NIGHTS SURVIVED board
   (the owner found a separate board "too much").
 
@@ -479,6 +482,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **25 Oct (v117 = place version 116)**, the owner: "the whole game take on average 10 mins and down to
+  7mins… don't just limit the leaderboard time to 6:00… just don't include runs finished by skip to
+  blackout." Logs (v104-111, 199 full nights): mean 11.5 min, median 11, p10 8.8, p90 15. Done: shorter acts
+  and help times, the 7:00 floor (`MinNight`), no board floor (GDD "Night length (v117)"). Next:
+  `--since=116`: night length (want mean ~10, min 7), quits per act vs before.
 
 - **25 Oct (v116 = place version 115)**, the owner: a comment said "way too short, I escaped in 3 mins". The board
   already only counts wins of 6:00+ and never skip-to-blackout nights. Logs: escapes 3-48 s after the blackout
@@ -815,7 +824,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 115; the notes' "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 116; the notes' "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
