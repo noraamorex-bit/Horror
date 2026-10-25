@@ -296,6 +296,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   someone ate from the fifth, him bent over the little sister's bed, him sitting at the head of the table
   (SkinPose `Sit`), "so tonight we're leaving", the car keys on his plate, at the front door: he's right behind
   you), the first with the v114 masked creature. Caption: `he doesn't want us to leave 👀 game in comments`.
+  Reel 45 = #14 (`cant_play_alone_14.mp4`, 25 Oct): he sleeps where we hide (the hall closet open with his blanket
+  inside, him in the bedroom doorway, him bent down at the bed, hiding in mom's closet: "it was still warm in here",
+  his mask between the coats at the back of it; RUN, him crawling out after you). New for film2: skin_frames
+  `head` + `noSkin` (only the mask, placed exactly). Caption: `he sleeps where we hide 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -482,6 +486,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **25 Oct (reel 45)**: #14 (see Marketing). Next reel: #15, the next chapter (ideas: he leaves something for us
+  every night; the mimic's voice calling from the attic; Lily says he reads her stories).
 
 - **25 Oct (v117 = place version 116)**, the owner: "the whole game take on average 10 mins and down to
   7mins… don't just limit the leaderboard time to 6:00… just don't include runs finished by skip to
