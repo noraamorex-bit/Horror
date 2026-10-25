@@ -9,6 +9,7 @@
 	Out: { skin = { scale, bones = [{ name, parent, rest }] }, frames = { [f] = { root = {x, y, z, yaw},
 	       tr = { [bone] = {12} }, glow = {x, y, z} } } }
 	Run from the repo root: lune run tools/creature/skin_frames.luau in.json out.json [mask.json]
+	(reels) A frame can also carry "head": { pos, look, roll } (the mask placed there) and "noSkin" (no body).
 	(v114) With mask.json (tools/harness/mask_dump.luau) he wears the porcelain mask and the hair, kept on
 	the posed head bone exactly as the client does (client Creature), and the body gets the server's plain colour:
 	parts = the mask's parts (film2's part format), each frame's "parts" their frames.
@@ -92,9 +93,16 @@ for _, f in frames do
 	local place = CFrame.new(feet) * CFrame.Angles(0, yaw, 0)
 	local face = (posed("spine_006_0", byBone) * faceRest).Position
 	local g = place:PointToWorldSpace((face + Vector3.new(0, half, 0)) * SCALE)
-	local fr = { root = { feet.X, feet.Y, feet.Z, yaw }, tr = tr, glow = { g.X, g.Y, g.Z } }
+	local fr = { root = { feet.X, feet.Y, feet.Z, yaw }, tr = tr, glow = { g.X, g.Y, g.Z }, noSkin = f.noSkin }
 	if mask then
 		local headCF = place * bodyOffset * scaled(posed("spine_006_0", byBone)) * relHead
+		-- (reels) "head": { pos, look, roll? } puts the mask and hair exactly there, whatever the body does
+		-- (with "noSkin" film2 draws only them: his face in the dark at the back of a closet)
+		if f.head then
+			local hp, hl = f.head.pos, f.head.look
+			headCF = CFrame.lookAt(Vector3.new(hp[1], hp[2], hp[3]), Vector3.new(hl[1], hl[2], hl[3])) * CFrame.Angles(0, 0, f.head.roll or 0)
+			fr.glow = { hp[1], hp[2], hp[3] }
+		end
 		local open = math.clamp((pose.Mouth or 0) * 1.2, 0, 1)
 		fr.parts = {}
 		for i, p in mask.parts do

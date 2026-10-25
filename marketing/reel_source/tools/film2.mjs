@@ -342,7 +342,7 @@ for (const fr of spec.frames) {
     const SK = window.SKIN;
     if (SK) {
       // (the skinned creature: where he stands, then every bone's rest times its Transform)
-      SK.outer.visible = !!crFrame;
+      SK.outer.visible = !!crFrame && !crFrame.noSkin; // (noSkin: only the mask, skin_frames' "head")
       // (v114: the porcelain mask and hair on his head: the part meshes, placed per frame)
       window.CRG.visible = !!(crFrame && crFrame.parts);
       if (crFrame && crFrame.parts) crFrame.parts.forEach((c, i) => window.CR[i] && window.place(window.CR[i].mesh, c, window.CR[i].gi));
