@@ -249,6 +249,15 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   doubled), **Silent Steps** (2044448668: half the footstep noise, 50% longer breath). GDD
   "Monetization (v108)".
 
+- **25 Oct (v115)**, the owner (a screenshot of another game's "Jumpscare Everyone" for 19 R$): "Add
+  something like this for 10 Robux". **Jumpscare Everyone** (developer product 3722081951, 10 R$,
+  `Config.Shop.JumpscareAll`, icon `marketing/passes/jumpscare_all.png` from `make_jumpscare.py`): bought,
+  it scares everyone else in the server at once, house or lobby (ShopService → Remotes.JumpscareAll →
+  client `Prank`: black screen, his mask lunging at you in a ViewportFrame, jaw dropping, screech + hit,
+  red flash, shake; then "😱 <name> jumpscared everyone!"; the buyer gets "You jumpscared N players").
+  Bought from a small 😱 button under the inventory in the house and a 😱 SCARE dock icon in the lobby,
+  only while someone else is in the server. Logged in Sales_v1 as JumpscareAll, night log event Prank.
+
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
 alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
@@ -465,6 +474,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **25 Oct (v115 = place version 114, reel 44)**, the owner: "Add something like this [Jumpscare Everyone]
+  for 10 Robux or smth. Also make next reel." Done: Jumpscare Everyone (see Economy, v115). Reel 44 = #13
+  (`cant_play_alone_13.mp4`): the first reel with the v114 masked creature (see Marketing). SkinPose got a
+  `Sit` gait (reels only). Can't see the real client: check the scare on a phone (the mask fills the
+  screen, the banner reads) and that the 😱 button doesn't crowd the left column. Next: `pull_stats.py`
+  `== SALES` JumpscareAll bought / asked; reel 45 = #14.
 
 - **24 Oct (v114 = place version 113)**, the owner: the new monster is "a bit too much. Make it simpler but
   not that simple." Done: the body without its bloody colour map (charcoal + sculpted normal detail), the
@@ -788,7 +804,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 113; the notes' "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 114; the notes' "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

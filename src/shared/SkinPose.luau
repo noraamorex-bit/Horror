@@ -407,6 +407,28 @@ function SkinPose.sample(gait: string, phase: number, t: number, seed: number?, 
 		P.CurlL = 1.1
 		P.Root[1] -= 0.7
 		life(P, t, sd, 0.6)
+	elseif gait == "Sit" then
+		-- (v115, for the reels: sitting at the head of the family's table) on a chair, knees up,
+		-- forearms on the table, the head laid over, watching; seat height ~2.2 studs
+		stance(P, 0.35)
+		set(P, "LThigh", 1.45, 0.05, 0.06)
+		set(P, "RThigh", 1.45, -0.05, -0.06)
+		set(P, "LShin", -1.5)
+		set(P, "RShin", -1.5)
+		set(P, "LFoot", 0.1)
+		set(P, "RFoot", 0.1)
+		set(P, "Spine", -0.08)
+		set(P, "LArm", 0.7, 0, 0.1)
+		set(P, "RArm", 0.7, 0, -0.1)
+		set(P, "LFore", 0.95)
+		set(P, "RFore", 0.95)
+		set(P, "LHand", -0.2)
+		set(P, "RHand", -0.2)
+		local tilt = 0.35 + 0.1 * drift(t * 0.4, sd)
+		set(P, "Head", -0.05, 0.1 * drift(t * 0.5, sd + 1), tilt)
+		life(P, t, sd, 0.6)
+		P.Root = { 0, -3.15, 0.1 }
+		P.Plant = 0
 	elseif gait == "Leap" then
 		-- the pounce: arms flung forward, legs trailing, the chest wide open
 		set(P, "Spine", -0.35)

@@ -209,6 +209,8 @@ local function productKey(id: number): string
 		return "RocketNight"
 	elseif S.Starter and S.Starter.Id > 0 and id == S.Starter.Id then
 		return "Starter"
+	elseif S.JumpscareAll and S.JumpscareAll.Id > 0 and id == S.JumpscareAll.Id then
+		return "JumpscareAll"
 	end
 	local d = donationById(id)
 	if d then
@@ -266,7 +268,26 @@ local function receipt(info)
 	return decision
 end
 
+-- (v115) JUMPSCARE EVERYONE: everyone else in this server, now (client Prank)
+local function jumpscareReceipt(info)
+	local player = Players:GetPlayerByUserId(info.PlayerId)
+	if not player then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	local count = #Players:GetPlayers() - 1
+	ctx.Remotes.JumpscareAll:FireAllClients(player.DisplayName, player.UserId, count)
+	if ctx.Journey then
+		ctx.Journey.event(player, "Prank", tostring(count))
+	end
+	return Enum.ProductPurchaseDecision.PurchaseGranted
+end
+Shop._jumpscareReceipt = jumpscareReceipt -- (tests)
+
 function onReceipt(info)
+	local scare = ctx.Config.Shop.JumpscareAll
+	if scare and scare.Id > 0 and info.ProductId == scare.Id then
+		return jumpscareReceipt(info)
+	end
 	local rocket = ctx.Config.Shop.RocketNight
 	if rocket and rocket.Id > 0 and info.ProductId == rocket.Id then
 		return rocketReceipt(info)

@@ -74,7 +74,7 @@ local ok, err = pcall(function()
 	end
 	local rest = world({})
 	local standHead = rest["spine_006_0"].Position.Y
-	local gaits = { "Idle", "Stare", "Walk", "Search", "Chase", "Reach", "Stunned", "Peek", "Leap" }
+	local gaits = { "Idle", "Stare", "Walk", "Search", "Chase", "Reach", "Stunned", "Peek", "Leap", "Sit" }
 	local samples = {}
 	for _, g in gaits do
 		samples[g] = {}

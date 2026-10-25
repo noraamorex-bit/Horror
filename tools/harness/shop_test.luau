@@ -10,11 +10,12 @@ local ok, err = pcall(function()
 	for i, p in ctx.Config.Shop.Passes do p.Id = 100 + i; PID[p.Key] = p.Id end
 	for i, d in ctx.Config.Shop.Donations do d.Id = 200 + i; DID[d.Amount] = d.Id end
 	local notes = {}
+	local scares = {}
 	local setBeam
 	ctx.Remotes = setmetatable({}, { __index = function(_, k)
 		return {
 			FireClient = function(_, p, text) if k == "Notify" then table.insert(notes, p.Name .. ": " .. tostring(text)) end end,
-			FireAllClients = function() end,
+			FireAllClients = function(_, ...) if k == "JumpscareAll" then table.insert(scares, { ... }) end end,
 			OnServerEvent = { Connect = function(_, fn) if k == "SetBeam" then setBeam = fn end end },
 		}
 	end })
@@ -137,6 +138,14 @@ local ok, err = pcall(function()
 	assert(today["Ask:RocketNight"][1] == 1 and today["Ask:Revive"][1] == 1, "product windows")
 	assert(today.RocketNight[1] == 1, "asking isn't selling")
 	print("funnel ok")
+	-- (v115) JUMPSCARE EVERYONE: everyone else in the server is scared at once, named, and it's logged
+	local JID = ctx.Config.Shop.JumpscareAll.Id
+	assert(JID > 0 and ctx.Config.Shop.JumpscareAll.Price == 10, "the product exists, at 10 R$")
+	local r6 = MSr.ProcessReceipt({ ProductId = JID, PlayerId = 1, PurchaseId = "p6", CurrencySpent = 10 })
+	assert(tostring(r6):find("PurchaseGranted"), "granted")
+	assert(#scares == 1 and scares[1][1] == "Alex" and scares[1][2] == 1 and scares[1][3] == 1, "everyone told who did it, and how many were scared")
+	assert(today.JumpscareAll and today.JumpscareAll[1] == 1 and today.JumpscareAll[2] == 10, "logged with its price")
+	print("jumpscare everyone ok")
 	-- the rocket launcher pass, bought: the pass is theirs
 	finished:Fire(a, PID.Rocket, true)
 	assert(a:GetAttribute("Pass_Rocket") == true, "rocket launcher granted")

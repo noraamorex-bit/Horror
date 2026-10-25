@@ -36,7 +36,7 @@ local ok, err = pcall(function()
 		return r
 	end })
 	-- (the client's lobby list, init.client.luau; the owner's panel too)
-	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "LobbyHub", "Admin" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "Prank", "LobbyHub", "Admin" }
 	player:SetAttribute("IsAdmin", true)
 	player:SetAttribute("Coins", 1234)
 	player:SetAttribute("Candy", 7)

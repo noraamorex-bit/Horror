@@ -410,6 +410,9 @@ Config.Shop = {
 	-- (worth 25 + 25 + 10 R$+ bought apart). Offered at the top of the SHOP and on the result card.
 	-- Id 0 = the product isn't made on Roblox yet: hidden everywhere.
 	Starter = { Id = 3721088307, Price = 19, Coins = 500, Rockets = 1, Revives = 1 },
+	-- (v115, the owner: "add something like this for 10 Robux") jumpscares everyone else in the
+	-- server, house or lobby, the moment it's bought (ShopService, client Prank)
+	JumpscareAll = { Id = 3722081951, Price = 10 },
 	-- the passes VIP includes (it sets their attributes too)
 	VIPIncludes = { "Colours", "Marathon", "Battery", "ChooseRole" },
 	Donations = {

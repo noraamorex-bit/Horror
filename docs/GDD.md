@@ -559,6 +559,9 @@ At the start of each night, for a player's first 3 nights, the camera holds on t
 
 Notices and the chapter card wait until the shot ends (`Notice.hold`). It exists for retention: players see the threat in the first seconds, while the acts keep their slow build.
 
+### Jumpscare Everyone (v115, client `Prank`, 10 R$ developer product)
+The owner asked for "something like" another game's 19 R$ "Jumpscare Everyone", for 10 R$. Bought (from the small 😱 button under the inventory in the house, or the 😱 SCARE dock icon in the lobby, both shown only while someone else is in the server), ShopService fires `Remotes.JumpscareAll` (buyer's name, id, how many were scared) to the whole server. Everyone else gets a full-screen scare over everything: black, his mask and hair (a copy of the real ones, in a ViewportFrame) lunging out of the dark at them with the jaw dropping, the screech and a hit, a red flash and a shake, ~1.3 s; then "😱 <name> jumpscared everyone!" low on the screen for 4 s (so they know who to pay back). The buyer gets "😈 You jumpscared N players!". Never over a real capture or an ending. Logged as JumpscareAll in Sales_v1 and Prank in the night log.
+
 ### Shop & donations (`ShopService`, client `Shop`)
 A **SHOP** button sits on the right edge of the lobby screen. A gold "!" pulses on it until you open it. The panel has two tabs:
 

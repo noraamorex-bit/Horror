@@ -36,7 +36,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -392,6 +392,28 @@ local ok, err = pcall(function()
 		cr:Destroy()
 		player:SetAttribute("InGame", wasIn)
 		print("become him ui ok")
+	end
+	-- (v115) JUMPSCARE EVERYONE: only with someone else to scare; the scare covers the screen and
+	-- names who did it; the buyer is told how many they got
+	do
+		local wasIn = player:GetAttribute("InGame")
+		player:SetAttribute("InGame", true)
+		ctx.Prank._refresh()
+		local btn = H.unwrap(pg):FindFirstChild("PrankOffer", true)
+		assert(btn and not btn.Visible, "alone: nobody to scare")
+		local other = H.wrap(roblox.Instance.new("Player"))
+		local wasGet = S.Players.GetPlayers
+		S.Players.GetPlayers = function() return { player, other } end
+		ctx.Prank._refresh()
+		assert(btn.Visible and string.find(btn.Text, "R$ 10", 1, true), "with someone else, at 10 R$: " .. btn.Text)
+		ctx.Remotes.JumpscareAll.OnClientEvent:Fire("Sam", 99, 1)
+		local gui = H.unwrap(pg):FindFirstChild("Prank")
+		assert(gui and gui:FindFirstChildOfClass("ViewportFrame"), "the scare covers the screen")
+		gui:Destroy()
+		S.Players.GetPlayers = wasGet
+		ctx.Prank._refresh()
+		player:SetAttribute("InGame", wasIn)
+		print("jumpscare everyone ok")
 	end
 	-- the one-night rocket: a small button during the hunt, for anyone without a rocket in hand
 	do

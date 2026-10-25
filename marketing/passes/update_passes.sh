@@ -32,3 +32,4 @@ api 2005053525 -F "price=15"   # Marathon (20)
 api 2005388315 -F "price=15"   # Long-life battery (25)
 api 2006721483 -F "price=19"   # Head start (25)
 # (the Become Him developer product, 50 -> 25: PATCH .../developer-products/v2/universes/$U/developer-products/3718593338 -F price=25)
+# v115 (25 Oct): "Jumpscare Everyone" developer product 3722081951 (10 R$, icon jumpscare_all.png from make_jumpscare.py), made with POST .../developer-products/v2/universes/$U/developer-products

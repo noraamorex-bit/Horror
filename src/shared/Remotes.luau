@@ -53,6 +53,7 @@ local NAMES = {
 	"LeaveQueue", -- () lobby: step off your circle
 	"DialogueChoice", -- (index) the line you picked
 	"Jumpscare", -- (head part) he got you: the camera snaps to his face
+	"JumpscareAll", -- (buyerName, buyerUserId, count) v115: someone bought JUMPSCARE EVERYONE (client Prank)
 	"Notice", -- ({Title, Body, Button}) a one-button card (first-night tips)
 	"QuickPlay", -- (kind) lobby: "Solo" or "Group" walks you into a queue circle
 	"SetBeam", -- (beamId) pick an unlocked flashlight colour
