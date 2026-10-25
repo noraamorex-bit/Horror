@@ -287,7 +287,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   he's living in the house now (the TV on by itself, him at the top of the stairs, watching from the bedroom
   doorway, crawling down the upstairs hall, the lights out, behind the sofa: the maw tears open on the hit;
   RUN down the stairs), the **first reel with the v112 creature** (film2 draws the skinned mesh from
-  `tools/creature/skin_frames.luau`, the game's own SkinPose). Caption: `he's not hiding anymore 👀 game in comments`.
+  `tools/creature/skin_frames.luau`, the game's own SkinPose). Caption: `he's not hiding anymore 👀 game in comments`. Reel 44 = #13 (`cant_play_alone_13.mp4`, 25 Oct): he wants a place in the family (five plates for four,
+  someone ate from the fifth, him bent over the little sister's bed, him sitting at the head of the table
+  (SkinPose `Sit`), "so tonight we're leaving", the car keys on his plate, at the front door: he's right behind
+  you), the first with the v114 masked creature. Caption: `he doesn't want us to leave 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
