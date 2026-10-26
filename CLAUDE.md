@@ -513,6 +513,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **26 Oct (reel 47)**: #2 of the new run (see Marketing). The pinned comment is now the owner's donation text; every
+  reel gets the caption and the comment as code blocks. Renders: a full disk makes film2's WebGL fail ("could not create
+  a WebGL context"); delete finished reels' raw/final frame folders in the scratchpad first. Next reel: #3 of the new run.
+
 - **26 Oct (v119 = place version 118)**, the owner: "Give proper caption like before. Also dont offer become him in
   lobby". Done: the lobby BE HIM icon removed (the result card's BE HIM NEXT NIGHT and the in-house offer stay).
 
