@@ -140,24 +140,6 @@ function Shop.start()
 	end })
 	badge.Visible = true
 
-	-- (v118) BE HIM: the one thing that sells (8 of 99 offers since v112, 295 of 660 R$) was only ever offered in
-	-- the house; bought here it's saved and used on your next night with friends (ShopService: MonsterCredits)
-	local him = ctx.Config.Shop.BecomeHim
-	if him and him.Id > 0 then
-		local player = game:GetService("Players").LocalPlayer
-		local himBtn = ctx.Dock.add({ Order = 6, Glyph = "😈", Label = "BE HIM", Color = Color3.fromRGB(255, 96, 90), OnClick = function()
-			pcall(function()
-				game:GetService("MarketplaceService"):PromptProductPurchase(player, him.Id)
-			end)
-		end })
-		-- (one saved is enough: hidden while you have one waiting)
-		local function refresh()
-			himBtn.Visible = (tonumber(player:GetAttribute("MonsterCredits")) or 0) == 0
-		end
-		player:GetAttributeChangedSignal("MonsterCredits"):Connect(refresh)
-		refresh()
-	end
-
 	-- the panel
 	panel = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),

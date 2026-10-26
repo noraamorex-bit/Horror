@@ -62,7 +62,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   rule; no START NOW, no waiting for players). **v118: once in, you're held in (invisible walls only queued
   players bump into); ✕ LEAVE is the only way out** (the owner).
 - Returning players get a small "BACK FOR ANOTHER NIGHT?" card (streak, daily reward, quests, NIGHTMARE,
-  ▶ PLAY). The dock has 😈 BE HIM (saved for the next group night); it wraps into two columns.
+  ▶ PLAY). The dock wraps into two columns. **Never offer Become Him in the lobby** (v119, the owner).
 - Shop has a pulsing "!" to attract; donation board on the lawn.
 
 **HUD / text**
@@ -259,9 +259,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 
 - **26 Oct (v118)**, the owner: "Check current gamepasses data and analyze and improve." Sales since 15 Oct
   (Sales_v1; the API has no sales counts): 660 R$, Become Him 295 (8 of 99 offers), revive 3/12 at 10, nothing
-  else selling; passes were barely ever seen. Done: 😈 BE HIM in the lobby dock; Pick your role (pass) 15 → 10
-  (0/20), Rocket (tonight) 15 → 10 (0/13), both live through the API. Next: bought/asked for those two and BE HIM
-  from the lobby (`Ask:BecomeHim` count should jump).
+  else selling; passes were barely ever seen. Done: Pick your role (pass) 15 → 10
+  (0/20), Rocket (tonight) 15 → 10 (0/13), both live through the API. Next: bought/asked for those two. (v118 also put
+  BE HIM in the lobby dock; removed in v119, the owner: "dont offer become him in lobby".)
 
 - **25 Oct (v115)**, the owner (a screenshot of another game's "Jumpscare Everyone" for 19 R$): "Add
   something like this for 10 Robux". **Jumpscare Everyone** (developer product 3722081951, 10 R$,
@@ -503,12 +503,15 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **26 Oct (v119 = place version 118)**, the owner: "Give proper caption like before. Also dont offer become him in
+  lobby". Done: the lobby BE HIM icon removed (the result card's BE HIM NEXT NIGHT and the in-house offer stay).
+
 - **26 Oct (v118 = place version 117, reel 46 #1)**, the owner: "1. Make a leave button instead of walking off and
   create a barrier… 4. Fix this properly [his pathfinding]. 5. Sure [veterans]. 7. Check current gamepasses data and
   analyze and improve. Also make the next reel. Start from part one again." Logs since 112 (523 lobby visits, 204
   nights): queued-never-sent 124/452, first-nighters quit mid-night 44% (93 of 133 in act I, median minute 1.7),
   solo nights 89% no ending, veterans left the lobby 70%, his nav 41 failed routes + 27 wedges a night. Done: queue
-  walls + LEAVE, in/out-of-the-house routing (GDD "How he walks"), the welcome-back card, BE HIM in the lobby, two
+  walls + LEAVE, in/out-of-the-house routing (GDD "How he walks"), the welcome-back card, two
   prices (see Economy, v118). Reel 46 = #1 (`cant_play_alone_1_v2.mp4`, see Marketing). skin_frames' `head.look`
   now really turns the face to `look` in film2 (probed: (dx, -dy, -dz)); reel 45's scare re-rendered with it. Next:
   `--since=117`: queued-never-sent (want near 0), Leave marks, veterans' queue rate, FailPF/Repeat/Wedge_ by room.
@@ -857,7 +860,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 117; the notes' "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 118; the notes' "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

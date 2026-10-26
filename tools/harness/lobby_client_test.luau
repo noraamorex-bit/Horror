@@ -92,12 +92,10 @@ local ok, err = pcall(function()
 	H.wrap(H.unwrap(card):FindFirstChild("Play")).Activated:Fire()
 	assert(sent[#sent] == "QuickPlay" and not card.Parent, "PLAY: into a circle, card gone")
 	print("welcome back ok")
-	-- (v118) BE HIM in the lobby dock (the earner, only ever offered in the house before)
-	local beHim = nil
+	-- (v119, the owner: "dont offer become him in lobby")
 	for _, d in H.unwrap(pg):GetDescendants() do
-		if d:IsA("TextLabel") and d.Text == "BE HIM" then beHim = d.Parent end
+		assert(not (d:IsA("TextLabel") and d.Text == "BE HIM"), "no BE HIM in the lobby")
 	end
-	assert(beHim and beHim.Visible, "BE HIM in the dock")
 	assert(H.unwrap(pg):FindFirstChildWhichIsA("UIGridLayout", true), "the dock wraps into a second column")
 	-- count UI objects
 	local n = 0
