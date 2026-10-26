@@ -33,3 +33,6 @@ api 2005388315 -F "price=15"   # Long-life battery (25)
 api 2006721483 -F "price=19"   # Head start (25)
 # (the Become Him developer product, 50 -> 25: PATCH .../developer-products/v2/universes/$U/developer-products/3718593338 -F price=25)
 # v115 (25 Oct): "Jumpscare Everyone" developer product 3722081951 (10 R$, icon jumpscare_all.png from make_jumpscare.py), made with POST .../developer-products/v2/universes/$U/developer-products
+# v118 (26 Oct): the most-offered things that sold nothing go to the impulse price that sells (Revive: 3 of 12 at 10):
+api 2006193593 -F "price=10"   # Pick your role (15; 0 of 20 offers bought)
+# (Rocket (tonight) developer product 3718739690: 15 -> 10, 0 of 13: PATCH .../developer-products/v2/universes/$U/developer-products/3718739690 -F price=10)

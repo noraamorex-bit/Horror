@@ -59,7 +59,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   coin balance. Don't add big buttons back.
 - Queue circles: white **outline** only, spread out so labels don't overlap. **Every circle counts down
   10 s from the moment someone steps in, 3 s once full; at 0 it teleports whoever's on it** (the owner's
-  rule; no START NOW, no waiting for players).
+  rule; no START NOW, no waiting for players). **v118: once in, you're held in (invisible walls only queued
+  players bump into); ✕ LEAVE is the only way out** (the owner).
+- Returning players get a small "BACK FOR ANOTHER NIGHT?" card (streak, daily reward, quests, NIGHTMARE,
+  ▶ PLAY). The dock has 😈 BE HIM (saved for the next group night); it wraps into two columns.
 - Shop has a pulsing "!" to attract; donation board on the lawn.
 
 **HUD / text**
@@ -254,6 +257,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   doubled), **Silent Steps** (2044448668: half the footstep noise, 50% longer breath). GDD
   "Monetization (v108)".
 
+- **26 Oct (v118)**, the owner: "Check current gamepasses data and analyze and improve." Sales since 15 Oct
+  (Sales_v1; the API has no sales counts): 660 R$, Become Him 295 (8 of 99 offers), revive 3/12 at 10, nothing
+  else selling; passes were barely ever seen. Done: 😈 BE HIM in the lobby dock; Pick your role (pass) 15 → 10
+  (0/20), Rocket (tonight) 15 → 10 (0/13), both live through the API. Next: bought/asked for those two and BE HIM
+  from the lobby (`Ask:BecomeHim` count should jump).
+
 - **25 Oct (v115)**, the owner (a screenshot of another game's "Jumpscare Everyone" for 19 R$): "Add
   something like this for 10 Robux". **Jumpscare Everyone** (developer product 3722081951, 10 R$,
   `Config.Shop.JumpscareAll`, icon `marketing/passes/jumpscare_all.png` from `make_jumpscare.py`): bought,
@@ -300,6 +309,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   inside, him in the bedroom doorway, him bent down at the bed, hiding in mom's closet: "it was still warm in here",
   his mask between the coats at the back of it; RUN, him crawling out after you). New for film2: skin_frames
   `head` + `noSkin` (only the mask, placed exactly). Caption: `he sleeps where we hide 👀 game in comments`.
+  Reel 46 = **#1 again** (`cant_play_alone_1_v2.mp4`, 26 Oct; the owner: "Start from part one again"): #2's own story
+  (314K) told from the start with the v114 creature and new shots: "night 1: footsteps in the ceiling." → "night 4:
+  the food went missing." (the fridge, the dish licked clean) → "night 9: we found the hatch open." → "someone's been
+  sleeping up here." (his nest) → "photos. of us." → "he's been counting the days." (the tally) → "and tonight he's
+  coming down." (under the open hatch: his mask comes down out of the dark, then drops at you) → RUN (he crawls after
+  you from under the hatch). Caption: `he's still up there 👀 game in comments` (#2's). The next reels count up again
+  from #2 in this new run.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -486,6 +502,16 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **26 Oct (v118 = place version 117, reel 46 #1)**, the owner: "1. Make a leave button instead of walking off and
+  create a barrier… 4. Fix this properly [his pathfinding]. 5. Sure [veterans]. 7. Check current gamepasses data and
+  analyze and improve. Also make the next reel. Start from part one again." Logs since 112 (523 lobby visits, 204
+  nights): queued-never-sent 124/452, first-nighters quit mid-night 44% (93 of 133 in act I, median minute 1.7),
+  solo nights 89% no ending, veterans left the lobby 70%, his nav 41 failed routes + 27 wedges a night. Done: queue
+  walls + LEAVE, in/out-of-the-house routing (GDD "How he walks"), the welcome-back card, BE HIM in the lobby, two
+  prices (see Economy, v118). Reel 46 = #1 (`cant_play_alone_1_v2.mp4`, see Marketing). Reel 45's scare was
+  re-rendered: the mask had shown its inside (skin_frames' `head.look` now means where the face points). Next:
+  `--since=117`: queued-never-sent (want near 0), Leave marks, veterans' queue rate, FailPF/Repeat/Wedge_ by room.
 
 - **25 Oct (reel 45)**: #14 (see Marketing). Next reel: #15, the next chapter (ideas: he leaves something for us
   every night; the mimic's voice calling from the attic; Lily says he reads her stories).
@@ -831,7 +857,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 116; the notes' "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 117; the notes' "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

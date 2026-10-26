@@ -5,6 +5,7 @@
 
 local TeleportService = game:GetService("TeleportService")
 local GuiService = game:GetService("GuiService")
+local HttpService = game:GetService("HttpService")
 
 local LobbyHub = {}
 local ctx
@@ -42,7 +43,7 @@ local function render(state)
 		queueStatus.Text = "This circle is full. Try another one."
 	else
 		-- (every circle counts down from 10 the moment someone steps in; 3 once it's full)
-		queueStatus.Text = state.Countdown and ("Starting in " .. tostring(state.Countdown) .. "... walk away to cancel") or "Starting soon..."
+		queueStatus.Text = state.Countdown and ("Starting in " .. tostring(state.Countdown) .. "...  LEAVE to step out") or "Starting soon..."
 		-- (v111) a short circle goes anyway (the owner's rule), so say so: 15 of 34 lone players left
 		-- their house within 26 s, nearly all brand new: they'd queued for "2 players" and landed alone
 		if state.Countdown and state.Size > 1 and state.Count < state.Size then
@@ -53,6 +54,122 @@ end
 
 function LobbyHub.init(c)
 	ctx = c
+end
+
+-- (v118) back in the lobby after a night, or on another day: 70% of returning players left the lobby
+-- within a minute without queueing (since v112, 56 visits). A small card at the top: what tonight is
+-- worth (the night streak, today's quests, the daily reward, NIGHTMARE), and one tap to play.
+local function backLines(player: Player): { string }
+	local lines = {}
+	local untilT, bonus = player:GetAttribute("ChainUntil"), player:GetAttribute("ChainNext")
+	if type(untilT) == "number" and type(bonus) == "number" and bonus > 0 then
+		local left = math.max(0, math.floor(untilT - os.time()))
+		if left > 0 then
+			table.insert(lines, string.format("<font color=\"#ffcd5a\"><b>NIGHT STREAK</b>  +%d%% coins if you play in the next %d:%02d</font>", bonus, left // 60, left % 60))
+		end
+	end
+	local eco = player:GetAttribute("Eco")
+	local ok, data = pcall(function()
+		return HttpService:JSONDecode(eco)
+	end)
+	if ok and type(data) == "table" then
+		if type(data.Daily) == "table" and data.Daily.CanClaim then
+			table.insert(lines, "<b>DAILY REWARD</b> ready: open REWARDS on the right")
+		end
+		local n = 0
+		for _, q in (type(data.Quests) == "table" and data.Quests or {}) do
+			if not q.Done and n < 2 then
+				n += 1
+				table.insert(lines, string.format("□  %s  <font color=\"#9a968e\">%d/%d</font>  <font color=\"#ffcd5a\">+%d</font>", tostring(q.Text), q.Progress or 0, q.Goal or 1, q.Coins or 0))
+			end
+		end
+	end
+	if (tonumber(player:GetAttribute("StatEscapes")) or 0) >= 1 and #lines < 4 then
+		table.insert(lines, "<b>NIGHTMARE</b> is open to you: vote for it in the house, 2x coins")
+	end
+	return lines
+end
+LobbyHub._backLines = backLines -- (tests)
+
+function LobbyHub.welcomeBack()
+	local UI = ctx.UI
+	local player = game:GetService("Players").LocalPlayer
+	-- (the coins and quests come with the economy record: give it a moment)
+	local t0 = os.clock()
+	while player:GetAttribute("Eco") == nil and os.clock() - t0 < 5 do
+		task.wait(0.25)
+	end
+	local lines = backLines(player)
+	local inset = GuiService:GetGuiInset()
+	local card = UI.new("Frame", {
+		Name = "WelcomeBack",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, inset.Y + 78),
+		Size = UDim2.fromOffset(400, 64 + 20 * #lines),
+		BackgroundColor3 = Color3.fromRGB(12, 12, 14),
+		BackgroundTransparency = 0.15,
+		Parent = UI.Root,
+	})
+	UI.corner(card, 10)
+	UI.stroke(card, Color3.new(1, 1, 1), 1, 0.75)
+	UI.label({ Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -150, 0, 22), Text = "BACK FOR ANOTHER NIGHT?", Font = UI.Font.Bold, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+	for i, line in lines do
+		UI.label({
+			Position = UDim2.fromOffset(14, 32 + (i - 1) * 20),
+			Size = UDim2.new(1, -28, 0, 20),
+			Text = line,
+			RichText = true,
+			TextSize = 13,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			Parent = card,
+		})
+	end
+	local play = UI.new("TextButton", {
+		Name = "Play",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -44, 0, 8),
+		Size = UDim2.fromOffset(96, 30),
+		Text = "▶  PLAY",
+		Font = UI.Font.Bold,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(20, 20, 20),
+		BackgroundColor3 = Color3.fromRGB(240, 238, 232),
+		Parent = card,
+	})
+	UI.corner(play, 6)
+	local close = UI.new("TextButton", {
+		Name = "Close",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -8, 0, 8),
+		Size = UDim2.fromOffset(30, 30),
+		Text = "✕",
+		Font = UI.Font.Bold,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(235, 232, 226),
+		BackgroundColor3 = Color3.fromRGB(40, 40, 44),
+		Parent = card,
+	})
+	UI.corner(close, 6)
+	play.Activated:Connect(function()
+		card:Destroy()
+		ctx.Remotes.QuickPlay:FireServer("Group")
+	end)
+	close.Activated:Connect(function()
+		card:Destroy()
+	end)
+	-- (it goes by itself after a while, and the moment you're in a circle)
+	task.delay(25, function()
+		if card.Parent then
+			card:Destroy()
+		end
+	end)
+	ctx.Remotes.Queue.OnClientEvent:Connect(function(state)
+		if state and card.Parent then
+			card:Destroy()
+		end
+	end)
+	return card
 end
 
 -- The lobby is third person (the house is first person, and StarterPlayer is set up for that).
@@ -296,7 +413,9 @@ function LobbyHub.start()
 				nights = player:GetAttribute("StatNights")
 			until nights ~= nil or os.clock() - t0 > 4
 		end
-		if (tonumber(nights) or 0) == 0 then
+		if (tonumber(nights) or 0) > 0 then
+			LobbyHub.welcomeBack()
+		elseif (tonumber(nights) or 0) == 0 then
 			-- (one tap and you're in: new players took a median 39 s to queue, a third never did)
 			ctx.Notice.show({
 				Title = "Welcome to Hollis Creek",
@@ -321,15 +440,17 @@ function LobbyHub.start()
 	UI.stroke(panel, Color3.new(1, 1, 1), 1, 0.8)
 	queueTitle = UI.label({ Position = UDim2.fromOffset(12, 8), Size = UDim2.new(1, -24, 0, 20), Text = "", Font = UI.Font.Bold, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
 	queueStatus = UI.label({ Position = UDim2.fromOffset(12, 30), Size = UDim2.new(1, -24, 0, 34), Text = "", TextSize = 13, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
+	-- (v118) the only way out of a circle once you're in it: the walls hold queued players in
 	local leave = UI.new("TextButton", {
+		Name = "LeaveQueue",
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, -8, 1, -8),
-		Size = UDim2.fromOffset(96, 36),
-		Text = "Leave",
-		Font = Enum.Font.GothamMedium,
-		TextSize = 14,
-		TextColor3 = Color3.fromRGB(235, 232, 226),
-		BackgroundColor3 = Color3.fromRGB(40, 40, 44),
+		Size = UDim2.fromOffset(110, 38),
+		Text = "✕  LEAVE",
+		Font = UI.Font.Bold,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(255, 236, 232),
+		BackgroundColor3 = Color3.fromRGB(120, 28, 30),
 		Parent = panel,
 	})
 	UI.corner(leave, 6)

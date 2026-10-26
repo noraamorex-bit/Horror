@@ -100,7 +100,9 @@ for _, f in frames do
 		-- (with "noSkin" film2 draws only them: his face in the dark at the back of a closet)
 		if f.head then
 			local hp, hl = f.head.pos, f.head.look
-			headCF = CFrame.lookAt(Vector3.new(hp[1], hp[2], hp[3]), Vector3.new(hl[1], hl[2], hl[3])) * CFrame.Angles(0, 0, f.head.roll or 0)
+			-- (the mask's face is the Head part's +Z: its back points away from "look")
+			local at = Vector3.new(hp[1], hp[2], hp[3])
+			headCF = CFrame.lookAt(at, at * 2 - Vector3.new(hl[1], hl[2], hl[3])) * CFrame.Angles(0, 0, f.head.roll or 0)
 			fr.glow = { hp[1], hp[2], hp[3] }
 		end
 		local open = math.clamp((pose.Mouth or 0) * 1.2, 0, 1)

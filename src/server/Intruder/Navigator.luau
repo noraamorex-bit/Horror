@@ -11,6 +11,12 @@
 	• Wedged (no progress for a moment): re-route from where he is; still wedged, he steps back
 	  off whatever caught him and goes round again; still wedged, and nobody's looking, he slips
 	  to the next corner. isStuck() tells the brain to give up on the goal.
+	• In and out of the house (v118): PathfindingService can't get through the house's closed doors, so
+	  once he'd gone outside (to a knock at Mrs. Okafor's, the car, the junction box) he could never get
+	  back in, and nobody outside could be followed: 31 of 205 nights logged hundreds of failed routes
+	  each, him stuck retrying one impossible route. A route from inside to outside (or back) now goes
+	  through the best exterior door: the survey to the door, PathfindingService beyond it.
+	• A route that has just failed isn't worked out again for the same errand a moment later.
 	• Stats (wedges, step-backs, slips, failed routes, routes planned and the time spent on
 	  them) go into the night log (JourneyService), so we can see how he gets about in real games.
 ]]
@@ -30,6 +36,13 @@ local AGENT = {
 	Costs = { Door = 2 },
 }
 local ROOT = 4.9 -- (his root above his feet: Rig.RootY)
+-- the ways in and out of the house: the exterior doors, and which way is outside
+local EXITS = {
+	{ Id = "FrontDoor", Out = Vector3.new(0, 0, -1) },
+	{ Id = "BackDoor", Out = Vector3.new(0, 0, 1) },
+	{ Id = "GarageSide", Out = Vector3.new(1, 0, 0) },
+}
+local GARAGE_DOOR = Vector3.new(53, 1, -30) -- (the big door, when it's up)
 
 local function flat(v: Vector3): number
 	return Vector3.new(v.X, 0, v.Z).Magnitude
@@ -81,6 +94,20 @@ function Navigator:_step()
 end
 
 function Navigator:_fail(kind: string?)
+	-- (the same errand failing again from the same spot: no new route, no new count)
+	local goal0, pos0 = self.Goal, self.Root.Position
+	local last = self.LastFail
+	if last and goal0 and os.clock() - last.At < 2.5 and (last.Goal - goal0).Magnitude < 4 and (last.From - pos0).Magnitude < 3 then
+		self.Stats.Repeat = (self.Stats.Repeat or 0) + 1
+		self.Waypoints = nil
+		self.Failed = true
+		self.Arrived = true
+		self.Humanoid:MoveTo(pos0)
+		return
+	end
+	if goal0 then
+		self.LastFail = { At = os.clock(), Goal = goal0, From = pos0 }
+	end
 	self.Stats.Fail += 1
 	-- (where: the night log sums these, so the next stats pass can see which goals can't be reached)
 	local goal = self.Goal
@@ -89,7 +116,10 @@ function Navigator:_fail(kind: string?)
 		local room = self.ctx and self.ctx.Rooms and self.ctx.Rooms.find(goal)
 		where = room and room.Name or (inGrid(goal) and "House" or "Outside")
 	end
-	local key = "Fail" .. (kind or "") .. "_" .. where
+	-- (and from where: v118, to see what's left)
+	local from = self.Root.Position
+	local fromRoom = self.ctx and self.ctx.Rooms and self.ctx.Rooms.find(from)
+	local key = "Fail" .. (kind or "") .. "_" .. where .. "_" .. (fromRoom and fromRoom.Name or (inGrid(from) and "House" or (from.Y > NavGrid.Bounds.Top + 2 and "High" or "Out")))
 	self.Stats[key] = (self.Stats[key] or 0) + 1
 	self.Waypoints = nil
 	self.Failed = true
@@ -140,10 +170,10 @@ function Navigator:_planGrid(): boolean
 end
 
 -- PathfindingService (outside the house)
-function Navigator:_compute()
+function Navigator:_compute(subGoal: Vector3?, tail: { Vector3 }?)
 	self.Version += 1
 	local version = self.Version
-	local from, goal = self.Root.Position, self.Goal
+	local from, goal = self.Root.Position, subGoal or self.Goal
 	if not goal then
 		return
 	end
@@ -162,6 +192,10 @@ function Navigator:_compute()
 			for _, wp in path:GetWaypoints() do
 				table.insert(list, wp.Position)
 			end
+			-- (then on through the door and the house: _planCross)
+			for _, p in tail or {} do
+				table.insert(list, p)
+			end
 			self.Waypoints = list
 			self.End = list[#list]
 			self.Index = math.min(2, #list)
@@ -173,8 +207,107 @@ function Navigator:_compute()
 	end)
 end
 
+-- the doors he can go in and out by right now: { Inside, Outside } floor points
+function Navigator:_exits(): { { Inside: Vector3, Outside: Vector3 } }
+	local list = {}
+	local Doors = self.ctx and self.ctx.Doors
+	local function add(at: Vector3, out: Vector3)
+		local inside = NavGrid.nearest(at - out * 2.2, 2.5)
+		if inside then
+			table.insert(list, { Inside = inside, Outside = Vector3.new(at.X, inside.Y, at.Z) + out * 3.5 })
+		end
+	end
+	for _, e in EXITS do
+		local d = Doors and Doors.get(e.Id)
+		if d and d.Position then
+			add(Vector3.new(d.Position.X, 1, d.Position.Z), e.Out)
+		end
+	end
+	local Escape = self.ctx and self.ctx.Escape
+	if Escape and Escape.isGarageOpen and Escape.isGarageOpen() then
+		add(GARAGE_DOOR, Vector3.new(0, 0, -1))
+	end
+	return list
+end
+Navigator._EXITS = EXITS -- (tests)
+
+local function pathLength(from: Vector3, path: { Vector3 }): number
+	local len, last = 0, from
+	for _, p in path do
+		len += flat(p - last)
+		last = p
+	end
+	return len
+end
+
+-- in to out, or out to in: through the best exterior door. Returns false if it can't help.
+function Navigator:_planCross(): boolean
+	local goal = self.Goal :: Vector3
+	local from = self.Root.Position
+	if not NavGrid.ready() then
+		return false
+	end
+	local fromIn, goalIn = inGrid(from), inGrid(goal)
+	if fromIn == goalIn then
+		return false
+	end
+	-- (somewhere neither leg can start from: up in the attic, on a roof)
+	if not fromIn and from.Y > NavGrid.Bounds.Top + 2 then
+		return false
+	end
+	local t0 = os.clock()
+	local best, bestCost, bestPath = nil, math.huge, nil
+	for _, exit in self:_exits() do
+		if fromIn then
+			local path = NavGrid.findPath(from, exit.Inside + Vector3.new(0, ROOT, 0), 2)
+			if path then
+				local cost = pathLength(from, path) + flat(exit.Outside - goal)
+				if cost < bestCost then
+					best, bestCost, bestPath = exit, cost, path
+				end
+			end
+		else
+			local path = NavGrid.findPath(exit.Inside + Vector3.new(0, ROOT, 0), goal, self.Reach or 6)
+			if path then
+				local cost = flat(from - exit.Outside) + pathLength(exit.Inside, path)
+				if cost < bestCost then
+					best, bestCost, bestPath = exit, cost, path
+				end
+			end
+		end
+	end
+	self.Stats.Plans += 1
+	self.Stats.PlanMs += (os.clock() - t0) * 1000
+	if not best then
+		return false
+	end
+	self.Stats.Cross = (self.Stats.Cross or 0) + 1
+	self.Version += 1
+	self.Computing = false
+	self.SideUntil = nil
+	if fromIn then
+		-- the survey to the door, out, then (out in the open) straight on; a fence on the way and he
+		-- re-routes from out there with PathfindingService
+		local list = table.clone(bestPath :: { Vector3 })
+		table.insert(list, best.Outside)
+		table.insert(list, goal)
+		self.Waypoints = list
+		self.End = goal
+		self.Index = math.min(2, #list)
+		self:_step()
+	else
+		-- PathfindingService to the door from outside, then in, then the survey
+		local tail = { best.Inside }
+		for _, p in bestPath :: { Vector3 } do
+			table.insert(tail, p)
+		end
+		self:_compute(best.Outside, tail)
+	end
+	return true
+end
+
 function Navigator:_plan()
-	if not self:_planGrid() then
+	if not self:_planGrid() and not self:_planCross() then
 		self:_compute()
 	end
 end
@@ -398,6 +531,10 @@ function Navigator:update()
 		self.Stuck += 1
 		self.StuckAt = now
 		self.Stats.Wedged += 1
+		-- (where: v118, to find the corners that catch him in real games)
+		local room = self.ctx and self.ctx.Rooms and self.ctx.Rooms.find(pos)
+		local wkey = "Wedge_" .. (room and room.Name or (inGrid(pos) and "House" or "Out"))
+		self.Stats[wkey] = (self.Stats[wkey] or 0) + 1
 		local nextWp = wps[math.min(self.Index, #wps)]
 		if self.Stuck >= 3 and nextWp and unseen(self.ctx, pos) and unseen(self.ctx, nextWp + Vector3.new(0, ROOT, 0)) then
 			self.Stats.Slip += 1

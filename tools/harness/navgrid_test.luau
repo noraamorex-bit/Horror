@@ -84,6 +84,43 @@ for name, y in { Basement = -13, Ground = 1, Upstairs = 15 } do
 	-- (a map of the floor for looking at by eye: next to the harness, never committed)
 	pcall(fs.writeFile, "navgrid_" .. name .. ".txt", table.concat(lines, "\n"))
 end
+-- (v118) in and out of the house: PathfindingService can't get through the closed doors, so a route that
+-- crosses the walls goes through the best exterior door (Navigator._planCross)
+local Navigator = H.load("Server/Intruder/Navigator")
+local moved = {}
+local fakeRoot = { Position = V(2, 1 + 4.9, -20) }
+local nav = Navigator.new(ctx, { MoveTo = function(_, p) table.insert(moved, p) end, WalkSpeed = 10 }, fakeRoot)
+local exits = nav:_exits()
+assert(#exits >= 3, "the front, back and garage side doors: " .. #exits)
+local inG = function(p) local B2 = NavGrid.Bounds return p.X >= B2.X0 and p.X <= B2.X1 and p.Z >= B2.Z0 and p.Z <= B2.Z1 end
+for _, e in exits do
+	assert(inG(e.Inside) and not inG(e.Outside), "each door: a spot inside and one outside")
+	assert(NavGrid.findPath(hall, e.Inside + V(0, 4.9, 0), 2), "every door reachable from the hall: " .. tostring(e.Inside))
+end
+-- inside -> outside: out of the nearest door to Mrs. Okafor's porch
+local porch = ctx.Layout.Outside.NeighborPorch
+nav:goTo(porch, { Speed = 10 })
+assert(not nav.Failed and nav.Waypoints, "a route out to her porch")
+assert(nav.Waypoints[#nav.Waypoints] == porch and nav.Stats.Cross == 1, "through a door, then on to the porch")
+local through = nav.Waypoints[#nav.Waypoints - 1]
+assert(not inG(through), "the step before the porch is outside the door: " .. tostring(through))
+-- outside -> upstairs: pathfinding to a door, then in and up the stairs on the survey
+local legs = nil
+nav._compute = function(self, sub, tail) legs = { Sub = sub, Tail = tail } end
+fakeRoot.Position = V(2, 1 + 4.9, -48) -- (on the front lawn)
+local upstairs = V(4, 15 + 3, 6)
+nav:goTo(upstairs, { Speed = 10 })
+assert(legs and legs.Sub and not inG(legs.Sub), "pathfinding as far as a door, from outside")
+assert(legs.Tail and #legs.Tail >= 3 and inG(legs.Tail[1]), "then in through it")
+local last = legs.Tail[#legs.Tail]
+assert(math.abs(last.Y - 15) < 2 and V(last.X - upstairs.X, 0, last.Z - upstairs.Z).Magnitude < 6, "and up to the goal: " .. tostring(last))
+-- a route that just failed isn't worked out (or counted) again for the same errand
+nav.Stats.Fail = 0
+nav.Goal = V(500, 1, 500)
+nav:_fail("PF")
+nav:_fail("PF")
+assert(nav.Stats.Fail == 1 and nav.Stats.Repeat == 1, "the second failure is a repeat")
+print("in and out of the house ok")
 for _, e in H.errors do print("ERR", e) end
 assert(#failures == 0, #failures .. " unreachable")
 print("navgrid ok")

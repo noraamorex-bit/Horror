@@ -45,6 +45,8 @@ local ok, err = pcall(function()
 	local starterId = ctx.Config.Shop.Starter.Id
 	ctx.Config.Shop.Starter.Id = 4242
 	player:SetAttribute("StarterOffer", true)
+	local serde = require("@lune/serde")
+	H.services.HttpService = { JSONEncode = function(_, v) return serde.encode("json", v) end, JSONDecode = function(_, v) return serde.decode("json", v) end }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -74,6 +76,29 @@ local ok, err = pcall(function()
 	local row = H.unwrap(pg):FindFirstChild("StarterRow", true)
 	assert(row and row.Visible, "the Starter Pack at the top of the shop")
 	ctx.Config.Shop.Starter.Id = starterId
+	-- (v118) a returning player: the welcome-back card with what tonight is worth, and one tap to play
+	player:SetAttribute("StatNights", 3)
+	player:SetAttribute("StatEscapes", 1)
+	player:SetAttribute("ChainUntil", os.time() + 400)
+	player:SetAttribute("ChainNext", 25)
+	player:SetAttribute("Eco", '{"Daily":{"CanClaim":true},"Quests":[{"Text":"Survive a night","Progress":0,"Goal":1,"Coins":60,"Done":false},{"Text":"Hide 5 times","Progress":5,"Goal":5,"Coins":40,"Done":true}]}')
+	local lines = mods.LobbyHub._backLines(player)
+	local all = table.concat(lines, "\n")
+	assert(string.find(all, "+25%", 1, true) and string.find(all, "DAILY REWARD", 1, true) and string.find(all, "Survive a night", 1, true)
+		and not string.find(all, "Hide 5 times", 1, true) and string.find(all, "NIGHTMARE", 1, true), "the card's lines: " .. all)
+	local card = mods.LobbyHub.welcomeBack()
+	assert(card and card.Parent and card:FindFirstChild("Play"), "the card, with PLAY")
+	local before = #sent
+	H.wrap(H.unwrap(card):FindFirstChild("Play")).Activated:Fire()
+	assert(sent[#sent] == "QuickPlay" and not card.Parent, "PLAY: into a circle, card gone")
+	print("welcome back ok")
+	-- (v118) BE HIM in the lobby dock (the earner, only ever offered in the house before)
+	local beHim = nil
+	for _, d in H.unwrap(pg):GetDescendants() do
+		if d:IsA("TextLabel") and d.Text == "BE HIM" then beHim = d.Parent end
+	end
+	assert(beHim and beHim.Visible, "BE HIM in the dock")
+	assert(H.unwrap(pg):FindFirstChildWhichIsA("UIGridLayout", true), "the dock wraps into a second column")
 	-- count UI objects
 	local n = 0
 	for _ in H.unwrap(pg):GetDescendants() do n += 1 end

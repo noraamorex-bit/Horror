@@ -290,6 +290,12 @@ def report_nights(nights):
         where = {k: v for k, v in tot.most_common() if k.startswith("Fail") and "_" in k}
         if where:
             print(f"      failed routes by kind_where (v105+: Grid = no route on the survey, PF = PathfindingService): {where}")
+        cross = tot.get("Cross", 0)
+        if cross or tot.get("Repeat"):
+            print(f"      v118+: routes through an exterior door {cross / k:.1f}/night, repeat failures not re-planned {tot.get('Repeat', 0) / k:.1f}/night")
+        wedges = {k2: v for k2, v in tot.most_common() if k2.startswith("Wedge_")}
+        if wedges:
+            print(f"      wedged by room (v118+): {wedges}")
     # script errors (v82+): on players' devices (Perf.Err) and on the game servers (SErr)
     cerr, cwho, serr = Counter(), Counter(), Counter()
     for n in started:

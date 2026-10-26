@@ -247,16 +247,25 @@ function Dock.start()
 	end
 	local UI = ctx.UI
 	local inset = GuiService:GetGuiInset()
+	-- (four icons down the right edge, then a second column to their left: v118's six didn't fit a
+	-- phone's height in one)
 	column = UI.new("Frame", {
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -math.max(14, inset.X + 14), 0.5, 10),
-		Size = UDim2.fromOffset(70, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
+		Size = UDim2.fromOffset(148, 4 * 70 + 3 * 8),
 		BackgroundTransparency = 1,
 		ZIndex = 30,
 		Parent = UI.Root,
 	})
-	UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = column })
+	UI.new("UIGridLayout", {
+		CellSize = UDim2.fromOffset(70, 70),
+		CellPadding = UDim2.fromOffset(8, 8),
+		FillDirection = Enum.FillDirection.Vertical,
+		FillDirectionMaxCells = 4,
+		StartCorner = Enum.StartCorner.TopRight,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Parent = column,
+	})
 	-- the coin count, top right (tap: the store)
 	local pill = UI.new("TextButton", {
 		AnchorPoint = Vector2.new(1, 0),

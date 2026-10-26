@@ -10,6 +10,17 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 
+-- (v118, the owner: "create a barrier preventing them from leaving and only press the leave button")
+-- invisible walls round every circle that only queued players bump into: anyone can walk in, nobody
+-- queued can walk out; LEAVE is the way out
+pcall(function()
+	local PhysicsService = game:GetService("PhysicsService")
+	PhysicsService:RegisterCollisionGroup("QueueWall")
+	PhysicsService:RegisterCollisionGroup("Queued")
+	PhysicsService:CollisionGroupSetCollidable("QueueWall", "Default", false)
+	PhysicsService:CollisionGroupSetCollidable("QueueWall", "Queued", true)
+end)
+
 local Kit = require(script.Parent.Parent.World.Kit)
 local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
 
@@ -18,16 +29,18 @@ local LobbyServer = {}
 local V = Vector3.new
 local ORIGIN = V(0, 0, 400) -- far from the house coordinates, so nothing mistakes it for a room
 local PAD_RADIUS = 5.5
--- (v107) once you're queued you stay queued until you've clearly walked away: on a phone, nudging the
--- stick to look around used to step you off and cancel it (22% of brand-new players queued and were
--- never sent: 22 of them stood in the lobby for 20 s to 24 min afterwards)
-local STICKY_RADIUS = PAD_RADIUS + 7
+-- (v107) on a phone, nudging the stick to look around used to step you off and cancel it; (v118) since
+-- v112 124 of 452 who queued were never sent, nearly all of them walked off: once you're queued you stay
+-- queued until you press LEAVE (the walls hold you in; anyone pushed out is put back)
+local HOLD_RADIUS = PAD_RADIUS + 1.6
 -- (v107) the open-night lookup (MemoryStore) gets this long; then a fresh house, straight away
 local MATCH_WAIT = 2.5
 
 local ctx
 local pads = {}
 local teleporting: { [Player]: boolean } = {}
+local leftAt: { [Player]: number } = {} -- (pressed LEAVE: not put straight back in)
+local setGroup, holdIn
 local lastSent: { [Player]: string } = {}
 local spawnCF: CFrame
 
@@ -540,6 +553,26 @@ local function build(root: Folder)
 		local x = (i - (#ctx.Config.Lobby.QueueSizes + 1) / 2) * 18
 		local center = ORIGIN + V(x, 0.72, -14)
 		local segments = ring(root, center, PAD_RADIUS)
+		-- the barrier: tall, invisible, solid only to queued players (collision group QueueWall)
+		local WALLS = 24
+		local wr = PAD_RADIUS + 0.7
+		for w = 0, WALLS - 1 do
+			local a = w / WALLS * math.pi * 2
+			local p = center + V(math.cos(a) * wr, 7, math.sin(a) * wr)
+			local wall = B.part(root, {
+				Name = "QueueWall",
+				Size = V(0.6, 14, 2 * math.pi * wr / WALLS + 0.3),
+				CFrame = CFrame.lookAt(p, p + V(-math.sin(a), 0, math.cos(a))),
+				Transparency = 1,
+				CanCollide = true,
+				CanQuery = false,
+				CanTouch = false,
+				CastShadow = false,
+			})
+			pcall(function()
+				wall.CollisionGroup = "QueueWall"
+			end)
+		end
 		local anchor = B.part(root, {
 			Name = "Pad" .. size,
 			Size = V(1, 1, 1),
@@ -746,6 +779,38 @@ local function teleportGroup(pad, group: { Player }, joinCode: string?)
 	end)
 end
 
+-- a character's collision group (Queued: the circle's walls hold it in)
+setGroup = function(char: Model?, group: string)
+	if not char or char:GetAttribute("CollisionGroup") == group then
+		return
+	end
+	char:SetAttribute("CollisionGroup", group)
+	for _, d in char:GetDescendants() do
+		if d:IsA("BasePart") then
+			pcall(function()
+				d.CollisionGroup = group
+			end)
+		end
+	end
+end
+LobbyServer._setGroup = setGroup -- (tests)
+
+-- queued: walls hold you in; and if you're somehow outside (a respawn, a fling), you're put back
+holdIn = function(p: Player, pad, root: BasePart, queued: boolean)
+	setGroup(p.Character, "Queued")
+	if queued and not pad.Teleporting then
+		local d = root.Position - pad.Center
+		if V(d.X, 0, d.Z).Magnitude > HOLD_RADIUS or math.abs(d.Y) >= 8 then
+			local a = math.random() * math.pi * 2
+			-- (moving the root part carries the whole character)
+			root.CFrame = CFrame.new(pad.Center + V(math.cos(a) * 2, 3.2, math.sin(a) * 2))
+			if ctx.Journey and ctx.Journey.lobbyMark then
+				ctx.Journey.lobbyMark(p, "Off")
+			end
+		end
+	end
+end
+
 local function tick()
 	local now = os.clock()
 	for _, pad in pads do
@@ -762,23 +827,16 @@ local function tick()
 				pad.Group = nil
 			end
 		end
-		-- who is standing on it (anyone already queued here: anywhere near it)
+		-- who is standing on it; anyone already queued here stays queued until they press LEAVE (or go)
 		local inside = {}
 		for _, p in Players:GetPlayers() do
 			local root = ctx.Util.getRoot(p)
-			if root and not teleporting[p] then
+			if root and not teleporting[p] and not (leftAt[p] and now - leftAt[p] < 1.5) then
 				local d = root.Position - pad.Center
-				local r = table.find(pad.Members, p) and STICKY_RADIUS or PAD_RADIUS
-				if V(d.X, 0, d.Z).Magnitude <= r and math.abs(d.Y) < 8 then
+				local queued = table.find(pad.Members, p) ~= nil
+				if queued or (V(d.X, 0, d.Z).Magnitude <= PAD_RADIUS and math.abs(d.Y) < 8) then
 					inside[p] = true
-				end
-			end
-		end
-		-- (stepped right off before it went: counted, to see whether it still happens)
-		if not pad.Teleporting and ctx.Journey and ctx.Journey.lobbyMark then
-			for _, p in pad.Members do
-				if not inside[p] and p.Parent and not teleporting[p] then
-					ctx.Journey.lobbyMark(p, "Off")
+					holdIn(p, pad, root, queued)
 				end
 			end
 		end
@@ -1064,14 +1122,29 @@ function LobbyServer.run(c)
 			ctx.Remotes.Notify:FireClient(player, "Every circle is busy. Try again in a moment.", "info")
 		end
 	end)
+	-- LEAVE: the only way out of a circle once you're in it
 	ctx.Remotes.LeaveQueue.OnServerEvent:Connect(function(player)
 		if teleporting[player] then
 			return
 		end
-		local char = player.Character
-		if char and padOf(player) then
-			char:PivotTo(spawnCF * CFrame.new(math.random(-4, 4), 0, 3))
+		local pad = padOf(player)
+		if not pad then
+			return
 		end
+		table.remove(pad.Members, table.find(pad.Members, player))
+		leftAt[player] = os.clock()
+		setGroup(player.Character, "Default")
+		local root = ctx.Util.getRoot(player)
+		if root then
+			-- (just outside, in front of the circle, facing the house)
+			root.CFrame = CFrame.lookAt(pad.Center + V(0, 3.2, PAD_RADIUS + 3.5), pad.Center + V(0, 3.2, -10))
+		end
+		if ctx.Journey and ctx.Journey.lobbyMark then
+			ctx.Journey.lobbyMark(player, "Leave")
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		leftAt[player] = nil
 	end)
 	-- (v107) a teleport that fails on the way: one quiet retry into the same house (the rest of the
 	-- group is probably there already), then a fresh one; only then is the player told

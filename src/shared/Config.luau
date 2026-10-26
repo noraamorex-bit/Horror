@@ -397,7 +397,7 @@ Config.Shop = {
 		{ Key = "Silent", Id = 2044448668, Price = 29, Name = "Silent Steps", Desc = "Your footsteps make half the noise, and you can hold your breath 50% longer while hiding." },
 		{ Key = "Supporter", Id = 2008280313, Price = 10, Name = "Supporter", Desc = "+20% coins every night, a SUPPORTER tag, a gold flashlight and a star on the donation board." },
 		{ Key = "Colours", Id = 2005832310, Price = 15, Name = "Flashlight colours", Desc = "Every flashlight colour, plus the pale Ghost beam." },
-		{ Key = "ChooseRole", Id = 2006193593, Price = 15, Name = "Pick your role", Desc = "Choose who you play every night, and what you start with: Jamie's flashlight, Riley's toolkit, Morgan's energy drinks or Casey's firecrackers." },
+		{ Key = "ChooseRole", Id = 2006193593, Price = 10, Name = "Pick your role", Desc = "Choose who you play every night, and what you start with: Jamie's flashlight, Riley's toolkit, Morgan's energy drinks or Casey's firecrackers." },
 		{ Key = "Marathon", Id = 2005053525, Price = 15, Name = "Marathon", Desc = "Sprint for longer and get your breath back twice as fast." },
 		{ Key = "Battery", Id = 2005388315, Price = 15, Name = "Long-life battery", Desc = "Your flashlight never runs out." },
 		{ Key = "HeadStart", Id = 2006721483, Price = 19, Name = "Head start", Desc = "Start every night with a flashlight in your pocket, plus a spray can to keep him back." },
@@ -410,7 +410,7 @@ Config.Shop = {
 	-- co-op only, bought again every night: you become him for the rest of the night (MonsterService)
 	BecomeHim = { Id = 3718593338, Price = 25 }, -- (v108: 50 → 25: opened 49 times, bought 0 at 50)
 	-- one rocket for this night only (the hunt): for anyone without the pass, bought on the spot
-	RocketNight = { Id = 3718739690, Price = 15 }, -- (v110: 25 -> 15, 0 of 10 bought at 25)
+	RocketNight = { Id = 3718739690, Price = 10 }, -- (v110: 25 -> 15, 0 of 10 bought at 25; v118: 15 -> 10, 0 of 13 at 15)
 	-- one time only, for everyone who hasn't had it: coins, a rocket for the next night and a revive
 	-- (worth 25 + 25 + 10 R$+ bought apart). Offered at the top of the SHOP and on the result card.
 	-- Id 0 = the product isn't made on Roblox yet: hidden everywhere.
