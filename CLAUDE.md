@@ -509,8 +509,8 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   nights): queued-never-sent 124/452, first-nighters quit mid-night 44% (93 of 133 in act I, median minute 1.7),
   solo nights 89% no ending, veterans left the lobby 70%, his nav 41 failed routes + 27 wedges a night. Done: queue
   walls + LEAVE, in/out-of-the-house routing (GDD "How he walks"), the welcome-back card, BE HIM in the lobby, two
-  prices (see Economy, v118). Reel 46 = #1 (`cant_play_alone_1_v2.mp4`, see Marketing). Reel 45's scare was
-  re-rendered: the mask had shown its inside (skin_frames' `head.look` now means where the face points). Next:
+  prices (see Economy, v118). Reel 46 = #1 (`cant_play_alone_1_v2.mp4`, see Marketing). skin_frames' `head.look`
+  now really turns the face to `look` in film2 (probed: (dx, -dy, -dz)); reel 45's scare re-rendered with it. Next:
   `--since=117`: queued-never-sent (want near 0), Leave marks, veterans' queue rate, FailPF/Repeat/Wedge_ by room.
 
 - **25 Oct (reel 45)**: #14 (see Marketing). Next reel: #15, the next chapter (ideas: he leaves something for us
