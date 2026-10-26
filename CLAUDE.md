@@ -316,6 +316,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   coming down." (under the open hatch: his mask comes down out of the dark, then drops at you) → RUN (he crawls after
   you from under the hatch). Caption: `he's still up there 👀 game in comments` (#2's). The next reels count up again
   from #2 in this new run.
+  Reel 47 = **#2** of the new run (`cant_play_alone_2_v2.mp4`, 26 Oct): he comes into my room at night: "night 10: my door
+  was open." → "night 11: wet footprints. to my bed." → "night 12: a photo on my pillow." → "so we set up a camera." (on
+  Jamie's bookcase, red light) → "3:12 am." (the camera's view of the door opening) → "he stood there all night." (the
+  camera's view: him bent over the bed) → "he knew about the camera." (his head turns up to the lens, he comes at it) →
+  RUN. Caption: `he knew about the camera 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -496,7 +501,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
   #roblox #robloxhorror #horror #fyp
   ```
-  **Pinned comment:** `someone lives in our attic. [HORROR]`
+  **Pinned comment (26 Oct on, the owner's text):**
+  ```
+  Game- someone lives in our attic.
+  Play on Roblox. It is currently ages 16+ only and I need 200 more Robux to make it accessible to all ages. Appreciate all donations
+  ```
+  **Every reel: give the caption and this comment as separate code blocks** (copyable; the owner asked).
 - **The beat** is original (synthesized in code, no samples): "someone lives in our attic". Viewers ask
   for it — `marketing/beat/` has the 64 s MP3/WAV and a video to post it as Instagram audio (rename the
   audio to the game's name).
