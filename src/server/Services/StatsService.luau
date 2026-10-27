@@ -29,9 +29,11 @@ local function fresh()
 end
 
 --[[
-	Invite rewards: bring friends, get flashlight colours. A friend counts once, the first time
-	they ever play: they joined from your invite (LaunchData "ref:<userId>") or turned up in the
-	same server as you (a Roblox friend) on their first visit. They get the first colour too.
+	Invite rewards: bring friends, get flashlight colours, and (v121) coins: Config.Referral.Coins for
+	you, kept in RefCoins until your next visit if you're away, and Welcome coins for them. A friend
+	counts once, the first time they ever play: they joined from your invite (Roblox's
+	ReferredByPlayerId, or LaunchData "ref:<userId>") or turned up in the same server as you (a
+	Roblox friend) on their first visit. They get the first colour too.
 ]]
 Stats.Beams = {
 	{ Id = "Classic", Name = "Classic", Need = 0, Color = Color3.fromRGB(255, 244, 222) },
@@ -123,6 +125,7 @@ local function mirror(player: Player)
 end
 
 local checkReferral: (Player) -> () -- below: needs save()
+local claimRefCoins: (Player) -> () -- below
 
 local function load(player: Player)
 	cache[player.UserId] = fresh()
@@ -155,6 +158,9 @@ local function load(player: Player)
 				end
 			end
 			cache[player.UserId] = d
+			if (tonumber(data.RefCoins) or 0) > 0 then
+				task.spawn(claimRefCoins, player)
+			end
 		end
 	end
 	mirror(player)
@@ -195,14 +201,56 @@ local function save(userId: number)
 					MonsterCredits = d.MonsterCredits,
 					RocketCredits = d.RocketCredits,
 					Tips = math.max(tonumber(old.Tips) or 0, d.Tips),
+					RefCoins = tonumber(old.RefCoins), -- (v121: kept for whoever invited, claimed on their next visit)
 				}
 			end)
 		end)
 	end)
 end
 
+-- (v121) coins for an invite, once their coins are loaded (EconomyService)
+local function payCoins(player: Player, n: number, sku: string): boolean
+	local t0 = os.clock()
+	while Players:GetPlayerByUserId(player.UserId) and os.clock() - t0 < 30 do
+		if ctx.Economy and ctx.Economy.ready(player) then
+			return ctx.Economy.addCoins(player, n, false, "Onboarding", sku)
+		end
+		task.wait(0.5)
+	end
+	return false
+end
+
+-- friends you brought while you were away: their coins are kept in RefCoins until you're back
+claimRefCoins = function(player: Player)
+	if not store then
+		return
+	end
+	local t0 = os.clock()
+	while not (ctx.Economy and ctx.Economy.ready(player)) do
+		if os.clock() - t0 > 30 or not Players:GetPlayerByUserId(player.UserId) then
+			return
+		end
+		task.wait(0.5)
+	end
+	local owed = 0
+	local ok = pcall(function()
+		store:UpdateAsync("u" .. player.UserId, function(old)
+			if type(old) ~= "table" then
+				return nil
+			end
+			owed = math.max(0, math.floor(tonumber(old.RefCoins) or 0))
+			old.RefCoins = nil
+			return old
+		end)
+	end)
+	if ok and owed > 0 and ctx.Economy.addCoins(player, owed, false, "Onboarding", "Referral") then
+		ctx.Remotes.Notify:FireClient(player, "Friends you invited came while you were away: +" .. owed .. " coins", "done")
+	end
+end
+
 -- credit whoever brought this brand-new player
 local function creditReferrer(referrerId: number, newcomer: Player)
+	local coins = (ctx.Config and ctx.Config.Referral and ctx.Config.Referral.Coins) or 0
 	local online = Players:GetPlayerByUserId(referrerId)
 	if online and cache[referrerId] then
 		local d = cache[referrerId]
@@ -210,18 +258,21 @@ local function creditReferrer(referrerId: number, newcomer: Player)
 		d.Referrals += 1
 		mirror(online)
 		save(referrerId)
+		local paid = coins > 0 and payCoins(online, coins, "Referral")
+		local text = newcomer.DisplayName .. " joined you" .. (paid and (": +" .. coins .. " coins") or "") .. "."
 		for _, b in Stats.Beams do
 			if b.Need and before < b.Need and d.Referrals >= b.Need then
-				ctx.Remotes.Notify:FireClient(online, newcomer.DisplayName .. " joined you. Flashlight colour unlocked: " .. b.Name, "done")
+				ctx.Remotes.Notify:FireClient(online, text .. " Flashlight colour unlocked: " .. b.Name, "done")
 				return
 			end
 		end
-		ctx.Remotes.Notify:FireClient(online, newcomer.DisplayName .. " joined you. Friends brought: " .. d.Referrals, "info")
+		ctx.Remotes.Notify:FireClient(online, text .. " Friends brought: " .. d.Referrals, paid and "done" or "info")
 	elseif store then
 		task.spawn(pcall, function()
 			store:UpdateAsync("u" .. referrerId, function(old)
 				old = type(old) == "table" and old or {}
 				old.Referrals = (tonumber(old.Referrals) or 0) + 1
+				old.RefCoins = (tonumber(old.RefCoins) or 0) + coins
 				return old
 			end)
 		end)
@@ -253,6 +304,12 @@ checkReferral = function(player: Player)
 			referrer = id
 		end
 	end
+	-- (v121) Roblox's own: they came from someone's invite (lobby invites carry no LaunchData, and a
+	-- night invite's is the house's code)
+	local by = okJoin and type(join) == "table" and tonumber(join.ReferredByPlayerId)
+	if not referrer and by and by > 0 and by ~= player.UserId then
+		referrer = by
+	end
 	if not referrer then
 		for _, other in Players:GetPlayers() do
 			if other ~= player then
@@ -272,8 +329,10 @@ checkReferral = function(player: Player)
 	d.Referred = true
 	mirror(player)
 	save(player.UserId)
-	ctx.Remotes.Notify:FireClient(player, "A friend brought you here. Flashlight colour unlocked: Ember", "done")
+	local welcome = (ctx.Config and ctx.Config.Referral and ctx.Config.Referral.Welcome) or 0
 	creditReferrer(referrer, player)
+	local paid = welcome > 0 and payCoins(player, welcome, "Referred")
+	ctx.Remotes.Notify:FireClient(player, "A friend brought you here" .. (paid and (": +" .. welcome .. " coins") or "") .. ". Flashlight colour unlocked: Ember", "done")
 end
 
 -- pick a flashlight colour you've unlocked

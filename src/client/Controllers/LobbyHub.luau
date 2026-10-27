@@ -189,6 +189,9 @@ end
 function LobbyHub.start()
 	local UI = ctx.UI
 	thirdPerson()
+	if ctx.Social then
+		ctx.Social.dockIcon()
+	end
 	local lp = game:GetService("Players").LocalPlayer
 	lp.CharacterAdded:Connect(function()
 		task.defer(thirdPerson)

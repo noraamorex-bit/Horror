@@ -311,6 +311,11 @@ end
 ---------------------------------------------------------------------------
 -- Coins and gear
 ---------------------------------------------------------------------------
+-- (their coins are loaded: addCoins will work)
+function Economy.ready(player: Player): boolean
+	return docs[player.UserId] ~= nil and pending[player.UserId] ~= nil
+end
+
 function Economy.coins(player: Player): number
 	local d = docs[player.UserId]
 	return d and d.Coins or 0

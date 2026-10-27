@@ -17,13 +17,22 @@ local player = Players.LocalPlayer
 local favoritePrompted = false
 
 -- (in the house, the invite carries this night's server code: the lobby sends whoever accepts
--- straight here, into the same house, instead of into a night of their own)
+-- straight here, into the same house, instead of into a night of their own; in the lobby it says who
+-- invited them, v121: StatsService pays you both for it)
 function Social.inviteData(): string?
 	local code = workspace:GetAttribute("NightCode")
 	if ctx.Mode ~= "Lobby" and type(code) == "string" and #code > 0 then
 		return "night:" .. code
 	end
+	if ctx.Mode == "Lobby" then
+		return "ref:" .. tostring(player.UserId)
+	end
 	return nil
+end
+
+-- (v121) what a friend who joins pays you (Config.Referral), for the buttons
+function Social.bonus(): number
+	return (ctx.Config.Referral and ctx.Config.Referral.Coins) or 0
 end
 
 function Social.invite()
@@ -35,7 +44,9 @@ function Social.invite()
 			pcall(function()
 				local options = Instance.new("ExperienceInviteOptions")
 				local launch = Social.inviteData()
-				options.PromptMessage = launch and "He's in the house. Come hide with me, right now" or "Survive the night at 14 Alder Lane with me"
+				local night = launch ~= nil and string.sub(launch, 1, 6) == "night:"
+				options.PromptMessage = (night and "He's in the house. Come hide with me, right now" or "Survive the night at 14 Alder Lane with me")
+					.. (Social.bonus() > 0 and ("  (+" .. Social.bonus() .. " coins for every friend who joins)") or "")
 				if launch then
 					options.LaunchData = launch
 				end
@@ -79,7 +90,7 @@ function Social.button(parent: Instance, kind: string, props): TextButton
 	-- minimal: dark glass, thin outline, white text
 	local b = UI.new("TextButton", {
 		Size = UDim2.fromOffset(150, 34),
-		Text = isInvite and "Invite friends" or (isRemind and "🔔 Remind me" or "Favorite"),
+		Text = isInvite and (Social.bonus() > 0 and ("Invite  ·  +" .. Social.bonus() .. " coins") or "Invite friends") or (isRemind and "🔔 Remind me" or "Favorite"),
 		Font = Enum.Font.GothamMedium,
 		TextSize = 15,
 		TextColor3 = Color3.fromRGB(235, 232, 226),
@@ -124,5 +135,15 @@ function Social.init(c)
 end
 
 function Social.start() end
+
+-- (v121) the lobby: a small INVITE icon in the dock (a friend who joins pays you both). Called by
+-- LobbyHub, once the dock is up.
+function Social.dockIcon()
+	if ctx.Mode == "Lobby" and ctx.Dock then
+		-- (no pulsing "!": the shop and rewards have those; the coins are on the invite prompt itself)
+		local b = ctx.Dock.add({ Order = 6, Glyph = "👥", Label = "INVITE", Color = Color3.fromRGB(120, 230, 150), OnClick = Social.invite })
+		b.Name = "InviteDock"
+	end
+end
 
 return Social

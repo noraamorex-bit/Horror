@@ -490,7 +490,8 @@ local ok, err = pcall(function()
 		ctx.Mode = "Game"
 		assert(ctx.Social.inviteData() == "night:abc123", "the invite carries the night's code")
 		ctx.Mode = "Lobby"
-		assert(ctx.Social.inviteData() == nil, "from the lobby: a plain invite")
+		assert(ctx.Social.inviteData() == "ref:" .. tostring(player.UserId), "from the lobby: it says who invited them (v121: coins for both)")
+		assert(string.find(inv.Text, "+" .. ctx.Config.Referral.Coins, 1, true), "the invite button says what a friend is worth: " .. inv.Text)
 		ctx.Mode = wasMode
 		ws:SetAttribute("InviteOpen", nil)
 		ws:SetAttribute("NightCode", nil)

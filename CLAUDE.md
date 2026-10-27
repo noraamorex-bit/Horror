@@ -179,6 +179,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Rain sound and occasional thunder; fog outside.
 
 **Retention (the 250 highly-engaged goal)**
+- **Invites pay (v121)**: a brand-new friend you bring = +200 coins for you (kept until you're back), +100 for them;
+  the 👥 INVITE dock icon and "+200" on every invite button. Referral = LaunchData `ref:<id>`, Roblox's
+  `ReferredByPlayerId`, or a Roblox friend in the same lobby on their first visit (StatsService).
 - Every group circle at 0 first tries to join a group night that started short (MatchService; open through
   acts I-II until bedtime, up to 4 players). An arrow at the screen edge points to the current task when its "!" is off screen.
 - Levels (XP = coins earned playing) with rewards at milestones; LV on the lobby tag, XP bar on the
@@ -526,6 +529,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **27 Oct (v121 = place version 120)**, the owner: "Gained like no visits past 2 days". Logs: lobby visits per day
+  ~450 (18-22 Oct) → 182 / 214 / 388 / 235 (23-26) → 73 by 16:00 UTC on the 27th; the visits come in spikes after reel
+  posts and the spikes shrink (25 Oct 16:00 UTC 55/h, 26 Oct 18:00 26/h, then ~10/h). Nothing broke in the game
+  (no script errors; queue/teleport and quit rates as before; 13,247 visits total, rating 20 up / 33 down). ~45%
+  of lobby visits come through a friend (`Ref`). Done: **invites pay** (`Config.Referral`: +200 coins to whoever
+  brings a brand-new friend, kept as `RefCoins` in PlayerStats_v1 until their next visit if away; +100 to the
+  friend), Roblox's `ReferredByPlayerId` now counts (before, a lobby invite carried no LaunchData and a night invite
+  only a house code, so most invites never credited anyone), lobby invites carry `ref:<userId>`, a 👥 INVITE dock
+  icon, "+200" on every invite button. Asked the owner for the views of reels 46-48. Next: `--since=120`: `Ref`
+  share of lobby visits, Referral coins paid (Telemetry sku "Referral" / "Referred").
 
 - **27 Oct (v120 = place version 119)**: the Starter Pack on the side + its window by itself (see Economy, v120).
   ui_preview now draws UIGridLayout (the dock). Next: `--since=119`: StarterAuto bought / asked (if it sells under
@@ -895,7 +909,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 119; the notes' "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 120; the notes' "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

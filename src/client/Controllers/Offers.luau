@@ -140,7 +140,7 @@ function Offers.start()
 	inviteButton = UI.new("TextButton", {
 		Name = "InviteOffer",
 		Size = UDim2.fromOffset(190, 34),
-		Text = "➕ INVITE A FRIEND",
+		Text = (ctx.Config.Referral and ctx.Config.Referral.Coins or 0) > 0 and ("➕ INVITE A FRIEND  +" .. ctx.Config.Referral.Coins) or "➕ INVITE A FRIEND",
 		Font = UI.Font.Bold,
 		TextSize = 15,
 		TextColor3 = Color3.fromRGB(235, 232, 226),

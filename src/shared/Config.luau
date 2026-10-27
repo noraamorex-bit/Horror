@@ -380,6 +380,10 @@ Config.Badges = {
 	the item still shows in the shop, marked "Soon". Price is only shown until Roblox reports the
 	real one.
 ]]
+-- (v121) invites pay: whoever brings a brand-new friend gets Coins (kept for them if they're offline),
+-- the friend gets Welcome coins (StatsService checkReferral; on top of the flashlight colours)
+Config.Referral = { Coins = 200, Welcome = 100 }
+
 Config.Shop = {
 	Passes = {
 		-- (14 Oct: the owner wants Robux for all-ages access. Every pass does more now, the pepper spray
