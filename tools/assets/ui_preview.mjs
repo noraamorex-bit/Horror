@@ -1,6 +1,6 @@
 // node tools/assets/ui_preview.mjs <ui.json> <out.png> [pc|phone|tablet] [backdrop.png]
 // Draws a GUI dump from tools/harness/ui_dump.luau the way Roblox lays it out (UDim2 position and
-// size, anchor points, UIListLayout, UIPadding, AutomaticSize, UICorner, UIStroke, UIScale, ZIndex,
+// size, anchor points, UIListLayout, UIGridLayout, UIPadding, AutomaticSize, UICorner, UIStroke, UIScale, ZIndex,
 // rich text), at a PC (1920x1080), phone (844x390) or tablet (1180x820) screen, over a backdrop.
 // An approximation: fonts are close, images are placeholders, the Roblox top bar and hotbar are
 // sketched in for context. Good enough to see what shows, where, how big, and what overlaps.
@@ -123,7 +123,26 @@ function draw(n, pw, ph, parentEl, inList) {
   // children
   const cw = Math.max(0, w - p[1] - p[3]), chh = Math.max(0, h - p[0] - p[2]);
   const guiKids = arr(n.ch).filter(c => c.size);
-  if (list) {
+  const grid = kids(n, 'UIGridLayout')[0];
+  if (grid) {
+    // (cells in order, filling down (or across) up to max cells, from the start corner; hidden ones take no cell)
+    const cwid = grid.cell[0] * cw + grid.cell[1], chei = grid.cell[2] * chh + grid.cell[3];
+    const px = grid.cpad[0] * cw + grid.cpad[1], py = grid.cpad[2] * chh + grid.cpad[3];
+    const shown = guiKids.filter(c => c.vis !== false).sort((a, b) => grid.sort === 'LayoutOrder' ? (a.order || 0) - (b.order || 0) : 0);
+    const inner = document.createElement('div');
+    inner.style.position = 'absolute'; inner.style.left = p[3] + 'px'; inner.style.top = p[0] + 'px';
+    inner.style.width = cw + 'px'; inner.style.height = chh + 'px';
+    el.appendChild(inner);
+    const max = grid.max > 0 ? grid.max : 1e9;
+    shown.forEach((c, k) => {
+      const a = k % max, b = Math.floor(k / max);
+      const [col, row] = grid.dir === 'Vertical' ? [b, a] : [a, b];
+      const right = /Right/.test(grid.corner || ''), bottom = /Bottom/.test(grid.corner || '');
+      const x = right ? cw - (col + 1) * cwid - col * px : col * (cwid + px);
+      const y = bottom ? chh - (row + 1) * chei - row * py : row * (chei + py);
+      draw(Object.assign({}, c, { pos: [0, x, 0, y], size: [0, cwid, 0, chei], anchor: [0, 0] }), cw, chh, inner, false);
+    });
+  } else if (list) {
     const box = document.createElement('div');
     box.style.display = 'flex';
     box.style.flexDirection = list.dir === 'Horizontal' ? 'row' : 'column';

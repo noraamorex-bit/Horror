@@ -271,6 +271,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   red flash, shake; then "😱 <name> jumpscared everyone!"; the buyer gets "You jumpscared N players").
   Bought from a small 😱 button under the inventory in the house and a 😱 SCARE dock icon in the lobby,
   only while someone else is in the server. Logged in Sales_v1 as JumpscareAll, night log event Prank.
+  It sells: 8 bought of 51 asked in its first two days (the best rate of anything).
+
+- **27 Oct (v120)**, the owner: "put the starter pack on the side and prompt them to buy it with the transaction
+  screen without them pressing anything or maybe accidentally pressing". It had been opened 4 times in a week (0 sold).
+  Done: client `Starter`: a ⭐ STARTER dock icon in the lobby, a small gold button in the house before the hunt, and the
+  purchase window opens by itself once a visit (lobby: stepping into a circle, if you've finished a night; house: the
+  result card, not over a revive). **Never timed to catch a tap** (waits for no finger down + 1.2 s still): tricking
+  players into buying breaks Roblox's rules (moderation, refunds) and the all-ages goal. Funnel: `Ask:StarterAuto`.
 
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
@@ -518,6 +526,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **27 Oct (v120 = place version 119)**: the Starter Pack on the side + its window by itself (see Economy, v120).
+  ui_preview now draws UIGridLayout (the dock). Next: `--since=119`: StarterAuto bought / asked (if it sells under
+  ~1 in 20, try the window only on the result card), lobby queue drops right after the window.
 
 - **27 Oct (reel 48)**: #3 of the new run (see Marketing). The stage dump carries the Halloween candies: hide
   `CandyWrap`/`CandyBody` in reel shots. `reel48/probe.sh <frames>` renders single frames full size. Next reel: #4.
@@ -883,7 +895,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 118; the notes' "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 119; the notes' "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

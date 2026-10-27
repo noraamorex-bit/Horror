@@ -255,6 +255,26 @@ local function asked(player: Player?, key: string, bought: boolean)
 end
 Shop._asked = asked -- (tests)
 
+-- (v120) a Starter Pack window the client opened by itself counts again as Ask:StarterAuto (and
+-- StarterAuto when bought, at 0 R$: the R$ are on "Starter"), so the auto prompt has its own bought / asked
+local autoAsk: { [Player]: number } = {}
+function Shop._autoFinished(player: Player?, key: string, bought: boolean)
+	if key ~= "Starter" or not player or not autoAsk[player] then
+		return
+	end
+	local fresh = os.clock() - autoAsk[player] < 120
+	autoAsk[player] = nil
+	if fresh then
+		Shop.logSale("Ask:StarterAuto", 0)
+		if bought then
+			Shop.logSale("StarterAuto", 0)
+		end
+	end
+end
+function Shop._autoAsked(player: Player) -- (tests)
+	autoAsk[player] = os.clock()
+end
+
 local onReceipt
 local function receipt(info)
 	local decision = onReceipt(info)
@@ -451,7 +471,20 @@ function Shop.start()
 	end)
 	MarketplaceService.ProcessReceipt = receipt
 	MarketplaceService.PromptProductPurchaseFinished:Connect(function(userId, productId, purchased)
-		asked(Players:GetPlayerByUserId(userId), productKey(productId), purchased == true)
+		local p = Players:GetPlayerByUserId(userId)
+		local key = productKey(productId)
+		asked(p, key, purchased == true)
+		Shop._autoFinished(p, key, purchased == true)
+	end)
+	-- (v120) the Starter Pack's window opened by itself (client Starter): its own funnel line
+	ctx.Remotes.StarterAuto.OnServerEvent:Connect(function(player, where)
+		autoAsk[player] = os.clock()
+		if ctx.Journey then
+			ctx.Journey.event(player, "StarterAuto", where == "Lobby" and "Lobby" or "Card")
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		autoAsk[player] = nil
 	end)
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
 		local pass = passById(passId)

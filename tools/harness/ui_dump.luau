@@ -27,13 +27,15 @@ S.UserInputService = {
 	GetMouseDelta = function() return roblox.Vector2.new() end,
 }
 S.GuiService = { GetGuiInset = function() return roblox.Vector2.new(0, 36), roblox.Vector2.new() end }
-S.ProximityPromptService = { PromptShown = H.signal(), PromptHidden = H.signal(), Enabled = true }
+S.ProximityPromptService = { PromptShown = H.signal(), PromptHidden = H.signal(), PromptTriggered = H.signal(), Enabled = true }
+S.MarketplaceService = { PromptGamePassPurchaseFinished = H.signal(), PromptProductPurchaseFinished = H.signal(), PromptGamePassPurchase = function() end, PromptProductPurchase = function() end }
 S.SoundService = H.wrap(roblox.Instance.new("SoundService"))
 S.Lighting = H.wrap(roblox.Instance.new("Lighting"))
 S.StarterGui = { SetCoreGuiEnabled = function() end, SetCore = function() end }
 S.RunService.IsServer = function() return false end
 
 local LOBBY = SCENE == "lobby"
+player:SetAttribute("StarterOffer", true) -- (v120: the Starter Pack on the side, while it's on offer)
 local ctx: any = { Player = player, Mode = LOBBY and "Lobby" or "Game" }
 ctx.Config = H.load("RS/Shared/Config")
 ctx.Rooms = H.load("RS/Shared/Rooms")
@@ -46,7 +48,7 @@ ctx.Remotes = setmetatable({}, { __index = function(t, k)
 	rawset(t, k, r)
 	return r
 end })
-local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Prank", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 local mods = {}
 for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -105,6 +107,12 @@ R.Objectives.OnClientEvent:Fire({
 	{ Id = "B", Text = "Get out through the garage", Done = false, Optional = true, Steps = {}, Targets = {} },
 })
 frames(5)
+-- (the side offers: attribute signals don't fire here, so they're refreshed by hand)
+for _, m in { "Offers", "Prank", "Starter" } do
+	if ctx[m] and ctx[m]._refresh then
+		ctx[m]._refresh()
+	end
+end
 if SCENE == "night" then
 	R.Thought.OnClientEvent:Fire("The popcorn's in the pantry. Then the microwave.", nil)
 elseif SCENE == "hunt" then
@@ -176,6 +184,13 @@ local function node(i)
 		n.pad = { i.Padding.Scale, i.Padding.Offset }
 		n.ha = tostring(i.HorizontalAlignment):match("%.(%w+)$")
 		n.va = tostring(i.VerticalAlignment):match("%.(%w+)$")
+		n.sort = tostring(i.SortOrder):match("%.(%w+)$")
+	elseif i:IsA("UIGridLayout") then
+		n.cell = udim2(i.CellSize)
+		n.cpad = udim2(i.CellPadding)
+		n.dir = tostring(i.FillDirection):match("%.(%w+)$")
+		n.max = i.FillDirectionMaxCells
+		n.corner = tostring(i.StartCorner):match("%.(%w+)$")
 		n.sort = tostring(i.SortOrder):match("%.(%w+)$")
 	elseif i:IsA("UIPadding") then
 		n.p = { i.PaddingTop.Offset, i.PaddingRight.Offset, i.PaddingBottom.Offset, i.PaddingLeft.Offset }

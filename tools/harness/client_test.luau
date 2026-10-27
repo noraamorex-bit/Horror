@@ -22,6 +22,11 @@ local ok, err = pcall(function()
 	S.Lighting = H.wrap(roblox.Instance.new("Lighting"))
 	S.StarterGui = { SetCoreGuiEnabled = function() end, SetCore = function() end }
 	S.RunService.IsServer = function() return false end
+	local promptsMade = {}
+	S.MarketplaceService = setmetatable({ PromptProductPurchase = function(_, _, id) table.insert(promptsMade, id) end }, { __index = function(_, k)
+		if string.find(k, "Finished$") then return H.signal() end
+		return function() return nil end
+	end })
 
 	local ctx: any = { Player = player, Mode = "Game" }
 	ctx.Config = H.load("RS/Shared/Config")
@@ -36,7 +41,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -414,6 +419,43 @@ local ok, err = pcall(function()
 		ctx.Prank._refresh()
 		player:SetAttribute("InGame", wasIn)
 		print("jumpscare everyone ok")
+	end
+	-- (v120) the Starter Pack: a small button on the side before the hunt, and its window by itself once a
+	-- visit, never while a finger is down or right after one lifts
+	do
+		local St = ctx.Starter
+		local ws = H.unwrap(H.workspaceRoot)
+		local sid = ctx.Config.Shop.Starter.Id
+		ctx.Config.Shop.Starter.Id = 4242
+		local wasAct, wasIn = ws:GetAttribute("Act"), player:GetAttribute("InGame")
+		player:SetAttribute("InGame", true)
+		player:SetAttribute("StarterOffer", true)
+		ws:SetAttribute("Act", "SmallThings")
+		St._refresh()
+		local side = H.unwrap(pg):FindFirstChild("StarterSide", true)
+		assert(side and side.Visible and string.find(side.Text, "R$ 19", 1, true), "on the side before the hunt")
+		ws:SetAttribute("Act", "SomeoneElse")
+		St._refresh()
+		assert(not side.Visible, "not during the hunt (the rocket's place)")
+		ws:SetAttribute("Act", "SmallThings")
+		St._reset()
+		local TOUCH = { UserInputType = roblox.Enum.UserInputType.Touch }
+		S.UserInputService.InputBegan:Fire(TOUCH)
+		assert(not St.auto("Card", os.clock() + 10), "a finger's down: not now")
+		S.UserInputService.InputEnded:Fire(TOUCH)
+		assert(not St.auto("Card", os.clock() + 0.3), "a finger just lifted: not yet")
+		local n = #promptsMade
+		assert(St.auto("Card", os.clock() + 5), "still for a moment: it opens")
+		assert(#promptsMade == n + 1 and promptsMade[#promptsMade] == 4242 and table.find(sent, "StarterAuto"), "the window, and the server's told")
+		assert(not St.auto("Card", os.clock() + 20) and #promptsMade == n + 1, "once a visit")
+		St._reset()
+		player:SetAttribute("StarterOffer", nil)
+		assert(not St.auto("Card", os.clock() + 5) and not side.Visible, "bought: never again")
+		ctx.Config.Shop.Starter.Id = sid
+		ws:SetAttribute("Act", wasAct)
+		player:SetAttribute("InGame", wasIn)
+		St._refresh()
+		print("starter pack ok")
 	end
 	-- the one-night rocket: a small button during the hunt, for anyone without a rocket in hand
 	do

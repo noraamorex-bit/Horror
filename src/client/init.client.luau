@@ -29,9 +29,9 @@ end
 ctx.Mode = mode
 
 local ORDER = if mode == "Lobby"
-	then { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "Prank", "LobbyHub", "Admin", "Diagnostics", "ChatTags", "Creature" }
+	then { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Prank", "LobbyHub", "Admin", "Diagnostics", "ChatTags", "Creature" }
 	else {
-		"UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Settings", "Atmosphere", "Dread", "Acoustics", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Gear", "NightVision",
+		"UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Settings", "Atmosphere", "Dread", "Acoustics", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "NightVision",
 		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Diagnostics", "ChatTags",
 	}
 

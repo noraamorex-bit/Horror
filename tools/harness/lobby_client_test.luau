@@ -36,7 +36,7 @@ local ok, err = pcall(function()
 		return r
 	end })
 	-- (the client's lobby list, init.client.luau; the owner's panel too)
-	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Store", "Locker", "Rewards", "Prank", "LobbyHub", "Admin" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Prank", "LobbyHub", "Admin" }
 	player:SetAttribute("IsAdmin", true)
 	player:SetAttribute("Coins", 1234)
 	player:SetAttribute("Candy", 7)
@@ -75,6 +75,27 @@ local ok, err = pcall(function()
 	end
 	local row = H.unwrap(pg):FindFirstChild("StarterRow", true)
 	assert(row and row.Visible, "the Starter Pack at the top of the shop")
+	-- (v120) and in the dock, and its window by itself when someone who's played steps into a circle
+	local dockIcon = H.unwrap(pg):FindFirstChild("StarterDock", true)
+	assert(dockIcon and dockIcon.Visible, "a STARTER icon in the dock")
+	ctx.Starter._reset()
+	local before = 0
+	for _, k in sent do if k == "StarterAuto" then before += 1 end end
+	player:SetAttribute("StatNights", 0)
+	ctx.Remotes.Queue.OnClientEvent:Fire({ Size = 2, Count = 1, Status = "Waiting" })
+	local after = 0
+	for _, k in sent do if k == "StarterAuto" then after += 1 end end
+	assert(after == before, "a first-timer isn't asked (the first night comes first)")
+	player:SetAttribute("StatNights", 2)
+	ctx.Remotes.Queue.OnClientEvent:Fire({ Size = 2, Count = 1, Status = "Waiting" })
+	after = 0
+	for _, k in sent do if k == "StarterAuto" then after += 1 end end
+	assert(after == before + 1, "someone who's played: the window opens while they wait in the circle")
+	player:SetAttribute("StarterOffer", nil)
+	ctx.Starter._refresh()
+	assert(not dockIcon.Visible, "bought: the icon goes")
+	player:SetAttribute("StarterOffer", true)
+	player:SetAttribute("StatNights", nil)
 	ctx.Config.Shop.Starter.Id = starterId
 	-- (v118) a returning player: the welcome-back card with what tonight is worth, and one tap to play
 	player:SetAttribute("StatNights", 3)
