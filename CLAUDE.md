@@ -321,6 +321,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   Jamie's bookcase, red light) → "3:12 am." (the camera's view of the door opening) → "he stood there all night." (the
   camera's view: him bent over the bed) → "he knew about the camera." (his head turns up to the lens, he comes at it) →
   RUN. Caption: `he knew about the camera 👀 game in comments`.
+  Reel 48 = **#3** (`cant_play_alone_3_v2.mp4`, 27 Oct): he's learned our voices (the game's mimic): "night 13: mom called
+  me downstairs." (the top of the stairs) → "mom was asleep." (her bed) → "night 14: it called lily. in my voice." (her door
+  open, the bed empty, her blanket on the floor) → "her bear was on the stairs." → "tonight it was mom's voice again." (the
+  kitchen arch glowing at the end of the hall) → "\"i made you something.\"" (a pot on the blue flame) → "mom doesn't cook at
+  3 am." (him at the stove, back to you; his head turns right round, `Look` = [yaw, pitch]; he comes at you) → RUN.
+  Caption: `he knows all our voices 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -512,6 +518,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **27 Oct (reel 48)**: #3 of the new run (see Marketing). The stage dump carries the Halloween candies: hide
+  `CandyWrap`/`CandyBody` in reel shots. `reel48/probe.sh <frames>` renders single frames full size. Next reel: #4.
 
 - **26 Oct (reel 47)**: #2 of the new run (see Marketing). The pinned comment is now the owner's donation text; every
   reel gets the caption and the comment as code blocks. Renders: a full disk makes film2's WebGL fail ("could not create
