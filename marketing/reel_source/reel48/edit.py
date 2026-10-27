@@ -18,7 +18,7 @@ CLIPS = [
     (R, shots["setup"], 60, "clip", "her bear was on the stairs."),
     (R, shots["open"], 60, "clip", "tonight it was mom's voice again."),
     (R, shots["stood"], 60, "clip", "\"i made you something.\""),
-    (R, shots["knew"], 75, "clip", "mom doesn't cook at 3 am."),
+    (R, shots["knew"], 75, "clip", "mom doesn't cook at 3\u00a0am."),
     (R, shots["run"], 30, "clip", "RUN."),
     (R, shots["card"], 180, "end", ""),
 ]
