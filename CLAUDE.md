@@ -346,6 +346,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   the end of the hall." → "night 16: closer." → "night 17: at my door." → "night 18: at the foot of my bed." → "so tonight
   i stayed awake." (lamps on, the doorway empty) → "the hall was empty." → "he was already in here." (turn in bed: he's
   crouched beside it, the maw tears open on the hit) → RUN. Caption: `he gets closer every night 👀 game in comments`.
+  Reel 50 = **#5** (`cant_play_alone_5_v2.mp4`, 28 Oct), the same recipe in the upstairs bathroom (the house's one bar of
+  signal): "night 19: someone was on the roof." (lightning: him on the garage roof outside its window) → "night 20: at the
+  window." → "night 21: in the shower." (his shape behind the drawn curtain, head turning) → "night 22: in the doorway." →
+  "so tonight i locked the door." → "and hid in the shower." → "he was in here with me." (turn round inside: he's in its
+  corner under the showerhead; the maw tears open) → RUN. Caption: `he wants the bathroom 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -537,6 +542,8 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **28 Oct (reel 50)**: #5 of the new run (see Marketing). Next reel: #6, the same recipe (the v112 look, him in most clips).
 
 - **28 Oct (reel 49)**: #4 of the new run, the v112 look (see Marketing, the views). Next: compare #4's views with
   #12's; if the v112 look wins again, keep it for reels (the game's creature is the masked v114 one: an option is
