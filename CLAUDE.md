@@ -351,6 +351,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   window." → "night 21: in the shower." (his shape behind the drawn curtain, head turning) → "night 22: in the doorway." →
   "so tonight i locked the door." → "and hid in the shower." → "he was in here with me." (turn round inside: he's in its
   corner under the showerhead; the maw tears open) → RUN. Caption: `he wants the bathroom 👀 game in comments`.
+  Reel 51 = **#6** (`cant_play_alone_6_v2.mp4`, 28 Oct), the same recipe in Lily's room: "night 23: lily said she made a
+  friend." (lightning: him in her far corner, from her bed) → "night 24: he played with her dollhouse." (a light on inside it,
+  him bent over it) → "night 25: he watched her sleep." (bent over the foot of her bed) → "night 26: he said goodnight." (in
+  her doorway) → "so tonight i slept in her room." (on the floor, the door shut) → "3 am. her music box opened." → "someone
+  was at her tea party." (sit up and turn: him hunched over her little table, back to you; his head turns right round over
+  his right shoulder (`Look` yaw negative here), the maw tears open) → RUN. Caption: `she says he's her friend 👀 game in
+  comments`. Captions keep their last words together with `\u00a0`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -553,6 +560,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **28 Oct (reel 51)**: #6 of the new run (see Marketing). Next reel: #7, the same recipe (ideas: the garage / the car, the
+  basement boiler, the attic itself again).
 
 - **28 Oct (reel 50)**: #5 of the new run (see Marketing). Next reel: #6, the same recipe (the v112 look, him in most clips).
 

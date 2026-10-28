@@ -14,11 +14,11 @@ CLIPS = [
     (R, shots["card"], 120, "card", ""),                                          # the same room in the dark
     (R, shots["door"], 72, "clip", "night 23: lily said she made a friend."),
     (R, shots["prints"], 33, "clip", "night 24: he played with her dollhouse."),
-    (R, shots["photo"], 90, "clip", "night 25: he watched her sleep."),
+    (R, shots["photo"], 90, "clip", "night 25: he watched her\u00a0sleep."),
     (R, shots["setup"], 60, "clip", "night 26: he said goodnight."),
-    (R, shots["open"], 60, "clip", "so tonight i slept in her room."),
+    (R, shots["open"], 60, "clip", "so tonight i slept in her\u00a0room."),
     (R, shots["stood"], 60, "clip", "3\u00a0am. her music box opened."),
-    (R, shots["knew"], 75, "clip", "someone was at her tea party."),
+    (R, shots["knew"], 75, "clip", "someone was at her\u00a0tea\u00a0party."),
     (R, shots["run"], 30, "clip", "RUN."),
     (R, shots["card"], 180, "end", ""),
 ]
