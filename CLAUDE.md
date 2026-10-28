@@ -338,6 +338,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   kitchen arch glowing at the end of the hall) → "\"i made you something.\"" (a pot on the blue flame) → "mom doesn't cook at
   3 am." (him at the stove, back to you; his head turns right round, `Look` = [yaw, pitch]; he comes at you) → RUN.
   Caption: `he knows all our voices 👀 game in comments`.
+  **The views (28 Oct, the owner's screenshot):** #12 **46.7K**; #11 3,787; #3 v2 3,097; #2 v2 2,401; #14 1,981;
+  #1 v2 1,529; #13 1,525; PEAK gameplay Parts 5/6 1.3K/1.6K. #12 is the one reel with the **v112 look (no mask: the pale
+  skinned body, the maw)**, and it shows him in four clips before the scare; the masked reels since show him once or
+  twice and stay under 4K. **So: the v112 look in reels (skin_frames without mask.json) and him in most clips.**
+  Reel 49 = **#4** (`cant_play_alone_4_v2.mp4`, 28 Oct), #12's recipe: he gets closer every night: "night 15: he was at
+  the end of the hall." → "night 16: closer." → "night 17: at my door." → "night 18: at the foot of my bed." → "so tonight
+  i stayed awake." (lamps on, the doorway empty) → "the hall was empty." → "he was already in here." (turn in bed: he's
+  crouched beside it, the maw tears open on the hit) → RUN. Caption: `he gets closer every night 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -529,6 +537,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **28 Oct (reel 49)**: #4 of the new run, the v112 look (see Marketing, the views). Next: compare #4's views with
+  #12's; if the v112 look wins again, keep it for reels (the game's creature is the masked v114 one: an option is
+  NIGHTMARE nights without the mask). Next reel: #5.
 
 - **27 Oct (v121 = place version 120)**, the owner: "Gained like no visits past 2 days". Logs: lobby visits per day
   ~450 (18-22 Oct) → 182 / 214 / 388 / 235 (23-26) → 73 by 16:00 UTC on the 27th; the visits come in spikes after reel
