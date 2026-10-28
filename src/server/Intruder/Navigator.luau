@@ -440,10 +440,22 @@ local function unseen(ctx, p: Vector3): boolean
 	return perception == nil or not perception.anyoneSees(p + Vector3.new(0, 2, 0))
 end
 
+-- (v122) the brain is holding him still (a scream, a cutscene, a stun): not a wedge. Live games logged
+-- ~40 wedges a night to the sim's ~3: every hold left the progress clock stale, and the first frame
+-- after it counted a wedge and threw the route away
+function Navigator:idle()
+	self.LastProgress = os.clock()
+	self.LastPos = self.Root.Position
+end
+
 -- call every frame
 function Navigator:update()
 	local goal = self.Goal
 	if not goal or self.Arrived then
+		return
+	end
+	if self.Root.Anchored or self.Humanoid.WalkSpeed < 0.5 then
+		self:idle()
 		return
 	end
 	local now = os.clock()

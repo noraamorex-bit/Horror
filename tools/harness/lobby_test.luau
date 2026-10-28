@@ -209,6 +209,38 @@ local ok, err = pcall(function()
 	ctx.Match = { find = function() return "night-9" end }
 	assert(Lobby._findWithin(1, 0.3, {}) == "night-9", "a quick answer is used")
 	print("match lookup timeout ok")
+	-- (v122) a short group to a fresh house: who's still in the lobby rides along in the teleport data
+	-- (friends first), and they're told they can follow
+	do
+		for i = #players, 1, -1 do
+			rawset(players[i], "Parent", nil)
+			table.remove(players, i)
+		end
+		hb:Fire(0.3)
+		L.Countdown = 1
+		ctx.Match = { find = function() return nil end, listNew = function() end }
+		local g, rg = makePlayer("Gina")
+		local st = makePlayer("Stranger")
+		local pal = makePlayer("Pal")
+		rawset(g, "UserId", 501); rawset(st, "UserId", 502); rawset(pal, "UserId", 503)
+		rawset(g, "DisplayName", "Gina"); rawset(st, "DisplayName", "Stranger"); rawset(pal, "DisplayName", "Pal")
+		rawset(g, "IsFriendsWith", function(_, id) return id == 503 end)
+		local list = Lobby._leftBehind({ g })
+		assert(#list == 2 and list[1] == pal and list[2] == st, "the friend first")
+		local nBefore = #fired
+		rg.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad2").CFrame.Position + roblox.Vector3.new(0, 3, 0))
+		hb:Fire(0.3)
+		waitFor(1.2)
+		hb:Fire(0.3)
+		local td = lastOptions and lastOptions.Data
+		assert(td and td.Behind == 2 and td.BehindNames == "Pal and Stranger", "who was left behind rides along: " .. tostring(td and td.BehindNames))
+		local told = 0
+		for i = nBefore + 1, #fired do
+			if string.find(fired[i], "Gina just went into a house", 1, true) then told += 1 end
+		end
+		assert(told == 2, "both told they can follow: " .. told)
+		print("left behind ok")
+	end
 end)
 print(ok and "LOBBY OK" or ("LOBBY FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

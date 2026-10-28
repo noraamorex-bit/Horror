@@ -182,6 +182,8 @@ function Journey.nightStart(players: { Player })
 	n.Data.Start = os.time()
 	n.Data.Diff = workspace:GetAttribute("Nightmare") and "Nightmare" or workspace:GetAttribute("Difficulty")
 	n.Data.Size = #players
+	-- (v122) a short group sent in while others were still in the lobby: how many could follow
+	n.Data.Behind = tonumber(workspace:GetAttribute("LobbyBehind"))
 	for _, p in players do
 		local e = entry(p)
 		e.Role = p:GetAttribute("Role")

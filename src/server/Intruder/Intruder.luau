@@ -271,6 +271,15 @@ local function park()
 	S.InHouse = false
 end
 
+-- (v122) unanchored again: his physics stay on the server
+local function serverOwn()
+	pcall(function()
+		if S.Root and not S.Root.Anchored then
+			S.Root:SetNetworkOwner(nil)
+		end
+	end)
+end
+
 local function placeAt(pos: Vector3, look: Vector3?)
 	ensureModel()
 	S.Root.Anchored = false
@@ -2130,6 +2139,7 @@ STATES.Stalk = function(_, visible)
 	if turned then
 		-- they turned round: he SCREAMS
 		S.Root.Anchored = false
+		serverOwn()
 		nextSurprise()
 		S.StungAt[turned] = now()
 		ctx.Audio.playAt("Roar", S.Head.Position, { CaptionText = "[A SCREECH, right behind you]", CaptionRange = 30 })
@@ -2147,6 +2157,7 @@ STATES.Stalk = function(_, visible)
 		-- they never turned round: a whisper, and he's gone
 		ctx.Audio.playAt("CreatureWhisper", S.Head.Position, { Caption = false })
 		S.Root.Anchored = false
+		serverOwn()
 		nextSurprise()
 		if not relocate() then
 			withdraw()
@@ -3053,6 +3064,7 @@ function Intruder.puppet()
 	function P.moveTo(target: Vector3, speed: number?, run: boolean?)
 		S.PuppetRun = run == true
 		S.Root.Anchored = false
+		serverOwn()
 		S.Nav:moveDirect(target, speed or tune().WalkSpeed)
 	end
 	function P.stop()
@@ -3581,12 +3593,31 @@ function Intruder.start()
 	end)
 
 	local acc = 0
+	local ownCheck = 0
 	RunService.Heartbeat:Connect(function(dt)
 		-- (his feet every frame: he turns corners the moment he reaches them)
 		if S.Nav and S.InHouse and not S.AdminFrozen and now() >= (S.HoldUntil or 0) and S.State ~= "Offstage" then
 			local ok, err = pcall(S.Nav.update, S.Nav)
 			if not ok then
 				warn("[Intruder] nav: " .. tostring(err))
+			end
+		elseif S.Nav then
+			S.Nav:idle() -- (held still: the wedge clock waits too)
+		end
+		-- (v122) his body stays the server's: unanchoring a part hands it back to automatic ownership,
+		-- and a nearby player's device then ran his physics (stutters, stalls); counted as Owner in
+		-- the night log
+		ownCheck += dt
+		if ownCheck > 1 and S.Root and S.Root.Parent and not S.Root.Anchored then
+			ownCheck = 0
+			local okO, owner = pcall(function()
+				return S.Root:GetNetworkOwner()
+			end)
+			if okO and owner ~= nil then
+				serverOwn()
+				if S.Nav then
+					S.Nav.Stats.Owner = (S.Nav.Stats.Owner or 0) + 1
+				end
 			end
 		end
 		acc += dt

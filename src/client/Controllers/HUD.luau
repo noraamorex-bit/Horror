@@ -685,8 +685,18 @@ local function update()
 			openSince = openSince or os.clock()
 			local lobbyN = tonumber(workspace:GetAttribute("LobbyNow"))
 			local dots = string.rep(".", 1 + math.floor(os.clock() * 2) % 3)
-			etaLabel.Text = "Finding players" .. dots .. "  " .. ctx.Util.formatSeconds(os.clock() - openSince)
-				.. ((lobbyN and lobbyN > 0) and ("  ·  " .. lobbyN .. " in the lobby") or "")
+			local onWay = tonumber(workspace:GetAttribute("OnTheirWay"))
+			local behind = workspace:GetAttribute("LobbyBehindNames")
+			if onWay and onWay > 0 then
+				-- (v122: a lobby has sent someone here)
+				etaLabel.Text = (onWay == 1 and "1 player" or (onWay .. " players")) .. " on their way" .. dots
+			elseif type(behind) == "string" and #behind > 0 and os.clock() - openSince < 120 then
+				-- (v122: the ones left in the lobby can follow: say who)
+				etaLabel.Text = "Waiting for " .. behind .. dots .. "  " .. ctx.Util.formatSeconds(os.clock() - openSince)
+			else
+				etaLabel.Text = "Finding players" .. dots .. "  " .. ctx.Util.formatSeconds(os.clock() - openSince)
+					.. ((lobbyN and lobbyN > 0) and ("  ·  " .. lobbyN .. " in the lobby") or "")
+			end
 		else
 			openSince = nil
 			etaLabel.Text = "Others can join your night · " .. tostring(workspace:GetAttribute("OpenNight"))
@@ -756,6 +766,10 @@ local function update()
 	hintBox.Visible = hintLabel.Text ~= ""
 	crosshair.Visible = player:GetAttribute("InGame") == true and not player:GetAttribute("Hiding")
 	root.Visible = not workspace:GetAttribute("EndingActive")
+end
+HUD._update = update -- (tests)
+function HUD._eta(): string -- (tests)
+	return etaLabel and etaLabel.Text or ""
 end
 
 function HUD.init(c)

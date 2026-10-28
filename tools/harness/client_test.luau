@@ -420,6 +420,23 @@ local ok, err = pcall(function()
 		player:SetAttribute("InGame", wasIn)
 		print("jumpscare everyone ok")
 	end
+	-- (v122) alone in a night that can take players: who was left in the lobby, then who's on the way
+	do
+		local ws = H.unwrap(H.workspaceRoot)
+		local wasIn = player:GetAttribute("InGame")
+		player:SetAttribute("InGame", true)
+		ws:SetAttribute("OpenNight", "1/4")
+		ws:SetAttribute("LobbyBehindNames", "Sam")
+		ctx.HUD._update()
+		assert(string.find(ctx.HUD._eta(), "Waiting for Sam", 1, true), "who can follow: " .. ctx.HUD._eta())
+		ws:SetAttribute("OnTheirWay", 1)
+		ctx.HUD._update()
+		assert(string.find(ctx.HUD._eta(), "1 player on their way", 1, true), "someone's coming: " .. ctx.HUD._eta())
+		for _, a in { "OpenNight", "LobbyBehindNames", "OnTheirWay" } do ws:SetAttribute(a, nil) end
+		ctx.HUD._update()
+		player:SetAttribute("InGame", wasIn)
+		print("lone night hud ok")
+	end
 	-- (v120) the Starter Pack: a small button on the side before the hunt, and its window by itself once a
 	-- visit, never while a finger is down or right after one lifts
 	do

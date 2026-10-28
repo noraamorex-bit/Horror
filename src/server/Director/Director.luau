@@ -795,8 +795,17 @@ function Director.startAct(name: string, cause: Player?)
 			task.delay(7, function()
 				if state == myState and state.Act == "Evening" and #ctx.Util.sessionPlayers() == 1 then
 					local open = ctx.Match and ctx.Match.isOpen()
+					-- (v122: and if others were left in the lobby, by name: they can follow)
+					local behind = tonumber(workspace:GetAttribute("LobbyBehind")) or 0
+					local names = workspace:GetAttribute("LobbyBehindNames")
+					local text = open and ctx.Story.SoloFinding or ctx.Story.SoloInvite
+					if open and behind > 0 then
+						local who = (type(names) == "string" and #names > 0) and names or (behind .. " others")
+						local plural = behind > 1 or string.find(who, " and ", 1, true) ~= nil
+						text = string.format(ctx.Story.SoloBehind, who, plural and "are" or "is")
+					end
 					for _, p in ctx.Util.sessionPlayers() do
-						ctx.Remotes.Notify:FireClient(p, open and ctx.Story.SoloFinding or ctx.Story.SoloInvite, "info")
+						ctx.Remotes.Notify:FireClient(p, text, "info")
 					end
 				end
 			end)

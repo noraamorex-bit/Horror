@@ -703,6 +703,34 @@ local function findWithin(count: number, limit: number, group: { Player }): stri
 end
 LobbyServer._findWithin = findWithin -- (tests)
 
+-- (v122) everyone else in this lobby when a short group goes in alone (friends first): the group is told
+-- who can still follow them, and those left behind are told they can (the v116-121 logs: 30 of 35 new
+-- players who left a lone night within 30 s had others in the lobby when they were sent, and went
+-- back to them, while players alone in the lobby stayed and played)
+local function leftBehind(group: { Player }): { Player }
+	local out, friends = {}, {}
+	for _, p in Players:GetPlayers() do
+		if not table.find(group, p) and not teleporting[p] then
+			local isFriend = false
+			for _, g in group do
+				local ok, yes = pcall(function()
+					return g:IsFriendsWith(p.UserId)
+				end)
+				if ok and yes then
+					isFriend = true
+					break
+				end
+			end
+			table.insert(isFriend and friends or out, p)
+		end
+	end
+	for i = #friends, 1, -1 do
+		table.insert(out, 1, friends[i])
+	end
+	return out
+end
+LobbyServer._leftBehind = leftBehind -- (tests)
+
 -- joinCode: an open night's server (MatchService) to join instead of a fresh house
 local function teleportGroup(pad, group: { Player }, joinCode: string?)
 	pad.Teleporting = true
@@ -736,11 +764,30 @@ local function teleportGroup(pad, group: { Player }, joinCode: string?)
 				local options = Instance.new("TeleportOptions")
 				options.ReservedServerAccessCode = code
 				-- (Code and Cap let the game server offer its empty places to the next lobby: MatchService)
-				options:SetTeleportData({ PartySize = #here, Mode = "Game", Code = code, Cap = pad.Size })
+				local td: any = { PartySize = #here, Mode = "Game", Code = code, Cap = pad.Size }
+				local short = not joinCode and pad.Size > 1 and #here < pad.Size and ctx.Match ~= nil and ctx.Match.listNew ~= nil
+				local behind = short and leftBehind(here) or {}
+				if #behind > 0 then
+					local names = {}
+					for i = 1, math.min(2, #behind) do
+						table.insert(names, behind[i].DisplayName)
+					end
+					td.Behind = #behind
+					td.BehindNames = table.concat(names, " and ")
+				end
+				options:SetTeleportData(td)
 				TeleportService:TeleportAsync(placeId, here, options)
 				-- (a short group to a fresh house: the next lone circle can join them from the start)
-				if not joinCode and pad.Size > 1 and #here < pad.Size and ctx.Match and ctx.Match.listNew then
+				if short then
 					task.spawn(ctx.Match.listNew, code, #here)
+					local who = here[1].DisplayName .. (#here > 1 and (" and " .. (#here - 1) .. (#here == 2 and " other" or " others")) or "")
+					for _, p in behind do
+						-- (someone already in a group circle is matched there anyway)
+						local inPad = padOf(p)
+						if p.Parent and not (inPad and inPad.Size > 1) then
+							ctx.Remotes.Notify:FireClient(p, who .. " just went into a house with room for you. Press FIND PLAYERS: you'll land with them.", "info")
+						end
+					end
 				end
 			end)
 			if ok or RunService:IsStudio() then

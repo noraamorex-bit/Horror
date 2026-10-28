@@ -104,6 +104,15 @@ local function readJoin(p: Player)
 		if tonumber(td.PartySize) and not party then
 			party = tonumber(td.PartySize)
 		end
+		-- (v122) who was left in the lobby when this short group was sent: the lone player is told they
+		-- can follow (v116-121 logs: 30 of 35 new players who left a lone night within 30 s had others in
+		-- the lobby when they were sent, and went back to them; alone in the lobby, players stayed)
+		if tonumber(td.Behind) and tonumber(td.Behind) > 0 and not workspace:GetAttribute("LobbyBehind") then
+			workspace:SetAttribute("LobbyBehind", math.floor(tonumber(td.Behind) :: number))
+			if type(td.BehindNames) == "string" and #td.BehindNames > 0 then
+				workspace:SetAttribute("LobbyBehindNames", string.sub(td.BehindNames, 1, 60))
+			end
+		end
 	end
 end
 
@@ -154,6 +163,7 @@ local function publish()
 	end
 	if open then
 		-- (places a lobby just claimed stay taken until those players arrive)
+		local onWay = 0
 		listed = pcall(function()
 			m:UpdateAsync(code, function(old)
 				local nn = n
@@ -161,11 +171,15 @@ local function publish()
 				if claimed and os.time() - claimed < 25 then
 					nn = math.max(n, tonumber(old.n) or n)
 				end
+				onWay = nn - n
 				return { n = nn, cap = ctx.Config.MaxPlayers, at = os.time(), claimed = claimed }
 			end, TTL)
 		end) or listed
+		-- (v122: a lobby has sent someone here: the HUD says they're on their way)
+		workspace:SetAttribute("OnTheirWay", onWay > 0 and onWay or nil)
 	elseif listed then
 		listed = false
+		workspace:SetAttribute("OnTheirWay", nil)
 		pcall(function()
 			m:RemoveAsync(code)
 		end)
@@ -207,6 +221,7 @@ function Match.listNew(accessCode: string, count: number)
 end
 
 Match._publish = publish -- (tests)
+Match._readJoin = readJoin -- (tests)
 Match._set = function(c: string?, size: number?, started: number?) -- (tests)
 	code, cap, party, listed = c, size, started, false
 end

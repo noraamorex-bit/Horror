@@ -66,12 +66,25 @@ local ok, err = pcall(function()
 	players = { "B1", "B2" }
 	Match._publish()
 	assert(store["night-B"].n == 3, "a fresh claim isn't overwritten by the old count, got " .. store["night-B"].n)
+	-- (v122) and the house is told someone's on the way
+	assert(H.unwrap(H.workspaceRoot):GetAttribute("OnTheirWay") == 1, "1 player on their way, got " .. tostring(H.unwrap(H.workspaceRoot):GetAttribute("OnTheirWay")))
 	-- the next lone players: the last place in each, then nothing
 	local x, y = Match.find(1), Match.find(1)
 	assert(x and y and x ~= y and (x == "night-A" or x == "night-B") and (y == "night-A" or y == "night-B"), "the last place in each")
 	assert(Match.find(1) == nil, "nothing left")
 	assert(Match.find(MAX) == nil, "never more than the server holds")
 	print("find + claim ok")
+	-- (v122) who was left in the lobby rides along in the teleport data: the lone night says who can follow
+	do
+		local ws = H.unwrap(H.workspaceRoot)
+		local p = H.wrap(H.roblox.Instance.new("Player"))
+		rawset(p, "GetJoinData", function() return { TeleportData = { Code = "night-Z", Cap = 2, PartySize = 1, Behind = 2, BehindNames = "Sam and Jo" } } end)
+		Match._readJoin(p)
+		assert(ws:GetAttribute("LobbyBehind") == 2 and ws:GetAttribute("LobbyBehindNames") == "Sam and Jo", "who was left behind")
+		ws:SetAttribute("LobbyBehind", nil)
+		ws:SetAttribute("LobbyBehindNames", nil)
+		print("left behind ok")
+	end
 
 	-- open through act II until bedtime; closed after it, past the time limit, on a skipped night
 	Match._set("night-C", 2, 1)

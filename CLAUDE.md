@@ -543,6 +543,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **28 Oct (v122 = place version 121)**, the owner: "Deeply analyze statistics and improve the game." Visits 13,405 (+158 in a
+  day), rating 20 up / 33 down. Logs since 112 (1,082 lobby visits, 446 nights): first-nighters quit mid-night 41%, 185 of 672
+  in act I (median minute 1.3); **lone first nights: 46% gone within 30 s** (groups 6-7%), and 30 of those 35 had others in
+  the lobby when sent (the countdown split them; 28 of 30 who played again landed in a group). Done: **nobody left behind**
+  (GDD): who's still in the lobby rides in the teleport data, they're told they can follow, the lone house says who's coming
+  and when someone's on the way. **His wedges** (~40 a night live, ~3 in the sim): holds no longer count as wedges
+  (`Navigator:idle`), and he's kept server-owned (three unanchors gave his physics to a player's device). Sales 1,060 R$ (Admin
+  panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
+  mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
+  solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
 - **28 Oct (reel 50)**: #5 of the new run (see Marketing). Next reel: #6, the same recipe (the v112 look, him in most clips).
 
 - **28 Oct (reel 49)**: #4 of the new run, the v112 look (see Marketing, the views). Next: compare #4's views with
@@ -928,7 +939,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 120; the notes' "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 121; the notes' "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

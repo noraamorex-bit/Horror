@@ -262,6 +262,8 @@ Story.Documents = {
 -- sent only on a solo night, a little after it starts
 -- (v113) alone at the start of a night (Director): players being found for this house, or not
 Story.SoloFinding = "Finding players for your house. Anyone who presses PLAY now lands here. Start without them, they'll catch up."
+-- (v122) sent in alone while others were still in the lobby: they can follow (%s = their names, or "2 others")
+Story.SoloBehind = "%s %s still in the lobby. When they press PLAY they land right here, in this house. Start without them, they'll catch up."
 Story.SoloInvite = "More is scarier. ➕ INVITE A FRIEND (left): they come straight into your house."
 
 Story.SoloTexts = {

@@ -246,6 +246,12 @@ def report_nights(nights):
         if g:
             ends = Counter((n.get("End") or [None, "(no ending)"])[1] for n in g)
             print(f"  size {size}: {len(g)} nights, no ending {pct(ends['(no ending)'], len(g))}: {dict(ends.most_common())}")
+            if size == 1:
+                # (v122) lone nights sent in while others were still in the lobby: told they can follow
+                behind = [n for n in g if n.get("Behind")]
+                if behind:
+                    joined = sum(1 for n in behind if any(p.get("Arr", 0) > 5 for p in n.get("P", {}).values()))
+                    print(f"      v122+: {len(behind)} sent with others left in the lobby; someone followed in {joined}")
     # after the ending: pressed ANOTHER NIGHT, LOBBY, or neither
     after = Counter()
     for n in started:
@@ -296,6 +302,8 @@ def report_nights(nights):
         wedges = {k2: v for k2, v in tot.most_common() if k2.startswith("Wedge_")}
         if wedges:
             print(f"      wedged by room (v118+): {wedges}")
+        if tot.get("Owner"):
+            print(f"      v122+: a player's device had taken over his physics {tot['Owner'] / k:.1f}/night (put back on the server)")
     # script errors (v82+): on players' devices (Perf.Err) and on the game servers (SErr)
     cerr, cwho, serr = Counter(), Counter(), Counter()
     for n in started:
