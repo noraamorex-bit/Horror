@@ -563,6 +563,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
 
+- **29 Oct (v123 = place version 122)**, the owner (screenshots of another game's feedback mailbox and Roblox's "Share Your
+  Feedback" window): "Add something like this in the lobby". Done: the feedback mailbox (see Lobby; GDD Act 0). Next: read
+  Creator Hub → Audience → Feedback; `pull_stats` prints how many visits opened it.
+
 - **29 Oct**, the owner: "Game visits are so low even after the reels". Lobby visits per day: ~450 (18-22 Oct) → 235 / 114 /
   84 (26-28 Oct); 13,510 visits, rating 20 up / 34 down, 388 favorites. Nothing broke in the game (no client errors, queue and
   teleport as before). Two causes: (1) visits follow reel reach, and only #12 (46.7K) reached far lately (the rest 1.5-4K views
@@ -967,7 +971,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 121; the notes' "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 122; the notes' "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
