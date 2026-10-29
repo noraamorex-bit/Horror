@@ -67,7 +67,7 @@ SHOTS = {
               "lights": HALL + [{"p": [6, 31, 10], "col": WARM, "b": 0.5, "r": 10}]},
     "kitchen": {"center": [-24, G + 5, 18], "radius": 32, "lampRadius": 0, "maxLamps": 0, "lights": KITCHEN + [glowAt(KPHONE, 1.8, 6)]},
     "hand": {"center": [4, U + 6, 16], "radius": 30, "lampRadius": 0, "maxLamps": 0, "door": HATCH,
-             "lights": HALL + [glowAt([4.32, U + 4.7, 25.3], 1.0, 3.5)]},
+             "lights": HALL + [glowAt([4.3, U + 4.5, 25.2], 1.0, 3.5)]},
     "hall": {"center": [4, U + 6, 16], "radius": 30, "lampRadius": 0, "maxLamps": 0, "door": HATCH, "lights": HALL},
 }
 for _s in SHOTS.values(): _s["hide"] = _s.get("hide", []) + NOCANDY
@@ -89,19 +89,19 @@ def phone(group, p, rot, lit, bubbles=False):
     def at(dx, dz, h): return [p[0] + dx + n[0] * h + zl[0] * dz, p[1] + n[1] * h + zl[1] * dz, p[2] + n[2] * h + zl[2] * dz]
     ex(group, {"pos": p, "s": [0.25, 0.03, 0.47], "rot": rot, "col": BODY, "rough": 0.3})
     if lit:
-        ex(group, {"pos": at(0, 0, 0.017), "s": [0.22, 0.004, 0.42], "rot": rot, "col": [70, 96, 150], "emissive": [70, 100, 170], "ei": 1.1, "rough": 0.2})
+        ex(group, {"pos": at(0, 0, 0.017), "s": [0.22, 0.004, 0.42], "rot": rot, "col": [30, 44, 78], "emissive": [40, 62, 120], "ei": 0.55, "rough": 0.2})
         if bubbles:
-            ex(group, {"pos": at(-0.03, -0.11, 0.021), "s": [0.13, 0.003, 0.05], "rot": rot, "col": [230, 232, 238], "emissive": [220, 224, 235], "ei": 1.2})
-            ex(group, {"pos": at(0.035, -0.03, 0.021), "s": [0.11, 0.003, 0.045], "rot": rot, "col": [90, 160, 255], "emissive": [80, 150, 255], "ei": 1.4})
+            ex(group, {"pos": at(-0.03, -0.11, 0.021), "s": [0.13, 0.003, 0.05], "rot": rot, "col": [200, 204, 214], "emissive": [190, 196, 210], "ei": 0.7})
+            ex(group, {"pos": at(0.035, -0.03, 0.021), "s": [0.11, 0.003, 0.045], "rot": rot, "col": [60, 130, 255], "emissive": [60, 130, 255], "ei": 0.9})
         else:
-            ex(group, {"pos": at(0, -0.1, 0.021), "s": [0.17, 0.003, 0.05], "rot": rot, "col": [230, 232, 238], "emissive": [220, 224, 235], "ei": 1.2})
+            ex(group, {"pos": at(0, -0.1, 0.021), "s": [0.17, 0.003, 0.05], "rot": rot, "col": [200, 204, 214], "emissive": [190, 196, 210], "ei": 0.7})
     else:
         ex(group, {"pos": at(0, 0, 0.017), "s": [0.22, 0.004, 0.42], "rot": rot, "col": [8, 8, 10], "rough": 0.15})
 phone(BED_OFF, BEDPHONE, [0.0, 0.0, 0.0], False)
 phone(BED_ON, BEDPHONE, [0.0, 0.0, 0.0], True)
 phone(KPH, KPHONE, [0.0, 0.0, 0.0], True)
 # (in my hand, tilted to face the camera)
-HP = [HANDCAM[0] + 0.1, HANDCAM[1] - 0.42, HANDCAM[2] - 1.15]
+HP = [HANDCAM[0] + 0.1, HANDCAM[1] - 0.62, HANDCAM[2] - 1.2]      # (low in the frame, under the caption)
 phone(HPH, HP, [math.atan2(HANDCAM[2] - HP[2], HANDCAM[1] - HP[1]), 0.0, 0.0], True, True)
 WOOD = [150, 118, 80]
 TOP, BOT = [9.2, 28.2], [14.3, U]

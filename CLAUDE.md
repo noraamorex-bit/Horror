@@ -360,6 +360,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   was at her tea party." (sit up and turn: him hunched over her little table, back to you; his head turns right round over
   his right shoulder (`Look` yaw negative here), the maw tears open) → RUN. Caption: `she says he's her friend 👀 game in
   comments`. Captions keep their last words together with `\u00a0`.
+  Reel 52 = **#7** (`cant_play_alone_7_v2.mp4`, 29 Oct), **a new hook** (after #4-#6 sat at ~1.4K), the masked v114 look as in
+  the game, him twice before the scare (#3's dose): mom's texts. "night 27: mom texted "you up?"" (the phone lights up by my
+  pillow) → "night 28: "come downstairs."" (him standing at the bottom of the stairs) → "night 29: "i'm in the attic."" (the
+  hatch open, the ladder down, his mask in the dark above) → "mom's phone was in the kitchen." (face up on the island) → "so i
+  texted back." (my phone in my hand, two bubbles) → ""where are you?"" (the empty upstairs hall) → ""behind you."" (turn
+  round: him right there; the mask lunges into the lens) → RUN. Phones are film2 extras (`phone()` in reel52/scene.py: real
+  size 0.25 x 0.47, a dim screen, ei ~0.5 or it blows out white). Caption: `don't answer mom's texts 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -582,6 +589,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   Reel views (29 Oct screenshot): #6 1,444 / #5 1,252 / #4 1,341 (all three the v112 look, him in most clips), #3 5,299 (masked),
   #2 2,454, #1 1,548, #14 2,000, #13 1,536, #12 47.3K. **The v112 look didn't repeat #12: #12 was a one-off**, and the series
   sits at ~1.5K a reel. Next reel: change the hook, not the monster (e.g. the all-ages opening once it's live).
+
+- **29 Oct (reel 52)**: #7 of the new run, mom's texts (see Marketing). Next: its views against #4-#6 (~1.4K) and #3 (5.3K):
+  does a new hook beat the series' floor? Next reel: #8.
 
 - **28 Oct (reel 51)**: #6 of the new run (see Marketing). Next reel: #7, the same recipe (ideas: the garage / the car, the
   basement boiler, the attic itself again).
