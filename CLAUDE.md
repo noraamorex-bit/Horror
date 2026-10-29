@@ -561,6 +561,16 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
 
+- **29 Oct**, the owner: "Game visits are so low even after the reels". Lobby visits per day: ~450 (18-22 Oct) → 235 / 114 /
+  84 (26-28 Oct); 13,510 visits, rating 20 up / 34 down, 388 favorites. Nothing broke in the game (no client errors, queue and
+  teleport as before). Two causes: (1) visits follow reel reach, and only #12 (46.7K) reached far lately (the rest 1.5-4K views
+  ≈ 10-30 visits each); (2) **the game is 16+ only** (Roblox Kids and Select, June 2026 rules: under-16s see the page but
+  can't play until the game has 250 highly engaged players in 60 days AND the creator has paid the one-time refundable 1,000 R$
+  publishing fee *or* has 2 consecutive months of Roblox Plus/Premium; staying in needs 25 HEP). Most people who watch Roblox
+  horror reels are under 16, so most reel viewers can't play. Our players are 55-65% PC/console now. Told the owner: the
+  Premium route, check the HEP count in Creator Hub, a Roblox Event for Halloween night, cross-post to TikTok/Shorts.
+  Sales since v120: StarterAuto 0/65, Starter 1/109, JumpscareAll 10/70, BecomeHim 10/112.
+
 - **28 Oct (reel 51)**: #6 of the new run (see Marketing). Next reel: #7, the same recipe (ideas: the garage / the car, the
   basement boiler, the attic itself again).
 
