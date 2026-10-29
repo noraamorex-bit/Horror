@@ -67,7 +67,7 @@ SHOTS = {
               "lights": HALL + [{"p": [6, 31, 10], "col": WARM, "b": 0.5, "r": 10}]},
     "kitchen": {"center": [-24, G + 5, 18], "radius": 32, "lampRadius": 0, "maxLamps": 0, "lights": KITCHEN + [glowAt(KPHONE, 1.8, 6)]},
     "hand": {"center": [4, U + 6, 16], "radius": 30, "lampRadius": 0, "maxLamps": 0, "door": HATCH,
-             "lights": HALL + [glowAt([4.3, U + 4.5, 25.2], 1.0, 3.5)]},
+             "lights": HALL + [glowAt([4.3, U + 4.8, 25.1], 1.0, 3.5)]},
     "hall": {"center": [4, U + 6, 16], "radius": 30, "lampRadius": 0, "maxLamps": 0, "door": HATCH, "lights": HALL},
 }
 for _s in SHOTS.values(): _s["hide"] = _s.get("hide", []) + NOCANDY
@@ -101,7 +101,7 @@ phone(BED_OFF, BEDPHONE, [0.0, 0.0, 0.0], False)
 phone(BED_ON, BEDPHONE, [0.0, 0.0, 0.0], True)
 phone(KPH, KPHONE, [0.0, 0.0, 0.0], True)
 # (in my hand, tilted to face the camera)
-HP = [HANDCAM[0] + 0.1, HANDCAM[1] - 0.62, HANDCAM[2] - 1.2]      # (low in the frame, under the caption)
+HP = [HANDCAM[0] + 0.1, HANDCAM[1] - 0.3, HANDCAM[2] - 1.25]      # (mid-frame, clear of the caption at ~75% down)
 phone(HPH, HP, [math.atan2(HANDCAM[2] - HP[2], HANDCAM[1] - HP[1]), 0.0, 0.0], True, True)
 WOOD = [150, 118, 80]
 TOP, BOT = [9.2, 28.2], [14.3, U]
