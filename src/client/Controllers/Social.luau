@@ -3,13 +3,15 @@
 	(Roblox's invite prompt), favorite the game (Roblox's favorite prompt) and REMIND ME (Roblox's
 	experience-notification opt-in: the game can then tell them when their daily reward is ready).
 	All fail quietly where Roblox doesn't allow them (Studio, a player who can't send invites,
-	already opted in, etc); REMIND ME only shows when Roblox says it can ask.
+	already opted in, etc); REMIND ME only shows when Roblox says it can ask. In the lobby, the
+	feedback mailbox opens Roblox's feedback window (v123).
 ]]
 
 local Players = game:GetService("Players")
 local SocialService = game:GetService("SocialService")
 local AvatarEditorService = game:GetService("AvatarEditorService")
 local ExperienceNotificationService = game:GetService("ExperienceNotificationService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 
 local Social = {}
 local ctx
@@ -74,6 +76,19 @@ function Social.remind()
 	end)
 end
 
+-- (v123) Roblox's own feedback window, from the mailbox on the lobby lawn (LobbyServer): what's sent
+-- shows in Creator Hub → Audience → Feedback (Roblox allows one a day per player per game)
+function Social.feedback()
+	task.spawn(function()
+		local ok = pcall(function()
+			(SocialService :: any):PromptFeedbackSubmissionAsync()
+		end)
+		if not ok and ctx.Notice then
+			ctx.Notice.show({ Title = "Feedback", Body = "Feedback isn't available right now. Try again later.", Button = "OK" })
+		end
+	end)
+end
+
 -- asks once per session, after a finished night
 function Social.maybeAskFavorite()
 	if favoritePrompted then
@@ -134,7 +149,15 @@ function Social.init(c)
 	ctx.Social = Social
 end
 
-function Social.start() end
+function Social.start()
+	if ctx.Mode == "Lobby" then
+		ProximityPromptService.PromptTriggered:Connect(function(prompt)
+			if prompt.Name == "FeedbackPrompt" then
+				Social.feedback()
+			end
+		end)
+	end
+end
 
 -- (v121) the lobby: a small INVITE icon in the dock (a friend who joins pays you both). Called by
 -- LobbyHub, once the dock is up.

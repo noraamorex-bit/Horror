@@ -388,6 +388,52 @@ local function build(root: Folder)
 	if ctx.Shop then
 		ctx.Shop.buildBoard(root, CFrame.lookAt(ORIGIN + V(15, 0.5, 5), ORIGIN + V(2, 0.5, 13)))
 	end
+	-- (v123) the feedback mailbox, across the walk from the donation board: its prompt opens Roblox's own
+	-- feedback window (client Social.feedback; what's sent shows in Creator Hub → Audience → Feedback)
+	do
+		local cf = CFrame.lookAt(ORIGIN + V(-14, 0.5, 5), ORIGIN + V(-2, 0.5, 13))
+		local box = Kit.mailbox(root, cf, Color3.fromRGB(26, 26, 30))
+		box.Name = "FeedbackBox"
+		local body = box:FindFirstChild("MailBody") :: BasePart
+		local glow = Instance.new("PointLight")
+		glow.Range = 9
+		glow.Brightness = 0.8
+		glow.Color = Color3.fromRGB(255, 236, 200)
+		glow.Parent = body
+		local sign = Instance.new("BillboardGui")
+		sign.Name = "FeedbackSign"
+		sign.Size = UDim2.fromScale(7, 1.3)
+		sign.StudsOffsetWorldSpace = V(0, 2.4, 0)
+		sign.MaxDistance = 70
+		sign.LightInfluence = 0
+		sign.Parent = body
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.GothamBlack
+		label.TextScaled = true
+		label.Text = "📝 LEAVE FEEDBACK!"
+		label.TextColor3 = Color3.fromRGB(245, 242, 235)
+		label.TextStrokeTransparency = 0.2
+		label.TextStrokeColor3 = Color3.fromRGB(10, 10, 12)
+		label.Parent = sign
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "FeedbackPrompt"
+		prompt.ActionText = "Send message"
+		prompt.ObjectText = "Leave some feedback!"
+		prompt.HoldDuration = 0
+		prompt.MaxActivationDistance = 10
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = body
+		-- (counted on the visit's lobby log: did anyone use it)
+		pcall(function()
+			prompt.Triggered:Connect(function(p)
+				if ctx.Journey and ctx.Journey.lobbyMark then
+					ctx.Journey.lobbyMark(p, "Feedback")
+				end
+			end)
+		end)
+	end
 	-- two boards beside the queue circles (top 10, refreshed): nights survived, and fastest wins
 	local function leaderboard(name: string, at: Vector3, heading: string, empty: string, which: string?)
 		-- (the survivors' board is a little taller: the top 10, and a line about the secret ending)

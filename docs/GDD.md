@@ -198,6 +198,8 @@ In the game server the group spawns in the kitchen, facing the fridge (v110). On
 
 **Hard** (`Config.Difficulty.Hard`): he is faster, senses you sooner, checks more hiding spots and rests less; flashlight batteries last 70%; help takes 25% longer; the everyone-captured last chance is 30 s. The HUD shows "· HARD" next to the act. After the ending, everyone is teleported back to the lobby.
 
+**Feedback mailbox (v123, the owner asked).** On the lawn across the front walk from the donation board (to the left of where you spawn) stands a dark mailbox, lit, with a "📝 LEAVE FEEDBACK!" sign floating over it. Its prompt ("Leave some feedback! · Send message", no hold) opens Roblox's own feedback window (`SocialService:PromptFeedbackSubmissionAsync`, client `Social.feedback`): what players write shows in Creator Hub → Audience → Feedback (Roblox allows one a day per player per game). The lobby log counts each use (`Feedback`).
+
 How it works: one place serves both. Public servers run the lobby (`server/Lobby/LobbyServer`); reserved servers created by `TeleportService:ReserveServer` run the house (`shared/Mode`). Studio can't teleport, so a Studio test runs the house directly with the old in-house READY screen (`Config.ForceMode = "Lobby"` shows the lobby instead). To split them into two places later, set `Config.Lobby.GamePlaceId` / `LobbyPlaceId`. Because lobby and game share one place, **Server Size also caps the lobby**: set it higher than 4 (e.g. 20) so more people can gather; a game server only ever receives one group, and the game caps a night at 4.
 
 ### Onboarding: one notice, then your own thoughts

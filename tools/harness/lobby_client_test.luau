@@ -22,6 +22,9 @@ local ok, err = pcall(function()
 	S.Lighting = H.wrap(roblox.Instance.new("Lighting"))
 	S.StarterGui = { SetCoreGuiEnabled = function() end, SetCore = function() end }
 	S.RunService.IsServer = function() return false end
+	-- (v123) Roblox's feedback window, opened from the lobby's mailbox
+	local feedbackAsked = 0
+	S.SocialService = setmetatable({ PromptFeedbackSubmissionAsync = function() feedbackAsked += 1 end }, { __index = function() return function() return nil end end })
 
 	local ctx: any = { Player = player, Mode = "Lobby" }
 	ctx.Config = H.load("RS/Shared/Config")
@@ -121,6 +124,11 @@ local ok, err = pcall(function()
 		assert(not (d:IsA("TextLabel") and d.Text == "BE HIM"), "no BE HIM in the lobby")
 	end
 	assert(H.unwrap(pg):FindFirstChildWhichIsA("UIGridLayout", true), "the dock wraps into a second column")
+	-- (v123) the feedback mailbox's prompt opens Roblox's feedback window; other prompts don't
+	S.ProximityPromptService.PromptTriggered:Fire({ Name = "DonatePrompt" })
+	S.ProximityPromptService.PromptTriggered:Fire({ Name = "FeedbackPrompt" })
+	H.task.wait(0.05)
+	assert(feedbackAsked == 1, "the mailbox opens the feedback window once, got " .. feedbackAsked)
 	-- count UI objects
 	local n = 0
 	for _ in H.unwrap(pg):GetDescendants() do n += 1 end

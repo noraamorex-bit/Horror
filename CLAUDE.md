@@ -64,6 +64,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Returning players get a small "BACK FOR ANOTHER NIGHT?" card (streak, daily reward, quests, NIGHTMARE,
   ▶ PLAY). The dock wraps into two columns. **Never offer Become Him in the lobby** (v119, the owner).
 - Shop has a pulsing "!" to attract; donation board on the lawn.
+- **Feedback mailbox (v123, the owner):** across the walk from the donation board, "📝 LEAVE FEEDBACK!"; its prompt opens
+  Roblox's own feedback window (`Social.feedback`). Read what players send in Creator Hub → Audience → Feedback.
 
 **HUD / text**
 - Monochrome, bold but smaller text on dark boxes. One message at a time — never several in a couple of

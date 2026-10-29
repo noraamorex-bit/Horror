@@ -60,6 +60,16 @@ local ok, err = pcall(function()
 	for _, d in watcher:GetDescendants() do
 		if d:IsA("BasePart") then assert(not d.CanCollide, "nothing on him collides") end
 	end
+	-- (v123) the feedback mailbox on the lawn, across the walk from the donation board
+	local fbox = lobby:FindFirstChild("FeedbackBox", true)
+	local fprompt = fbox and fbox:FindFirstChild("FeedbackPrompt", true)
+	assert(fprompt and fprompt.ActionText == "Send message" and fprompt.HoldDuration == 0, "a feedback mailbox with its prompt")
+	local fsign = fbox:FindFirstChild("FeedbackSign", true)
+	assert(fsign and string.find(fsign:FindFirstChildWhichIsA("TextLabel").Text, "FEEDBACK"), "and its sign")
+	local fpos = fbox:FindFirstChild("MailBody").CFrame.Position
+	local spawnPos = lobby:FindFirstChild("LobbySpawn").CFrame.Position
+	local d = (fpos - spawnPos).Magnitude
+	assert(d > 8 and d < 24 and fpos.Z > spawnPos.Z - 10, "near where you spawn, off the walk, not by the circles: " .. tostring(d))
 	-- every circle counts down from Countdown the moment someone steps in; full, it drops to FullCountdown
 	local L = ctx.Config.Lobby
 	assert(L.Countdown == 10 and L.FullCountdown == 3, "10 s, 3 s when full")

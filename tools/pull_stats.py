@@ -144,6 +144,9 @@ def report_lobby(lobby):
     qnt = [v for v in visits if v.get("Queued") is not None and v.get("Tp") is None]
     print(f"  queued but never sent: {len(qnt)} of {len([v for v in visits if v.get('Queued') is not None])}  "
           f"(v107+: stepped off after queuing {len(off)}, teleport failed {len(fail)}, match lookup timed out {len(slow)})")
+    # (v123) the feedback mailbox (the messages themselves are in Creator Hub → Audience → Feedback)
+    fb = [v for v in visits if v.get("Feedback")]
+    print(f"  opened the feedback mailbox (v123+): {len(fb)} visits")
 
 
 def report_nights(nights):
