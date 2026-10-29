@@ -16,8 +16,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   camera across a button must never press it).
 - The owner posts reels on **Instagram** (several accounts) to bring players.
 - **Goal: maximize players and engagement** ("a game that will get millions of visits"). Numbers so far:
-  0 → 500 → 850 → 1.1k → 1.8k visits; **62 / 250 highly engaged players** (Roblox's 250-highly-engaged
-  requirement for all-ages play). Reels are what brought the traffic.
+  0 → 500 → 850 → 1.1k → 1.8k → 13.5k visits; **400 / 250 highly engaged players** (29 Oct; Roblox's 250-highly-engaged
+  requirement for all-ages play is met: what's left is the refundable 1,000 R$ publishing fee). Reels are what brought the traffic.
 
 ## How the owner wants work done
 
@@ -570,6 +570,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   horror reels are under 16, so most reel viewers can't play. Our players are 55-65% PC/console now. Told the owner: the
   Premium route, check the HEP count in Creator Hub, a Roblox Event for Halloween night, cross-post to TikTok/Shorts.
   Sales since v120: StarterAuto 0/65, Starter 1/109, JumpscareAll 10/70, BecomeHim 10/112.
+  Same day, the owner: 750 R$ + 465 pending, **400 highly engaged**. So all ages only waits for the pending Robux to clear and
+  the owner to pay the refundable 1,000 R$ fee in Creator Hub (their call; we never spend Robux). Also check the Maturity &
+  Compliance questionnaire is filled (the API reports ageRating UNSPECIFIED): its label sets the youngest age that can play.
+  Reel views (29 Oct screenshot): #6 1,444 / #5 1,252 / #4 1,341 (all three the v112 look, him in most clips), #3 5,299 (masked),
+  #2 2,454, #1 1,548, #14 2,000, #13 1,536, #12 47.3K. **The v112 look didn't repeat #12: #12 was a one-off**, and the series
+  sits at ~1.5K a reel. Next reel: change the hook, not the monster (e.g. the all-ages opening once it's live).
 
 - **28 Oct (reel 51)**: #6 of the new run (see Marketing). Next reel: #7, the same recipe (ideas: the garage / the car, the
   basement boiler, the attic itself again).
