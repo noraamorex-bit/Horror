@@ -125,7 +125,7 @@ window.setFrame = (f, fr, cuts) => {
   const cam = fr.cam;
   $('camui').style.opacity = cam ? 1 : 0;
   if (cam) {
-    filt = 'grayscale(1) contrast(1.35) brightness(' + ((fr.bright || 1.45) * 1.05) + ')';
+    filt = 'grayscale(1) contrast(1.2) brightness(' + (fr.bright || 1.45) + ')';
     zoom = 1.0;
     $('camlabel').textContent = cam.label || 'FRONT DOOR';
     $('camdot').style.opacity = (Math.floor(f / 15) % 2) ? 1 : 0.25;

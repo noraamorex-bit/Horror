@@ -370,6 +370,15 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   texted back." (my phone in my hand, two bubbles) → ""where are you?"" (the empty upstairs hall) → ""behind you."" (turn
   round: him right there; the mask lunges into the lens) → RUN. Phones are film2 extras (`phone()` in reel52/scene.py: real
   size 0.25 x 0.47, a dim screen, ei ~0.5 or it blows out white). Caption: `don't answer mom's texts 👀 game in comments`.
+  **#7 got 50K views** (30 Oct, the owner; #4-#6 ~1.4K): an everyday, relatable hook (texts from mom) beat the monster's look.
+  Reel 53 = **#8** (`cant_play_alone_8_v2.mp4`, 30 Oct), the same idea: **the doorbell camera**. "night 30: the doorbell cam. 3 am."
+  (its view: him at the end of the front walk in the rain) → "night 31: closer." (on the porch steps) → "night 32: he looked right
+  at it." (bent down to the lens until his mask fills it) → "tonight it went off again." (my phone, the notification) → "the porch
+  was empty." → "the front door was open." (from the stairs) → "he was already inside." (turn round in the hall; the mask lunges) →
+  RUN (out onto the porch, him through the door after you). New in comp_cantplay: **`fr.cam`** = { label, clock [h, m, s], date,
+  rain }: grey night vision through a round lens, ● FRONT DOOR / LIVE, a running clock, rain streaks; film2's IR is a wide spot
+  `flash` from the camera (keep `bright` ~1.05 on cam frames or the porch blows out white). Caption: `never open the door at 3am 👀
+  game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -572,6 +581,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **30 Oct (reel 53)**: #8, the doorbell camera (see Marketing). Next: its views against #7 (50K). Next reel #9: another
+  everyday thing turned (ideas: the baby monitor, the smart speaker answering at night, the family location app showing someone
+  home, a voicemail from your own number).
 
 - **30 Oct (v124 = place version 123)**, the owner: "#7 did well; 50k views. Also game stats have gotten better. Now analyze and
   improve the game and make next reel". Visits 14,103 (+593 in ~1.5 days; was ~100/day), 22 up / 35 down, 5 playing. Logs since 121

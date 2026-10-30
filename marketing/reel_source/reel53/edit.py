@@ -38,7 +38,7 @@ for reel, start, n, section, cap in CLIPS:
             # the doorbell camera's view: grey night vision, FRONT DOOR, the clock running from 3:12 am, rain
             clock = {shots["door"]: [3, 12, 7], shots["prints"]: [3, 14, 41], shots["photo"]: [3, 16, 2], shots["open"]: [3, 12, 55]}[start]
             fr["cam"] = {"label": "FRONT DOOR", "clock": clock, "rain": True, "date": "OCT 31" if start == shots["open"] else "OCT 2" + str(7 + [shots["door"], shots["prints"], shots["photo"]].index(start))}
-            fr["bright"] = 1.7
+            fr["bright"] = 1.05
         out.append(fr)
 print(len(out), "frames =", len(out) / FPS, "s")
 cuts, t = [], 0
