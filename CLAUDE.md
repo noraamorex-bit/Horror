@@ -405,6 +405,15 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   spot) → "i checked my room." (my door swings open: empty) → "i checked the hall." → "then i looked up." (the hatch open, his
   mask comes down out of the dark; it drops at you on 22.15 s) → RUN. film2 phones in reel55/scene.py draw the map (`phone(...,
   dots)`). Caption: `he joined our family map 👀 game in comments`.
+  **The views (30 Oct, the owner's screenshot): #7 mom's texts 115K**, #8 the doorbell 12.6K, #8 the family map 4,956 (newest),
+  #6 1,843, #5 1,467, #4 1,579. Quoted texts with a twist ("behind you.") win; sequels of the hit next.
+  Reel 56 = **#9** (`cant_play_alone_9_v2.mp4`, 30 Oct), **the sequel to #7: mom texts again**. "night 36: mom texted "are you
+  awake?"" (the phone by my pillow) → "night 37: "let me in."" (from my back window, lightning: him on the lawn looking up) →
+  "night 38: "i'm upstairs."" (my door eases open: him at the far end of the hall) → "mom works nights." (her bed, made, empty)
+  → "so i called her." (my phone: calling) → "it rang under my bed." (a light on the floor under the foot of my bed) → "someone
+  picked up." (down on the floor looking under the bed: her phone lit, his mask behind it on its side, looking at me; it comes
+  at you on 22.15 s) → RUN. Under Jamie's bed: a 1.6-stud gap at the foot (x -31.4), the camera at U + 0.85; the mask on its
+  side is `head.roll` 1.45. Caption: `don't answer if mom calls 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -613,6 +622,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   one closet = a win when the police pulled up. Done: stale hiding spots + the last run to the front door (see The intruder).
   Next: `--since=124`: `Stale` events (how often 1 vs 2), `OutFront` escapes, captures and quits in the last run (act Guest after
   FinalRun), and whether the rating moves.
+
+- **30 Oct (reel 56)**: #9, mom texts again (see Marketing; #7 is at 115K). Next: its views against #7; if sequels of the hit
+  work, a #10 in the same thread (mom's voicemail, mom's location, mom at the door).
 
 - **30 Oct (reels 54-55)**: FIND HIM (reel 54) rejected by the owner, not posted. Reel 55 = #8, the family map (see Marketing).
   Next: its views against #7 (50K). Next reel #9: another everyday thing turned (the baby monitor, the smart speaker, a voicemail
