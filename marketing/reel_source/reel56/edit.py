@@ -32,7 +32,7 @@ for reel, start, n, section, cap in CLIPS:
             p = i % 180
             src = start + 20 + (p if p < 90 else 179 - p)    # the dark room, drifting slowly back and forth
         fr = {"src": f"{S}/{reel}/raw/{src:04d}.png", "section": section, "cap": cap, "k": i / max(1, n - 1), "i": i}
-        if start in (shots["prints"], shots["photo"], shots["setup"], shots["stood"]) and section == "clip":
+        if start in (shots["prints"], shots["setup"], shots["stood"]) and section == "clip":
             fr["bright"] = 1.8                       # (the dark house: lifted so a phone shows it)
         out.append(fr)
 print(len(out), "frames =", len(out) / FPS, "s")
