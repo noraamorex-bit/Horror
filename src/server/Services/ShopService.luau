@@ -480,7 +480,7 @@ function Shop.start()
 	ctx.Remotes.StarterAuto.OnServerEvent:Connect(function(player, where)
 		autoAsk[player] = os.clock()
 		if ctx.Journey then
-			ctx.Journey.event(player, "StarterAuto", where == "Lobby" and "Lobby" or "Card")
+			ctx.Journey.event(player, "StarterAuto", (where == "Lobby" or where == "Night") and where or "Card")
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)

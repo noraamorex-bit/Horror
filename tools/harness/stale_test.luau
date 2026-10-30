@@ -85,6 +85,7 @@ local ok, err = pcall(function()
 	assert(S.InHouse, "in the house")
 	local tune = I._tune()
 	local Hunt = ctx.Story.Hunt
+	S.NextSense = 1e12 -- (v126's sense sprint off for the stale checks: section 4 tests it)
 	local function patrolling(at)
 		S.State = "Patrol"; S.Data = { Route = {}, Index = 0, Moving = true, PauseUntil = 1e12 }; S.Heard = nil
 		if at then S.Root.CFrame = R.CFrame.new(at) end
@@ -169,6 +170,49 @@ local ok, err = pcall(function()
 	ctx.Hiding.exit(a)
 	print("moving resets ok")
 
+	-- 4) (v126) he knows where you are: every SenseEvery s he sprints at someone's current position. Out in
+	--    the open: a charge at SenseSpeed that keeps re-aiming at them. Hiding: straight to their spot to listen
+	do
+		b:SetAttribute("InGame", true)
+		local aRoot, bRoot = ctx.Util.getRoot(a), ctx.Util.getRoot(b)
+		aRoot.CFrame = R.CFrame.new(spot.Exit.Position + R.Vector3.new(0, 3, 0))
+		bRoot.CFrame = R.CFrame.new(R.Vector3.new(0, 300, 400))
+		b:SetAttribute("InGame", nil)
+		patrolling(spot2.Exit.Position + R.Vector3.new(40, 0, 0))
+		S.SensedAt = {}
+		S.Spared = {} -- (she was freed in section 1: her FreedGrace would hide her from him)
+		S.NextSense = T - 1
+		tick(0.2)
+		assert(S.State == "Charge" and S.Data.Homing == a and S.Data.Speed == tune.SenseSpeed, "he sprints at her, got " .. S.State)
+		assert(thought(a, Hunt.Sensed), "she's told he's coming")
+		-- (the first run of the night plays the HeKnows cutscene: his face, the scream; he's held for it)
+		local cut = false
+		for _, f in fired do if f[1] == "Cutscene" and type(f[3]) == "table" and f[3].Name == "HeKnows" then cut = true end end
+		assert(cut, "the first run of the night: the HeKnows cutscene")
+		tick(4.5)
+		assert(S.State == "Charge" and S.Data.Homing == a, "after the cutscene he goes, got " .. S.State)
+		-- she moves: he re-aims at where she is now
+		aRoot.CFrame = R.CFrame.new(spot3.Exit.Position + R.Vector3.new(0, 3, 0))
+		tick(0.7)
+		assert(S.State == "Charge" and (S.Data.Pos - aRoot.Position).Magnitude < 1, "re-aimed at her new position")
+		-- next time she's hiding: he runs to her spot and listens
+		ctx.Hiding.enter(a, spot3)
+		-- (no physics here: he's put a few steps from her spot so his run there "arrives")
+		patrolling(spot3.Exit.Position + R.Vector3.new(0, 0, 3))
+		a:SetAttribute("HoldingBreath", true)
+		S.SensedAt = {}
+		S.NextSense = T - 1
+		tick(0.2)
+		a:SetAttribute("HoldingBreath", nil)
+		assert(S.State == "Inspect" and S.Data.Spot == spot3, "hiding: straight to her spot, got " .. S.State)
+		assert(thought(a, Hunt.SensedHiding), "and she's told")
+		assert(S.NextSense > T + tune.SenseEvery[1] - 1, "the next one in SenseEvery s")
+		ctx.Hiding.exit(a)
+		S.NextSense = 1e12
+		patrolling(spot.Exit.Position + R.Vector3.new(60, 0, 0))
+		print("sense sprint ok")
+	end
+
 	-- 3) the police: the last run for the front door
 	b:SetAttribute("InGame", true)
 	ctx.Util.getRoot(b).CFrame = R.CFrame.new(spot3.Exit.Position + R.Vector3.new(0, 3, 0))
@@ -176,6 +220,11 @@ local ok, err = pcall(function()
 	ctx.Escape.callForHelp("Cell", a)
 	ctx.Escape.finalRun()
 	assert(ctx.Escape.isFinalRun(), "final run on")
+	do
+		local cut = false
+		for _, f in fired do if f[1] == "Cutscene" and type(f[3]) == "table" and f[3].Name == "PoliceHere" then cut = true end end
+		assert(cut, "the PoliceHere cutscene")
+	end
 	local door = ctx.Doors.get("FrontDoor")
 	assert(door.IsOpen and not door.Locked, "the front door is open")
 	assert(type(H.workspaceRoot:GetAttribute("FinalRunEnd")) == "number", "GET OUT timer on the HUD")
@@ -190,7 +239,8 @@ local ok, err = pcall(function()
 	ctx.Util.getRoot(a).CFrame = R.CFrame.new(spot.Exit.Position + R.Vector3.new(0, 3, 0))
 	S.State = "Patrol"; S.Data = { Route = {}, Index = 0, Moving = true, PauseUntil = 1e12 }
 	local went = false
-	for _ = 1, math.floor((ctx.Config.Help.FinalRunGrace + 3) * 10) do
+	-- (v126: the PoliceHere cutscene holds him a few seconds first)
+	for _ = 1, math.floor((ctx.Config.Help.FinalRunGrace + 10) * 10) do
 		tick(0.1)
 		if S.State == "CheckSpot" and S.Data.Spot == spot3 then went = true end
 	end

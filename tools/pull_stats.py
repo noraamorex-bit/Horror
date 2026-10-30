@@ -214,6 +214,10 @@ def report_nights(nights):
         outfront = sum(1 for r in group for ev in r[2].get("Ev") or [] if ev[1] == "OutFront")
         if stale or outfront:
             print(f"      stale hiding spots (1 listened, 2 opened): {dict(stale)}  out the front door to the police: {outfront}")
+        # (v126) he knew where they were and ran at them: in the open / hiding
+        sensed = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Sensed" and len(ev) > 2)
+        if sensed:
+            print(f"      his runs at someone's position (v126): {dict(sensed)}  per player {sum(sensed.values()) / n:.2f}")
     # devices and frame rates: quitters vs the rest
     def perf(rows_):
         p = [r[2].get("Perf") or {} for r in rows_]

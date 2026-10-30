@@ -33,7 +33,7 @@ local ANIMS = {
 local S: any = {}
 local tune: () -> any
 local charge: (Vector3, Player?) -> ()
-local inspect: (any) -> ()
+local inspect: (any, number?) -> ()
 local grabAnyone: () -> boolean
 local patrolRoute: () -> { Vector3 }
 local unstick: (string) -> ()
@@ -77,6 +77,8 @@ local function fresh()
 		HideStale = {}, -- (v125) player -> { Spot, Since, Stage, Next, Warned }: how long they've camped one spot
 		FinalRun = nil, -- (v125) the police are out front: until when he goes for everyone still inside
 		FinalNext = 0,
+		NextSense = nil, -- (v126) when he next sprints at someone's current position
+		SensedAt = {}, -- player -> when he last went for them that way
 		Tracks = {},
 		CurrentTrack = nil,
 		StepClock = 0,
@@ -1798,7 +1800,27 @@ STATES.Charge = function(_, visible)
 	if grabAnyone() then
 		return
 	end
-	local speed = I.ChargeSpeed + (S.Frenzy and 0.5 or 0)
+	local speed = d.Speed or (I.ChargeSpeed + (S.Frenzy and 0.5 or 0))
+	-- (v126) a run at someone's current position: he keeps re-aiming at where they are now
+	local homing = d.Homing
+	if homing and now() < (d.HomingUntil or 0) and valid(homing) and not homing:GetAttribute("Hiding") and not spared(homing) then
+		local r = rootOf(homing)
+		if r and now() >= (d.NextAim or 0) then
+			d.NextAim = now() + 0.5
+			d.Pos = r.Position
+			d.Searching = false
+		end
+	elseif homing and valid(homing) and homing:GetAttribute("Hiding") and not d.Searching then
+		-- (they got into a hiding spot on the way: he goes straight to it and listens)
+		local spot = ctx.Hiding.spotOf(homing)
+		if spot then
+			d.Homing = nil
+			S.HeardHide[spot] = now()
+			S.SpotCooldown[spot] = nil
+			inspect(spot, speed)
+			return
+		end
+	end
 	if not d.Searching then
 		follow(d.Pos, speed)
 		local off = d.Pos - pos()
@@ -1908,14 +1930,14 @@ local function investigate(at: Vector3, source: Player?)
 end
 
 -- stop at a hiding spot and listen (the heartbeat minigame for whoever's inside)
-inspect = function(spot)
+inspect = function(spot, speed: number?)
 	if not spot or S.State == "Inspect" or now() < (S.SpotCooldown[spot] or 0) then
 		return
 	end
 	S.SpotCooldown[spot] = now() + 30
 	setState("Inspect", { Spot = spot, Phase = "Approach" })
 	S.HuntTarget = nil
-	S.Nav:goTo(spot.Exit.Position, { Speed = tune().InvestigateSpeed, Tolerance = 2.5 })
+	S.Nav:goTo(spot.Exit.Position, { Speed = speed or tune().InvestigateSpeed, Tolerance = 2.5, Hurry = speed ~= nil })
 	speak("Inspect")
 end
 
@@ -2768,6 +2790,81 @@ local function finalRunTick(): boolean
 end
 Intruder._staleHiding = staleHiding -- (tests)
 
+--[[
+	He knows where you are (v126, the owner: "He didn't even check my hiding spot. I want him to
+	automatically sprint to my current location... Make the monster much scarier and harder"). Every
+	SenseEvery seconds of the hunt he picks one of you, the one he went for longest ago (closest first on
+	a tie), and sprints at SenseSpeed to where they are now: a charge that keeps re-aiming at them if
+	they're out in the open (SenseHoming s), or straight to their hiding spot to listen at it (the
+	heartbeat) if they're hiding. They're told, he says something, the screen shakes.
+]]
+local SENSE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true }
+local function senseTick(): boolean
+	local I = tune()
+	if not I.SenseEvery then
+		return false
+	end
+	if not S.NextSense then
+		S.NextSense = now() + (I.SenseFirst or 15)
+		return false
+	end
+	if now() < S.NextSense or not SENSE_FREE[S.State] then
+		return false
+	end
+	local best, bestKey = nil, nil
+	for _, p in ctx.Util.activePlayers() do
+		local r = not spared(p) and rootOf(p)
+		if r then
+			local key = { S.SensedAt[p] or -1e9, (r.Position - pos()).Magnitude }
+			if not bestKey or key[1] < bestKey[1] or (key[1] == bestKey[1] and key[2] < bestKey[2]) then
+				best, bestKey = p, key
+			end
+		end
+	end
+	S.NextSense = now() + I.SenseEvery[1] + math.random() * (I.SenseEvery[2] - I.SenseEvery[1])
+	if not best then
+		return false
+	end
+	S.SensedAt[best] = now()
+	local spot = best:GetAttribute("Hiding") and ctx.Hiding.spotOf(best)
+	-- (the first run of the night: a cutscene of his face as he turns to you and screams; he's held
+	-- still for it, so is everyone, then he goes)
+	if not S.SenseCut and ctx.Cutscene and ctx.Cutscene.heKnows and not ctx.Cutscene.isPlaying() and S.Head then
+		S.SenseCut = true
+		local r = rootOf(best)
+		ctx.Cutscene.heKnows(S.Head.Position, r and r.Position or pos(), S.Model)
+	end
+	if ctx.Journey then
+		ctx.Journey.event(best, "Sensed", spot and "Hiding" or "Open")
+	end
+	speak("Sense", true)
+	ctx.Remotes.Shake:FireClient(best, 0.6, 0.8)
+	ctx.PlayerState.addNerve(best, -10)
+	ctx.Director.think(best, spot and ctx.Story.Hunt.SensedHiding or ctx.Story.Hunt.Sensed)
+	ctx.Director.addTension(15)
+	if spot then
+		S.HeardHide[spot] = now()
+		S.SpotCooldown[spot] = nil
+		if S.Head then
+			ctx.Audio.playAt("Roar", S.Head.Position, { Caption = true })
+		end
+		inspect(spot, I.SenseSpeed)
+	else
+		local r = rootOf(best)
+		if not r then
+			return false
+		end
+		charge(r.Position, best)
+		if S.State == "Charge" then
+			S.Data.Speed = I.SenseSpeed
+			S.Data.Homing = best
+			S.Data.HomingUntil = now() + (I.SenseHoming or 10)
+		end
+	end
+	return true
+end
+Intruder._senseTick = senseTick -- (tests)
+
 local function think(dt: number)
 	if S.State == "Lurk" and S.Model and not S.InHouse then
 		STATES.Lurk(dt, {})
@@ -2798,6 +2895,9 @@ local function think(dt: number)
 		recordTrails()
 		unstick(state)
 		state = S.State
+	end
+	if S.Nav then
+		S.Nav.MaxSpeed = tune().MaxSpeed -- (v126: the difficulty's cap, not always Normal's)
 	end
 	local visible = {}
 	local head = S.Head.CFrame
@@ -2859,6 +2959,10 @@ local function think(dt: number)
 	end
 	-- (v125) someone has camped one hiding spot too long: he smells them there
 	if S.Mode == "Hunt" and staleHiding() then
+		return
+	end
+	-- (v126) every half minute or so he knows exactly where one of you is, and runs there
+	if S.Mode == "Hunt" and not S.FinalRun and senseTick() then
 		return
 	end
 	-- now and then, a surprise instead of the plain patrol (v104; never while he's lying low: that's
@@ -2987,6 +3091,10 @@ end
 -- his head, for the capture jumpscare (the real one, with the mask on it)
 function Intruder.getHead(): BasePart?
 	return S.Face or S.Head
+end
+
+function Intruder.getModel(): Model?
+	return S.Model
 end
 
 -- just broke free (or was cut free): for a few seconds he can't see, hear or grab them, and he

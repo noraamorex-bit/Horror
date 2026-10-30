@@ -312,10 +312,12 @@ function Navigator:_plan()
 	end
 end
 
--- (never as fast as your walk, whatever asked: Config.Intruder.MaxSpeed)
+-- (never as fast as your sprint, whatever asked: the difficulty's MaxSpeed, which the intruder sets as
+-- self.MaxSpeed; v126: it used to read Normal's Config.Intruder.MaxSpeed on every difficulty, so Hard and
+-- NIGHTMARE were held to Normal's top speed)
 function Navigator:_setSpeed(speed: number)
 	local cfg = self.ctx and self.ctx.Config
-	local cap = cfg and cfg.Intruder and cfg.Intruder.MaxSpeed
+	local cap = self.MaxSpeed or (cfg and cfg.Intruder and cfg.Intruder.MaxSpeed)
 	self.Humanoid.WalkSpeed = cap and math.min(speed, cap) or speed
 end
 

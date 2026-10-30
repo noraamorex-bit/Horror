@@ -2,9 +2,9 @@
 	Offers — things you can buy on the spot, in the night.
 	• 🚀 ROCKET (R$ 25, "Rocket (tonight)"): during the hunt, for anyone without a rocket in hand. A
 	  small button under the inventory (never in the middle of the screen).
-	• ➕ INVITE A FRIEND while your night can still take players (acts I-II, room left): the invite
-	  brings them straight into this house (Social.invite carries the night's code; the lobby routes them).
 	  While he's chasing or charging within 70 studs of you it flashes and says STOP HIM.
+	  (v126, the owner: "UI is cramped. Remove the invite friends and starter pack while in game": the
+	  ➕ INVITE A FRIEND button is gone from the house; inviting is on the result card and in the lobby.)
 	• 👁 NIGHT VISION (the pass, v108) for the first minute after the power goes out, if you don't
 	  have it: the moment you'd want it most.
 	• When someone knocks him flat with a rocket, everyone hears about it ("Sam knocked him flat with a
@@ -19,7 +19,6 @@ local ctx
 local player = Players.LocalPlayer
 
 local rocketButton: TextButton
-local inviteButton: TextButton
 local nvButton: TextButton
 local nvUntil = 0 -- (the night vision offer shows until then: a minute from the blackout)
 local NV_SHOW = 60
@@ -47,10 +46,6 @@ local function refresh()
 		end
 		nvButton.Visible = nv ~= nil and nv.Id > 0 and canAct and hunt and os.clock() < nvUntil and not player:GetAttribute("Pass_NightVision")
 		nvButton.Text = "👁 NIGHT VISION  R$ " .. tostring(nv and nv.Price or 49)
-	end
-	-- while this night can still take players: bring a friend straight into it (Social.invite)
-	if inviteButton then
-		inviteButton.Visible = canAct and workspace:GetAttribute("InviteOpen") == true and workspace:GetAttribute("NightCode") ~= nil
 	end
 end
 
@@ -137,28 +132,6 @@ function Offers.start()
 			end)
 		end
 	end)
-	inviteButton = UI.new("TextButton", {
-		Name = "InviteOffer",
-		Size = UDim2.fromOffset(190, 34),
-		Text = (ctx.Config.Referral and ctx.Config.Referral.Coins or 0) > 0 and ("➕ INVITE A FRIEND  +" .. ctx.Config.Referral.Coins) or "➕ INVITE A FRIEND",
-		Font = UI.Font.Bold,
-		TextSize = 15,
-		TextColor3 = Color3.fromRGB(235, 232, 226),
-		BackgroundColor3 = Color3.fromRGB(20, 20, 24),
-		BackgroundTransparency = 0.15,
-		AutoButtonColor = true,
-		LayoutOrder = 7,
-		Visible = false,
-		Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
-	})
-	UI.corner(inviteButton, 8)
-	UI.stroke(inviteButton, Color3.new(1, 1, 1), 1, 0.6)
-	inviteButton.Activated:Connect(function()
-		if ctx.Social then
-			ctx.Social.invite()
-		end
-	end)
-	workspace:GetAttributeChangedSignal("InviteOpen"):Connect(refresh)
 	for _, a in { "InGame", "Captured", "Dead", "Escaped", "Monster", "Item_Rocket" } do
 		player:GetAttributeChangedSignal(a):Connect(refresh)
 	end

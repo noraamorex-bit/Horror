@@ -667,14 +667,7 @@ local function onResult(payload)
 		Coins = payload.Coins,
 		AdminNight = payload.AdminNight,
 	})
-	-- (v120) the night's over for you: the Starter Pack's window, once (not over a revive offer)
-	if not payload.CanRevive and ctx.Starter then
-		task.delay(2.5, function()
-			if card then
-				ctx.Starter.auto("Card")
-			end
-		end)
-	end
+	-- (v126: the Starter Pack's window no longer opens on the result card: it comes at the start of a night)
 end
 
 local function onEnding(payload)
@@ -712,12 +705,6 @@ local function onEnding(payload)
 		task.delay(8, function()
 			if card and ctx.Social then
 				ctx.Social.maybeAskFavorite()
-			end
-		end)
-		-- (v120) and the Starter Pack's window, once
-		task.delay(2.5, function()
-			if card and ctx.Starter then
-				ctx.Starter.auto("Card")
 			end
 		end)
 	end)

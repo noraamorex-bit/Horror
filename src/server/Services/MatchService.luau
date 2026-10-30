@@ -189,9 +189,11 @@ local function publish()
 			local fresh = ok and type(v) == "table" and type(v.name) == "string" and os.time() - (tonumber(v.at) or 0) < 40
 			local who = fresh and string.sub(v.name, 1, 20) or nil
 			local coming = fresh and v.coming == true or nil
-			if who ~= workspace:GetAttribute("FriendInLobby") and who and ctx.Remotes then
+			-- (v126, the owner, of "X is in the lobby and can join you" all through the night: "remove that".
+			-- Only when they've pressed JOIN: one notice that they're on their way)
+			if who and coming and not workspace:GetAttribute("FriendComing") and ctx.Remotes then
 				for _, p in Players:GetPlayers() do
-					ctx.Remotes.Notify:FireClient(p, who .. " is in the lobby and can join you right here. Wait for them.", "info")
+					ctx.Remotes.Notify:FireClient(p, who .. " is on the way to your house.", "info")
 				end
 			end
 			workspace:SetAttribute("FriendInLobby", who)

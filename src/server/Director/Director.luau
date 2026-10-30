@@ -26,9 +26,11 @@ Director.Perception = Perception
 local ACT_ORDER = { "Evening", "SmallThings", "SomeoneElse", "Guest" }
 
 -- guaranteed beats per act: { event id, deadline as a fraction of the act's Max }
+-- (v126, the owner: "I barely saw the monster once throughout the run": every sighting is a beat now,
+-- not left to chance: him in the yard in act I; at the window and staring down the hall in act II)
 local BEATS = {
-	Evening = { { "WindSlam", 0.45 } },
-	SmallThings = { { "PlateCrash", 0.2 }, { "FootstepsUpstairs", 0.35 }, { "TVAlert", 0.55 }, { "FigureWindow", 0.7 } },
+	Evening = { { "WindSlam", 0.3 }, { "YardFigure", 0.55 } },
+	SmallThings = { { "PlateCrash", 0.15 }, { "FootstepsUpstairs", 0.28 }, { "FigureWindow", 0.42 }, { "TVAlert", 0.55 }, { "HallStare", 0.7 }, { "Mimic", 0.85 } },
 }
 
 local state: any = {}

@@ -268,7 +268,7 @@ Story.Documents = {
 Story.SoloFinding = "Finding players for your house. Anyone who presses PLAY now lands here. Start without them, they'll catch up."
 -- (v122) sent in alone while others were still in the lobby: they can follow (%s = their names, or "2 others")
 Story.SoloBehind = "%s %s still in the lobby. When they press PLAY they land right here, in this house. Start without them, they'll catch up."
-Story.SoloInvite = "More is scarier. ➕ INVITE A FRIEND (left): they come straight into your house."
+Story.SoloInvite = "More is scarier. Invite a friend from the Roblox menu: they come straight into your house."
 
 Story.SoloTexts = {
 	{ From = "Riley", Body = "creek rd is literally underwater. we had to turn around 😭" },
@@ -548,7 +548,7 @@ Story.Mirror = { "I WATCH YOU SLEEP", "YOUR BED IS WARM", "I SAW YOU BRUSH", "GO
 ]]
 Story.HisLines = {
 	Gap = 9,
-	Every = { Murmur = 22, Found = 14, Lost = 18, Inspect = 16, Heart = 30, Grab = 0, Behind = 0, Closet = 0 },
+	Every = { Murmur = 22, Found = 14, Lost = 18, Inspect = 16, Heart = 30, Grab = 0, Behind = 0, Closet = 0, Sense = 0 },
 	Murmur = {
 		"I know you're in here.",
 		"Come out, come out... wherever you are.",
@@ -570,6 +570,8 @@ Story.HisLines = {
 	Grab = { "Shhh. Shhh. Shhh.", "We're a family now.", "Mine.", "There. That's better." },
 	Behind = { "Turn around.", "Don't look.", "Right behind you." },
 	Closet = { "Come closer...", "In here." },
+	-- (v126) he knows where you are, and he's coming: as he starts his run at you
+	Sense = { "I know where you are.", "I'm coming for you.", "I can smell you from here.", "Stay right there.", "Don't move. I'm coming." },
 }
 
 --[[
@@ -927,10 +929,10 @@ Story.Endings = {
 }
 
 -- shown once, the first night someone plays, when he starts moving around the house
-Story.SurvivalTipsVersion = 3 -- (bump when the tips change: everyone sees them once more)
+Story.SurvivalTipsVersion = 4 -- (bump when the tips change: everyone sees them once more) (v126: 4)
 Story.SurvivalTips = {
 	Title = "HE'S IN THE HOUSE",
-	Body = "• The way out: CALL 911. One bar of signal by the upstairs bathroom window: call there, then hide until the police come.\n• He hunts by SOUND. Walk near him and he hears you; run and he hears you across the house. CROUCH and he can't.\n• A noise makes him come to look; a loud one makes him charge. Anything he runs into, he grabs.\n• Floor shaking? He's close. Hide: closets, wardrobes, under beds, the shower.\n• If he stops at your hiding spot, keep your heartbeat steady: press the side each half-heart comes from.\n• His eyes are bad in the dark. Your flashlight isn't.",
+	Body = "• The way out: CALL 911. One bar of signal by the upstairs bathroom window. When the police pull up, RUN for the front door.\n• He knows where you are. Every half minute he comes straight for one of you: hear him running, MOVE.\n• Don't camp one hiding spot: stay too long and he smells you there. Hide, then hide somewhere else.\n• He hunts by SOUND. CROUCH near him. Running is loud.\n• If he stops at your hiding spot, keep your heartbeat steady: press the side each half-heart comes from.",
 	Button = "GOT IT",
 }
 
@@ -949,6 +951,9 @@ Story.Hunt = {
 	-- (v125) a hiding spot going stale: the warning, then after he's listened at it and gone
 	Stale = "I've been in here too long. He can smell me. I need a new hiding place.|hide",
 	StaleAfter = "He knows I'm in here. He's coming back. MOVE.|hide",
+	-- (v126) he's sprinting at you, wherever you are
+	Sensed = "Footsteps. Running. Straight at me. He knows exactly where I am.|hide",
+	SensedHiding = "He's coming. Straight for my hiding spot. Hold still. Breathe slow.|breath",
 	-- (v125) the police are here: the last run
 	FinalNotice = "THE POLICE ARE HERE. GET OUT THE FRONT DOOR!",
 	Final = "Red and blue through the windows. He knows it's over. He's coming for us. RUN for the front door.",

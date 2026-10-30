@@ -337,6 +337,9 @@ function Economy.addCoins(player: Player, n: number, earned: boolean?, reason: s
 	if earned and n > 0 then
 		pend.Earned += n
 		d.Earned += n
+		if ctx.Stats and ctx.Stats.recordEarned then
+			ctx.Stats.recordEarned(player, d.Earned) -- (v126: the TOP LEVELS sign)
+		end
 	end
 	mirror(player)
 	queueSave(player.UserId)
@@ -1085,6 +1088,9 @@ local function load(player: Player)
 	end
 	Economy.checkLevel(player) -- (catch up: a level reached on another server, or levels new to the game)
 	mirror(player)
+	if ctx.Stats and ctx.Stats.recordEarned then
+		ctx.Stats.recordEarned(player, d.Earned) -- (v126: onto the TOP LEVELS sign, earned before it existed)
+	end
 	-- (a crate flashlight colour can only be shown once we know it's yours)
 	if ctx.Stats and ctx.Stats.refresh then
 		ctx.Stats.refresh(player)

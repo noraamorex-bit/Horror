@@ -2,11 +2,12 @@
 	Starter — the one-time Starter Pack (Config.Shop.Starter: 500 coins + a rocket + a revive), out where
 	people see it while it's on offer (the player attribute StarterOffer; v120, the owner: "put the starter
 	pack on the side and prompt them to buy it"):
-	• on the side: a 🎁 STARTER icon in the lobby's dock; in the house a small button in the left column
-	  before the hunt (during the hunt that column is the rocket's and the night vision's)
-	• its purchase window also opens by itself, at most once a visit, on the result card when a night is
-	  over for you (not with a revive on offer: that window comes first). (v124: the lobby's window, as you
-	  stepped into a circle, went: 0 bought of 197 auto windows in v120-122)
+	• on the side: a 🎁 STARTER icon in the lobby's dock (v126: no button in the house any more, the owner:
+	  "UI is cramped. Remove the invite friends and starter pack while in game")
+	• its purchase window also opens by itself, at most once a visit, at the start of a night, a few
+	  seconds in (v126, the owner: "dont give the purchase starter pack pop up at the end of the game put
+	  it at the beginning otherwise just doesn't make sense": it's gear for the night). (v124: the lobby's
+	  window, as you stepped into a circle, went: 0 bought of 197 auto windows in v120-122)
 	• never under a finger: it waits until nothing has been pressed for a moment and gives up if that
 	  doesn't come, so a tap meant for the game can't land on Buy (Roblox treats tricking people into a
 	  purchase as a scam). The server logs these windows as Ask:StarterAuto (ShopService).
@@ -22,13 +23,12 @@ local player = Players.LocalPlayer
 
 Starter.IdleFor = 1.2 -- nothing pressed for this long before the window opens by itself
 Starter.WaitMax = 8 -- (and if that never happens, it doesn't open)
+Starter.NightDelay = 6 -- (v126) seconds into a night before its window opens by itself
 
 local button: GuiButton? = nil
 local asked = false -- (it opens by itself once a visit)
 local held = 0 -- fingers / mouse buttons down right now
 local lastInput = -math.huge
-
-local HUNT = { SomeoneElse = true, Guest = true }
 
 local function product(): any
 	local st = ctx.Config.Shop.Starter
@@ -57,18 +57,12 @@ local function refresh()
 	if not button then
 		return
 	end
-	if ctx.Mode == "Lobby" then
-		button.Visible = Starter.onOffer()
-		return
-	end
-	local canAct = player:GetAttribute("InGame") == true and not player:GetAttribute("Captured") and not player:GetAttribute("Dead")
-		and not player:GetAttribute("Escaped") and not player:GetAttribute("Monster")
-	button.Visible = Starter.onOffer() and canAct and not HUNT[workspace:GetAttribute("Act") or ""] and not workspace:GetAttribute("EndingActive")
+	button.Visible = ctx.Mode == "Lobby" and Starter.onOffer()
 end
 Starter._refresh = refresh -- (tests)
 
 --[[
-	Open the window by itself (where: "Lobby" | "Card"), once a visit, when nobody's pressing anything.
+	Open the window by itself (where: "Night"), once a visit, when nobody's pressing anything.
 	Returns whether it went ahead (tests: now = a fake clock, and it doesn't wait).
 ]]
 function Starter.auto(where: string, now: number?): boolean
@@ -135,31 +129,22 @@ function Starter.start()
 			button = b
 		end
 		-- (v124: no window by itself in the lobby any more: 0 bought of 197 auto windows, lobby and card
-		-- together, v120-122; it opens by itself only on the result card now)
+		-- together, v120-122)
 	else
-		local st = ctx.Config.Shop.Starter
-		local b = UI.new("TextButton", {
-			Name = "StarterSide",
-			Size = UDim2.fromOffset(190, 30),
-			Text = "🎁 STARTER PACK  R$ " .. tostring(st and st.Price or 19),
-			Font = UI.Font.Bold,
-			TextSize = 13,
-			TextColor3 = Color3.fromRGB(16, 14, 10),
-			BackgroundColor3 = Color3.fromRGB(255, 205, 90),
-			BackgroundTransparency = 0.1,
-			AutoButtonColor = true,
-			LayoutOrder = 10,
-			Visible = false,
-			Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
-		})
-		UI.corner(b, 8)
-		b.Activated:Connect(prompt)
-		button = b
-		for _, a in { "InGame", "Captured", "Dead", "Escaped", "Monster" } do
-			player:GetAttributeChangedSignal(a):Connect(refresh)
+		-- (v126) no button in the house; the window by itself once, a few seconds into a night, when
+		-- the gear in it is still worth having
+		local function nightStarted()
+			if workspace:GetAttribute("Act") ~= "Evening" then
+				return
+			end
+			task.delay(Starter.NightDelay, function()
+				if workspace:GetAttribute("Act") == "Evening" and player:GetAttribute("InGame") and not player:GetAttribute("Monster") then
+					Starter.auto("Night")
+				end
+			end)
 		end
-		workspace:GetAttributeChangedSignal("Act"):Connect(refresh)
-		workspace:GetAttributeChangedSignal("EndingActive"):Connect(refresh)
+		workspace:GetAttributeChangedSignal("Act"):Connect(nightStarted)
+		nightStarted()
 	end
 	player:GetAttributeChangedSignal("StarterOffer"):Connect(refresh)
 	refresh()

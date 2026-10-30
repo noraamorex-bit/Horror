@@ -502,7 +502,8 @@ local function build(root: Folder)
 				if #top > 0 then
 					local lines = {}
 					for i, e in top do
-						local value = if which == "Fastest" then ctx.Util.formatSeconds(e.Value) else tostring(e.Value)
+						local value = if which == "Fastest" then ctx.Util.formatSeconds(e.Value)
+							elseif which == "Level" then ("LV " .. tostring((Cat.levelOf(e.Value)))) else tostring(e.Value)
 						table.insert(lines, string.format("%d.  %s  —  %s", i, e.Name, value))
 					end
 					body.Text = table.concat(lines, "\n")
@@ -512,7 +513,8 @@ local function build(root: Folder)
 		end)
 	end
 	leaderboard("SurvivorBoard", V(-39, 7, -13), "NIGHTS SURVIVED", "Survive a night to get on the board.", nil)
-	leaderboard("FastestBoard", V(-39, 7, 1), "FASTEST WINS", "Win a night to set a time.", "Fastest")
+	-- (v126: was FASTEST WINS; every win sat at the night's minimum length, so the board was a list of ties)
+	leaderboard("LevelBoard", V(-39, 7, 1), "TOP LEVELS", "Play a night to earn XP.", "Level")
 	Kit.hydrant(root, CFrame.new(ORIGIN + V(-34, 0.75, 22.5)))
 	for i, t in { { -48, -50 }, { 58, -52 }, { -58, 2 }, { 62, 4 }, { -118, 8 }, { 118, 10 }, { -20, 70 }, { 40, 72 }, { -90, 72 } } do
 		if i % 3 == 0 then

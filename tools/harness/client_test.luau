@@ -420,35 +420,29 @@ local ok, err = pcall(function()
 		player:SetAttribute("InGame", wasIn)
 		print("jumpscare everyone ok")
 	end
-	-- (v122) alone in a night that can take players: who was left in the lobby, then who's on the way
+	-- (v126) no standing lines about the lobby on the HUD (the owner: "'lazytoast is waiting in the lobby and can
+	-- join you' was on the screen remove that"); only "N on their way" while someone really is
 	do
 		local ws = H.unwrap(H.workspaceRoot)
 		local wasIn = player:GetAttribute("InGame")
 		player:SetAttribute("InGame", true)
 		ws:SetAttribute("OpenNight", "1/4")
 		ws:SetAttribute("LobbyBehindNames", "Sam")
+		ws:SetAttribute("FriendInLobby", "Bo")
+		ws:SetAttribute("LobbyNow", 5)
 		ctx.HUD._update()
-		assert(string.find(ctx.HUD._eta(), "Waiting for Sam", 1, true), "who can follow: " .. ctx.HUD._eta())
+		assert(ctx.HUD._eta() == "", "no lobby lines: " .. ctx.HUD._eta())
 		ws:SetAttribute("OnTheirWay", 1)
 		ctx.HUD._update()
 		assert(string.find(ctx.HUD._eta(), "1 player on their way", 1, true), "someone's coming: " .. ctx.HUD._eta())
-		for _, a in { "OpenNight", "LobbyBehindNames", "OnTheirWay" } do ws:SetAttribute(a, nil) end
-		-- (v124) a friend in a lobby has been offered this house (any night they can still come into)
-		ws:SetAttribute("FriendInLobby", "Bo")
-		ctx.HUD._update()
-		assert(string.find(ctx.HUD._eta(), "Bo is in the lobby", 1, true), "a friend can join: " .. ctx.HUD._eta())
-		ws:SetAttribute("FriendComing", true)
-		ctx.HUD._update()
-		assert(string.find(ctx.HUD._eta(), "Bo is on the way", 1, true), "and is coming: " .. ctx.HUD._eta())
-		ws:SetAttribute("FriendInLobby", nil)
-		ws:SetAttribute("FriendComing", nil)
+		for _, a in { "OpenNight", "LobbyBehindNames", "OnTheirWay", "FriendInLobby", "LobbyNow" } do ws:SetAttribute(a, nil) end
 		ctx.HUD._update()
 		assert(ctx.HUD._eta() == "", "gone with them")
 		player:SetAttribute("InGame", wasIn)
 		print("lone night hud ok")
 	end
-	-- (v120) the Starter Pack: a small button on the side before the hunt, and its window by itself once a
-	-- visit, never while a finger is down or right after one lifts
+	-- (v126) the Starter Pack: no button in the house (the owner: "UI is cramped"); its window by itself once a
+	-- visit at the start of a night, never while a finger is down or right after one lifts
 	do
 		local St = ctx.Starter
 		local ws = H.unwrap(H.workspaceRoot)
@@ -459,25 +453,20 @@ local ok, err = pcall(function()
 		player:SetAttribute("StarterOffer", true)
 		ws:SetAttribute("Act", "SmallThings")
 		St._refresh()
-		local side = H.unwrap(pg):FindFirstChild("StarterSide", true)
-		assert(side and side.Visible and string.find(side.Text, "R$ 19", 1, true), "on the side before the hunt")
-		ws:SetAttribute("Act", "SomeoneElse")
-		St._refresh()
-		assert(not side.Visible, "not during the hunt (the rocket's place)")
-		ws:SetAttribute("Act", "SmallThings")
+		assert(not H.unwrap(pg):FindFirstChild("StarterSide", true), "no starter button in the house")
 		St._reset()
 		local TOUCH = { UserInputType = roblox.Enum.UserInputType.Touch }
 		S.UserInputService.InputBegan:Fire(TOUCH)
-		assert(not St.auto("Card", os.clock() + 10), "a finger's down: not now")
+		assert(not St.auto("Night", os.clock() + 10), "a finger's down: not now")
 		S.UserInputService.InputEnded:Fire(TOUCH)
-		assert(not St.auto("Card", os.clock() + 0.3), "a finger just lifted: not yet")
+		assert(not St.auto("Night", os.clock() + 0.3), "a finger just lifted: not yet")
 		local n = #promptsMade
-		assert(St.auto("Card", os.clock() + 5), "still for a moment: it opens")
+		assert(St.auto("Night", os.clock() + 5), "still for a moment: it opens")
 		assert(#promptsMade == n + 1 and promptsMade[#promptsMade] == 4242 and table.find(sent, "StarterAuto"), "the window, and the server's told")
-		assert(not St.auto("Card", os.clock() + 20) and #promptsMade == n + 1, "once a visit")
+		assert(not St.auto("Night", os.clock() + 20) and #promptsMade == n + 1, "once a visit")
 		St._reset()
 		player:SetAttribute("StarterOffer", nil)
-		assert(not St.auto("Card", os.clock() + 5) and not side.Visible, "bought: never again")
+		assert(not St.auto("Night", os.clock() + 5), "bought: never again")
 		ctx.Config.Shop.Starter.Id = sid
 		ws:SetAttribute("Act", wasAct)
 		player:SetAttribute("InGame", wasIn)
@@ -506,24 +495,19 @@ local ok, err = pcall(function()
 		refresh()
 		assert(not btn.Visible, "not once you're out")
 		player:SetAttribute("Dead", nil)
-		-- ➕ INVITE A FRIEND while the night can take them, with this house's code in the invite
-		local inv = H.unwrap(pg):FindFirstChild("InviteOffer", true)
-		assert(inv and not inv.Visible, "no invite button while the night is closed")
+		-- (v126) no ➕ INVITE A FRIEND button in the house; the invite itself still carries the house's code
+		assert(not H.unwrap(pg):FindFirstChild("InviteOffer", true), "no invite button in the house")
 		ws:SetAttribute("NightCode", "abc123")
 		ws:SetAttribute("InviteOpen", true)
-		refresh()
-		assert(inv.Visible, "invite button while friends can still come in")
 		local wasMode = ctx.Mode
 		ctx.Mode = "Game"
 		assert(ctx.Social.inviteData() == "night:abc123", "the invite carries the night's code")
 		ctx.Mode = "Lobby"
 		assert(ctx.Social.inviteData() == "ref:" .. tostring(player.UserId), "from the lobby: it says who invited them (v121: coins for both)")
-		assert(string.find(inv.Text, "+" .. ctx.Config.Referral.Coins, 1, true), "the invite button says what a friend is worth: " .. inv.Text)
 		ctx.Mode = wasMode
 		ws:SetAttribute("InviteOpen", nil)
 		ws:SetAttribute("NightCode", nil)
 		refresh()
-		assert(not inv.Visible, "gone once the night closes")
 		-- v98: he's chasing someone near you: the button says STOP HIM; far away, it doesn't
 		do
 			local me = H.Instance.new("Model", H.workspaceRoot)

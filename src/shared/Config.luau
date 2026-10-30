@@ -41,16 +41,16 @@ Config.LobbyCountdown = 10
 -- Act lengths in minutes. An act ends at Max, or earlier once its exit condition is met (never before Min).
 Config.TimeScale = 1
 Config.Acts = {
-	-- (kept short: the cozy part sets the mood, but players came for him)
-	-- (v117, the owner: "the whole game take on average 10 mins and down to 7 mins": logs on v104-111,
-	-- full nights ran 11.5 min on average, 15 at the 90th percentile)
-	Evening = { Min = 2, Max = 4 }, -- (was 2.5 / 5)
-	SmallThings = { Min = 3, Max = 4.5 }, -- (was 4 / 6)
-	SomeoneElse = { Min = 4.5, Max = 5 }, -- (was 6 / 7; 9 left nights without a call dragging past 20 minutes)
+	-- (v126, the owner: "The game is too short... I want this to be a fully polished 15-20 minute game where
+	-- BPM goes 120+. Make it constantly scary". The owner's later word wins over v117's "10 minutes on
+	-- average": a longer build-up with him seen more, and a much longer hunt. Before: v117 ~10 min.)
+	Evening = { Min = 2.5, Max = 5 }, -- (v117: 2 / 4)
+	SmallThings = { Min = 4.5, Max = 6 }, -- (v117: 3 / 4.5)
+	SomeoneElse = { Min = 10, Max = 12 }, -- (v117: 4.5 / 5)
 }
 -- no night ends sooner than this (the police, the car and next door wait for it), except a night
--- that skipped to the blackout
-Config.MinNight = 420
+-- that skipped to the blackout (v126: 15 minutes; v117: 7)
+Config.MinNight = 900
 -- a night where everyone has played before: the build-up acts could run shorter (this much of
 -- their length). Off: the owner found the night too fast; repeat groups can SKIP TO THE BLACKOUT.
 Config.VeteranPace = {}
@@ -136,27 +136,39 @@ Config.Intruder = {
 	Brain = "Figure",
 	-- (his speeds. v102, the owner: "make him faster": chasing or charging he now outpaces your walk
 	-- (10) but not your sprint (17): seen, you run (and hide). Before, everything sat under 10.)
-	ChargeSpeed = 12, -- going for a sound he's sure of (you walk at 10, sprint at 17)
-	InvestigateSpeed = 9,
+	-- (v126, the owner: "Make the monster much scarier and harder... I want him to automatically sprint to my
+	-- current location": every speed up a notch, all still under your sprint)
+	ChargeSpeed = 13, -- going for a sound he's sure of (you walk at 10, sprint at 17) (v125: 12)
+	InvestigateSpeed = 10, -- (v125: 9)
 	ChargeSearchTime = 5, -- thrashing about where the noise was, after a charge
 	InvestigateSearchTime = 6,
 	InspectTime = { 7, 10 }, -- standing at your hiding spot, listening (v91: +1 s for the heartbeat's longer lead-in)
-	InspectNearChance = 0.25, -- walking right past an occupied spot (not holding breath): he stops
+	InspectNearChance = 0.4, -- walking right past an occupied spot (not holding breath): he stops (v125: 0.25)
 	WalkSpeed = 8, -- lying low between hunts
 	SneakSpeed = 5,
 	ProwlSpeed = 11, -- (Classic brain) going to where he feels you are
-	ChaseSpeed = 12.5, -- he can see you: faster than you walk, slower than you sprint, and he never stops
-	LungeSpeed = 13.5, -- the last few steps
-	MaxSpeed = 14.5, -- a hard cap on all of the above: never as fast as your sprint
+	ChaseSpeed = 13.5, -- he can see you: faster than you walk, slower than you sprint, and he never stops (v125: 12.5)
+	LungeSpeed = 14.5, -- the last few steps (v125: 13.5)
+	MaxSpeed = 15, -- a hard cap on all of the above: never as fast as your sprint (v125: 14.5)
+	--[[
+		(v126) He knows where you are. Every SenseEvery seconds of the hunt (the first SenseFirst in), he
+		picks one of you, the one he went for longest ago, and sprints at SenseSpeed to where they are
+		RIGHT NOW: out in the open, he charges, re-aiming as they move (SenseHoming s); hiding, he runs
+		to their hiding spot and listens at it (the heartbeat). The one he's after is told.
+	]]
+	SenseFirst = 15,
+	SenseEvery = { 24, 34 },
+	SenseSpeed = 14,
+	SenseHoming = 10,
 	GrabRange = 4.5,
 	FOV = 90, -- degrees
 	-- (short sight: he hunts by sound. Lit rooms and your beam still give you away)
 	SightLit = 28,
-	SightDark = 10,
+	SightDark = 13, -- (v125: 10)
 	SightFlashlight = 40, -- a flashlight in the dark gives you away
 	CrouchSightMultiplier = 0.6,
 	PeripheralRange = 7, -- sensed regardless of facing
-	HearWalk = 10, -- walking (not crouched) this close: he notices you behind him
+	HearWalk = 12, -- walking (not crouched) this close: he notices you behind him (v125: 10)
 	HearSprint = 16, -- running
 	HearFlashlight = 12, -- your beam on the walls around him
 	SoloChaseSlowdown = 1, -- studs/s slower when playing alone
@@ -168,32 +180,32 @@ Config.Intruder = {
 	-- stale: stay in the same one this long and he smells you there. A warning first (HideStaleWarn
 	-- before), then he comes and listens at it (the heartbeat). Still there HideStaleAgain after he
 	-- left, and he rips it open: move between hiding spots, don't camp one.
-	HideStale = 40,
+	HideStale = 30, -- (v125: 40)
 	HideStaleWarn = 8,
-	HideStaleAgain = 20,
+	HideStaleAgain = 15, -- (v125: 20)
 	-- searching hiding spots
 	SearchChecks = 2,
 	TrueSpotWeight = 1.5, -- the spot you're really in is this much likelier to be opened
 	SeeHideCheckChance = 1, -- he saw you get in
-	OpenFindChance = 0.75, -- he opens your spot without having seen you
+	OpenFindChance = 0.85, -- he opens your spot without having seen you (v125: 0.75)
 	BreathHoldSave = 0.6, -- holding your breath cuts that by this much
 	AmbushChance = 0.4, -- after a search: pretend to leave, wait round the corner
 	AmbushTime = 9, -- (+0-5 s)
 	-- between hunts: a short breather near the players' floor, then he patrols
-	WithdrawMin = 14,
-	WithdrawMax = 22,
+	WithdrawMin = 8, -- (v125: 14)
+	WithdrawMax = 14, -- (v125: 22)
 	WithdrawNotice = 30, -- seen this close while he's lying low, and he comes anyway
 	StunTime = 7,
 	RetreatAfterStun = 30,
-	RetreatAfterCapture = 14, -- after a capture he walks off somewhere far from the boiler room
+	RetreatAfterCapture = 10, -- after a capture he walks off somewhere far from the boiler room (v125: 14)
 	RetreatBlind = 4, -- ...ignoring everyone only this long; then whoever he sees close, he chases
 	RetreatBlindStun = 10, -- (pepper-sprayed: a longer head start)
 	CaptiveGrace = 45, -- and for this long ignores the basement (struggling, rescues): the rescue window
 	FreedGrace = 40, -- just got free (yourself or a friend): he can't see, hear or grab you for this long
 	-- patrolling (nobody to sense): he sweeps the rooms you were last in, listening
-	PatrolSpeed = 8.5,
+	PatrolSpeed = 9.5, -- (v125: 8.5)
 	PatrolPause = { 1.5, 3 },
-	PatrolCheckChance = 0.25, -- at each stop: tear open a hiding spot nearby
+	PatrolCheckChance = 0.4, -- at each stop: tear open a hiding spot nearby (v125: 0.25)
 	DriftAfter = 60, -- nobody has met him this long: his patrols lean toward people out in the open
 	DriftWeight = 14,
 	PatrolCaptiveCheck = 90, -- with someone tied up: back past the boiler room this often
@@ -211,33 +223,38 @@ Config.Difficulty = {
 	VoteTime = 12,
 	Hard = {
 		Intruder = {
-			WalkSpeed = 8.5,
-			PatrolSpeed = 9,
-			ProwlSpeed = 12,
-			ChaseSpeed = 13.5, -- (Hard: only a sprint gets away)
-			LungeSpeed = 14.5,
+			WalkSpeed = 9.5,
+			PatrolSpeed = 10.5,
+			ProwlSpeed = 13,
 			SenseDelay = 2,
 			HideGrace = 6,
-			OpenFindChance = 0.85,
+			OpenFindChance = 0.92,
 			SearchChecks = 3,
 			AmbushChance = 0.55,
-			WithdrawMin = 8,
-			WithdrawMax = 14,
-			RetreatAfterCapture = 8,
+			WithdrawMin = 5,
+			WithdrawMax = 9,
+			RetreatAfterCapture = 7,
 			CaptiveGrace = 30,
 			FreedGrace = 20,
 			-- (Hard keeps the sharper senses Normal had before it was eased)
 			SightLit = 32,
 			SightFlashlight = 45,
 			GrabRange = 5,
-			HearWalk = 11,
-			PatrolCheckChance = 0.4,
+			HearWalk = 13,
+			SightDark = 15,
+			PatrolCheckChance = 0.55,
 			SoloChaseSlowdown = 0.6,
-			ChargeSpeed = 13,
-			InvestigateSpeed = 9.5,
-			InspectNearChance = 0.5,
-			HideStale = 30,
-			HideStaleAgain = 15,
+			ChargeSpeed = 14,
+			InvestigateSpeed = 11,
+			ChaseSpeed = 14.5, -- (Hard: only a sprint gets away)
+			LungeSpeed = 15.5,
+			MaxSpeed = 16,
+			InspectNearChance = 0.55,
+			HideStale = 22,
+			HideStaleAgain = 12,
+			SenseFirst = 10,
+			SenseEvery = { 16, 24 },
+			SenseSpeed = 15,
 		},
 		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22, Travel = 0.9, Lead = 1.2, ForgiveWrong = false },
 		BatteryMultiplier = 0.7, -- flashlights die faster
@@ -254,9 +271,9 @@ Config.Difficulty = {
 			ProwlSpeed = 14,
 			InvestigateSpeed = 10.5,
 			ChargeSpeed = 14.5,
-			ChaseSpeed = 15, -- (your sprint is 17: you get away only running, and only so long)
-			LungeSpeed = 16,
-			MaxSpeed = 16.5,
+			ChaseSpeed = 15.5, -- (your sprint is 17: you get away only running, and only so long)
+			LungeSpeed = 16.5,
+			MaxSpeed = 16.8,
 			SightLit = 36,
 			SightDark = 14,
 			SightFlashlight = 50,
@@ -265,13 +282,16 @@ Config.Difficulty = {
 			OpenFindChance = 0.9,
 			SearchChecks = 3,
 			AmbushChance = 0.65,
-			WithdrawMin = 6,
-			WithdrawMax = 10,
+			WithdrawMin = 4,
+			WithdrawMax = 7,
 			InspectNearChance = 0.6,
 			SoloChaseSlowdown = 0.4,
 			GrabRange = 5.2,
-			HideStale = 24,
-			HideStaleAgain = 12,
+			HideStale = 18,
+			HideStaleAgain = 10,
+			SenseFirst = 8,
+			SenseEvery = { 11, 17 },
+			SenseSpeed = 16,
 		},
 	},
 }
@@ -286,9 +306,9 @@ Config.Difficulty = {
 Config.Heartbeat = {
 	Interval = 1.25, -- seconds between beats
 	Travel = 1.3, -- how long a half-heart takes to fly in (easier to read)
-	Window = 0.42, -- seconds either side of arrival that count (forgiving on touch screens)
+	Window = 0.38, -- seconds either side of arrival that count (forgiving on touch screens) (v126: 0.42)
 	Lead = 2.4, -- the heart shows this long before the first beat (time to read it: v88-90 Normal passed 28 of 60)
-	Misses = 3, -- this many misses and he hears you (more and doing nothing could outlast him)
+	Misses = 2, -- this many misses and he hears you (v126, the owner: "much harder": 3 -> 2)
 	-- (v87 logs: passed only 15 times out of 50 on Normal, and that failure was most of the upstairs
 	-- bathroom captures. The side buttons now show on every device, not just touch (PC players had
 	-- only Q / E to go on), and on Normal the first wrong-side press on a beat is forgiven: press
@@ -312,13 +332,13 @@ Config.Capture = {
 Config.Help = {
 	-- (v88-90 logs: once help was called only 7 of 200 players left before the police came, while the
 	-- hunt is the game; nights ran ~11 min against the ~13 the owner wants: a longer hold-out)
-	PhoneResponse = 100, -- (v117: 120; v94: 200 was "too long", the owner; 150 before that)
-	NeighborResponse = 100,
-	CarResponse = 60,
+	PhoneResponse = 150, -- (v126: 100 with MinNight 15 min; v117: 120; v94: 200 was "too long", the owner)
+	NeighborResponse = 150, -- (v126: 100)
+	CarResponse = 90, -- (v126: 60)
 	CellCallDuration = 15, -- (Hard)
 	CellCallDurationNormal = 10,
-	OkaforCallsAfter = 60, -- (v117: 100) -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
-	OkaforResponse = 60, -- (v117: 80)
+	OkaforCallsAfter = 300, -- (v126: 60) -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
+	OkaforResponse = 120, -- (v126: 60)
 	-- the call goes through and he hears it (he screams and charges the caller): on Normal the caller
 	-- gets this head start to hide (v81 logs: most upstairs-bathroom captures came 3-12 s after the
 	-- call ended, the caller still at the window). Hard: none.
@@ -329,7 +349,7 @@ Config.Help = {
 	-- (v116, a player: "way too short, I escaped in 3 mins": the car and her door worked from the first
 	-- second of the hunt; keys grabbed before the blackout meant a drive-off 3 s in) the car won't start
 	-- and Mrs. Okafor doesn't wake until the hunt has run this long. Calling 911 is ~130 s anyway.
-	ExitsAfter = 90, -- (v117: 120, with the shorter night; Config.MinNight still holds)
+	ExitsAfter = 240, -- (v126: 90; Config.MinNight still holds)
 	JunctionRepair = 10,
 	-- (v125) the police pulling up doesn't end the night by itself: they're at the front, he knows
 	-- it's over and comes for whoever is still inside, wherever they are. Get out the front door.
@@ -343,19 +363,19 @@ Config.Help = {
 Config.Director = {
 	Ceiling = { Evening = 25, SmallThings = 65, SomeoneElse = 85, Guest = 100 },
 	Gap = {
-		Evening = { 25, 45 }, -- (v117: 30-55, the shorter night)
-		SmallThings = { 25, 42 }, -- (v117: 30-50)
+		Evening = { 18, 32 }, -- (v126: 25-45; constantly scary)
+		SmallThings = { 16, 30 }, -- (v126: 25-42)
 		SomeoneElse = { 32, 55 },
 		Guest = { 45, 80 },
 	},
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
-	BeatSpacing = 35, -- a scripted scare waits this long after the last one (one thing at a time)
+	BeatSpacing = 25, -- a scripted scare waits this long after the last one (one thing at a time) (v126: 35)
 	AfterNews = 22, -- (v117: 28) -- act II ends this long after the news was watched at the soonest...
 	BedtimeAfterNews = 4, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
 	AfterBedtime = 5, -- (v94: 12; the owner wanted less waiting before the blackout)
-	BedtimeMinAct = 120, -- (v117: 150) -- (but act II still runs at least this long: its scares need room)
+	BedtimeMinAct = 260, -- (v126: 120) -- (but act II still runs at least this long: its scares need room)
 	AfterScare = 22, -- (v117: 30) -- ...and this long after the last scare
 	CeilingSteps = 20, -- (v113) seconds into the Evening: footsteps cross the ceiling over someone
 }

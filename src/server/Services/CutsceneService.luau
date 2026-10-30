@@ -136,6 +136,69 @@ function Cutscene.heComesDown(at: Vector3)
 	})
 end
 
+-- (a camera spot near `face`, `dist` studs out, that isn't inside a wall: tries the given directions,
+-- then the compass round; nil if nothing's clear)
+local function clearSpot(face: Vector3, dirs: { Vector3 }, dist: number, ignore: { Instance }): Vector3?
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = ignore
+	local tries = table.clone(dirs)
+	for k = 0, 7 do
+		local a = k * math.pi / 4
+		table.insert(tries, V(math.cos(a), 0, math.sin(a)))
+	end
+	for _, d in tries do
+		local flat = V(d.X, 0, d.Z)
+		if flat.Magnitude > 0.01 then
+			local dir = flat.Unit * dist + V(0, -0.4, 0)
+			if not workspace:Raycast(face, dir * 1.15, params) then
+				return face + dir
+			end
+		end
+	end
+	return nil
+end
+Cutscene._clearSpot = clearSpot -- (tests)
+
+-- (v126) the first time in a night that he knows where one of you is and starts his run: his face,
+-- close, turning to you, the scream. Everyone sees it. Returns how long it holds everything (0: skipped).
+function Cutscene.heKnows(face: Vector3, toward: Vector3, model: Instance?): number
+	local dir = toward - face
+	local cam = clearSpot(face, { dir, -dir }, 5, { model :: Instance })
+	if not cam then
+		return 0
+	end
+	local closer = face + (cam - face) * 0.72
+	return Cutscene.play({
+		Name = "HeKnows",
+		Gait = "Stare",
+		Shots = {
+			{ From = look(cam, face), To = look(closer, face), Time = 2.4, Fov = 52, FovTo = 42, Scream = 0.6, Shake = 0.7 },
+		},
+		Subtitle = "He knows where you are.",
+	})
+end
+
+-- (v126) the police are here: from the front walk, red and blue on the house and the front door
+-- swinging open; then him, inside, screaming. Then the last run (EscapeService.finalRun).
+function Cutscene.policeHere(door: Vector3, face: Vector3?, model: Instance?): number
+	local shots = {
+		{ From = look(door + V(-9, 5.5, -26), door + V(0, 3.5, 0)), To = look(door + V(-6, 5, -18), door + V(0, 3.5, 0)), Time = 2.8, Fov = 55, FovTo = 48, Sound = "DoorSlam" },
+	}
+	if face then
+		local cam = clearSpot(face, {}, 5.5, { model :: Instance })
+		if cam then
+			table.insert(shots, { From = look(cam, face), To = look(face + (cam - face) * 0.7, face), Time = 1.8, Fov = 48, FovTo = 40, Scream = 0.2, Shake = 1 })
+		end
+	end
+	return Cutscene.play({
+		Name = "PoliceHere",
+		Gait = "Stare",
+		Shots = shots,
+		Subtitle = "The police are here. GET OUT.",
+	})
+end
+
 -- Tied up for the first time: you, zip-tied to the pipes in the boiler room. Just for you.
 function Cutscene.tiedUp(player: Player, slot, line: string?)
 	if not slot then

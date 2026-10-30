@@ -15,7 +15,11 @@ local Stats = {}
 local ctx
 local store = nil
 local board = nil -- OrderedDataStore: nights survived, for the lobby leaderboard
-local fastBoard = nil -- OrderedDataStore: fastest win in seconds (lowest first), for the second sign
+local fastBoard = nil -- OrderedDataStore: fastest win in seconds (lowest first; personal bests only since v126)
+-- (v126, the owner: "Why is the leaderboard only till 6:00 there's so many people with that": no night can end before the
+-- minimum night length, so every winner tied at the floor. The second sign ranks levels instead: XP = coins earned playing)
+local levelBoard = nil -- OrderedDataStore: coins earned playing (XP), highest first
+local levelWritten: { [number]: { V: number, T: number } } = {}
 
 -- (v117, the owner: no time floor on the board; only skip-to-the-blackout nights never count)
 local function validBest(x: number?): number
@@ -429,6 +433,35 @@ function Stats.recordWin(player: Player, seconds: number): boolean
 	return true
 end
 
+-- (v126) the TOP LEVELS sign: a player's lifetime XP (coins earned playing). Written at most every 30 s
+-- per player, and only when it grew; never for the owner or a night the admin panel was used on
+function Stats.recordEarned(player: Player, earned: number)
+	earned = math.floor(tonumber(earned) or 0)
+	if not levelBoard or earned <= 0 or offBoards(player.UserId) or (ctx.Config and ctx.Config.Debug) then
+		return
+	end
+	if ctx.Admin and ctx.Admin.uncredited and ctx.Admin.uncredited(player) then
+		return
+	end
+	local last = levelWritten[player.UserId]
+	if last and (earned <= last.V or os.clock() - last.T < 30) then
+		return
+	end
+	levelWritten[player.UserId] = { V = earned, T = os.clock() }
+	local userId = player.UserId
+	task.spawn(function()
+		pcall(function()
+			levelBoard:UpdateAsync("u" .. userId, function(old)
+				old = tonumber(old)
+				if old and old >= earned then
+					return nil
+				end
+				return earned
+			end)
+		end)
+	end)
+end
+
 -- the "how he hunts" tips: shown again whenever they change (Story.SurvivalTipsVersion)
 function Stats.markTips(player: Player, version: number)
 	local d = cache[player.UserId]
@@ -620,6 +653,10 @@ function Stats.init(c)
 		return DataStoreService:GetOrderedDataStore("FastestWin_v1")
 	end)
 	fastBoard = ok3 and fds or nil
+	local ok5, lds = pcall(function()
+		return DataStoreService:GetOrderedDataStore("TopEarned_v1")
+	end)
+	levelBoard = ok5 and lds or nil
 	local ok4, gds = pcall(function()
 		return DataStoreService:GetDataStore("Global_v1")
 	end)
@@ -642,12 +679,12 @@ function Stats.init(c)
 	end)
 end
 
--- the top survivors (or, with "Fastest", the fastest wins), for the lobby signs: { { Name, Value } }
+-- the top survivors (or, with "Level", the most XP; "Fastest", the fastest wins), for the lobby signs: { { Name, Value } }
 local names: { [number]: string } = {}
 function Stats.top(n: number, which: string?)
 	local out = {}
 	local fastest = which == "Fastest"
-	local store_ = if fastest then fastBoard else board
+	local store_ = if fastest then fastBoard elseif which == "Level" then levelBoard else board
 	if not store_ then
 		return out
 	end

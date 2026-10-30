@@ -262,6 +262,23 @@ function Escape.finalRun()
 	local H = ctx.Config.Help
 	local secs = if workspace:GetAttribute("Difficulty") == "Hard" then (H.FinalRunHard or 35) else (H.FinalRun or 45)
 	workspace:SetAttribute("PoliceETA", nil)
+	-- (v126) the cutscene first: the house in red and blue, the door swinging open, him screaming inside
+	local frontDoor = ctx.Doors.get("FrontDoor")
+	if frontDoor and ctx.Cutscene and ctx.Cutscene.policeHere and not ctx.Cutscene.isPlaying() then
+		local head = ctx.Intruder and ctx.Intruder.getHead and ctx.Intruder.getHead()
+		local model = ctx.Intruder and ctx.Intruder.getModel and ctx.Intruder.getModel()
+		local t = ctx.Cutscene.policeHere(frontDoor.Position, head and head.Position or nil, model)
+		if t > 0 then
+			task.delay(0.9, function()
+				ctx.Doors.setLocked(frontDoor, false)
+				ctx.Doors.open(frontDoor, "Police", true)
+			end)
+			task.wait(t)
+			if state ~= night or ctx.Ending.isOver() or (state :: any).Suspended then
+				return
+			end
+		end
+	end
 	workspace:SetAttribute("FinalRunEnd", workspace:GetServerTimeNow() + secs)
 	local door = ctx.Doors.get("FrontDoor")
 	if door then

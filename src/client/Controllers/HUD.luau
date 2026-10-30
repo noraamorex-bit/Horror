@@ -392,7 +392,6 @@ local meterFrame: Frame
 local meterFill: Frame
 local meterLabel: TextLabel
 local etaLabel: TextLabel
-local openSince: number? = nil -- (alone in an open night: when the "finding players" clock started)
 local etaBox: Frame
 local hintBox: Frame
 local inventoryTop: Frame
@@ -691,41 +690,15 @@ local function update()
 			end
 		end
 		lastEtaSecond = whole
-	elseif type(workspace:GetAttribute("FriendInLobby")) == "string" and player:GetAttribute("InGame")
-		and not tonumber(workspace:GetAttribute("OnTheirWay")) then
-		-- (v124) a friend of someone in here is in a lobby, and it offers them this house (MatchService):
-		-- the one in here waits for them instead of going back out to find them
+	elseif (tonumber(workspace:GetAttribute("OnTheirWay")) or 0) > 0 and player:GetAttribute("InGame") then
+		-- (v122) someone has actually been sent here from a lobby: only while they're on their way.
+		-- (v126, the owner: "throughout the run this 'lazytoast is waiting in the lobby and can join you'
+		-- was on the screen remove that": no standing lines about who's in the lobby, who's waiting or
+		-- "finding players" on the HUD any more)
+		local onWay = tonumber(workspace:GetAttribute("OnTheirWay")) or 0
 		local dots = string.rep(".", 1 + math.floor(os.clock() * 2) % 3)
-		local who = workspace:GetAttribute("FriendInLobby") :: string
-		etaLabel.Text = workspace:GetAttribute("FriendComing") and (who .. " is on the way" .. dots)
-			or (who .. " is in the lobby: they can join you" .. dots)
-	elseif workspace:GetAttribute("OpenNight") and player:GetAttribute("InGame") then
-		-- a night that started short: others can still join it (MatchService)
-		if #Players:GetPlayers() == 1 then
-			-- (v113: alone, it reads like matchmaking: 36 of 38 lone first-nighters left, most within
-			-- 20 s, half of them to go and find players in the lobby; another player queues about once
-			-- a minute and is sent here)
-			openSince = openSince or os.clock()
-			local lobbyN = tonumber(workspace:GetAttribute("LobbyNow"))
-			local dots = string.rep(".", 1 + math.floor(os.clock() * 2) % 3)
-			local onWay = tonumber(workspace:GetAttribute("OnTheirWay"))
-			local behind = workspace:GetAttribute("LobbyBehindNames")
-			if onWay and onWay > 0 then
-				-- (v122: a lobby has sent someone here)
-				etaLabel.Text = (onWay == 1 and "1 player" or (onWay .. " players")) .. " on their way" .. dots
-			elseif type(behind) == "string" and #behind > 0 and os.clock() - openSince < 120 then
-				-- (v122: the ones left in the lobby can follow: say who)
-				etaLabel.Text = "Waiting for " .. behind .. dots .. "  " .. ctx.Util.formatSeconds(os.clock() - openSince)
-			else
-				etaLabel.Text = "Finding players" .. dots .. "  " .. ctx.Util.formatSeconds(os.clock() - openSince)
-					.. ((lobbyN and lobbyN > 0) and ("  ·  " .. lobbyN .. " in the lobby") or "")
-			end
-		else
-			openSince = nil
-			etaLabel.Text = "Others can join your night · " .. tostring(workspace:GetAttribute("OpenNight"))
-		end
+		etaLabel.Text = (onWay == 1 and "1 player" or (onWay .. " players")) .. " on their way" .. dots
 	else
-		openSince = nil
 		etaLabel.Text = ""
 	end
 

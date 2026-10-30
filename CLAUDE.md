@@ -79,6 +79,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **PC is not a big phone (v104**, a player: "unnecessary mobile UI for pc"): with mouse and keyboard
   the HUD stays ~real size (`UI.rescale`; touch/console keep the big one), the heartbeat shows Q / E key
   caps, no "tap" wording. Look at layouts with `ui_dump.luau` + `tools/assets/ui_preview.mjs`.
+- **No invite or Starter Pack buttons in the house, no standing lobby lines on the HUD (v126**, the owner: "UI is
+  cramped... this 'lazytoast is waiting in the lobby and can join you'... remove that"): only "N players on their way"
+  while someone really is. The Starter Pack window opens by itself 6 s into a night (never on the result card).
 - **Usable items are Roblox tools in the hotbar** (equip, click / tap to use; v94, the owner). **Our own
   hotbar since v109** (the owner: "only 3 items got in hotbar"; Roblox's shows 3 on a phone): client
   `Gear` draws a slot for every item, sized to fit; Roblox's backpack stays off.
@@ -103,9 +106,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Genuinely scary creature; smart (Doors' "Figure"-style: hunts by sound and sight, charges, inspects
   hiding spots, heartbeat minigame). Players must **hide**.
 - **Faster than your walk, slower than your sprint** (v102, the owner: "make him faster"; until v101 he
-  was always under the walk speed): chase 12.5 / charge 12 (Hard 13.5 / 13), cap 14.5; you walk 10,
-  sprint 17. Not too hard (owner worried about rage-quits); after a capture he leaves so friends get a
-  rescue window.
+  was always under the walk speed): **v126 (the owner: "much scarier and harder")** chase 13.5 / charge 13, cap 15
+  (Hard 14.5 / 14 / 16, NIGHTMARE 15.5 / 14.5 / 16.8); you walk 10, sprint 17. After a capture he leaves so friends
+  get a rescue window.
+- **He knows where you are (v126**, the owner: "He didn't even check my hiding spot. I want him to automatically sprint
+  to my current location"): every `Intruder.SenseEvery` (24-34 s; Hard 16-24; NIGHTMARE 11-17) he sprints at
+  `SenseSpeed` to one player's current position (the one he went for longest ago): a re-aiming charge in the open, or
+  straight to their hiding spot to listen (heartbeat). The first run of the night is the **HeKnows** cutscene.
 - **You must be able to see him** (v102: "I can't even see the monster… because of how dark it is"):
   charcoal body, brighter face glow + a cold chest light, a faint outline/fill in the house (client
   Highlight, occluded, not in the lobby), and the dark house after the blackout is moonlit
@@ -210,10 +217,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Night streak: another night within 15 min of the last pays +25% / +50%. Groups where everyone has
   finished a night can vote ⏩ SKIP TO THE BLACKOUT. 🔔 Remind me (notification opt-in) on the result
   card. Out early, you can already press ANOTHER NIGHT.
-- **Night length: ~10 min on average, never under 7** (v117, the owner: "I want the whole game to take on
-  average 10 mins and down to 7mins"; this replaces the old "~13 min, don't rush the night": the owner's
-  later word wins). `Config.Acts`, police 100 s, `Config.MinNight` 420 (police/car/next door wait for it,
-  skip nights excepted). Every night still gets the full build-up. Act II events take turns: scares 35 s apart, Mom's texts only when nothing
+- **Night length: 15-20 minutes (v126**, the owner: "The game is too short... I want this to be a fully polished 15-20
+  minute game where BPM goes 120+. Make it constantly scary"; replaces v117's ~10 min average). `Config.Acts` (Evening
+  2.5-5, SmallThings 4.5-6), police 150 s, `Config.MinNight` 900 (police/car/next door wait for it, skip nights
+  excepted), exits 240 s into the hunt, Mrs. Okafor 300 s. Scares 16-32 s apart; every sighting of him is a beat. Every night still gets the full build-up. Act II events take turns: scares 35 s apart, Mom's texts only when nothing
   else is going on, the TV alert never during the news, a breather before the blackout.
 - The heartbeat minigame must stay passable (logs: 0/22 passes before the fix); Normal is
   forgiving, Hard is tight.
@@ -222,8 +229,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **No quick exits (v116**, a player: "escaped in 3 mins"): the car and Mrs. Okafor's door only work 90 s into
   the hunt (`Config.Help.ExitsAfter`, v117) and after MinNight (before: car floods, nobody answers, both loud).
   NeighborWait 20 s.
-- FASTEST WINS: **only skip-to-the-blackout nights are left out** (and admin-panel nights); no time floor
-  (v117, the owner: "dont just limit the leaderboard time to 6:00").
+- **The second lobby sign is TOP LEVELS (v126**, the owner: "Why is the leaderboard only till 6:00 there's so many
+  people with that": no night can end before MinNight, so FASTEST WINS was a list of ties at the floor): lifetime XP
+  (`TopEarned_v1`, `Stats.recordEarned`), shown as LV n. The result card still shows your time.
 - "Secret ending: found by N players" is one small line at the bottom of the NIGHTS SURVIVED board
   (the owner found a separate board "too much").
 
@@ -291,7 +299,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   screen without them pressing anything or maybe accidentally pressing". It had been opened 4 times in a week (0 sold).
   Done: client `Starter`: a ⭐ STARTER dock icon in the lobby, a small gold button in the house before the hunt, and the
   purchase window opens by itself once a visit (lobby: stepping into a circle, if you've finished a night; house: the
-  result card, not over a revive; **v124: lobby window removed, 0 of 197 auto windows sold**). **Never timed to catch a tap** (waits for no finger down + 1.2 s still): tricking
+  result card, not over a revive; **v124: lobby window removed, 0 of 197 auto windows sold; v126: the house's button and
+  the card's window removed, it opens by itself 6 s into a night instead** (the owner: "put it at the beginning")). **Never timed to catch a tap** (waits for no finger down + 1.2 s still): tricking
   players into buying breaks Roblox's rules (moderation, refunds) and the all-ages goal. Funnel: `Ask:StarterAuto`.
 
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
@@ -616,6 +625,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **31 Oct (v126 = place version 125)**, the owner after a run: "too short. I barely saw the monster once... He didn't even
+  check my hiding spot. I want him to automatically sprint to my current location. UI is cramped. Remove the invite friends
+  and starter pack while in game... 'lazytoast is waiting in the lobby'... remove that. Make the monster much scarier and
+  harder... starter pack pop up... at the beginning... a fully polished 15-20 minute game where BPM goes 120+... cutscenes
+  sound effects. Why is the leaderboard only till 6:00". Done: all of it (see The intruder, Retention, HUD; GDD "The v126
+  night", "UI (v126)"); the navigator's speed cap was Normal's on every difficulty (fixed). Next: `--since=125`: night length
+  (want 15-20), `Sensed` per player, quits per act (a longer night may add quits: watch act III), captures/deaths per player.
 
 - **30 Oct (v125 = place version 124)**, the owner forwarded a comment: "This game was terrible bru, you can literally just hide
   and wait 2 mins and you've won, not scary either". It was true: help called (or Mrs. Okafor's call 60 s into the last act) +
@@ -1055,7 +1072,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 124; the notes' "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 125; the notes' "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
