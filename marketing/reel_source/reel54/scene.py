@@ -139,7 +139,7 @@ def s_l4(i, k):
         return (dict(DARK, shot="hall4", cam={"pos": cam, "look": look, "fov": 56}, exposure=2.8, door=-math.pi / 2, glow=0.0), cr, GAP)
     # the drop: the mask falls out of the gap and lunges at you, jaw open
     w = ease((i - 195) / 6)
-    p = lerp(GAP, [cam[0] + 0.05, cam[1] + 0.15, cam[2] - 1.6], w)
+    p = lerp(GAP, [cam[0] + 0.05, cam[1] + 0.25, cam[2] - 2.5], w)
     cr = him([6.0, U, 0.0], 0.0, "Reach", t=3.0 + i / FPS, Scream=1.0)
     cr["head"] = {"pos": p, "look": [cam[0], cam[1] + 0.1, cam[2]], "roll": 0.5 * (1 - w)}
     cr["noSkin"] = True

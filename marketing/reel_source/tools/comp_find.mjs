@@ -143,6 +143,8 @@ window.setFrame = (f, fr) => {
       const kz = ease(seg(i, S + 3, S + 15));
       // (the punch-in also pulls him to the middle of the screen, clear of the badge)
       zoom = 1 + (fr.zoom - 1) * kz; ox = tx; oy = ty; mx = (540 - tx) * kz; my = (900 - ty) * kz;
+      // (but never so far that the picture's edge comes into view)
+      mx = clamp(mx, 1080 - tx - (1080 - tx) * zoom, tx * (zoom - 1)); my = clamp(my, 1920 - ty - (1920 - ty) * zoom, ty * (zoom - 1));
       const rx = tx + mx, ry = ty + my;
       const kr = seg(i, S, S + 5);
       const r = $('ring'); r.style.opacity = 1;
@@ -179,7 +181,7 @@ window.setFrame = (f, fr) => {
     $('eTyped').textContent = typed.slice(0, nch) + ((Math.floor(t * 4) % 2) ? '|' : '');
     $('eFree').style.opacity = seg(t, 1.0, 1.2);
     const ka = seg(t, 1.2, 1.4); $('eAsk').style.opacity = ka; $('eAsk').style.transform = 'translateY(' + (30 * (1 - back(ka))) + 'px)';
-    if (t < 0.12) fl = 0.6 * (1 - seg(t, 0, 0.12));
+    bk = 1 - seg(t, 0, 0.2);                       // (in from black after the scare)
   }
   $('base').style.filter = filt;
   const sx = (rnd(f) - .5) * sh, sy = (rnd(f + 9) - .5) * sh;
@@ -187,7 +189,6 @@ window.setFrame = (f, fr) => {
   $('base').style.transform = 'translate(' + (sx + mx) + 'px,' + (sy + my) + 'px) scale(' + zoom + ')';
   $('red').style.opacity = red;
   $('flash').style.opacity = fl;
-  if (fr.fadeOut) bk = fr.fadeOut;
   $('black').style.opacity = bk;
   const d = gi.data;
   for (let i2 = 0; i2 < d.length; i2 += 4) { const v = (128 + (Math.random() - 0.5) * 150) | 0; d[i2] = d[i2 + 1] = d[i2 + 2] = v; d[i2 + 3] = 255; }
