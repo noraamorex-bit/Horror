@@ -113,6 +113,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   to my current location"): every `Intruder.SenseEvery` (24-34 s; Hard 16-24; NIGHTMARE 11-17) he sprints at
   `SenseSpeed` to one player's current position (the one he went for longest ago): a re-aiming charge in the open, or
   straight to their hiding spot to listen (heartbeat). The first run of the night is the **HeKnows** cutscene.
+- **Always after someone (v127**, the owner: "Make him constantly run after someone"): between those loud runs, whenever
+  he has nothing else to do (patrol, search, lying low) he's running after a player again within `PursueGap` (2.5 s; Hard
+  1.5, NIGHTMARE 1): the same one for up to `PursueFor` 18 s (re-aiming at them), then whoever he went for longest ago;
+  hiding, he runs to the spot and listens. These runs are quiet (no roar); the player gets "He's after me" at most every
+  25 s. Not while he carries someone off (the rescue window stays), is stunned or listens at a door.
 - **You must be able to see him** (v102: "I can't even see the monster… because of how dark it is"):
   charcoal body, brighter face glow + a cold chest light, a faint outline/fill in the house (client
   Highlight, occluded, not in the lobby), and the dark house after the blackout is moonlit
@@ -626,6 +631,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
 
+- **31 Oct (v127 = place version 126)**, the owner: "Make him constantly run after someone". Done: constant pursuit (see
+  The intruder; GDD "Always after someone"). Next: `--since=126`: `Pursued` per player, captures and deaths per player,
+  quits in the hunt (the hunt is much harder now: watch for rage-quits).
+
 - **31 Oct (v126 = place version 125)**, the owner after a run: "too short. I barely saw the monster once... He didn't even
   check my hiding spot. I want him to automatically sprint to my current location. UI is cramped. Remove the invite friends
   and starter pack while in game... 'lazytoast is waiting in the lobby'... remove that. Make the monster much scarier and
@@ -1072,7 +1081,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 125; the notes' "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 126; the notes' "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

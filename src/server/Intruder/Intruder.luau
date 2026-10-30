@@ -32,7 +32,7 @@ local ANIMS = {
 
 local S: any = {}
 local tune: () -> any
-local charge: (Vector3, Player?) -> ()
+local charge: (Vector3, Player?, boolean?) -> ()
 local inspect: (any, number?) -> ()
 local grabAnyone: () -> boolean
 local patrolRoute: () -> { Vector3 }
@@ -79,6 +79,10 @@ local function fresh()
 		FinalNext = 0,
 		NextSense = nil, -- (v126) when he next sprints at someone's current position
 		SensedAt = {}, -- player -> when he last went for them that way
+		NextPursue = 0, -- (v127) when he next starts running after someone
+		PursueTarget = nil,
+		PursueUntil = 0,
+		PursueTold = {}, -- player -> when they were last told he's after them
 		Tracks = {},
 		CurrentTrack = nil,
 		StepClock = 0,
@@ -1766,7 +1770,7 @@ local function growl()
 	end
 end
 
-charge = function(at: Vector3, who: Player?)
+charge = function(at: Vector3, who: Player?, quiet: boolean?)
 	if S.State == "Charge" then
 		-- another footstep: re-aim, and if he'd started thrashing about, he runs again
 		S.Data.Pos = at
@@ -1780,7 +1784,8 @@ charge = function(at: Vector3, who: Player?)
 	if who then
 		S.LastFelt[who] = at
 	end
-	if now() - (S.LastRoar or -1e9) > 6 and S.Head then
+	-- (quiet: v127's constant pursuit, a run with no roar; the loud ones stay rare)
+	if not quiet and now() - (S.LastRoar or -1e9) > 6 and S.Head then
 		S.LastRoar = now()
 		ctx.Audio.playAt("Roar", S.Head.Position, { Caption = true })
 		if who and valid(who) then
@@ -2865,6 +2870,75 @@ local function senseTick(): boolean
 end
 Intruder._senseTick = senseTick -- (tests)
 
+--[[
+	Always after someone (v127, the owner: "Make him constantly run after someone"). Whenever he has
+	nothing else to do (patrolling, searching, lying low), PursueGap s later he's running after one of
+	you: the same one for up to PursueFor s, re-aiming at where they are, then whoever he went for
+	longest ago. Out in the open it's a charge at SenseSpeed; hiding, he runs to the spot and listens
+	(the heartbeat). The one he's after is told (at most every 25 s), quietly: the loud announcement is
+	senseTick's.
+]]
+local function pursueTick(): boolean
+	local I = tune()
+	if not I.PursueGap or now() < (S.NextPursue or 0) or not SENSE_FREE[S.State] then
+		return false
+	end
+	S.NextPursue = now() + I.PursueGap
+	local function usable(p: Player?): boolean
+		return p ~= nil and valid(p) and not spared(p) and not p:GetAttribute("Captured") and rootOf(p) ~= nil
+	end
+	local target = S.PursueTarget
+	if not (usable(target) and now() < (S.PursueUntil or 0)) then
+		target = nil
+		local bestKey = nil
+		for _, p in ctx.Util.activePlayers() do
+			if usable(p) then
+				local key = { S.SensedAt[p] or -1e9, ((rootOf(p) :: BasePart).Position - pos()).Magnitude }
+				if not bestKey or key[1] < bestKey[1] or (key[1] == bestKey[1] and key[2] < bestKey[2]) then
+					target, bestKey = p, key
+				end
+			end
+		end
+		if not target then
+			return false
+		end
+		S.PursueTarget = target
+		S.PursueUntil = now() + (I.PursueFor or 18)
+		S.SensedAt[target] = now()
+	end
+	local who = target :: Player
+	local spot = who:GetAttribute("Hiding") and ctx.Hiding.spotOf(who)
+	if now() - (S.PursueTold[who] or -1e9) > 25 then
+		S.PursueTold[who] = now()
+		ctx.Director.think(who, ctx.Story.Hunt.Pursued)
+	end
+	if ctx.Journey then
+		ctx.Journey.count(who, "Pursued")
+	end
+	if spot then
+		if now() < (S.SpotCooldown[spot] or 0) then
+			-- (he listened at it moments ago: someone else for now)
+			S.PursueUntil = 0
+			return false
+		end
+		S.HeardHide[spot] = now()
+		inspect(spot, I.SenseSpeed)
+		return S.State == "Inspect"
+	end
+	local r = rootOf(who)
+	if not r then
+		return false
+	end
+	charge(r.Position, who, true)
+	if S.State == "Charge" then
+		S.Data.Speed = I.SenseSpeed
+		S.Data.Homing = who
+		S.Data.HomingUntil = math.min(S.PursueUntil, now() + (I.PursueFor or 18))
+	end
+	return true
+end
+Intruder._pursueTick = pursueTick -- (tests)
+
 local function think(dt: number)
 	if S.State == "Lurk" and S.Model and not S.InHouse then
 		STATES.Lurk(dt, {})
@@ -2962,7 +3036,12 @@ local function think(dt: number)
 		return
 	end
 	-- (v126) every half minute or so he knows exactly where one of you is, and runs there
-	if S.Mode == "Hunt" and not S.FinalRun and senseTick() then
+	-- (the Figure brain's: the Classic brain always feels where you are already)
+	if S.Mode == "Hunt" and figure() and not S.FinalRun and senseTick() then
+		return
+	end
+	-- (v127) and in between, he's always running after one of you
+	if S.Mode == "Hunt" and figure() and not S.FinalRun and pursueTick() then
 		return
 	end
 	-- now and then, a surprise instead of the plain patrol (v104; never while he's lying low: that's

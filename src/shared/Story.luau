@@ -954,6 +954,8 @@ Story.Hunt = {
 	-- (v126) he's sprinting at you, wherever you are
 	Sensed = "Footsteps. Running. Straight at me. He knows exactly where I am.|hide",
 	SensedHiding = "He's coming. Straight for my hiding spot. Hold still. Breathe slow.|breath",
+	-- (v127) he's after you again (a plain run, between the loud ones)
+	Pursued = "He's after me. Keep moving.|hide",
 	-- (v125) the police are here: the last run
 	FinalNotice = "THE POLICE ARE HERE. GET OUT THE FRONT DOOR!",
 	Final = "Red and blue through the windows. He knows it's over. He's coming for us. RUN for the front door.",

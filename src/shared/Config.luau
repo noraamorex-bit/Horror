@@ -160,6 +160,12 @@ Config.Intruder = {
 	SenseEvery = { 24, 34 },
 	SenseSpeed = 14,
 	SenseHoming = 10,
+	-- (v127, the owner: "Make him constantly run after someone") between those, he never just patrols: with
+	-- nothing else to do he's running after one of you again within PursueGap s, keeping on the same one for
+	-- up to PursueFor s (re-aiming as they move), then the one he went for longest ago. Hiding: he runs to
+	-- the spot and listens. (Not while he's carrying someone off, stunned, or listening at a door.)
+	PursueGap = 2.5,
+	PursueFor = 18,
 	GrabRange = 4.5,
 	FOV = 90, -- degrees
 	-- (short sight: he hunts by sound. Lit rooms and your beam still give you away)
@@ -255,6 +261,7 @@ Config.Difficulty = {
 			SenseFirst = 10,
 			SenseEvery = { 16, 24 },
 			SenseSpeed = 15,
+			PursueGap = 1.5,
 		},
 		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22, Travel = 0.9, Lead = 1.2, ForgiveWrong = false },
 		BatteryMultiplier = 0.7, -- flashlights die faster
@@ -292,6 +299,7 @@ Config.Difficulty = {
 			SenseFirst = 8,
 			SenseEvery = { 11, 17 },
 			SenseSpeed = 16,
+			PursueGap = 1,
 		},
 	},
 }

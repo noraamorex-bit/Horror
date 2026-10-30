@@ -86,6 +86,7 @@ local ok, err = pcall(function()
 	local tune = I._tune()
 	local Hunt = ctx.Story.Hunt
 	S.NextSense = 1e12 -- (v126's sense sprint off for the stale checks: section 4 tests it)
+	S.NextPursue = 1e12 -- (v127's constant pursuit too: section 5)
 	local function patrolling(at)
 		S.State = "Patrol"; S.Data = { Route = {}, Index = 0, Moving = true, PauseUntil = 1e12 }; S.Heard = nil
 		if at then S.Root.CFrame = R.CFrame.new(at) end
@@ -211,6 +212,38 @@ local ok, err = pcall(function()
 		S.NextSense = 1e12
 		patrolling(spot.Exit.Position + R.Vector3.new(60, 0, 0))
 		print("sense sprint ok")
+	end
+
+	-- 5) (v127) always after someone: with nothing else to do, PursueGap s later he's running after one of you
+	do
+		local aRoot = ctx.Util.getRoot(a)
+		aRoot.CFrame = R.CFrame.new(spot.Exit.Position + R.Vector3.new(0, 3, 0))
+		S.Spared = {}
+		patrolling(spot2.Exit.Position + R.Vector3.new(40, 0, 0))
+		S.PursueTarget = nil
+		S.NextPursue = T - 1
+		local said = 0
+		for _, f in fired do if f[1] == "HisVoice" then said += 1 end end
+		tick(0.2)
+		assert(S.State == "Charge" and S.Data.Homing == a and S.Data.Speed == tune.SenseSpeed, "patrolling with nothing to do: after her, got " .. S.State)
+		assert(thought(a, Hunt.Pursued), "she's told, quietly")
+		-- done with that run: back on her within PursueGap, not patrolling
+		patrolling(spot2.Exit.Position + R.Vector3.new(40, 0, 0))
+		tick(tune.PursueGap + 0.3)
+		assert(S.State == "Charge" and S.Data.Homing == a, "and again within PursueGap s, got " .. S.State)
+		-- after PursueFor s on her, he switches to whoever he went for longest ago (b, put in play)
+		b:SetAttribute("InGame", true)
+		ctx.Util.getRoot(b).CFrame = R.CFrame.new(spot3.Exit.Position + R.Vector3.new(0, 3, 0))
+		S.PursueUntil = T - 1
+		patrolling(spot2.Exit.Position + R.Vector3.new(40, 0, 0))
+		S.NextPursue = T - 1
+		tick(0.2)
+		assert(S.State == "Charge" and S.Data.Homing == b, "then the other one, got " .. tostring(S.Data.Homing))
+		b:SetAttribute("InGame", nil)
+		S.NextPursue = 1e12
+		S.PursueTarget = nil
+		patrolling(spot.Exit.Position + R.Vector3.new(60, 0, 0))
+		print("constant pursuit ok")
 	end
 
 	-- 3) the police: the last run for the front door

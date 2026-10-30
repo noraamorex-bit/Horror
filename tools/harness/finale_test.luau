@@ -341,7 +341,8 @@ local ok, err = pcall(function()
 		local head = S.P.head()
 		local look = V(head.CFrame.LookVector.X, 0, head.CFrame.LookVector.Z).Unit
 		local root = S.P.position()
-		place2(V(root.X, B.FloorY + 3, root.Z) + look * 3)
+		-- (2 studs: inside the 3.5 he always sees, so it doesn't hang on which way the sim's head looks)
+		place2(V(root.X, B.FloorY + 3, root.Z) + look * 2)
 		tick(0.1)
 		t += 0.1
 	end
