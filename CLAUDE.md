@@ -379,7 +379,8 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   rain }: grey night vision through a round lens, ● FRONT DOOR / LIVE, a running clock, rain streaks; film2's IR is a wide spot
   `flash` from the camera (keep `bright` ~1.05 on cam frames or the porch blows out white). Caption: `never open the door at 3am 👀
   game in comments`.
-- **Fourth format: "FIND HIM"** (reel 54, `find_him_1.mp4`, 30 Oct; the owner: "completely different than everything else… the
+- **Fourth format: "FIND HIM" — REJECTED** (the owner: "This is so bad Im not even uploading it… just make the next reel #8"). Don't
+  make spot-the-monster / challenge reels again; stay with the #N format and everyday hooks. What it was: (reel 54, `find_him_1.mp4`, 30 Oct; the owner: "completely different than everything else… the
   maximum possible amount of views… <35 secs"): a 25 s spot-the-monster challenge, built for rewatches, pauses, comments ("found
   him on 3") and sends ("bet you can't get level 4"). Four still dark rooms with him hidden, harder each time: LEVEL 1/4 EASY (the
   front hall, standing by the door), 2/4 MEDIUM (the top of the stairs), 3/4 HARD (Lily's room, two eyes in the dark corner), 4/4
@@ -389,8 +390,15 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   no case file, no #2 track: white Outfit text, level colours green/yellow/orange/red, its own track (`reel54/audio.py`: a clock
   tick per second, a heartbeat faster each level, a drone a semitone up each level, ring stingers, silence before the drop).
   Tools: `comp_find.mjs`; scene.py writes `targets.json` (his face projected to the screen, per frame) for the ring. Caption:
-  `can you find him? 👀 game in comments`. If it works, make it a series (FIND HIM #2: new rooms, the garage, the basement,
-  the bathroom).
+  `can you find him? 👀 game in comments`.
+  Reel 55 = **#8 (again)** (`cant_play_alone_8_v3.mp4`, 30 Oct; the owner asked for "the next reel #8" after rejecting FIND HIM;
+  the doorbell reel 53 was also numbered #8 and may not have been posted), #7's recipe: **the family location map**. "night 33:
+  someone joined our family map." (the phone by my pillow: a map, a new red dot) → "night 34: his dot was in our yard." (from my
+  back window in a lightning flash: him on the lawn by the swings, looking up) → "night 35: in our kitchen." (from the hall arch:
+  him at the island, back turned; his head turns right round) → "tonight his dot was on mine." (my phone: the two dots on one
+  spot) → "i checked my room." (my door swings open: empty) → "i checked the hall." → "then i looked up." (the hatch open, his
+  mask comes down out of the dark; it drops at you on 22.15 s) → RUN. film2 phones in reel55/scene.py draw the map (`phone(...,
+  dots)`). Caption: `he joined our family map 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -594,8 +602,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
 
-- **30 Oct (reel 54)**: a new format, FIND HIM (see Marketing). Next: its views and comments against #7 (50K) and #8; if it
-  beats them, FIND HIM #2 next, else back to everyday hooks (#9).
+- **30 Oct (reels 54-55)**: FIND HIM (reel 54) rejected by the owner, not posted. Reel 55 = #8, the family map (see Marketing).
+  Next: its views against #7 (50K). Next reel #9: another everyday thing turned (the baby monitor, the smart speaker, a voicemail
+  from your own number).
 
 - **30 Oct (reel 53)**: #8, the doorbell camera (see Marketing). Next: its views against #7 (50K). Next reel #9: another
   everyday thing turned (ideas: the baby monitor, the smart speaker answering at night, the family location app showing someone
