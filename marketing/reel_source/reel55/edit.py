@@ -34,6 +34,8 @@ for reel, start, n, section, cap in CLIPS:
         fr = {"src": f"{S}/{reel}/raw/{src:04d}.png", "section": section, "cap": cap, "k": i / max(1, n - 1), "i": i}
         if start in (shots["prints"], shots["photo"], shots["open"], shots["stood"]) and section == "clip":
             fr["bright"] = 1.8                       # (the dark house: lifted so a phone shows it)
+        if start == shots["door"] and section == "clip":
+            fr["bright"] = 0.95                      # (the lit phone on the white sheet: held down or it blows out)
         out.append(fr)
 print(len(out), "frames =", len(out) / FPS, "s")
 cuts, t = [], 0
