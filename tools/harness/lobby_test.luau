@@ -172,6 +172,37 @@ local ok, err = pcall(function()
 	Lobby._invited(other)
 	assert(#teleports == before + 1, "not an invite: stays in the lobby")
 	print("invites ok")
+	-- (v124) a Roblox friend's house: the lobby offers it (FriendHouse = the friend's name) and tells that
+	-- house; JOIN takes them straight there, out of any circle, as an invited player
+	local seen = {}
+	local savedMatch = ctx.Match
+	ctx.Match = {
+		friendHouse = function(p) if p.Name == "Bo" then return "night-sam", "Sam" end return nil, nil end,
+		friendSeen = function(c, name, coming) table.insert(seen, { c, name, coming }) end,
+		forget = function() end,
+		find = function() return nil end,
+	}
+	local bo = makePlayer("Bo")
+	Lobby._friendCheck(bo)
+	assert(bo:GetAttribute("FriendHouse") == "Sam", "offered Sam's house")
+	assert(#seen == 1 and seen[1][1] == "night-sam" and not seen[1][3], "and Sam's house is told Bo is here")
+	local loner = makePlayer("Lo")
+	Lobby._friendCheck(loner)
+	assert(loner:GetAttribute("FriendHouse") == nil, "nobody's friend: nothing")
+	local tb = #teleports
+	ctx.Remotes.JoinFriend.OnServerEvent:Fire(bo)
+	assert(#teleports == tb + 1 and lastOptions.ReservedServerAccessCode == "night-sam", "JOIN: into Sam's house")
+	local ftd = lastOptions.Data
+	assert(ftd and ftd.Invited and ftd.Code == "night-sam" and ftd.PartySize == 1, "as an invited player")
+	assert(seen[#seen][3] == true and bo:GetAttribute("FriendHouse") == nil, "Sam's house hears Bo is on the way")
+	ctx.Remotes.JoinFriend.OnServerEvent:Fire(loner)
+	assert(#teleports == tb + 1, "no friend's house: nothing happens")
+	for _, gone in { bo, loner } do
+		rawset(gone, "Parent", nil)
+		table.remove(players, table.find(players, gone))
+	end
+	ctx.Match = savedMatch
+	print("friends ok")
 	-- (v118) once queued you stay queued until LEAVE: the walls hold you in, anyone pushed out is put back
 	L.Countdown = 10
 	ctx.Match = { find = function() return nil end }

@@ -96,7 +96,7 @@ local ok, err = pcall(function()
 	ctx.Remotes.Queue.OnClientEvent:Fire({ Size = 2, Count = 1, Status = "Waiting" })
 	after = 0
 	for _, k in sent do if k == "StarterAuto" then after += 1 end end
-	assert(after == before + 1, "someone who's played: the window opens while they wait in the circle")
+	assert(after == before, "(v124) no window by itself in the lobby any more (0 of 197 sold)")
 	player:SetAttribute("StarterOffer", nil)
 	ctx.Starter._refresh()
 	assert(not dockIcon.Visible, "bought: the icon goes")
@@ -124,6 +124,19 @@ local ok, err = pcall(function()
 		assert(not (d:IsA("TextLabel") and d.Text == "BE HIM"), "no BE HIM in the lobby")
 	end
 	assert(H.unwrap(pg):FindFirstChildWhichIsA("UIGridLayout", true), "the dock wraps into a second column")
+	-- (v124) a friend's house: a small JOIN card at the top; JOIN asks the server, the card goes
+	local fc0 = H.unwrap(pg):FindFirstChild("FriendHouse", true)
+	assert(not fc0 or not fc0.Visible, "no card without a friend's house")
+	player:SetAttribute("FriendHouse", "Sam")
+	ctx.Social._friendHouse()
+	local fcard = H.unwrap(pg):FindFirstChild("FriendHouse", true)
+	assert(fcard and fcard.Visible and string.find(fcard:FindFirstChild("Text").Text, "Sam"), "the card names the friend")
+	local nsent = #sent
+	H.wrap(fcard:FindFirstChild("Join")).Activated:Fire()
+	assert(sent[#sent] == "JoinFriend" and #sent == nsent + 1 and not fcard.Visible, "JOIN: the server takes them there")
+	player:SetAttribute("FriendHouse", nil)
+	ctx.Social._friendHouse()
+	assert(not fcard.Visible, "gone with the house")
 	-- (v123) the feedback mailbox's prompt opens Roblox's feedback window; other prompts don't
 	S.ProximityPromptService.PromptTriggered:Fire({ Name = "DonatePrompt" })
 	S.ProximityPromptService.PromptTriggered:Fire({ Name = "FeedbackPrompt" })

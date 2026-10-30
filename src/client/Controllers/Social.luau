@@ -149,6 +149,60 @@ function Social.init(c)
 	ctx.Social = Social
 end
 
+-- (v124) a Roblox friend's house you can still join: a small card at the top, JOIN ▶ (LobbyServer
+-- offers it from MatchService; the attribute is the friend's name)
+local friendCard: Frame? = nil
+local function friendHouse()
+	local name = player:GetAttribute("FriendHouse")
+	if type(name) ~= "string" then
+		if friendCard then
+			friendCard.Visible = false
+		end
+		return
+	end
+	local UI = ctx.UI
+	if not friendCard then
+		local inset = game:GetService("GuiService"):GetGuiInset()
+		local card = UI.new("Frame", {
+			Name = "FriendHouse",
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.new(0.5, 0, 0, inset.Y + 10),
+			Size = UDim2.fromOffset(340, 44),
+			BackgroundColor3 = Color3.fromRGB(12, 12, 14),
+			BackgroundTransparency = 0.15,
+			ZIndex = 40,
+			Parent = UI.Root,
+		})
+		UI.corner(card, 10)
+		UI.stroke(card, Color3.new(1, 1, 1), 1, 0.75)
+		UI.label({ Name = "Text", Position = UDim2.fromOffset(14, 0), Size = UDim2.new(1, -124, 1, 0), Text = "", Font = UI.Font.Bold, TextSize = 15,
+			TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 41, Parent = card })
+		local join = UI.new("TextButton", {
+			Name = "Join",
+			AnchorPoint = Vector2.new(1, 0.5),
+			Position = UDim2.new(1, -8, 0.5, 0),
+			Size = UDim2.fromOffset(100, 30),
+			Text = "JOIN  ▶",
+			Font = UI.Font.Bold,
+			TextSize = 15,
+			TextColor3 = Color3.fromRGB(20, 20, 20),
+			BackgroundColor3 = Color3.fromRGB(240, 238, 232),
+			ZIndex = 41,
+			Parent = card,
+		})
+		UI.corner(join, 6)
+		join.Activated:Connect(function()
+			card.Visible = false
+			ctx.Remotes.JoinFriend:FireServer()
+		end)
+		friendCard = card
+	end
+	local card = friendCard :: Frame
+	(card:FindFirstChild("Text") :: TextLabel).Text = "👥 " .. name .. " is in a house"
+	card.Visible = true
+end
+Social._friendHouse = friendHouse -- (tests)
+
 function Social.start()
 	if ctx.Mode == "Lobby" then
 		ProximityPromptService.PromptTriggered:Connect(function(prompt)
@@ -156,6 +210,8 @@ function Social.start()
 				Social.feedback()
 			end
 		end)
+		player:GetAttributeChangedSignal("FriendHouse"):Connect(friendHouse)
+		friendHouse()
 	end
 end
 

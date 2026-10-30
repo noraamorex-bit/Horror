@@ -13,6 +13,12 @@
 	  if there's room for all of them, sends its players there instead ("You made it just in time").
 	  A short group sent to a fresh house is listed by the lobby at once (Match.listNew), and the
 	  game server keeps it listed while its players arrive and vote, then through acts I-II.
+	• (v124) Friends find each other. The v121-122 logs: 33 of 36 first-nighters who left a night within
+	  30 s went straight back to the lobby (30 played a night after), most of them sent by a "2 players"
+	  circle's countdown before their friend got there. So every house that can still take an invited
+	  friend (InviteOpen) lists who is in it ("f:<code>"); a lobby offers its players a friend's house
+	  (JOIN ▶, LobbyServer) and leaves word for that house ("c:<code>": the HUD says "Sam is in the
+	  lobby: they can join you", so the one who's in there waits instead of leaving).
 ]]
 
 local MemoryStoreService = game:GetService("MemoryStoreService")
@@ -31,6 +37,22 @@ local listed = false
 local PULSE_NAME = "LobbyPulse_v1"
 local pulseMap = nil
 local lobbyNowAt = 0
+-- (v124) who is in each house a friend can still join, and which friends in a lobby have seen it
+local FRIENDS_NAME = "FriendNights_v1"
+local friendMap = nil
+local friendListed = false
+
+local function getFriendMap()
+	if not friendMap then
+		local ok, m = pcall(function()
+			return MemoryStoreService:GetSortedMap(FRIENDS_NAME)
+		end)
+		if ok then
+			friendMap = m
+		end
+	end
+	return friendMap
+end
 
 local function getPulse()
 	if not pulseMap then
@@ -146,6 +168,45 @@ local function publish()
 	local inviteOpen = code ~= nil and D ~= nil and (D.getAct() == "Lobby" or (D.lateJoinOpen ~= nil and D.lateJoinOpen()))
 		and #Players:GetPlayers() < ctx.Config.MaxPlayers
 	workspace:SetAttribute("InviteOpen", inviteOpen or nil)
+	-- (v124) friends: who's in here, for a friend's lobby; and whether one of them has seen it
+	local fm = getFriendMap()
+	if fm and code then
+		local ids, names = {}, {}
+		for _, p in Players:GetPlayers() do
+			local uid = (p :: any).UserId
+			if tonumber(uid) then
+				table.insert(ids, uid)
+				table.insert(names, tostring((p :: any).DisplayName or (p :: any).Name))
+			end
+		end
+		if inviteOpen and #ids > 0 then
+			friendListed = pcall(function()
+				fm:SetAsync("f:" .. code, { u = ids, nm = names, n = #ids, at = os.time() }, TTL)
+			end) or friendListed
+			local ok, v = pcall(function()
+				return fm:GetAsync("c:" .. code)
+			end)
+			local fresh = ok and type(v) == "table" and type(v.name) == "string" and os.time() - (tonumber(v.at) or 0) < 40
+			local who = fresh and string.sub(v.name, 1, 20) or nil
+			local coming = fresh and v.coming == true or nil
+			if who ~= workspace:GetAttribute("FriendInLobby") and who and ctx.Remotes then
+				for _, p in Players:GetPlayers() do
+					ctx.Remotes.Notify:FireClient(p, who .. " is in the lobby and can join you right here. Wait for them.", "info")
+				end
+			end
+			workspace:SetAttribute("FriendInLobby", who)
+			workspace:SetAttribute("FriendComing", coming)
+		else
+			workspace:SetAttribute("FriendInLobby", nil)
+			workspace:SetAttribute("FriendComing", nil)
+			if friendListed then
+				friendListed = false
+				pcall(function()
+					fm:RemoveAsync("f:" .. code)
+				end)
+			end
+		end
+	end
 	local m = getMap()
 	if not m or not code then
 		return
@@ -202,6 +263,11 @@ function Match.startGame()
 		if listed and map and code then
 			pcall(function()
 				map:RemoveAsync(code)
+			end)
+		end
+		if friendListed and friendMap and code then
+			pcall(function()
+				friendMap:RemoveAsync("f:" .. code)
 			end)
 		end
 	end)
@@ -288,6 +354,71 @@ function Match.find(count: number): string?
 		end
 	end
 	return nil
+end
+
+-- (v124, lobby) a house this player's Roblox friend is in, that can still take them: its code and
+-- the friend's name, or nil. One read of the list every few seconds serves the whole lobby; each
+-- friendship is asked once.
+local friendCache: { [Player]: { [number]: boolean } } = {}
+local rangeAt, rangeItems = -math.huge, {}
+local function isFriend(p: Player, uid: number): boolean
+	local c = friendCache[p]
+	if not c then
+		c = {}
+		friendCache[p] = c
+	end
+	if c[uid] == nil then
+		local ok, yes = pcall(function()
+			return p:IsFriendsWith(uid)
+		end)
+		c[uid] = ok and yes == true
+	end
+	return c[uid]
+end
+
+function Match.friendHouse(p: Player): (string?, string?)
+	local fm = getFriendMap()
+	if not fm then
+		return nil, nil
+	end
+	if os.clock() - rangeAt > 4 then
+		rangeAt = os.clock()
+		local ok, items = pcall(function()
+			return fm:GetRangeAsync(Enum.SortDirection.Ascending, 100)
+		end)
+		rangeItems = (ok and type(items) == "table") and items or {}
+	end
+	for _, item in rangeItems do
+		local v, key = item.value, item.key
+		if type(key) == "string" and string.sub(key, 1, 2) == "f:" and type(v) == "table" and type(v.u) == "table"
+			and os.time() - (tonumber(v.at) or 0) < TTL and (tonumber(v.n) or 0) < ctx.Config.MaxPlayers then
+			for i, uid in v.u do
+				if tonumber(uid) and uid ~= p.UserId and isFriend(p, uid) then
+					local nm = type(v.nm) == "table" and type(v.nm[i]) == "string" and v.nm[i] or "Your friend"
+					return string.sub(key, 3), nm
+				end
+			end
+		end
+	end
+	return nil, nil
+end
+
+-- (v124, lobby) tell a house that a friend of someone in it is here (and whether they're on their way)
+function Match.friendSeen(accessCode: string, name: string, coming: boolean?)
+	local fm = getFriendMap()
+	if not fm then
+		return
+	end
+	pcall(function()
+		fm:SetAsync("c:" .. accessCode, { name = name, at = os.time(), coming = coming or nil }, 40)
+	end)
+end
+
+function Match.forget(p: Player)
+	friendCache[p] = nil
+end
+Match._resetFriends = function() -- (tests)
+	rangeAt, rangeItems, friendCache = -math.huge, {}, {}
 end
 
 -- (lobby) places claimed by a lookup that came back too late go back (LobbyServer.findWithin)

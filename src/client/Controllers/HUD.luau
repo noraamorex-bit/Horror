@@ -676,6 +676,14 @@ local function update()
 			end
 		end
 		lastEtaSecond = whole
+	elseif type(workspace:GetAttribute("FriendInLobby")) == "string" and player:GetAttribute("InGame")
+		and not tonumber(workspace:GetAttribute("OnTheirWay")) then
+		-- (v124) a friend of someone in here is in a lobby, and it offers them this house (MatchService):
+		-- the one in here waits for them instead of going back out to find them
+		local dots = string.rep(".", 1 + math.floor(os.clock() * 2) % 3)
+		local who = workspace:GetAttribute("FriendInLobby") :: string
+		etaLabel.Text = workspace:GetAttribute("FriendComing") and (who .. " is on the way" .. dots)
+			or (who .. " is in the lobby: they can join you" .. dots)
 	elseif workspace:GetAttribute("OpenNight") and player:GetAttribute("InGame") then
 		-- a night that started short: others can still join it (MatchService)
 		if #Players:GetPlayers() == 1 then

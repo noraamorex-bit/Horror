@@ -64,6 +64,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Returning players get a small "BACK FOR ANOTHER NIGHT?" card (streak, daily reward, quests, NIGHTMARE,
   ▶ PLAY). The dock wraps into two columns. **Never offer Become Him in the lobby** (v119, the owner).
 - Shop has a pulsing "!" to attract; donation board on the lawn.
+- **Friends find each other (v124):** a Roblox friend's house you can still join shows a small "👥 Sam is in a house ·
+  JOIN ▶" card at the top of the lobby (MatchService `friendHouse`, `FriendNights_v1`); the house reads "Bo is in the lobby:
+  they can join you" (the quick quitters were players going back for a friend the countdown left behind).
 - **Feedback mailbox (v123, the owner):** across the walk from the donation board, "📝 LEAVE FEEDBACK!"; its prompt opens
   Roblox's own feedback window (`Social.feedback`). Read what players send in Creator Hub → Audience → Feedback.
 
@@ -282,7 +285,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   screen without them pressing anything or maybe accidentally pressing". It had been opened 4 times in a week (0 sold).
   Done: client `Starter`: a ⭐ STARTER dock icon in the lobby, a small gold button in the house before the hunt, and the
   purchase window opens by itself once a visit (lobby: stepping into a circle, if you've finished a night; house: the
-  result card, not over a revive). **Never timed to catch a tap** (waits for no finger down + 1.2 s still): tricking
+  result card, not over a revive; **v124: lobby window removed, 0 of 197 auto windows sold**). **Never timed to catch a tap** (waits for no finger down + 1.2 s still): tricking
   players into buying breaks Roblox's rules (moderation, refunds) and the all-ages goal. Funnel: `Ask:StarterAuto`.
 
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back

@@ -11,6 +11,7 @@ local ok, err = pcall(function()
 		SetAsync = function(_, k, v) store[k] = v end,
 		RemoveAsync = function(_, k) store[k] = nil end,
 		UpdateAsync = function(_, k, fn) local v = fn(store[k]); if v ~= nil then store[k] = v end; return v end,
+		GetAsync = function(_, k) return store[k] end,
 		GetRangeAsync = function()
 			local out = {}
 			for k, v in store do table.insert(out, { key = k, value = v }) end
@@ -144,6 +145,41 @@ local ok, err = pcall(function()
 	assert(store["night-L"] and store["night-L"].n == 1 and store["night-L"].cap == MAX and store["night-L"].claimed, "listed at once by the lobby")
 	Match.listNew("night-LF", MAX)
 	assert(store["night-LF"] == nil, "never a full one")
+	-- (v124) friends find each other: a house a friend can still join lists who's in it; a lobby finds a
+	-- Roblox friend's house, says so to that house, and the house's HUD says who's coming
+	local notes = {}
+	ctx.Remotes = { Notify = { FireClient = function(_, p, text) table.insert(notes, text) end } }
+	local sam = { UserId = 77, DisplayName = "Sam", Name = "sam77" }
+	H.services.Players.GetPlayers = function() return { sam } end
+	act, elapsed, players = "Evening", 20, { "Sam" }
+	Match._set("night-F", 1, 1) -- (a PLAY SOLO night: friends can still come in by invite)
+	Match._publish()
+	local fe = store["f:night-F"]
+	assert(fe and fe.u[1] == 77 and fe.nm[1] == "Sam" and fe.n == 1, "the house lists who's in it")
+	Match._resetFriends()
+	local friendOfSam = { UserId = 5, DisplayName = "Bo", IsFriendsWith = function(_, id) return id == 77 end }
+	local stranger = { UserId = 6, DisplayName = "Cy", IsFriendsWith = function() return false end }
+	local fc, fname = Match.friendHouse(friendOfSam)
+	assert(fc == "night-F" and fname == "Sam", "a friend in a lobby finds Sam's house, got " .. tostring(fc))
+	assert(Match.friendHouse(stranger) == nil, "a stranger doesn't")
+	Match.friendSeen("night-F", "Bo")
+	Match._publish()
+	local W = H.unwrap(H.workspaceRoot)
+	assert(W:GetAttribute("FriendInLobby") == "Bo" and not W:GetAttribute("FriendComing"), "the house knows Bo is in the lobby")
+	assert(#notes == 1 and string.find(notes[1], "Bo is in the lobby", 1, true), "and says so once")
+	Match._publish()
+	assert(#notes == 1, "only once")
+	Match.friendSeen("night-F", "Bo", true)
+	Match._publish()
+	assert(W:GetAttribute("FriendComing") == true, "Bo is on the way")
+	-- after bedtime / the blackout nobody new comes in: off the list, and the HUD line goes
+	act = "SomeoneElse"
+	Match._publish()
+	assert(store["f:night-F"] == nil and W:GetAttribute("FriendInLobby") == nil, "off the list once it can't take anyone")
+	Match._resetFriends()
+	assert(Match.friendHouse(friendOfSam) == nil, "nothing to join then")
+	act = "Evening"
+	print("friends ok")
 	Match._set(nil, nil)
 	Match._publish()
 	print("closed cases ok")

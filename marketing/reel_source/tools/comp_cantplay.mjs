@@ -55,6 +55,14 @@ html,body { margin:0; width:1080px; height:1920px; overflow:hidden; background:#
 #endSearch { left:50%; top:1010px; transform:translateX(-50%); padding:24px 50px; border-radius:14px; background:var(--acc); border:6px solid #000;
              font-family:H; font-size:80px; color:#000; white-space:nowrap; letter-spacing:2px; }
 #endNext { left:0; right:0; top:1250px; text-align:center; font-family:SC; font-size:${T.nextSize}px; color:#fff; -webkit-text-stroke: 8px #000; paint-order: stroke fill; }
+/* (reel 53) a doorbell camera's view: fr.cam = { label, clock } — night vision grey, a round lens, the label and a running clock */
+#camui { opacity:0; }
+#camlens { background: radial-gradient(ellipse 72% 58% at 50% 50%, rgba(0,0,0,0) 62%, rgba(0,0,0,.65) 88%, rgba(0,0,0,.95) 100%); }
+#camscan { background: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 2px, rgba(0,0,0,0) 2px 6px); }
+#camtop { position:absolute; left:60px; right:60px; top:150px; font-family:MO; font-size:40px; letter-spacing:3px; color:#f2f2f2;
+          text-shadow: 0 0 6px #000, 0 0 2px #000; display:flex; justify-content:space-between; }
+#camdot { display:inline-block; width:26px; height:26px; border-radius:50%; background:#ff2a2a; margin-right:16px; vertical-align:-2px; }
+#camclock { position:absolute; left:60px; top:210px; font-family:MO; font-size:34px; letter-spacing:2px; color:#dcdcdc; text-shadow: 0 0 6px #000; }
 </style></head><body>
 <div id="stage">
   <img id="base"/>
@@ -78,6 +86,9 @@ html,body { margin:0; width:1080px; height:1920px; overflow:hidden; background:#
   <div class="o" id="endSub">FREE ON ROBLOX · 1-4 PLAYERS</div>
   <div class="o" id="endSearch">SEARCH IT ON ROBLOX</div>
   <div class="o" id="endNext">${NEXT}</div>
+  <div class="l" id="camui"><canvas class="l" id="camrain" width="540" height="960" style="width:1080px;height:1920px"></canvas><div class="l" id="camscan"></div><div class="l" id="camlens"></div>
+    <div id="camtop"><span><span id="camdot"></span><span id="camlabel">FRONT DOOR</span></span><span>LIVE</span></div>
+    <div id="camclock"></div></div>
   <div class="l" id="flash"></div>
   <div class="l" id="black"></div>
 </div>
@@ -110,6 +121,29 @@ window.setFrame = (f, fr, cuts) => {
   if (sec === 'hook') filt = 'contrast(1.15) saturate(.7) brightness(.85)';
   if (sec === 'card') { filt = 'contrast(1.1) saturate(.55) brightness(.5)'; zoom = 1.02 + 0.04 * fr.k; }
   if (sec === 'end') { filt = 'contrast(1.1) saturate(.6) brightness(.4) blur(4px)'; zoom = 1.08; }
+  // (reel 53) the doorbell camera: grey night vision through a round lens, its label and clock
+  const cam = fr.cam;
+  $('camui').style.opacity = cam ? 1 : 0;
+  if (cam) {
+    filt = 'grayscale(1) contrast(1.35) brightness(' + ((fr.bright || 1.45) * 1.05) + ')';
+    zoom = 1.0;
+    $('camlabel').textContent = cam.label || 'FRONT DOOR';
+    $('camdot').style.opacity = (Math.floor(f / 15) % 2) ? 1 : 0.25;
+    const s0 = cam.clock[0] * 3600 + cam.clock[1] * 60 + cam.clock[2] + Math.floor(fr.i / 30);
+    const hh = Math.floor(s0 / 3600) % 24, mm = Math.floor(s0 / 60) % 60, ss = s0 % 60;
+    const p2 = (n) => String(n).padStart(2, '0');
+    // rain falling past the lens (cam.rain), fresh each frame
+    const rc = $('camrain').getContext('2d');
+    rc.clearRect(0, 0, 540, 960);
+    if (cam.rain) {
+      rc.strokeStyle = 'rgba(230,230,230,0.28)'; rc.lineWidth = 1.2;
+      for (let r = 0; r < 140; r++) {
+        const x = rnd(f * 3.1 + r * 7.7) * 600 - 30, y = rnd(f * 5.3 + r * 3.9) * 1000 - 40, l = 22 + 30 * rnd(r * 1.3);
+        rc.beginPath(); rc.moveTo(x, y); rc.lineTo(x - l * 0.18, y + l); rc.stroke();
+      }
+    }
+    $('camclock').textContent = (cam.date || 'OCT 31') + '  ' + p2(hh > 12 ? hh - 12 : hh) + ':' + p2(mm) + ':' + p2(ss) + (hh >= 12 ? ' PM' : ' AM');
+  }
   $('base').style.filter = filt;
   let sh = 0;
   if (fr.cap === 'RUN.') sh = 14 + 10 * Math.sin(f);

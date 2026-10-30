@@ -147,6 +147,10 @@ def report_lobby(lobby):
     # (v123) the feedback mailbox (the messages themselves are in Creator Hub → Audience → Feedback)
     fb = [v for v in visits if v.get("Feedback")]
     print(f"  opened the feedback mailbox (v123+): {len(fb)} visits")
+    # (v124) a Roblox friend's house offered in the lobby (FriendSeen), and JOIN pressed (FriendJoin)
+    fs = [v for v in visits if v.get("FriendSeen")]
+    fj = [v for v in visits if v.get("FriendJoin")]
+    print(f"  offered a friend's house (v124+): {len(fs)} visits, pressed JOIN: {len(fj)}")
 
 
 def report_nights(nights):

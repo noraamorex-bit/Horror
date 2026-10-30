@@ -1124,19 +1124,11 @@ function LobbyServer.run(c)
 			end)
 		end)
 	end
-	-- invited into a friend's night (the invite carries their house's server code: Social.invite):
-	-- straight there, no circles
-	local function invited(player: Player)
-		local ok, data = pcall(function()
-			return player:GetJoinData()
-		end)
-		local launch = ok and data and data.LaunchData
-		local code = type(launch) == "string" and string.match(launch, "^night:(.+)$")
-		if not code then
-			return
-		end
+	-- straight into a night's server, no circles: an invite into a friend's night (its house's code rides
+	-- in the invite: Social.invite), or (v124) JOIN on a friend's house the lobby found (Match.friendHouse)
+	local function sendTo(player: Player, code: string, note: string)
 		teleporting[player] = true
-		ctx.Remotes.Notify:FireClient(player, "Joining your friend's night...", "info")
+		ctx.Remotes.Notify:FireClient(player, note, "info")
 		if ctx.Journey then
 			ctx.Journey.lobbyTeleport(player, true)
 		end
@@ -1163,6 +1155,17 @@ function LobbyServer.run(c)
 			end
 		end)
 	end
+	local function invited(player: Player)
+		local ok, data = pcall(function()
+			return player:GetJoinData()
+		end)
+		local launch = ok and data and data.LaunchData
+		local code = type(launch) == "string" and string.match(launch, "^night:(.+)$")
+		if not code then
+			return
+		end
+		sendTo(player, code, "Joining your friend's night...")
+	end
 	LobbyServer._invited = invited -- (tests)
 	for _, p in Players:GetPlayers() do
 		setup(p)
@@ -1173,6 +1176,62 @@ function LobbyServer.run(c)
 	Players.PlayerRemoving:Connect(function(p)
 		teleporting[p] = nil
 		lastSent[p] = nil
+	end)
+
+	-- (v124) friends find each other: a Roblox friend's house that can still take you is offered as
+	-- JOIN ▶ (client Social), and that house is told you're here (MatchService). The v121-122 logs: 33 of
+	-- 36 first-nighters who left a night in its first 30 s came straight back to the lobby, sent ahead by
+	-- a circle's countdown before their friend arrived.
+	local friendCode: { [Player]: string? } = {}
+	local friendName: { [Player]: string? } = {}
+	local function friendCheck(p: Player)
+		if teleporting[p] or not (ctx.Match and ctx.Match.friendHouse) then
+			return
+		end
+		local c, name = ctx.Match.friendHouse(p)
+		if c and c ~= friendCode[p] and ctx.Journey and ctx.Journey.lobbyMark then
+			ctx.Journey.lobbyMark(p, "FriendSeen")
+		end
+		friendCode[p] = c
+		friendName[p] = name
+		p:SetAttribute("FriendHouse", name)
+		if c then
+			ctx.Match.friendSeen(c, p.DisplayName)
+		end
+	end
+	LobbyServer._friendCheck = friendCheck -- (tests)
+	task.spawn(function()
+		while root.Parent do
+			for _, p in Players:GetPlayers() do
+				task.spawn(friendCheck, p)
+			end
+			task.wait(5)
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(p)
+		friendCode[p] = nil
+		friendName[p] = nil
+		if ctx.Match and ctx.Match.forget then
+			ctx.Match.forget(p)
+		end
+	end)
+	ctx.Remotes.JoinFriend.OnServerEvent:Connect(function(player)
+		local c = friendCode[player]
+		if not c or teleporting[player] then
+			return
+		end
+		-- (off any circle first: this isn't that circle's night)
+		local pad = padOf(player)
+		if pad then
+			table.remove(pad.Members, table.find(pad.Members, player))
+			setGroup(player.Character, "Default")
+		end
+		if ctx.Journey and ctx.Journey.lobbyMark then
+			ctx.Journey.lobbyMark(player, "FriendJoin")
+		end
+		ctx.Match.friendSeen(c, player.DisplayName, true)
+		player:SetAttribute("FriendHouse", nil)
+		sendTo(player, c, "Joining " .. (friendName[player] or "your friend") .. "...")
 	end)
 
 	-- one-tap queueing (phones): put the player in the right circle

@@ -4,9 +4,9 @@
 	pack on the side and prompt them to buy it"):
 	• on the side: a 🎁 STARTER icon in the lobby's dock; in the house a small button in the left column
 	  before the hunt (during the hunt that column is the rocket's and the night vision's)
-	• its purchase window also opens by itself, at most once a visit, at two calm moments: in the lobby
-	  when someone who has played a night steps into a circle (they stand still for the countdown), and on
-	  the result card when a night is over for you (not with a revive on offer: that window comes first)
+	• its purchase window also opens by itself, at most once a visit, on the result card when a night is
+	  over for you (not with a revive on offer: that window comes first). (v124: the lobby's window, as you
+	  stepped into a circle, went: 0 bought of 197 auto windows in v120-122)
 	• never under a finger: it waits until nothing has been pressed for a moment and gives up if that
 	  doesn't come, so a tap meant for the game can't land on Buy (Roblox treats tricking people into a
 	  purchase as a scam). The server logs these windows as Ask:StarterAuto (ShopService).
@@ -134,12 +134,8 @@ function Starter.start()
 			badge.Visible = true
 			button = b
 		end
-		-- someone who's played a night steps into a circle: the countdown is time standing still
-		ctx.Remotes.Queue.OnClientEvent:Connect(function(state)
-			if state and (tonumber(player:GetAttribute("StatNights")) or 0) >= 1 then
-				task.spawn(Starter.auto, "Lobby")
-			end
-		end)
+		-- (v124: no window by itself in the lobby any more: 0 bought of 197 auto windows, lobby and card
+		-- together, v120-122; it opens by itself only on the result card now)
 	else
 		local st = ctx.Config.Shop.Starter
 		local b = UI.new("TextButton", {

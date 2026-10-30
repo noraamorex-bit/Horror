@@ -57,6 +57,7 @@ local NAMES = {
 	"StarterAuto", -- (where) v120: the client opened the Starter Pack window by itself (client Starter; ShopService logs it)
 	"Notice", -- ({Title, Body, Button}) a one-button card (first-night tips)
 	"QuickPlay", -- (kind) lobby: "Solo" or "Group" walks you into a queue circle
+	"JoinFriend", -- () v124 lobby: into the house a Roblox friend is in (LobbyServer, Match.friendHouse)
 	"SetBeam", -- (beamId) pick an unlocked flashlight colour
 	"Unstuck", -- () wedged in the scenery: move me to the nearest open spot
 	"PhoneReply", -- (index) the text you picked to send back
