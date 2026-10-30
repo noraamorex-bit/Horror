@@ -145,17 +145,21 @@ end
 
 -- nobody left in the house: which ending is it?
 local function earlyKind(): string
-	local car, door = false, false
+	local car, door, police = false, false, false
 	for _, p in ctx.Util.sessionPlayers() do
 		local where = p:GetAttribute("Escaped")
 		if where == "Car" then
 			car = true
+		elseif where == "FrontDoor" then
+			police = true -- (v125: out the front door to the police)
 		elseif where then
 			door = true
 		end
 	end
 	if car then
 		return "Taillights"
+	elseif police then
+		return "Sirens"
 	elseif door then
 		return "NextDoor"
 	end

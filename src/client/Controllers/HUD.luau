@@ -289,7 +289,13 @@ local lastFocus = { Id = nil, Done = -1 }
 
 -- the task the group should do next: the first unfinished required one, else any unfinished one
 local function focusObjective()
-	-- once help is on the way, staying alive is the only thing that matters
+	-- once help is on the way, staying alive is the only thing that matters (and once the police
+	-- are out front, getting out the door: v125)
+	for _, o in objectives do
+		if o.Id == "GetOut" and not o.Done then
+			return o
+		end
+	end
 	for _, o in objectives do
 		if o.Id == "Survive" and not o.Done then
 			return o
@@ -661,9 +667,18 @@ local function update()
 	local clockBox = clockLabel.Parent :: GuiObject
 	clockBox.Visible = clockLabel.Visible or actLabel.Visible
 
-	-- police ETA
+	-- police ETA (v125: then the last run for the front door, before the police come in)
 	local eta = workspace:GetAttribute("PoliceETA")
-	if eta then
+	local finalEnd = workspace:GetAttribute("FinalRunEnd")
+	if type(finalEnd) == "number" then
+		local left = math.max(0, finalEnd - workspace:GetServerTimeNow())
+		etaLabel.Text = "GET OUT  " .. ctx.Util.formatSeconds(left)
+		local whole = math.ceil(left)
+		if whole ~= lastEtaSecond and ctx.Effects and player:GetAttribute("InGame") and whole <= 10 and whole >= 1 then
+			ctx.Effects.playSound("CountBeep", nil, { Caption = false })
+		end
+		lastEtaSecond = whole
+	elseif eta then
 		local left = eta - workspace:GetServerTimeNow()
 		etaLabel.Text = "Police: " .. ctx.Util.formatSeconds(left)
 		-- the last stretch: a riser, then a tick every second

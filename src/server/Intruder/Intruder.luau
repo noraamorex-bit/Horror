@@ -74,6 +74,9 @@ local function fresh()
 		HuntTarget = nil,
 		Waves = 0,
 		Frenzy = false,
+		HideStale = {}, -- (v125) player -> { Spot, Since, Stage, Next, Warned }: how long they've camped one spot
+		FinalRun = nil, -- (v125) the police are out front: until when he goes for everyone still inside
+		FinalNext = 0,
 		Tracks = {},
 		CurrentTrack = nil,
 		StepClock = 0,
@@ -2672,6 +2675,99 @@ unstick = function(state: string)
 	end
 end
 
+--[[
+	Stale hiding spots (v125, a player: "you can literally just hide and wait 2 mins and you've won").
+	Stay in one hiding spot HideStale seconds and he smells you there: a thought warns you
+	HideStaleWarn seconds before, then he comes and listens at it (the heartbeat minigame). Get
+	through that and stay put anyway, and HideStaleAgain seconds after he walked off he's back and
+	rips it open. Moving to another spot starts the clock again: hiding buys time, it doesn't win.
+]]
+local STALE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true }
+local function staleHiding(): boolean
+	local I = tune()
+	for _, p in ctx.Util.activePlayers() do
+		local spot = p:GetAttribute("Hiding") and ctx.Hiding.spotOf(p)
+		local h = S.HideStale[p]
+		if not spot then
+			S.HideStale[p] = nil
+		else
+			if not h or h.Spot ~= spot then
+				h = { Spot = spot, Since = now(), Stage = 0 }
+				S.HideStale[p] = h
+			end
+			if h.Stage == 1 and not h.Next and not (S.State == "Inspect" and S.Data and S.Data.Spot == spot) then
+				-- he listened at it and walked off: he'll be back
+				h.Next = now() + I.HideStaleAgain
+				ctx.Director.think(p, ctx.Story.Hunt.StaleAfter)
+			elseif h.Stage == 2 and not (S.State == "CheckSpot" and S.Data and S.Data.Spot == spot) then
+				-- (still in there after all that: the owner, or he couldn't reach it) the clock starts again
+				h.Stage, h.Since, h.Next, h.Warned = 0, now(), nil, nil
+			end
+			local due = if h.Stage == 0 then h.Since + I.HideStale elseif h.Stage == 1 then h.Next else nil
+			if h.Stage == 0 and not h.Warned and now() >= h.Since + I.HideStale - I.HideStaleWarn then
+				h.Warned = true
+				ctx.Director.think(p, ctx.Story.Hunt.Stale)
+			end
+			if due and now() >= due and not spared(p) and STALE_FREE[S.State] then
+				if ctx.Journey then
+					ctx.Journey.event(p, "Stale", h.Stage + 1)
+				end
+				if h.Stage == 0 and figure() then
+					h.Stage = 1
+					S.HeardHide[spot] = now()
+					S.SpotCooldown[spot] = nil
+					inspect(spot)
+				else
+					-- (the second time, or the Classic brain: he knows. He opens it)
+					h.Stage = 2
+					S.SawHide[spot] = true
+					checkSpot(spot, "Patrol", { Route = patrolRoute(), Index = 0 })
+				end
+				return true
+			end
+		end
+	end
+	return false
+end
+
+--[[
+	The final run (v125): the police are out front (EscapeService). For these last seconds he knows
+	where everyone still inside is, hiding or not, and goes for the nearest: a charge at whoever is
+	out in the open, a hiding spot torn open for whoever is hiding. Get out the front door.
+]]
+local FINAL_BUSY = { Chase = true, CheckSpot = true, Retreat = true, Stunned = true, Trapped = true, Gone = true, Stopped = true, Puppet = true, Closet = true }
+local function finalRunTick(): boolean
+	if not S.FinalRun or now() > S.FinalRun or now() < (S.FinalNext or 0) or FINAL_BUSY[S.State] then
+		return false
+	end
+	S.FinalNext = now() + 1.5
+	local best, bestD = nil, math.huge
+	for _, p in ctx.Util.activePlayers() do
+		local r = not spared(p) and rootOf(p)
+		if r then
+			local d = (r.Position - pos()).Magnitude
+			if d < bestD then
+				best, bestD = p, d
+			end
+		end
+	end
+	if not best then
+		return false
+	end
+	local spot = best:GetAttribute("Hiding") and ctx.Hiding.spotOf(best)
+	if spot then
+		S.SawHide[spot] = true
+		checkSpot(spot, "Patrol", { Route = patrolRoute(), Index = 0 })
+	else
+		local r = rootOf(best)
+		if r then
+			charge(r.Position, best)
+		end
+	end
+	return true
+end
+Intruder._staleHiding = staleHiding -- (tests)
+
 local function think(dt: number)
 	if S.State == "Lurk" and S.Model and not S.InHouse then
 		STATES.Lurk(dt, {})
@@ -2757,9 +2853,17 @@ local function think(dt: number)
 			end
 		end
 	end
+	-- (v125) the police are out front: he goes for whoever is nearest, hidden or not
+	if S.Mode == "Hunt" and S.FinalRun and finalRunTick() then
+		return
+	end
+	-- (v125) someone has camped one hiding spot too long: he smells them there
+	if S.Mode == "Hunt" and staleHiding() then
+		return
+	end
 	-- now and then, a surprise instead of the plain patrol (v104; never while he's lying low: that's
 	-- the breather to move in)
-	if S.Mode == "Hunt" and state == "Patrol" and #visible == 0 and trySurprise() then
+	if S.Mode == "Hunt" and state == "Patrol" and #visible == 0 and not S.FinalRun and trySurprise() then
 		return
 	end
 	local handler = STATES[state]
@@ -3143,6 +3247,26 @@ function Intruder.onHelpCalled(caller: Player?)
 		S.HuntTarget = caller
 		S.UnhidAt[caller] = nil
 	end
+end
+
+-- (v125) the police are out front: for `seconds` he goes for everyone still inside (finalRunTick)
+function Intruder.finalRun(seconds: number, grace: number?)
+	if ctx.Monster and ctx.Monster.active() then
+		return
+	end
+	if S.Mode ~= "Hunt" or not S.InHouse or S.State == "Trapped" or S.State == "Gone" or S.State == "Stopped" then
+		return
+	end
+	S.Frenzy = true
+	S.FinalRun = now() + seconds
+	S.FinalNext = now() + (grace or 0)
+	if S.Head then
+		ctx.Audio.playAt("Roar", S.Head.Position, { CaptionText = "[A scream of pure rage, somewhere in the house]", CaptionRange = 200 })
+	end
+end
+
+function Intruder.isFinalRun(): boolean
+	return S.FinalRun ~= nil and now() <= S.FinalRun
 end
 
 -- someone is trying the doors and windows: he hears it

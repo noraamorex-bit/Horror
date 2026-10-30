@@ -1,0 +1,215 @@
+-- stale_test (v125, a player: "you can literally just hide and wait 2 mins and you've won"):
+-- 1) a hiding spot goes stale: camp one spot Config.Intruder.HideStale seconds and a thought warns you
+--    first, then he comes and listens at it (the heartbeat); get through that and stay put, and
+--    HideStaleAgain seconds after he walked off he's back and rips it open. Moving spots resets it.
+-- 2) the police arriving is a last run, not the end: the front door opens, he goes for whoever is
+--    still inside (hidden or not), out on the porch is out, and after Config.Help.FinalRun the police
+--    come in (the night ends "Sirens").
+local H = require("./env")
+local T = 1000
+H.clock = function() return T end
+H.schedule = true
+function H.flush(sec) for _ = 1, math.ceil(sec / 0.1) do T += 0.1; H.runDue() end end
+local function setup()
+	local ctx: any = {}
+	ctx.Config = H.load("RS/Shared/Config")
+	ctx.Rooms = H.load("RS/Shared/Rooms")
+	ctx.Sounds = H.load("RS/Shared/Sounds")
+	ctx.Story = H.load("RS/Shared/Story")
+	ctx.Util = H.load("RS/Shared/Util")
+	ctx.Builder = H.load("Server/World/Builder")
+	ctx.Layout = H.load("Server/World/Layout")
+	local fired = {}
+	ctx.Remotes = setmetatable({}, { __index = function(t, k)
+		local r = { FireClient = function(_, p, a) table.insert(fired, { k, p, a }) end, FireAllClients = function(_, a) table.insert(fired, { k, "all", a }) end, OnServerEvent = H.signal() }
+		rawset(t, k, r)
+		return r
+	end })
+	local ORDER = { "Audio=AudioService", "Noise=NoiseService", "Interaction=InteractionService", "Inventory=InventoryService", "Power=PowerService", "Doors=DoorService", "PlayerState=PlayerStateService", "Hiding=HidingService", "Capture=CaptureService", "Objectives=ObjectiveService", "Dialogue=DialogueService", "Phone=PhoneService", "Escape=EscapeService", "Chat=ChatService", "Ending=EndingService", "Revive=ReviveService", "Admin=AdminService", "Cutscene=CutsceneService", "Heartbeat=HeartbeatService" }
+	local names = {}
+	for _, name in ORDER do
+		local key, file = name:match("(%w+)=(%w+)")
+		ctx[key] = H.load("Server/Services/" .. file)
+		table.insert(names, key)
+	end
+	ctx.World = H.load("Server/World/World")
+	ctx.Director = H.load("Server/Director/Director")
+	ctx.Intruder = H.load("Server/Intruder/Intruder")
+	for _, k in { "World", "Director", "Intruder" } do table.insert(names, k) end
+	for _, k in names do if ctx[k].init then ctx[k].init(ctx) end end
+	ctx.World.build()
+	ctx.restart = function() end
+	for _, k in names do if ctx[k].start then ctx[k].start() end end
+	return ctx, fired
+end
+local function mkPlayer(name, id)
+	local p = H.wrap(H.roblox.Instance.new("Player"))
+	p.Name = name
+	rawset(p, "UserId", id)
+	local char = H.Instance.new("Model")
+	local rootPart = H.Instance.new("Part", char)
+	rootPart.Name = "HumanoidRootPart"
+	local hum = H.Instance.new("Humanoid", char)
+	hum.Health = 100
+	rawset(p, "Character", char)
+	rawset(p, "Parent", H.workspaceRoot)
+	p:SetAttribute("InGame", true)
+	return p
+end
+local ok, err = pcall(function()
+	H.services.RunService.IsStudio = function() return false end
+	local ctx, fired = setup()
+	local R = H.roblox
+	local a, b = mkPlayer("A", 1), mkPlayer("B", 2)
+	H.services.Players.GetPlayers = function() return { a, b } end
+	local function tick(sec) for _ = 1, math.floor(sec * 10 + 0.5) do H.services.RunService.Heartbeat:Fire(0.1); T += 0.1; H.runDue() end end
+	local thoughts = {}
+	local think = ctx.Director.think
+	ctx.Director.think = function(players, line, ...)
+		table.insert(thoughts, { players, line })
+		return think(players, line, ...)
+	end
+	local function thought(p, line)
+		for _, t in thoughts do
+			local list = t[1]
+			local hit = list == p or (type(list) == "table" and table.find(list, p))
+			if hit and t[2] == line then return true end
+		end
+		return false
+	end
+	ctx.Director.adminStart("Normal")
+	ctx.Director.startAct("Guest")
+	tick(3)
+	local I = ctx.Intruder
+	local S = I._state()
+	assert(S.InHouse, "in the house")
+	local tune = I._tune()
+	local Hunt = ctx.Story.Hunt
+	local function patrolling(at)
+		S.State = "Patrol"; S.Data = { Route = {}, Index = 0, Moving = true, PauseUntil = 1e12 }; S.Heard = nil
+		if at then S.Root.CFrame = R.CFrame.new(at) end
+	end
+	-- two hiding spots on the ground floor, far apart
+	local spots = {}
+	for _, s in ctx.Hiding.all() do
+		if s.Exit and math.abs(s.Position.Y - 1) < 6 then table.insert(spots, s) end
+	end
+	assert(#spots >= 3, "hiding spots on the ground floor")
+	local spot, spot2, spot3 = spots[1], nil, nil
+	for _, s in spots do
+		if not spot2 and (s.Position - spot.Position).Magnitude > 25 then spot2 = s
+		elseif spot2 and not spot3 and (s.Position - spot.Position).Magnitude > 25 and (s.Position - spot2.Position).Magnitude > 25 then spot3 = s end
+	end
+	assert(spot2 and spot3, "three spots apart")
+	-- b well out of the way, standing still (so he has nobody to chase)
+	ctx.Util.getRoot(b).CFrame = R.CFrame.new(R.Vector3.new(0, 300, 400))
+	b:SetAttribute("InGame", nil)
+
+	-- 1) camping one spot: the warning, then he comes to listen
+	local far = spot.Position + R.Vector3.new(0, 0, 0)
+	patrolling(spot2.Exit.Position + R.Vector3.new(60, 0, 0))
+	ctx.Hiding.enter(a, spot)
+	assert(S.State == "Patrol", "hid far from him: nothing yet, got " .. S.State)
+	-- (the clock starts on his first look once he's hunting)
+	for _ = 1, 100 do
+		if S.HideStale[a] then break end
+		tick(0.1)
+	end
+	assert(S.HideStale[a], "he's timing the spot")
+	local since = S.HideStale[a].Since
+	tick(since + tune.HideStale - tune.HideStaleWarn - 1 - T)
+	assert(not thought(a, Hunt.Stale), "no warning before " .. (tune.HideStale - tune.HideStaleWarn) .. " s")
+	tick(2)
+	assert(thought(a, Hunt.Stale), "the stale warning comes " .. tune.HideStaleWarn .. " s before")
+	assert(S.State ~= "Inspect", "...and he isn't there yet")
+	-- (keep him patrolling far away meanwhile: no chance encounter)
+	patrolling(spot2.Exit.Position + R.Vector3.new(60, 0, 0))
+	-- (no physics here: put him in the next room so his walk there "arrives")
+	tick(since + tune.HideStale - 0.3 - T)
+	assert(S.State == "Patrol", "not yet")
+	patrolling(spot.Exit.Position + R.Vector3.new(0, 0, 3))
+	a:SetAttribute("HoldingBreath", true) -- (so it's the stale visit, not him hearing her breathe as he passes)
+	tick(0.6)
+	a:SetAttribute("HoldingBreath", nil)
+	assert(S.HideStale[a].Stage == 1, "the stale visit")
+	assert(S.State == "Inspect" and S.Data.Spot == spot, "camped " .. tune.HideStale .. " s: he comes to listen, got " .. S.State)
+	print("stale warning + inspect ok")
+	-- he listened and walked off (say she passed the heartbeat): the second warning, then he's back to rip it open
+	patrolling(spot2.Exit.Position + R.Vector3.new(60, 0, 0))
+	tick(0.2)
+	assert(thought(a, Hunt.StaleAfter), "after he walks off: 'he's coming back. MOVE.'")
+	tick(tune.HideStaleAgain - 2)
+	assert(S.State == "Patrol", "not before HideStaleAgain")
+	patrolling(spot.Exit.Position + R.Vector3.new(0, 0, 3))
+	a:SetAttribute("HoldingBreath", true)
+	tick(2.5)
+	a:SetAttribute("HoldingBreath", nil)
+	assert(S.State == "CheckSpot" and S.Data.Spot == spot, "stayed put: he comes to open it, got " .. S.State)
+	S.Root.CFrame = R.CFrame.new(spot.Exit.Position)
+	for _ = 1, 60 do
+		tick(0.1)
+		if a:GetAttribute("Captured") then break end
+	end
+	assert(a:GetAttribute("Captured"), "camped through both warnings: caught")
+	assert(a:GetAttribute("CaughtHow") == "Hiding", "caught in hiding")
+	print("stale second visit rips it open ok")
+
+	-- 2) moving spots resets the clock
+	ctx.Capture.release(a)
+	a:SetAttribute("Captured", nil)
+	tick(1)
+	patrolling(spot.Exit.Position + R.Vector3.new(60, 0, 0))
+	ctx.Hiding.enter(a, spot2)
+	tick(tune.HideStale - 10)
+	ctx.Hiding.exit(a)
+	ctx.Hiding.enter(a, spot3)
+	patrolling(spot.Exit.Position + R.Vector3.new(60, 0, 0))
+	tick(12)
+	assert(S.State == "Patrol", "a new spot: the clock starts again, got " .. S.State)
+	ctx.Hiding.exit(a)
+	print("moving resets ok")
+
+	-- 3) the police: the last run for the front door
+	b:SetAttribute("InGame", true)
+	ctx.Util.getRoot(b).CFrame = R.CFrame.new(spot3.Exit.Position + R.Vector3.new(0, 3, 0))
+	patrolling(spot.Exit.Position)
+	ctx.Escape.callForHelp("Cell", a)
+	ctx.Escape.finalRun()
+	assert(ctx.Escape.isFinalRun(), "final run on")
+	local door = ctx.Doors.get("FrontDoor")
+	assert(door.IsOpen and not door.Locked, "the front door is open")
+	assert(type(H.workspaceRoot:GetAttribute("FinalRunEnd")) == "number", "GET OUT timer on the HUD")
+	assert(I.isFinalRun(), "he knows it's over")
+	local any = false
+	for _, f in fired do if f[1] == "Notify" and f[3] == Hunt.FinalNotice then any = true end end
+	assert(any, "everyone told: GET OUT THE FRONT DOOR")
+	-- b hides; a stays in the open far away: he goes for whoever's nearest, hidden or not
+	ctx.Hiding.enter(b, spot3)
+	S.Root.CFrame = R.CFrame.new(spot3.Exit.Position + R.Vector3.new(0, 0, 3))
+	b:SetAttribute("HoldingBreath", true) -- (no physics: he's put beside it; not him hearing her breathe)
+	ctx.Util.getRoot(a).CFrame = R.CFrame.new(spot.Exit.Position + R.Vector3.new(0, 3, 0))
+	S.State = "Patrol"; S.Data = { Route = {}, Index = 0, Moving = true, PauseUntil = 1e12 }
+	local went = false
+	for _ = 1, math.floor((ctx.Config.Help.FinalRunGrace + 3) * 10) do
+		tick(0.1)
+		if S.State == "CheckSpot" and S.Data.Spot == spot3 then went = true end
+	end
+	assert(went, "hiding during the last run: he goes straight to your spot")
+	assert(b:GetAttribute("Captured"), "...and has her")
+	b:SetAttribute("HoldingBreath", nil)
+	-- a reaches the porch: out
+	ctx.Util.getRoot(a).CFrame = R.CFrame.new(door.Position + R.Vector3.new(0, 0, -6))
+	tick(0.5)
+	assert(a:GetAttribute("Escaped") == "FrontDoor", "out the front door = out")
+	-- (b is zip-tied, a is out: nobody left inside, so the police come in now and find her)
+	tick(0.5)
+	assert(ctx.Ending.isOver(), "nobody left inside: the police come in")
+	local kind = H.workspaceRoot:GetAttribute("EndingActive")
+	assert(kind == "Sirens" or kind == "CaseClosed", "Sirens ending, got " .. tostring(kind))
+	print("final run ok")
+end)
+if not ok then
+	print("FAIL: " .. tostring(err))
+	return
+end
+print("stale_test OK")

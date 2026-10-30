@@ -85,6 +85,7 @@ Story.Objectives = {
 	Trap = "(Optional) Lock him in the basement",
 	Rescue = "Free anyone he takes (boiler room, basement)",
 	Survive = "Survive until the police arrive",
+	GetOut = "THE POLICE ARE HERE. Get out the front door",
 }
 
 ---------------------------------------------------------------------------
@@ -179,6 +180,9 @@ Story.Tasks = {
 		{ Key = "Free", Text = "Cut them loose in the boiler room", Target = "Boiler" },
 	} },
 	Survive = { Title = "Survive until the police arrive" },
+	GetOut = { Title = "GET OUT", Steps = {
+		{ Key = "Out", Text = "The police are out front. Run for the front door", Target = "Door_FrontDoor" },
+	} },
 }
 
 ---------------------------------------------------------------------------
@@ -942,6 +946,14 @@ Story.Hunt = {
 		"Those footsteps again. Getting closer.",
 	},
 	Seen = "He saw me. RUN. Get out of his sight and hide.",
+	-- (v125) a hiding spot going stale: the warning, then after he's listened at it and gone
+	Stale = "I've been in here too long. He can smell me. I need a new hiding place.|hide",
+	StaleAfter = "He knows I'm in here. He's coming back. MOVE.|hide",
+	-- (v125) the police are here: the last run
+	FinalNotice = "THE POLICE ARE HERE. GET OUT THE FRONT DOOR!",
+	Final = "Red and blue through the windows. He knows it's over. He's coming for us. RUN for the front door.",
+	FinalOut = "Outside. Flashlights, someone shouting my name. I made it.",
+	FinalStorm = "The police are coming in.",
 }
 
 -- Evidence: the clue documents that tell you who he is. Read enough of them (between you)

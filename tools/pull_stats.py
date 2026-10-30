@@ -208,6 +208,12 @@ def report_nights(nights):
         beats = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Beat" and len(ev) > 2)
         if beats:
             print(f"      heartbeat minigames: {dict(beats)}")
+        # (v125) camping one hiding spot: he smells it (1 = came to listen, 2 = came back to open it); the
+        # police at the front: who got out the door
+        stale = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Stale" and len(ev) > 2)
+        outfront = sum(1 for r in group for ev in r[2].get("Ev") or [] if ev[1] == "OutFront")
+        if stale or outfront:
+            print(f"      stale hiding spots (1 listened, 2 opened): {dict(stale)}  out the front door to the police: {outfront}")
     # devices and frame rates: quitters vs the rest
     def perf(rows_):
         p = [r[2].get("Perf") or {} for r in rows_]

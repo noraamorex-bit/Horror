@@ -30,6 +30,7 @@ local function freshState()
 		KeyHook = nil,
 		Knocking = false,
 		PoliceArrived = false,
+		FinalRun = false,
 	}
 end
 
@@ -42,6 +43,7 @@ function Escape.reset()
 	state = freshState()
 	workspace:SetAttribute("PoliceETA", nil)
 	workspace:SetAttribute("HelpMethod", nil)
+	workspace:SetAttribute("FinalRunEnd", nil)
 end
 
 function Escape.helpCalled(): boolean
@@ -233,7 +235,88 @@ function Escape.policeArrive()
 	else
 		kind = "Sirens"
 	end
+	-- (v125) the police at the front don't end it for whoever's still inside: get out the door
+	if kind == "Sirens" and #ctx.Util.activePlayers() > 0 and ctx.Intruder and ctx.Intruder.isHunting() then
+		Escape.finalRun()
+		return
+	end
 	ctx.Ending.trigger(kind)
+end
+
+-- (v125, a player: "you can literally just hide and wait 2 mins and you've won") the police are out
+-- front. The front door opens, everyone still inside has Config.Help.FinalRun seconds to get out of
+-- it while he goes for the nearest of them, hiding or not (Intruder.finalRun). Out on the porch is
+-- out. Then the police come in: whoever's still alive in there (even zip-tied) is found.
+local function outFront(door, p: Vector3): boolean
+	local rel = p - door.Position
+	-- (the front door is in the z = -30 wall and opens onto the porch, toward -z)
+	return rel.Z < -1.5 and rel.Z > -26 and math.abs(rel.X) < 12 and rel.Y < 6 and rel.Y > -6
+end
+
+function Escape.finalRun()
+	if state.FinalRun then
+		return
+	end
+	state.FinalRun = true
+	local night = state
+	local H = ctx.Config.Help
+	local secs = if workspace:GetAttribute("Difficulty") == "Hard" then (H.FinalRunHard or 35) else (H.FinalRun or 45)
+	workspace:SetAttribute("PoliceETA", nil)
+	workspace:SetAttribute("FinalRunEnd", workspace:GetServerTimeNow() + secs)
+	local door = ctx.Doors.get("FrontDoor")
+	if door then
+		ctx.Doors.setLocked(door, false)
+		ctx.Doors.open(door, "Police", true)
+	end
+	ctx.Objectives.complete("Survive")
+	ctx.Objectives.add("GetOut")
+	ctx.Remotes.Notify:FireAllClients(ctx.Story.Hunt.FinalNotice, "danger")
+	ctx.Director.think(ctx.Util.activePlayers(), ctx.Story.Hunt.Final)
+	ctx.Director.logTruthRaw("The police pulled up. He went for whoever was still inside.")
+	if ctx.Journey then
+		ctx.Journey.team("FinalRun")
+	end
+	ctx.Intruder.finalRun(secs, H.FinalRunGrace or 3)
+	task.spawn(function()
+		local endAt = os.clock() + secs
+		while state == night and not ctx.Ending.isOver() and not (state :: any).Suspended do
+			local inside = 0
+			for _, p in ctx.Util.activePlayers() do
+				local r = ctx.Util.getRoot(p)
+				if door and r and not p:GetAttribute("Hiding") and outFront(door, r.Position) then
+					if ctx.Journey then
+						ctx.Journey.event(p, "OutFront")
+					end
+					ctx.Director.think(p, ctx.Story.Hunt.FinalOut)
+					Escape.markEscaped(p, "FrontDoor")
+				else
+					inside += 1
+				end
+			end
+			if inside == 0 or os.clock() >= endAt then
+				break
+			end
+			task.wait(0.2)
+		end
+		if state ~= night or ctx.Ending.isOver() or (state :: any).Suspended then
+			return
+		end
+		workspace:SetAttribute("FinalRunEnd", nil)
+		if #ctx.Util.activePlayers() > 0 then
+			ctx.Remotes.Notify:FireAllClients(ctx.Story.Hunt.FinalStorm, "objective")
+		end
+		local anyFree = false
+		for _, p in ctx.Util.sessionPlayers() do
+			if p:GetAttribute("Escaped") or not p:GetAttribute("Dead") then
+				anyFree = true
+			end
+		end
+		ctx.Ending.trigger(anyFree and "Sirens" or "GotAway")
+	end)
+end
+
+function Escape.isFinalRun(): boolean
+	return state.FinalRun == true
 end
 
 -- The hard-cap ending

@@ -128,6 +128,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   he either waits in an empty hiding spot near someone (a creak at 15 studs, bursts out at 7.5) or
   appears behind someone alone (turn round: he screams and chases; don't: gone in 7 s). 0.7 s
   scream before he runs, so it's a scare, not a free catch.
+- **Hiding doesn't win the night (v125**, a player: "you can literally just hide and wait 2 mins and you've won, not scary
+  either"): a hiding spot goes **stale** (`Intruder.HideStale` 40 s / Hard 30 / NIGHTMARE 24: a warning thought 8 s before, then he
+  comes to listen at it (heartbeat); stay anyway and `HideStaleAgain` later he rips it open; moving resets it), and the police
+  pulling up is a **last run**, not the end: the front door opens, GET OUT (HUD `GET OUT 0:45`, `Help.FinalRun` 45 / Hard 35),
+  he goes for the nearest player still inside, hiding or not; out on the porch is out (`Escaped = "FrontDoor"`); then the police
+  come in (Sirens). GDD "Hiding goes stale", "The last run". Test `stale_test`.
 - **Taser auto-hits up close** (`Taser.AutoRange` 26, in plain sight, wherever you point; aim cone 30°
   further out).
 - Before the hunt he stays hidden — no pointless noises or knocked-over chairs in front of you.
@@ -602,6 +608,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
 
+- **30 Oct (v125 = place version 124)**, the owner forwarded a comment: "This game was terrible bru, you can literally just hide
+  and wait 2 mins and you've won, not scary either". It was true: help called (or Mrs. Okafor's call 60 s into the last act) +
+  one closet = a win when the police pulled up. Done: stale hiding spots + the last run to the front door (see The intruder).
+  Next: `--since=124`: `Stale` events (how often 1 vs 2), `OutFront` escapes, captures and quits in the last run (act Guest after
+  FinalRun), and whether the rating moves.
+
 - **30 Oct (reels 54-55)**: FIND HIM (reel 54) rejected by the owner, not posted. Reel 55 = #8, the family map (see Marketing).
   Next: its views against #7 (50K). Next reel #9: another everyday thing turned (the baby monitor, the smart speaker, a voicemail
   from your own number).
@@ -1031,7 +1043,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 123; the notes' "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 124; the notes' "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

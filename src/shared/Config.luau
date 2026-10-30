@@ -164,6 +164,13 @@ Config.Intruder = {
 	-- what he knows
 	SenseDelay = 3, -- he feels where you were this many seconds ago
 	HideGrace = 8, -- after leaving a hiding spot, he can't feel you for this long
+	-- (v125, a player: "you can literally just hide and wait 2 mins and you've won") a hiding spot goes
+	-- stale: stay in the same one this long and he smells you there. A warning first (HideStaleWarn
+	-- before), then he comes and listens at it (the heartbeat). Still there HideStaleAgain after he
+	-- left, and he rips it open: move between hiding spots, don't camp one.
+	HideStale = 40,
+	HideStaleWarn = 8,
+	HideStaleAgain = 20,
 	-- searching hiding spots
 	SearchChecks = 2,
 	TrueSpotWeight = 1.5, -- the spot you're really in is this much likelier to be opened
@@ -229,6 +236,8 @@ Config.Difficulty = {
 			ChargeSpeed = 13,
 			InvestigateSpeed = 9.5,
 			InspectNearChance = 0.5,
+			HideStale = 30,
+			HideStaleAgain = 15,
 		},
 		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22, Travel = 0.9, Lead = 1.2, ForgiveWrong = false },
 		BatteryMultiplier = 0.7, -- flashlights die faster
@@ -261,6 +270,8 @@ Config.Difficulty = {
 			InspectNearChance = 0.6,
 			SoloChaseSlowdown = 0.4,
 			GrabRange = 5.2,
+			HideStale = 24,
+			HideStaleAgain = 12,
 		},
 	},
 }
@@ -320,6 +331,12 @@ Config.Help = {
 	-- and Mrs. Okafor doesn't wake until the hunt has run this long. Calling 911 is ~130 s anyway.
 	ExitsAfter = 90, -- (v117: 120, with the shorter night; Config.MinNight still holds)
 	JunctionRepair = 10,
+	-- (v125) the police pulling up doesn't end the night by itself: they're at the front, he knows
+	-- it's over and comes for whoever is still inside, wherever they are. Get out the front door.
+	-- After this long the police come in anyway (whoever's still alive in there is found).
+	FinalRun = 45,
+	FinalRunHard = 35,
+	FinalRunGrace = 3, -- seconds after the door opens before he starts going for you
 }
 
 -- The Director: tension ceilings per act, seconds between scheduled events, storm cadence
