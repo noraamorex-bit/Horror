@@ -379,6 +379,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   rain }: grey night vision through a round lens, ● FRONT DOOR / LIVE, a running clock, rain streaks; film2's IR is a wide spot
   `flash` from the camera (keep `bright` ~1.05 on cam frames or the porch blows out white). Caption: `never open the door at 3am 👀
   game in comments`.
+- **Fourth format: "FIND HIM"** (reel 54, `find_him_1.mp4`, 30 Oct; the owner: "completely different than everything else… the
+  maximum possible amount of views… <35 secs"): a 25 s spot-the-monster challenge, built for rewatches, pauses, comments ("found
+  him on 3") and sends ("bet you can't get level 4"). Four still dark rooms with him hidden, harder each time: LEVEL 1/4 EASY (the
+  front hall, standing by the door), 2/4 MEDIUM (the top of the stairs), 3/4 HARD (Lily's room, two eyes in the dark corner), 4/4
+  IMPOSSIBLE (the open attic hatch, his mask far up in the black); a timer bar + seconds run out, a red ring snaps onto him and the
+  shot punches in (and pulls him to the middle), "THERE."; on level 4 the mask drops at you (the scare). Hook from frame 0: "FIND
+  HIM / only 1% find him on level 4". End card: the name, a search bar typing it, "what level did you find him on? ↓". No orange,
+  no case file, no #2 track: white Outfit text, level colours green/yellow/orange/red, its own track (`reel54/audio.py`: a clock
+  tick per second, a heartbeat faster each level, a drone a semitone up each level, ring stingers, silence before the drop).
+  Tools: `comp_find.mjs`; scene.py writes `targets.json` (his face projected to the screen, per frame) for the ring. Caption:
+  `can you find him? 👀 game in comments`. If it works, make it a series (FIND HIM #2: new rooms, the garage, the basement,
+  the bathroom).
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -581,6 +593,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **30 Oct (reel 54)**: a new format, FIND HIM (see Marketing). Next: its views and comments against #7 (50K) and #8; if it
+  beats them, FIND HIM #2 next, else back to everyday hooks (#9).
 
 - **30 Oct (reel 53)**: #8, the doorbell camera (see Marketing). Next: its views against #7 (50K). Next reel #9: another
   everyday thing turned (ideas: the baby monitor, the smart speaker answering at night, the family location app showing someone
