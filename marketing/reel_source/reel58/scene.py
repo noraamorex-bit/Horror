@@ -205,7 +205,7 @@ shot("open", 60, s_again)
 # 8. "it was showing my room." the monitor's view, now in my room's corner: my bed, Lily asleep on the floor... him bent over her
 OVER = [-33.8, U, 23.9]
 def s_mine(i, k):
-    return (moncam(JCAM, JLOOK, "jlily", 76, {"glow": 1.6, "door": 0.0, "hideIdx": only(LILY, MON_ON)}),
+    return (moncam(JCAM, JLOOK, "jlily", 76, {"glow": 2.8, "door": 0.0, "hideIdx": only(LILY, MON_ON)}, ir=9.0),
             him(OVER, facing(OVER, [-33.8, U, 18.0]), "Stare", t=3.0 + stop(i), Duck=0.85, Look=[0.0, -0.6]))
 shot("stood", 60, s_mine)
 
