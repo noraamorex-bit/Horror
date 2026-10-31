@@ -35,6 +35,11 @@ local look = { 0, 0 }
 local scream = 0
 local skinRigs: { [Instance]: any } = setmetatable({}, { __mode = "k" }) :: any
 local skinRetry = 0
+-- (v135) whether this device had to show the part-built figure (and how his body did, for the night log)
+local skinCheck = 0
+local noSkinFor = 0
+local fallbackOn = false
+local skinStatus: string? = nil
 
 -- the skeleton of a model's skinned body (cached), or nil if it's the part-built figure
 local function skinOf(m: Instance): any
@@ -72,8 +77,46 @@ local function skinOf(m: Instance): any
 		local restHead = neck.Part0.CFrame * neck.C0 * neck.C1:Inverse()
 		rig.Mask = { Neck = neck, Bone = bone, Rel = bone.WorldCFrame:ToObjectSpace(restHead), Jaw = Pose.jawMeshes(m) }
 	end
+	if rig then
+		rig.Body = body
+	end
 	skinRigs[m] = rig
 	return rig or nil
+end
+
+-- (v135, the owner's screenshot again: him upright in his rest pose, no mask in sight) a skeleton kept from
+-- before his body streamed out and back in drives bones that aren't his any more: the body on screen never
+-- moves and the mask stays where the bare frame holds it, inside him. Still his own body, bones and neck?
+local function skinValid(rig, m: Instance): boolean
+	local body = rig.Body
+	if not (body and body.Parent and m:FindFirstChild("Body") == body) then
+		return false
+	end
+	local hips = rig.Joints.Hips
+	if not (hips and hips.Bone:IsDescendantOf(body)) then
+		return false
+	end
+	local mk = rig.Mask
+	if mk and not (mk.Neck.Parent and mk.Neck:IsDescendantOf(m) and mk.Bone:IsDescendantOf(body) and mk.Neck.Part0) then
+		return false
+	end
+	return true
+end
+
+-- (v135) when the skinned body can't be driven on this device, the part-built figure (the mask, the
+-- jointed limbs, stop-motion) takes its place instead of a statue gliding about; back as soon as it can
+local function setFallback(m: Instance, on: boolean)
+	fallbackOn = on
+	for _, d in m:GetDescendants() do
+		if d:IsA("BasePart") then
+			local t0 = d:GetAttribute("T0")
+			if d.Name == "Body" and d:IsA("MeshPart") then
+				d.LocalTransparencyModifier = on and 1 or 0
+			elseif type(t0) == "number" then
+				d.Transparency = on and t0 or 1
+			end
+		end
+	end
 end
 
 local function applySkin(rig, pose)
@@ -101,6 +144,8 @@ local function bind(m: Model?)
 	jawList = {}
 	skin = nil
 	skinGait = ""
+	noSkinFor = 0
+	fallbackOn = false
 	if not m then
 		return
 	end
@@ -236,6 +281,15 @@ function Creature.poseCopy(copy: Instance, gait: string, t: number, seed: number
 	return true
 end
 
+-- (v135) how his skinned body did on this device: nil (not seen yet), "ok", "stale", "fallback"
+function Creature.status(): string?
+	return skinStatus
+end
+
+-- (tests)
+Creature._skinValid = skinValid
+Creature._setFallback = setFallback
+
 function Creature.start()
 	local lastStride = 0
 	RunService.Stepped:Connect(function(_, dt)
@@ -247,12 +301,38 @@ function Creature.start()
 		if not model or not root or not root.Parent then
 			return
 		end
+		-- (v135) the skeleton still his own? (streamed out and back in, the old one drives nothing)
+		skinCheck -= dt
+		if skin and skinCheck <= 0 then
+			skinCheck = 0.5
+			if not skinValid(skin, model) then
+				skinRigs[model] = nil
+				skin = nil
+				skinRetry = 0
+				skinStatus = "stale"
+			end
+		end
 		-- (v133) his skinned body still missing bones when he arrived: keep trying
 		if not skin and model:GetAttribute("Skinned") then
 			skinRetry -= dt
 			if skinRetry <= 0 then
 				skinRetry = 0.25
 				skin = skinOf(model)
+			end
+		end
+		if model:GetAttribute("Skinned") then
+			if skin then
+				noSkinFor = 0
+				skinStatus = skinStatus or "ok"
+				if fallbackOn then
+					setFallback(model, false)
+				end
+			else
+				noSkinFor += dt
+				if noSkinFor > 2 and not fallbackOn then
+					setFallback(model, true)
+					skinStatus = "fallback"
+				end
 			end
 		end
 		local cam = workspace.CurrentCamera

@@ -125,6 +125,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **v133** (the owner: "he's still so dumb sometimes just walks past me. Make him constantly run after players"): sharper senses
   (SightDark 18 / Hard 21 / NM 24, was 13/15/14; PeripheralRange 10, was 7; HearWalk 15 / Hard 17), he chases anyone he sees within
   16 studs on his way to a hiding spot (was 9), and running to a spot shows as running (it showed as a walk).
+- **v135 (the owner's screenshot: him a grey statue on the stairs again, "make it scarier... he isn't chasing")**: the client drops
+  a skeleton that's no longer the model's own (body streamed out and back in) and rebinds; if the skinned body can't be driven for 2 s
+  the part-built figure shows instead (server keeps each hidden part's `T0`); night log `Perf.Skin` ok/stale/fallback (pull_stats:
+  check it). Quiet runs also break off checking an empty hiding spot, `PursueGap` 1.2 (Hard 0.8, NM 0.6). Runs are heard: a growl as
+  a run starts, bones cracking as he runs, a shriek within 16 studs (20 s apart). Test `creature_skin_test`.
 - **His model on every client (v133**, the owner's screenshot: a black upright figure gliding, the mask beside its head): the client
   kept a bone-less skeleton when his body reached it before its 68 bones (`Creature` skinOf now only accepts a whole skeleton and
   retries every 0.25 s), and his model streams in whole (`ModelStreamingMode.Atomic`, `Rig.build`).
@@ -246,10 +251,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Night streak: another night within 15 min of the last pays +25% / +50%. Groups where everyone has
   finished a night can vote ⏩ SKIP TO THE BLACKOUT. 🔔 Remind me (notification opt-in) on the result
   card. Out early, you can already press ANOTHER NIGHT.
-- **The blackout is short (v134**, the owner: "Blackout part is too long"; this overrides the 15-20 min below): from the power cut
-  ~3 min typical, ~6 at most. `Config.MinNight` 600 (was 900: it held the police off until 15:00), police 90 s after the call
-  (neighbour 90, car 60), exits after 90 s, act III (no help called) 3-4 min (was 10-12) then Mrs. Okafor calls 30 s in and
-  the police come 60 s later, the final run 30 s (Hard 25). Nights now ~11-12 min; the build-up before the blackout is unchanged.
+- **The blackout is short (v134-135**, the owner: "Blackout part is too long", then a screenshot of "Police: 4:48": "still too
+  long"; this overrides the 15-20 min below): `Config.MinNight` 0 (v134's 600 still held the police for an early call), police 75 s
+  after the call (neighbour 75, car 60), exits after 60 s, act III (no help called) 2-2.5 min then Mrs. Okafor calls 30 s in and the
+  police come 60 s later, the final run 30 s (Hard 25). ~2-3 min of dark. Don't bring a minimum night length back.
 - **Night length: 15-20 minutes (v126**, the owner: "The game is too short... I want this to be a fully polished 15-20
   minute game where BPM goes 120+. Make it constantly scary"; replaces v117's ~10 min average). `Config.Acts` (Evening
   2.5-5, SmallThings 4.5-6), police 150 s, `Config.MinNight` 900 (police/car/next door wait for it, skip nights
@@ -665,6 +670,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **31 Oct (v135 = place version 134)**, the owner (a screenshot: "Police: 4:48", him a grey statue on the stairs): "Blackout still
+  too long. Also the monster didn't load again. Make it scarier, scarier sound effects too. Actually scary. And I want him to constantly
+  chase". Done: no minimum night (police 75 s after the call), the client's stale-skeleton fix + part-figure fallback, his runs heard
+  (growl, bone cracks, a close shriek), pursuit breaks off empty spot checks (see The intruder; GDD "Shorter still... (v135)").
+  Logs since 132 (27 nights): Nightmare 2, first-nighters quit mid-night 60% (15 of 26 in Evening, him Offstage). Next: `--since=134`:
+  `his body on devices` (want all ok; any fallback = the skin still fails somewhere), hunt quits, night length.
 
 - **31 Oct (v134 = place version 133)**, the owner: "Blackout part is too long". Done: the short blackout (see Retention). Next:
   `--since=133`: quits in the hunt (want well under v128's 20 of 47), night length (~11-12 min), help-called rate.
@@ -1161,7 +1173,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 133; the notes' "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 134; the notes' "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

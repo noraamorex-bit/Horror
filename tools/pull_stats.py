@@ -240,6 +240,9 @@ def report_nights(nights):
     for label, g in (("quit mid-night", quit_), ("everyone else", rest)):
         dev, fps, mem = perf(g)
         print(f"  {label:<15} devices {dict(dev.most_common())}  median fps {fps}  median peak memory {mem} MB")
+    # (v135) how his skinned body did on each device: ok / stale (re-bound after streaming) / fallback (the part figure)
+    sk = Counter((r[2].get("Perf") or {}).get("Skin") or "-" for r in rows)
+    print(f"  his body on devices (v135+: ok / stale / fallback / - = never saw him): {dict(sk.most_common())}")
     for dev in ("Phone", "Tablet", "PC", "Console"):
         g = [r for r in rows if (r[2].get("Perf") or {}).get("Dev") == dev]
         if g:

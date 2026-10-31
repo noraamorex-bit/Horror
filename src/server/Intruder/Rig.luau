@@ -473,6 +473,8 @@ function Rig.skin(model: Model, root: BasePart, upperTorso: BasePart): boolean
 	local keep = Rig.maskLayout(model)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") and d ~= body and not keep[d] then
+			-- (v135: kept, so a client that can't drive the skinned body can show the part-built figure instead)
+			d:SetAttribute("T0", d.Transparency)
 			d.Transparency = 1
 			d.CastShadow = false
 		end

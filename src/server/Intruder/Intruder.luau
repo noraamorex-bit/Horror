@@ -376,6 +376,28 @@ local function valid(p: Player?): boolean
 		and not spared(p)
 end
 
+-- (v135, the owner: "scarier sound effects... actually scary") a run is heard: bones cracking as he goes, and
+-- once he's close, a shriek right behind the one he's after (at most every 20 s each)
+local soundDice = Random.new() -- (its own dice: the night's other rolls stay as they were)
+local function runSounds(target: Player?)
+	if not (S.Head and target and valid(target)) then
+		return
+	end
+	local hr = rootOf(target)
+	local dd = hr and (hr.Position - pos()).Magnitude or math.huge
+	if dd < 45 and now() >= (S.NextCrack or 0) then
+		S.NextCrack = now() + 2.2 + soundDice:NextNumber() * 2.5
+		ctx.Audio.playAt("BoneCrack" .. soundDice:NextInteger(1, 2), S.Head.Position - V(0, 2, 0), { Caption = false })
+	end
+	S.CloseSting = S.CloseSting or {}
+	if dd < 16 and now() - (S.CloseSting[target] or -1e9) > 20 then
+		S.CloseSting[target] = now()
+		ctx.Audio.playAt("Screech", S.Head.Position, { CaptionText = "[A shriek, right behind you]", CaptionRange = 30 })
+		ctx.Remotes.Shake:FireClient(target, 0.8, 0.5)
+		ctx.PlayerState.addNerve(target, -6)
+	end
+end
+
 local function faceToward(target: Vector3)
 	local p = pos()
 	local flat = V(target.X, p.Y, target.Z)
@@ -1410,6 +1432,7 @@ end
 	his sight and he's back to following your trail, a few seconds behind.
 ]]
 STATES.Chase = function(_, visible)
+	runSounds(S.Data.Target)
 	local d = S.Data
 	local t = d.Target
 	local I = tune()
@@ -1806,6 +1829,7 @@ STATES.Charge = function(_, visible)
 	local speed = d.Speed or (I.ChargeSpeed + (S.Frenzy and 0.5 or 0))
 	-- (v126) a run at someone's current position: he keeps re-aiming at where they are now
 	local homing = d.Homing
+	runSounds(homing)
 	if homing and now() < (d.HomingUntil or 0) and valid(homing) and not homing:GetAttribute("Hiding") and not spared(homing) then
 		local r = rootOf(homing)
 		if r and now() >= (d.NextAim or 0) then
@@ -2820,6 +2844,9 @@ end
 Intruder._chaseSpeed = chaseSpeed -- (tests)
 
 local SENSE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true }
+-- (v135, the owner's screenshot: him standing at the top of the stairs, "he isn't chasing") the quiet runs also
+-- break off a walk to check a hiding spot nobody's in
+local PURSUE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true, CheckSpot = true }
 
 -- who his runs go for (sense and pursuit): not anyone spared or just freed (LeftAlone); on Normal, anyone
 -- not caught yet before anyone on their last life (LastLifeLast); then whoever he went for longest ago,
@@ -2917,7 +2944,11 @@ Intruder._senseTick = senseTick -- (tests)
 ]]
 local function pursueTick(): boolean
 	local I = tune()
-	if not I.PursueGap or now() < (S.NextPursue or 0) or not SENSE_FREE[S.State] then
+	if not I.PursueGap or now() < (S.NextPursue or 0) or not PURSUE_FREE[S.State] then
+		return false
+	end
+	-- (a cupboard he saw someone get into, or one he's already opening: that first)
+	if S.State == "CheckSpot" and (S.Data.Phase ~= "Approach" or (S.Data.Spot and S.SawHide[S.Data.Spot])) then
 		return false
 	end
 	S.NextPursue = now() + I.PursueGap
@@ -2958,6 +2989,11 @@ local function pursueTick(): boolean
 		return false
 	end
 	charge(r.Position, who, true)
+	-- (v135) a quiet run, but never a silent one: a growl where he is, if they're close enough to hear it
+	if S.Head and (r.Position - pos()).Magnitude < 55 and now() - (S.LastPursueGrowl or -1e9) > 7 then
+		S.LastPursueGrowl = now()
+		ctx.Audio.playAt("Growl", S.Head.Position, { Caption = true })
+	end
 	if S.State == "Charge" then
 		S.Data.Speed = I.PursueSpeed or I.SenseSpeed
 		S.Data.Homing = who

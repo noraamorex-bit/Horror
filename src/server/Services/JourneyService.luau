@@ -81,6 +81,7 @@ local function perfOf(p: Player): any
 		FpsAvg = s.N > 0 and round(s.FpsSum / s.N) or nil,
 		Last = s.Last and { Mem = math.floor(s.Last.Mem or 0), Fps = round(s.Last.Fps), Ago = math.floor(os.clock() - s.Last.At) } or nil,
 		Err = s.Err,
+		Skin = s.Skin, -- (v135: how his skinned body did on this device: "ok", "stale" (re-bound), "fallback")
 	}
 end
 
@@ -452,6 +453,12 @@ function Journey.start()
 		end
 		if info.Low == true then
 			s.Low = true
+		end
+		if info.Skin == "ok" or info.Skin == "stale" or info.Skin == "fallback" then
+			-- (the worst it got: a fallback stays a fallback)
+			if s.Skin ~= "fallback" and not (s.Skin == "stale" and info.Skin == "ok") then
+				s.Skin = info.Skin
+			end
 		end
 		-- the device's script errors (client Diagnostics): kept small and clean
 		if type(info.Err) == "table" then

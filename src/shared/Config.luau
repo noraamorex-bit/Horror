@@ -48,11 +48,12 @@ Config.Acts = {
 	SmallThings = { Min = 4.5, Max = 6 }, -- (v117: 3 / 4.5)
 	-- (v134, the owner: "Blackout part is too long": with no help called the dark ran 12 minutes before Mrs. Okafor's
 	-- part even began. Now 3-4; v126: 10 / 12; v117: 4.5 / 5)
-	SomeoneElse = { Min = 3, Max = 4 },
+	SomeoneElse = { Min = 2, Max = 2.5 }, -- (v135: 3-4)
 }
 -- no night ends sooner than this (the police, the car and next door wait for it), except a night
--- that skipped to the blackout (v126: 15 minutes; v117: 7)
-Config.MinNight = 600 -- (v134: the blackout was too long, and this held the police off until 15:00; v126: 900)
+-- that skipped to the blackout. v135 (the owner, a screenshot: "Police: 4:48", "Blackout still too long"): off; the police
+-- come PhoneResponse after the call and the exits open ExitsAfter into the hunt, whatever the clock says (v134: 600; v126: 900)
+Config.MinNight = 0
 -- a night where everyone has played before: the build-up acts could run shorter (this much of
 -- their length). Off: the owner found the night too fast; repeat groups can SKIP TO THE BLACKOUT.
 Config.VeteranPace = {}
@@ -166,7 +167,7 @@ Config.Intruder = {
 	-- nothing else to do he's running after one of you again within PursueGap s, keeping on the same one for
 	-- up to PursueFor s (re-aiming as they move), then the one he went for longest ago. Hiding: he runs to
 	-- the spot and listens. (Not while he's carrying someone off, stunned, or listening at a door.)
-	PursueGap = 2.5,
+	PursueGap = 1.2, -- (v135, the owner: "I want him to constantly chase": 2.5)
 	PursueFor = 18,
 	-- (v128) those quiet runs go at PursueSpeed, under the loud SenseSpeed: still faster than your walk, so
 	-- walking away doesn't lose him, but a sprint does (v126-127 logs: first-nighters' captures doubled and
@@ -273,7 +274,7 @@ Config.Difficulty = {
 			SenseFirst = 10,
 			SenseEvery = { 16, 24 },
 			SenseSpeed = 15,
-			PursueGap = 1.5,
+			PursueGap = 0.8, -- (v135: 1.5)
 			PursueSpeed = 13,
 			FreedLeaveAlone = 15,
 			LastLifeLast = false,
@@ -314,7 +315,7 @@ Config.Difficulty = {
 			SenseFirst = 8,
 			SenseEvery = { 11, 17 },
 			SenseSpeed = 16,
-			PursueGap = 1,
+			PursueGap = 0.6, -- (v135: 1)
 			PursueSpeed = 14.5,
 			FreedLeaveAlone = 0,
 		},
@@ -357,8 +358,8 @@ Config.Capture = {
 Config.Help = {
 	-- (v88-90 logs: once help was called only 7 of 200 players left before the police came, while the
 	-- hunt is the game; nights ran ~11 min against the ~13 the owner wants: a longer hold-out)
-	PhoneResponse = 90, -- (v134: 150; v126: 100 with MinNight 15 min; v117: 120; v94: 200 was "too long", the owner)
-	NeighborResponse = 90, -- (v134: 150)
+	PhoneResponse = 75, -- (v135: 90; v134: 150; v126: 100 with MinNight 15 min; v117: 120; v94: 200 was "too long", the owner)
+	NeighborResponse = 75, -- (v135: 90; v134: 150)
 	CarResponse = 60, -- (v134: 90)
 	CellCallDuration = 15, -- (Hard)
 	CellCallDurationNormal = 10,
@@ -374,7 +375,7 @@ Config.Help = {
 	-- (v116, a player: "way too short, I escaped in 3 mins": the car and her door worked from the first
 	-- second of the hunt; keys grabbed before the blackout meant a drive-off 3 s in) the car won't start
 	-- and Mrs. Okafor doesn't wake until the hunt has run this long. Calling 911 is ~130 s anyway.
-	ExitsAfter = 90, -- (v134: 240; Config.MinNight still holds)
+	ExitsAfter = 60, -- (v135: 90; v134: 240)
 	JunctionRepair = 10,
 	-- (v125) the police pulling up doesn't end the night by itself: they're at the front, he knows
 	-- it's over and comes for whoever is still inside, wherever they are. Get out the front door.

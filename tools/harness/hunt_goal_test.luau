@@ -400,23 +400,20 @@ local ok, err = pcall(function()
 	H.flush(ctx.Config.Help.NeighborWait + 2)
 	assert(not runner:GetAttribute("Escaped"), "too early: nobody answers her door")
 	assert(string.find(caps[#caps] or "", "Nobody comes"), "and says so: " .. tostring(caps[#caps]))
-	-- the hunt has run long enough, but the night hasn't run Config.MinNight yet: still no answer
-	huntT, nightT = ctx.Config.Help.ExitsAfter + 1, ctx.Config.MinNight - ctx.Config.Help.NeighborWait - 30
-	H.task.spawn(function() rawget(knock, "__signals").Triggered:Fire(runner) end)
-	H.flush(ctx.Config.Help.NeighborWait + 2)
-	assert(not runner:GetAttribute("Escaped"), "too early in the night: nobody answers")
-	nightT = ctx.Config.MinNight - ctx.Config.Help.NeighborWait
+	-- (v135) the hunt has run long enough: she lets you in, however early in the night
+	huntT, nightT = ctx.Config.Help.ExitsAfter + 1, 60
 	H.task.spawn(function() rawget(knock, "__signals").Triggered:Fire(runner) end) -- (the handler waits)
 	H.flush(ctx.Config.Help.NeighborWait + 2)
 	assert(runner:GetAttribute("Escaped") == "Neighbor", "later: she lets you in, got " .. tostring(runner:GetAttribute("Escaped")))
 	ctx.Audio.caption = realCap
 	ctx.Director.getAct, ctx.Director.huntSeconds, ctx.Director.elapsedSeconds = realAct2, realHunt, realEl
-	-- and the police never come before the night has run Config.MinNight
+	-- (v135, the owner: "Blackout still too long": the police showed 4:48, held to the night's minimum length) the police
+	-- come PhoneResponse after the call, however early in the night it is
 	ctx.Escape.reset()
 	ctx.Director.elapsedSeconds = function() return 60 end
 	ctx.Escape.callForHelp("Cell", nil)
 	local eta = H.unwrap(H.workspaceRoot):GetAttribute("PoliceETA") - os.clock()
-	assert(math.abs(eta - (ctx.Config.MinNight - 60)) < 1.5, "police held to MinNight, got " .. eta)
+	assert(math.abs(eta - ctx.Config.Help.PhoneResponse) < 1.5, "police PhoneResponse after the call, got " .. eta)
 	ctx.Director.elapsedSeconds = realEl
 	print(("exits open after %d s of the hunt ok"):format(ctx.Config.Help.ExitsAfter))
 end)

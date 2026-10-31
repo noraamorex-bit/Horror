@@ -91,6 +91,7 @@ function Diagnostics.start()
 					Q = quality(),
 					Low = game:GetService("Players").LocalPlayer:GetAttribute("LowPerf") == true or nil,
 					Err = #errors > 0 and errors or nil,
+					Skin = ctx.Creature and ctx.Creature.status and ctx.Creature.status() or nil,
 				})
 			end)
 			task.wait(15)

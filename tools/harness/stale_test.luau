@@ -77,6 +77,9 @@ local ok, err = pcall(function()
 		end
 		return false
 	end
+	-- (v135: no minimum night length holds the police any more; Mrs. Okafor's own call would bring them in the
+	-- middle of sections 1-2, so she sleeps through it until section 3 calls them itself)
+	ctx.Config.Help.OkaforCallsAfter = 1e9
 	ctx.Director.adminStart("Normal")
 	ctx.Director.startAct("Guest")
 	tick(3)
