@@ -2222,10 +2222,11 @@ STATES.Inspect = function(_, visible)
 	local spot = d.Spot
 	local I = tune()
 	if d.Phase == "Approach" then
-		-- (someone right in front of him on the way: that comes first)
+		-- (someone he sees on the way: that comes first. v133: 16 studs, was 9: he ran past people to get to
+		-- someone else's closet)
 		for _, p in visible do
 			local r = rootOf(p)
-			if r and (r.Position - pos()).Magnitude < 9 and engage({ p }) then
+			if r and (r.Position - pos()).Magnitude < 16 and engage({ p }) then
 				return
 			end
 		end
@@ -2565,7 +2566,10 @@ end
 -- going for someone (or a sound) flat out: the hunched lope and the running footsteps, whatever the speed
 local function hurrying(speed: number): boolean
 	local st = S.State
-	return speed > 4 and (st == "Chase" or st == "Charge" or st == "Prowl" or st == "Retreat" or (st == "Lurk" and speed > 7) or (st == "Puppet" and S.PuppetRun == true))
+	-- (v133: running to a hiding spot to listen at it, Inspect / CheckSpot on the way, is running too: it used to
+	-- show as a walk, him strolling past you to someone else's closet)
+	return speed > 4 and (st == "Chase" or st == "Charge" or st == "Prowl" or st == "Retreat" or (st == "Lurk" and speed > 7) or (st == "Puppet" and S.PuppetRun == true)
+		or ((st == "Inspect" or st == "CheckSpot" or st == "Investigate") and speed > 7.5))
 end
 
 local function gaitFor(speed: number): string

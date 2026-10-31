@@ -64,6 +64,11 @@ end
 function Rig.build(Builder): Model
 	local model = Instance.new("Model")
 	model.Name = "Curtis"
+	-- (v133) all of him reaches a client at once: his skinned body, its 68 bones and the mask (streamed in
+	-- pieces, a client could start animating a body with no bones yet: him upright in his rest pose)
+	pcall(function()
+		model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+	end)
 
 	local function part(name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?, extra: { [string]: any }?)
 		local props: { [string]: any } = {

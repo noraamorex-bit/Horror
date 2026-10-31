@@ -18,6 +18,9 @@ local flickering = false
 
 local OFF_COLOR = Color3.fromRGB(90, 88, 84)
 
+-- (v133) a room's lights forced on or off for a moment (the room scare), whatever its switch says
+local overrides: { [string]: boolean } = {}
+
 function Power.init(c)
 	ctx = c
 end
@@ -28,6 +31,7 @@ function Power.reset()
 	plates = {}
 	lights = {}
 	staticLit = {}
+	overrides = {}
 	flickering = false
 	workspace:SetAttribute("Power", true)
 	-- drop listeners that belonged to the old world
@@ -41,7 +45,8 @@ function Power.reset()
 end
 
 local function applyLight(entry)
-	local on = mainOn and switches[entry.Room] == true
+	local forced = overrides[entry.Room]
+	local on = mainOn and (if forced ~= nil then forced else switches[entry.Room] == true)
 	if entry.Light then
 		entry.Light.Enabled = on
 	end
@@ -145,7 +150,33 @@ function Power.isLit(pos: Vector3): boolean
 	if staticLit[room.Name] then
 		return true
 	end
+	if overrides[room.Name] ~= nil then
+		return mainOn and overrides[room.Name]
+	end
 	return mainOn and switches[room.Name] == true and not flickering
+end
+
+-- (v133) the room scare: one room's lights through a sequence of { on, seconds } steps, on or off whatever its
+-- switch says (a dark room's lights stutter on by themselves); then the switch is left at `finish`. Yields.
+-- Nothing (false) while the main breaker is off.
+function Power.flickerRoom(room: string, steps: { { any } }, finish: boolean?): boolean
+	if not mainOn then
+		return false
+	end
+	for _, step in steps do
+		if not mainOn then
+			break
+		end
+		overrides[room] = step[1] == true
+		refreshRoom(room)
+		task.wait(step[2])
+	end
+	overrides[room] = nil
+	if finish ~= nil then
+		switches[room] = finish
+	end
+	refreshRoom(room)
+	return true
 end
 
 -- Storm flicker: lights stutter, then return. Does not change the main breaker.

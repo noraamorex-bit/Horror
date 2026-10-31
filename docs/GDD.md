@@ -185,6 +185,8 @@ Walking into a room (Director.apparitionTick, four times a second, tracks who's 
 - **Where he stands** (`Director.apparitionSpot`): in the room, in front of you (straight ahead, then 20° and 35° either side), 5.5-13 studs off, with a clear line from your eyes to his knees and his chest, nothing solid where he stands; facing you.
 Test `apparition_test`.
 
+**v133** (the owner: "the window scare thing I don't think light flickered. And the lights out time is way too long people would leave"): the first act's upstairs rooms start with their lights off, so the client-side dimming had nothing to flicker and the room just stayed dark. Now the server drives the room's lights (`Power.flickerRoom(room, Events.ApparitionLights, true)`: forced on/off whatever the switch says, everyone in the room sees it): stuttering on (0.54 s), a 0.25 s blink of dark as he appears, the lights up on him for 0.7 s, a 0.35 s snap of dark with the hit, then on, and the switch left on. The client (`Effects.apparition(cf, room, powered)`) keeps the same timeline for the figure and the sounds; with the power out it flickers your flashlight instead.
+
 ### Sudden scares, rarely
 A loud musical sting (APM "Fear Hit") lands with the big scares: a door slam, the plate smashing, the window bang, a thunderclap right on top of the house. It plays at most once every 2½ minutes, so it stays a shock.
 

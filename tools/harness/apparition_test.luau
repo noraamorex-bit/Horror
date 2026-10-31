@@ -26,7 +26,7 @@ local function setup()
 	ctx.Layout = H.load("Server/World/Layout")
 	local fired = {}
 	ctx.Remotes = setmetatable({}, { __index = function(t, k)
-		local r = { FireClient = function(_, p, a, b) table.insert(fired, { k, p, a, b }) end, FireAllClients = function(_, a) table.insert(fired, { k, "all", a }) end, OnServerEvent = H.signal() }
+		local r = { FireClient = function(_, p, a, b, c) table.insert(fired, { k, p, a, b, c }) end, FireAllClients = function(_, a) table.insert(fired, { k, "all", a }) end, OnServerEvent = H.signal() }
 		rawset(t, k, r)
 		return r
 	end })
@@ -107,9 +107,16 @@ local ok, err = pcall(function()
 	put(a, V(6, 18, -14), V(20, 18, -14))
 	tick(30)
 	assert(#apparitions(a) == 0, "nothing in the hall")
-	-- 1) into the guest room to close its window: the lights go, and he's standing by the window
+	-- 1) into the guest room to close its window: the lights stutter (on, though its switch is off), and he's
+	-- standing by the window
+	assert(not ctx.Power.isRoomSwitchOn("Guest"), "the guest room starts dark")
+	local guestMid = V(26, 20, -18)
+	local litSeen, darkSeen = false, false
 	put(a, V(15, 18, -15), V(26, 18, -27))
-	tick(0.6)
+	for _ = 1, 6 do
+		tick(0.1)
+		if ctx.Power.isLit(guestMid) then litSeen = true else darkSeen = true end
+	end
 	local got = apparitions(a)
 	assert(#got == 1, "the room scare, walking in: " .. #got)
 	local cf = got[1][3]
@@ -118,7 +125,13 @@ local ok, err = pcall(function()
 	assert(math.abs(cf.Position.X - 26) < 0.5 and math.abs(cf.Position.Z + 27.4) < 0.5, "just inside the open window: " .. tostring(cf.Position))
 	local toMe = (V(15, 0, -15) - cf.Position) * V(1, 0, 1)
 	assert((cf.LookVector * V(1, 0, 1)).Unit:Dot(toMe.Unit) > 0.95, "facing whoever walked in")
-	tick(2.5)
+	assert(got[1][5] == true, "the house has power: the server drives the lights")
+	for _ = 1, 25 do
+		tick(0.1)
+		if ctx.Power.isLit(guestMid) then litSeen = true else darkSeen = true end
+	end
+	assert(litSeen and darkSeen, "the room's lights flickered")
+	assert(ctx.Power.isRoomSwitchOn("Guest") and ctx.Power.isLit(guestMid), "and they're left on: no long dark")
 	assert(thought(a, Story.Thoughts.Events.ApparitionWindow), "the thought")
 	-- once a room a night: out and back in, nothing
 	put(a, V(6, 18, -14), V(20, 18, -14))

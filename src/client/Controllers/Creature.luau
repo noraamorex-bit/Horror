@@ -34,6 +34,7 @@ local skinBlend = 1
 local look = { 0, 0 }
 local scream = 0
 local skinRigs: { [Instance]: any } = setmetatable({}, { __mode = "k" }) :: any
+local skinRetry = 0
 
 -- the skeleton of a model's skinned body (cached), or nil if it's the part-built figure
 local function skinOf(m: Instance): any
@@ -46,13 +47,28 @@ local function skinOf(m: Instance): any
 	if body and body:IsA("MeshPart") and m:GetAttribute("Skinned") then
 		local ok, r = pcall(Skin.rig, body)
 		rig = ok and r or false
+		-- (v133, the owner's screenshot: him gliding upright in his rest pose, the mask beside his head.
+		-- The body had reached this client before all its bones had, and that bone-less "rig" was kept
+		-- for the whole night. Only a whole skeleton counts; until then, try again shortly.)
+		local n = 0
+		for _ in rig and rig.Joints or {} do
+			n += 1
+		end
+		if not rig or n < 23 or not rig.Joints.Head or not rig.Joints.Hips then
+			return nil
+		end
+	elseif m:GetAttribute("Skinned") then
+		return nil -- (the body itself hasn't arrived yet)
 	end
 	-- (v114) the porcelain mask and hair (the part-built Head and what's welded to it) ride the head
 	-- bone: where the Head part sits relative to the bone at rest, both worked out from rest frames
 	local head = m:FindFirstChild("Head")
 	local neck = head and head:FindFirstChild("Neck")
 	local bone = body and body:FindFirstChild("spine_006_0", true)
-	if rig and m:GetAttribute("Masked") and neck and neck:IsA("Motor6D") and neck.Part0 and bone and bone:IsA("Bone") then
+	if rig and m:GetAttribute("Masked") then
+		if not (neck and neck:IsA("Motor6D") and neck.Part0 and bone and bone:IsA("Bone")) then
+			return nil -- (the mask and its neck joint aren't all here yet)
+		end
 		local restHead = neck.Part0.CFrame * neck.C0 * neck.C1:Inverse()
 		rig.Mask = { Neck = neck, Bone = bone, Rel = bone.WorldCFrame:ToObjectSpace(restHead), Jaw = Pose.jawMeshes(m) }
 	end
@@ -230,6 +246,14 @@ function Creature.start()
 		end
 		if not model or not root or not root.Parent then
 			return
+		end
+		-- (v133) his skinned body still missing bones when he arrived: keep trying
+		if not skin and model:GetAttribute("Skinned") then
+			skinRetry -= dt
+			if skinRetry <= 0 then
+				skinRetry = 0.25
+				skin = skinOf(model)
+			end
 		end
 		local cam = workspace.CurrentCamera
 		if not cam then

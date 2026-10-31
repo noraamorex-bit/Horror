@@ -406,82 +406,57 @@ function Effects.figure(cf: CFrame, duration: number, gait: string?)
 end
 
 -- (v132, the owner: "make the light flicker and let him show for a sec and then disappear suddenly with a loud
--- sound effect too") walking into a room: its lights stutter and die, and he's standing there; the lights come up
--- on him; then they snap off with a hit, and when they come back he's gone. The lights are dimmed here, for you
--- (your flashlight too: in the dark house it's the only light there is), and put back exactly as they were.
+-- sound effect too") walking into a room: its lights stutter, a blink of dark and he's standing there, the lights
+-- come up on him, then a snap of dark with a hit, and he's gone. (v133) While the house has power the server drives
+-- the room's lights (Power.flickerRoom, Events.ApparitionLights: switch or no switch, left on at the end); in the dark
+-- house it's your own flashlight that stutters. Same timeline either way.
 local apparitionBusy = false
-function Effects.apparition(cf: CFrame, roomName: string?)
+function Effects.apparition(cf: CFrame, roomName: string?, powered: boolean?)
 	if apparitionBusy or typeof(cf) ~= "CFrame" then
 		return
 	end
 	apparitionBusy = true
+	-- (no power: your flashlight is the light that goes)
 	local lights = {}
-	local function add(l: Light)
-		table.insert(lights, { L = l, B = l.Brightness, Bulb = l.Parent, Mat = l.Parent and l.Parent:IsA("BasePart") and (l.Parent :: BasePart).Material or nil })
-	end
-	local room = roomName and ctx.Rooms.ByName[roomName]
-	local world = workspace:FindFirstChild("World")
-	if room and world then
-		for _, d in world:GetDescendants() do
-			if d:IsA("Light") and d.Parent and d.Parent:IsA("BasePart") then
-				local p = (d.Parent :: BasePart).Position
-				if p.X >= room.Min.X - 0.5 and p.X <= room.Max.X + 0.5 and p.Z >= room.Min.Z - 0.5 and p.Z <= room.Max.Z + 0.5 and p.Y >= room.Min.Y and p.Y <= room.Max.Y + 0.5 then
-					add(d)
-				end
+	if not powered then
+		local beamPart = workspace:FindFirstChild("LocalFlashlight")
+		for _, d in beamPart and beamPart:GetChildren() or {} do
+			if d:IsA("Light") then
+				table.insert(lights, { L = d, B = d.Brightness })
 			end
-		end
-	end
-	local beamPart = workspace:FindFirstChild("LocalFlashlight")
-	for _, d in beamPart and beamPart:GetChildren() or {} do
-		if d:IsA("Light") then
-			add(d)
 		end
 	end
 	local function set(on: boolean)
 		for _, e in lights do
 			if e.L.Parent then
 				e.L.Brightness = on and e.B or 0
-				-- (a lit bulb goes dark with it)
-				if e.Mat == Enum.Material.Neon and e.Bulb.Parent then
-					(e.Bulb :: BasePart).Material = on and Enum.Material.Neon or Enum.Material.SmoothPlastic
-				end
-			end
-		end
-	end
-	local function restore()
-		for _, e in lights do
-			if e.L.Parent then
-				e.L.Brightness = e.B
-			end
-			if e.Bulb and e.Bulb.Parent and e.Mat then
-				(e.Bulb :: BasePart).Material = e.Mat
 			end
 		end
 	end
 	task.spawn(function()
 		local ok = pcall(function()
-			-- the stutter
 			Effects.playSound("BreakerClick", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.35 })
-			for _, step in { { false, 0.07 }, { true, 0.1 }, { false, 0.06 }, { true, 0.16 }, { false, 0.08 }, { true, 0.12 } } do
+			-- the stutter (0 .. 0.54 s)
+			for _, step in { { true, 0.12 }, { false, 0.08 }, { true, 0.1 }, { false, 0.1 }, { true, 0.14 } } do
 				set(step[1])
 				task.wait(step[2])
 			end
-			-- dark: and he's there
+			-- a blink of dark: and he's there
 			set(false)
-			Effects.figure(cf, 1.3, "Stare")
-			task.wait(0.3)
+			Effects.figure(cf, 1.06, "Stare")
+			task.wait(0.25)
 			-- the lights come up on him, standing there looking at you
 			set(true)
 			Effects.playSound("BoneCrack1", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.6 })
-			task.wait(0.75)
+			task.wait(0.7)
 			-- snap: dark, the hit, gone
 			set(false)
 			Effects.playSound("HorrorHit", nil, { Volume = 1 })
 			Effects.playSound("Screech", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.45 })
 			Effects.shake(0.55, 0.35)
-			task.wait(0.4)
+			task.wait(0.35)
 		end)
-		restore()
+		set(true)
 		apparitionBusy = false
 		if not ok then
 			warn("[Effects] the room scare didn't finish")

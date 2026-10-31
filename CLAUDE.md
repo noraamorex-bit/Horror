@@ -122,6 +122,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   SenseSpeed), Normal's freed grace 60 s + `FreedLeaveAlone` 45 s, not-caught-yet players picked before last-life ones
   (`LastLifeLast`, Normal), `HideStaleAgain` 25. Don't make Normal's runs faster again without checking deaths/player.
   **v129**: on Normal he chases first-nighters `RookieChaseSlowdown` 1.5 slower (12 / lunge 13); veterans as before.
+  **v133** (the owner: "he's still so dumb sometimes just walks past me. Make him constantly run after players"): sharper senses
+  (SightDark 18 / Hard 21 / NM 24, was 13/15/14; PeripheralRange 10, was 7; HearWalk 15 / Hard 17), he chases anyone he sees within
+  16 studs on his way to a hiding spot (was 9), and running to a spot shows as running (it showed as a walk).
+- **His model on every client (v133**, the owner's screenshot: a black upright figure gliding, the mask beside its head): the client
+  kept a bone-less skeleton when his body reached it before its 68 bones (`Creature` skinOf now only accepts a whole skeleton and
+  retries every 0.25 s), and his model streams in whole (`ModelStreamingMode.Atomic`, `Rig.build`).
 - **You must be able to see him** (v102: "I can't even see the monster… because of how dark it is"):
   charcoal body, brighter face glow + a cold chest light, a faint outline/fill in the house (client
   Highlight, occluded, not in the lobby), and the dark house after the blackout is moonlit
@@ -216,6 +222,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   and he's gone (client `Effects.apparition`, Director `roomEntered`/`apparitionSpot`, `Config.Director.Apparition`). Always in the
   first act's open-window rooms (by the window); other rooms by chance once a night; in the hunt your flashlight stutters instead.
   New scares should be this kind: seen, sudden, loud, gone. GDD "The room scare (v132)"; test `apparition_test`.
+  **v133**: the server drives the room's lights (`Power.flickerRoom`; act I's rooms start dark, so nothing flickered before) and
+  leaves them on; dark only 0.25 s + 0.35 s (the owner: "the lights out time is way too long people would leave").
 
 **Retention (the 250 highly-engaged goal)**
 - **Invites pay (v121)**: a brand-new friend you bring = +200 coins for you (kept until you're back), +100 for them;
@@ -653,6 +661,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **31 Oct (v133 = place version 132)**, the owner (screenshots: him as a black upright silhouette): "What happened to his model. Fix it
+  and make it scary. Also he's still so dumb sometimes just walks past me. Make him constantly run after players… the window scare thing I
+  don't think light flickered. And the lights out time is way too long people would leave." Done: the model fix, his senses, the room
+  scare's server-driven lights (see The intruder / World). Can't see the client here: check on a phone that he runs on all fours with
+  the mask on his face from the first moment he appears, and that the guest room's lights really stutter and stay on.
 
 - **31 Oct (v132 = place version 131)**, the owner: the room scare (see World/The house haunts you; GDD "The room scare (v132)").
   Can't see the client here: check on a phone that the flicker reads, he's in view when the lights come up (not half inside the
@@ -1140,7 +1154,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 131; the notes' "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 132; the notes' "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

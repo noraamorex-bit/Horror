@@ -152,6 +152,10 @@ local SCRAWLS = {
 	{ Room = "Garage", At = V(40.54, 10, -26), Into = V(1, 0, 0), W = 6, H = 2 },
 }
 Events.Scrawls = SCRAWLS
+-- (v133) the room scare's lights (Power.flickerRoom: { on, seconds }); the client's timeline (Effects.apparition)
+-- matches it: he appears at 0.54 s in the dark, the lights come up on him at 0.79, the snap and the hit at 1.49,
+-- and they're on again (and stay on) at 1.84
+Events.ApparitionLights = { { true, 0.12 }, { false, 0.08 }, { true, 0.1 }, { false, 0.1 }, { true, 0.14 }, { false, 0.25 }, { true, 0.7 }, { false, 0.35 } }
 local SCRAWL_TEXT = { "I'M IN THE WALLS", "WE'RE A FAMILY NOW", "{NAME} IS MINE", "DON'T LOOK UP", "NOBODY LEAVES", "I LIKE IT WHEN YOU SLEEP", "{NAME}, COME UPSTAIRS" }
 local scrawled: { [any]: { [number]: boolean } } = {}
 local scrawlLines: { [any]: { [string]: boolean } } = {}
@@ -1610,13 +1614,21 @@ Events.List = {
 			return nil
 		end,
 		Run = function(ctx, D, data)
+			-- (v133, the owner: "I don't think light flickered. And the lights out time is way too long people would
+			-- leave." The first act's upstairs rooms start with their lights off: there was nothing to flicker, and it
+			-- stayed dark. Now the server drives the room's lights, switch or no switch: stuttering on, a blink of dark
+			-- as he appears, up on him, a snap of dark with the hit, then on, and left on.)
+			local powered = ctx.Power.isOn()
 			local who = {}
 			for _, p in ctx.Util.activePlayers() do
 				local room = roomOf(ctx, p)
 				if p == data.Player or (room and room.Name == data.Room) then
 					table.insert(who, p)
-					ctx.Remotes.Apparition:FireClient(p, data.Spot, data.Room)
+					ctx.Remotes.Apparition:FireClient(p, data.Spot, data.Room, powered)
 				end
+			end
+			if powered then
+				task.spawn(ctx.Power.flickerRoom, data.Room, Events.ApparitionLights, true)
 			end
 			task.wait(1.9)
 			for _, p in who do
