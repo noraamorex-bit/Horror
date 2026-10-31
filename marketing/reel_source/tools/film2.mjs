@@ -368,7 +368,7 @@ for (const fr of spec.frames) {
     window.R.render(scene, cam);
     if (window.FRESH) { window.FRESH = false; window.R.render(scene, cam); }
   }, [fr, spec.shots[fr.shot], crFrame]);
-  const buf = await page.screenshot({ type: 'png' });
+  const buf = await page.screenshot({ type: 'png', timeout: 0 }); // (no limit: a full-size frame can take over 30 s when several renders share the CPU)
   fs.writeFileSync(`${outDir}/${String(fr.f).padStart(4, '0')}.png`, buf);
   if (fr.f % 10 === 0) { console.log('frame', fr.f, ((Date.now() - t0) / 1000).toFixed(1) + 's'); }
 }
