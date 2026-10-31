@@ -468,6 +468,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   porthole, the empty porch in the rain; comp_cantplay **`fr.peep`** = { rain }, drawn under the captions) → ""i'm not outside,
   sweetie."" (turn round from the door: him in the hall; the mask lunges on 22.15 s) → RUN (out the front door). Caption: `don't
   open the door for mom 👀 game in comments`.
+  Reel 58 = **#11** (`cant_play_alone_11_v2.mp4`, 31 Oct), another everyday hook: **Lily's baby monitor** (mom works nights, #9).
+  "night 42: lily's baby monitor turned on." (by my pillow) → "night 43: someone was humming to her." (the monitor's view: him in her
+  room) → "night 44: "shh. go back to sleep."" (bent over her bed; his head turns to the lens) → "so lily sleeps in my room now." (her
+  blanket on my floor) → "tonight it turned on again." → "it was showing my room." (him over her, by my bed) → ""shh. go back to
+  sleep."" (turn in bed: he's crouched there; the lunge on 22.15 s) → RUN. The monitor's views use comp's `fr.cam` (label "LILY'S
+  ROOM"). film2 now has no screenshot time limit (parallel full-size frames timed out). Caption: `don't check the baby monitor 👀 game
+  in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
