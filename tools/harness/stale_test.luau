@@ -205,6 +205,7 @@ local ok, err = pcall(function()
 		patrolling(spot3.Exit.Position + R.Vector3.new(0, 0, 3))
 		a:SetAttribute("HoldingBreath", true)
 		S.SensedAt = {}
+		S.RunToldAt = {} -- (v136: his run lines come at most every Thoughts.RunLineGap s; this is a new night's worth)
 		S.NextSense = T - 1
 		tick(0.2)
 		a:SetAttribute("HoldingBreath", nil)
@@ -224,6 +225,7 @@ local ok, err = pcall(function()
 		S.Spared, S.LeftAlone = {}, {}
 		patrolling(spot2.Exit.Position + R.Vector3.new(40, 0, 0))
 		S.PursueTarget = nil
+		S.RunToldAt = {} -- (v136: run lines at most every Thoughts.RunLineGap s)
 		S.NextPursue = T - 1
 		local said = 0
 		for _, f in fired do if f[1] == "HisVoice" then said += 1 end end
