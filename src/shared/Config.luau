@@ -168,6 +168,13 @@ Config.Intruder = {
 	-- up to PursueFor s (re-aiming as they move), then the one he went for longest ago. Hiding: he runs to
 	-- the spot and listens. (Not while he's carrying someone off, stunned, or listening at a door.)
 	PursueGap = 1.2, -- (v135, the owner: "I want him to constantly chase": 2.5)
+	-- (v136, a player's downvote: "how is it scary but fair when the ghost can literally find you when you're standing
+	-- completely still") someone who has kept still StillAfter s (and has no flashlight on) isn't run at exactly: his runs
+	-- go to a guess StillMiss studs off and don't re-aim at them while they keep still; moving again gives them away
+	StillAfter = 1.5,
+	StillMiss = 11,
+	-- standing still in the dark, he has to be nearer to make you out (crouched and still is better still)
+	StillSightMultiplier = 0.75,
 	PursueFor = 18,
 	-- (v128) those quiet runs go at PursueSpeed, under the loud SenseSpeed: still faster than your walk, so
 	-- walking away doesn't lose him, but a sprint does (v126-127 logs: first-nighters' captures doubled and
@@ -275,6 +282,7 @@ Config.Difficulty = {
 			SenseEvery = { 16, 24 },
 			SenseSpeed = 15,
 			PursueGap = 0.8, -- (v135: 1.5)
+			StillMiss = 8,
 			PursueSpeed = 13,
 			FreedLeaveAlone = 15,
 			LastLifeLast = false,
@@ -316,6 +324,7 @@ Config.Difficulty = {
 			SenseEvery = { 11, 17 },
 			SenseSpeed = 16,
 			PursueGap = 0.6, -- (v135: 1)
+			StillMiss = 6,
 			PursueSpeed = 14.5,
 			FreedLeaveAlone = 0,
 		},
@@ -417,6 +426,14 @@ Config.Director = {
 Config.Thoughts = {
 	Duration = 5, -- seconds each line stays on screen
 	IdleHint = 35, -- seconds without progress before they remind themselves of the next task
+	-- (v136, a player: "the protag won't shut the hell up every 1 minutes spilling some worthless info") each reminder of
+	-- the same step waits twice as long as the last, never more often than IdleHintHunt once he's hunting, and never
+	-- within HintQuiet s of any other line
+	IdleHintMax = 180,
+	IdleHintHunt = 90,
+	HintQuiet = 20,
+	-- his runs' lines ("Footsteps. Running.", "He's after me.") at most this often per player
+	RunLineGap = 90,
 	FirstHint = 3, -- seconds into the night before the first task nudge (it queues behind the opening line)
 	QuietGap = 4, -- seconds of quiet after a thought or conversation before a text or banter comes in
 }

@@ -130,6 +130,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   the part-built figure shows instead (server keeps each hidden part's `T0`); night log `Perf.Skin` ok/stale/fallback (pull_stats:
   check it). Quiet runs also break off checking an empty hiding spot, `PursueGap` 1.2 (Hard 0.8, NM 0.6). Runs are heard: a growl as
   a run starts, bones cracking as he runs, a shriek within 16 studs (20 s apart). Test `creature_skin_test`.
+- **Fair when you keep still (v136**, a player's downvote: "how is it scary but fair when the ghost can literally find you when
+  you're standing completely still and it's says it hears me... the protag won't shut the hell up every 1 minutes"): standing still
+  `StillAfter` 1.5 s (flashlight off) makes his runs go `StillMiss` 11 studs off (Hard 8, NM 6) with no re-aim until you move; still
+  in the dark = sight x0.75; the sense line no longer says "he knows exactly where I am"; run lines every 90 s at most; task
+  reminders back off (35/70/140, max 180, 90 in the hunt, never within 20 s of another line). Test `fair_test`. Keep him always
+  after someone, but stillness must keep working.
 - **His model on every client (v133**, the owner's screenshot: a black upright figure gliding, the mask beside its head): the client
   kept a bone-less skeleton when his body reached it before its 68 bones (`Creature` skinOf now only accepts a whole skeleton and
   retries every 0.25 s), and his model streams in whole (`ModelStreamingMode.Atomic`, `Rig.build`).
@@ -682,6 +688,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **31 Oct (v136 = place version 135)**, the owner forwarded a player's downvote (PC): "how is it scary but fair when the ghost can
+  literally find you when you're standing completely still and it's says it hears me also the protag won't shut the hell up every 1
+  minutes spilling some worthless info." Done: fair when you keep still + fewer lines (see The intruder; GDD "Fair when you keep
+  still (v136)"). Reels 58 (#11, baby monitor) and 59 (#12, smart speaker). Next: `--since=135`: deaths/player, hunt quits, rating.
 
 - **31 Oct (v135 = place version 134)**, the owner (a screenshot: "Police: 4:48", him a grey statue on the stairs): "Blackout still
   too long. Also the monster didn't load again. Make it scarier, scarier sound effects too. Actually scary. And I want him to constantly

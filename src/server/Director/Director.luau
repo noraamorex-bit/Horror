@@ -316,11 +316,31 @@ local function hintTick()
 	if not state.NextHintAt or os.clock() < state.NextHintAt then
 		return
 	end
-	state.NextHintAt = os.clock() + ctx.Config.Thoughts.IdleHint
+	local T = ctx.Config.Thoughts
+	-- (v136, a player: "the protag won't shut the hell up every 1 minutes spilling some worthless info") never right
+	-- after another line; each reminder of the same step waits twice as long as the last (IdleHintMax at most), and
+	-- once he's hunting, never more often than IdleHintHunt
+	if os.clock() < (state.ThinkBusyUntil or 0) + (T.HintQuiet or 0) then
+		state.NextHintAt = (state.ThinkBusyUntil or 0) + (T.HintQuiet or 0)
+		return
+	end
+	state.HintCount = state.HintCount or {}
+	local hunting = ctx.Intruder and ctx.Intruder.isHunting and ctx.Intruder.isHunting()
+	local function nextGap(key: string): number
+		local n = state.HintCount[key] or 0
+		state.HintCount[key] = n + 1
+		local gap = math.min(T.IdleHint * 2 ^ n, T.IdleHintMax or math.huge)
+		if hunting then
+			gap = math.max(gap, T.IdleHintHunt or 0)
+		end
+		return gap
+	end
+	state.NextHintAt = os.clock() + T.IdleHint
 	for _, id in ctx.Objectives.pending() do
 		local line = ctx.Story.Thoughts.Objectives[id]
 		local step = ctx.Objectives.currentText(id)
 		if line or step then
+			state.NextHintAt = os.clock() + nextGap(id .. ":" .. tostring(step))
 			-- the first reminder is in their own words, later ones name the exact next step
 			state.Hinted = state.Hinted or {}
 			if line and not state.Hinted[id] then
@@ -696,6 +716,9 @@ function Director.startAct(name: string, cause: Player?)
 	state.ActEnding = false
 	if name == "SomeoneElse" then
 		state.HuntStart = state.ActStart
+	end
+	if name == "Evening" then
+		state.HintCount = {} -- (a new night: reminders start from IdleHint again)
 	end
 	workspace:SetAttribute("Act", name)
 	if ctx.Telemetry then

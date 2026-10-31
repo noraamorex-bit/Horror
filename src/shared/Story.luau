@@ -977,7 +977,7 @@ Story.Hunt = {
 	Stale = "I've been in here too long. He can smell me. I need a new hiding place.|hide",
 	StaleAfter = "He knows I'm in here. He's coming back. MOVE.|hide",
 	-- (v126) he's sprinting at you, wherever you are
-	Sensed = "Footsteps. Running. Straight at me. He knows exactly where I am.|hide",
+	Sensed = "Footsteps. Running. Coming this way. Get out of sight, or keep still.|hide",
 	SensedHiding = "He's coming. Straight for my hiding spot. Hold still. Breathe slow.|breath",
 	-- (v127) he's after you again (a plain run, between the loud ones)
 	Pursued = "He's after me. Keep moving.|hide",

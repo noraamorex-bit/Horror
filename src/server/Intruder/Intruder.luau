@@ -379,6 +379,47 @@ end
 -- (v135, the owner: "scarier sound effects... actually scary") a run is heard: bones cracking as he goes, and
 -- once he's close, a shriek right behind the one he's after (at most every 20 s each)
 local soundDice = Random.new() -- (its own dice: the night's other rolls stay as they were)
+
+-- (v136, a player: "how is it scary but fair when the ghost can literally find you when you're standing completely
+-- still") how long each player has stayed put (sampled every tick of his brain); someone keeping still, flashlight off,
+-- isn't run at exactly: his runs go to a guess nearby and don't follow them while they stay still
+local function stillFor(p: Player): number
+	S.StillAt = S.StillAt or {}
+	local r = rootOf(p)
+	if not r then
+		return 0
+	end
+	local rec = S.StillAt[p]
+	if not rec or (r.Position - rec.Pos).Magnitude > 1.2 then
+		S.StillAt[p] = { Pos = r.Position, T = now() }
+		return 0
+	end
+	return now() - rec.T
+end
+local function keepingStill(p: Player?): boolean
+	if not p or p:GetAttribute("FlashlightOn") or p:GetAttribute("Hiding") then
+		return false
+	end
+	return stillFor(p) >= (tune().StillAfter or math.huge)
+end
+local function runAim(p: Player, at: Vector3): Vector3
+	local miss = tune().StillMiss
+	if not miss or not keepingStill(p) then
+		return at
+	end
+	local a = soundDice:NextNumber() * math.pi * 2
+	return at + V(math.cos(a) * miss, 0, math.sin(a) * miss)
+end
+-- the run lines ("Footsteps. Running.", "He's after me.") at most every Thoughts.RunLineGap s per player
+local function runLine(p: Player, line: string?)
+	S.RunToldAt = S.RunToldAt or {}
+	if now() - (S.RunToldAt[p] or -1e9) < (ctx.Config.Thoughts.RunLineGap or 0) then
+		return
+	end
+	S.RunToldAt[p] = now()
+	ctx.Director.think(p, line)
+end
+Intruder._keepingStill = keepingStill -- (tests)
 local function runSounds(target: Player?)
 	if not (S.Head and target and valid(target)) then
 		return
@@ -1832,7 +1873,7 @@ STATES.Charge = function(_, visible)
 	runSounds(homing)
 	if homing and now() < (d.HomingUntil or 0) and valid(homing) and not homing:GetAttribute("Hiding") and not spared(homing) then
 		local r = rootOf(homing)
-		if r and now() >= (d.NextAim or 0) then
+		if r and now() >= (d.NextAim or 0) and not keepingStill(homing) then
 			d.NextAim = now() + 0.5
 			d.Pos = r.Position
 			d.Searching = false
@@ -2909,7 +2950,7 @@ local function senseTick(): boolean
 	speak("Sense", true)
 	ctx.Remotes.Shake:FireClient(best, 0.6, 0.8)
 	ctx.PlayerState.addNerve(best, -10)
-	ctx.Director.think(best, spot and ctx.Story.Hunt.SensedHiding or ctx.Story.Hunt.Sensed)
+	runLine(best, spot and ctx.Story.Hunt.SensedHiding or ctx.Story.Hunt.Sensed)
 	ctx.Director.addTension(15)
 	if spot then
 		S.HeardHide[spot] = now()
@@ -2923,7 +2964,7 @@ local function senseTick(): boolean
 		if not r then
 			return false
 		end
-		charge(r.Position, best)
+		charge(runAim(best, r.Position), best)
 		if S.State == "Charge" then
 			S.Data.Speed = I.SenseSpeed
 			S.Data.Homing = best
@@ -2969,7 +3010,7 @@ local function pursueTick(): boolean
 	local spot = who:GetAttribute("Hiding") and ctx.Hiding.spotOf(who)
 	if now() - (S.PursueTold[who] or -1e9) > 25 then
 		S.PursueTold[who] = now()
-		ctx.Director.think(who, ctx.Story.Hunt.Pursued)
+		runLine(who, ctx.Story.Hunt.Pursued)
 	end
 	if ctx.Journey then
 		ctx.Journey.count(who, "Pursued")
@@ -2988,7 +3029,7 @@ local function pursueTick(): boolean
 	if not r then
 		return false
 	end
-	charge(r.Position, who, true)
+	charge(runAim(who, r.Position), who, true)
 	-- (v135) a quiet run, but never a silent one: a growl where he is, if they're close enough to hear it
 	if S.Head and (r.Position - pos()).Magnitude < 55 and now() - (S.LastPursueGrowl or -1e9) > 7 then
 		S.LastPursueGrowl = now()
@@ -3004,6 +3045,9 @@ end
 Intruder._pursueTick = pursueTick -- (tests)
 
 local function think(dt: number)
+	for _, p in ctx.Util.activePlayers() do
+		stillFor(p)
+	end
 	if S.State == "Lurk" and S.Model and not S.InHouse then
 		STATES.Lurk(dt, {})
 		return

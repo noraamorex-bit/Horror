@@ -71,6 +71,12 @@ function Perception.intruderSightRange(player: Player): number
 		if player:GetAttribute("Crouching") then
 			range *= I.CrouchSightMultiplier
 		end
+		-- (v136) keeping still in the dark
+		local root = ctx.Util.getRoot(player)
+		local v = root and root.AssemblyLinearVelocity or Vector3.zero
+		if I.StillSightMultiplier and Vector3.new(v.X, 0, v.Z).Magnitude < 1 then
+			range *= I.StillSightMultiplier
+		end
 	end
 	if lightningNow() then
 		range = math.max(range, 60)
