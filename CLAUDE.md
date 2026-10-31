@@ -475,6 +475,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   sleep."" (turn in bed: he's crouched there; the lunge on 22.15 s) → RUN. The monitor's views use comp's `fr.cam` (label "LILY'S
   ROOM"). film2 now has no screenshot time limit (parallel full-size frames timed out). Caption: `don't check the baby monitor 👀 game
   in comments`.
+  Reel 59 = **#12** (`cant_play_alone_12_v2.mp4`, 31 Oct), another everyday hook: **the smart speaker** on my nightstand (a film2
+  cylinder with a cyan ring; the laptop hidden). "night 45: our speaker turned on at 3 am." → "night 46: "goodnight, jamie."" (him in
+  my doorway) → "night 47: "playing lily's lullaby."" (him bent over her bed) → "so i asked who was home." → ""three people are home.""
+  (the ring pulsing) → "mom's at work." (her bed, empty) → ""the third one is behind you."" (turn round at the speaker: him; the mask
+  lunges on 22.15 s) → RUN. Caption: `don't ask it who's home 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
