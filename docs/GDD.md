@@ -154,6 +154,9 @@ No ➕ INVITE A FRIEND and no Starter Pack button in the house (the owner: "UI i
 ### Over the furniture (v104)
 A player: "most loopable enemy in horror games". He's slower than your sprint by design, so circling the dining table, a bed or the kitchen island kept him going round forever. Chasing someone in sight with something low between them (anything under his chest, never a wall, never onto another floor) when going round is 1.3x the distance or more, he pounces over it in stop-motion and lands on the far side with a thud (`leapOver` / `leap`; every 3 s at most; `Leaps` in the night log). And running dry winds you: no sprint until your breath is back to 35% (`Movement.WindedRecover`; the stamina bar goes red). Before, a sprint at 0 flickered back on at 1, so you could stutter-sprint forever at about his speed.
 
+### A short blackout (v134)
+The owner: "Blackout part is too long." The dark ran ~6-7 minutes when help was called (Config.MinNight 900 held the police off until 15:00) and up to ~19 when it wasn't (act III's 10-12 minutes before Mrs. Okafor's part began). Now: MinNight 600; police 90 s after the call (neighbour 90, car 60); the car and her door after 90 s of dark; act III 3-4 min with no help called, then Mrs. Okafor calls 30 s into the last act and the police come 60 s later; the final run to the front door 30 s (Hard 25). ~3 minutes of dark typically, ~6 at most; nights ~11-12 min.
+
 ### The house haunts you (v131)
 The owner: "Make the map (house) much better. Seriously rework the whole map and perfect it. Add way more scares. Actually scary and creepy stuff." The floor plan stays (his navigation survey, the hiding spots, every task and prompt depend on it); what's in it, and what it does, changes.
 

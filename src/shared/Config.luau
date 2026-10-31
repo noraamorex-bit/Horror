@@ -46,11 +46,13 @@ Config.Acts = {
 	-- average": a longer build-up with him seen more, and a much longer hunt. Before: v117 ~10 min.)
 	Evening = { Min = 2.5, Max = 5 }, -- (v117: 2 / 4)
 	SmallThings = { Min = 4.5, Max = 6 }, -- (v117: 3 / 4.5)
-	SomeoneElse = { Min = 10, Max = 12 }, -- (v117: 4.5 / 5)
+	-- (v134, the owner: "Blackout part is too long": with no help called the dark ran 12 minutes before Mrs. Okafor's
+	-- part even began. Now 3-4; v126: 10 / 12; v117: 4.5 / 5)
+	SomeoneElse = { Min = 3, Max = 4 },
 }
 -- no night ends sooner than this (the police, the car and next door wait for it), except a night
 -- that skipped to the blackout (v126: 15 minutes; v117: 7)
-Config.MinNight = 900
+Config.MinNight = 600 -- (v134: the blackout was too long, and this held the police off until 15:00; v126: 900)
 -- a night where everyone has played before: the build-up acts could run shorter (this much of
 -- their length). Off: the owner found the night too fast; repeat groups can SKIP TO THE BLACKOUT.
 Config.VeteranPace = {}
@@ -355,13 +357,13 @@ Config.Capture = {
 Config.Help = {
 	-- (v88-90 logs: once help was called only 7 of 200 players left before the police came, while the
 	-- hunt is the game; nights ran ~11 min against the ~13 the owner wants: a longer hold-out)
-	PhoneResponse = 150, -- (v126: 100 with MinNight 15 min; v117: 120; v94: 200 was "too long", the owner)
-	NeighborResponse = 150, -- (v126: 100)
-	CarResponse = 90, -- (v126: 60)
+	PhoneResponse = 90, -- (v134: 150; v126: 100 with MinNight 15 min; v117: 120; v94: 200 was "too long", the owner)
+	NeighborResponse = 90, -- (v134: 150)
+	CarResponse = 60, -- (v134: 90)
 	CellCallDuration = 15, -- (Hard)
 	CellCallDurationNormal = 10,
-	OkaforCallsAfter = 300, -- (v126: 60) -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
-	OkaforResponse = 120, -- (v126: 60)
+	OkaforCallsAfter = 30, -- (v134: 300; v126: 60) -- seconds into the last act with no help called: Mrs. Okafor sees the van and calls the police
+	OkaforResponse = 60, -- (v134: 120)
 	-- the call goes through and he hears it (he screams and charges the caller): on Normal the caller
 	-- gets this head start to hide (v81 logs: most upstairs-bathroom captures came 3-12 s after the
 	-- call ended, the caller still at the window). Hard: none.
@@ -372,13 +374,13 @@ Config.Help = {
 	-- (v116, a player: "way too short, I escaped in 3 mins": the car and her door worked from the first
 	-- second of the hunt; keys grabbed before the blackout meant a drive-off 3 s in) the car won't start
 	-- and Mrs. Okafor doesn't wake until the hunt has run this long. Calling 911 is ~130 s anyway.
-	ExitsAfter = 240, -- (v126: 90; Config.MinNight still holds)
+	ExitsAfter = 90, -- (v134: 240; Config.MinNight still holds)
 	JunctionRepair = 10,
 	-- (v125) the police pulling up doesn't end the night by itself: they're at the front, he knows
 	-- it's over and comes for whoever is still inside, wherever they are. Get out the front door.
 	-- After this long the police come in anyway (whoever's still alive in there is found).
-	FinalRun = 45,
-	FinalRunHard = 35,
+	FinalRun = 30, -- (v134: 45)
+	FinalRunHard = 25, -- (v134: 35)
 	FinalRunGrace = 3, -- seconds after the door opens before he starts going for you
 }
 
