@@ -121,6 +121,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **v128 (the stats: deaths x6 in pairs)**: those quiet runs go at `PursueSpeed` (11.5 / Hard 13 / NM 14.5, the loud ones keep
   SenseSpeed), Normal's freed grace 60 s + `FreedLeaveAlone` 45 s, not-caught-yet players picked before last-life ones
   (`LastLifeLast`, Normal), `HideStaleAgain` 25. Don't make Normal's runs faster again without checking deaths/player.
+  **v129**: on Normal he chases first-nighters `RookieChaseSlowdown` 1.5 slower (12 / lunge 13); veterans as before.
 - **You must be able to see him** (v102: "I can't even see the monster… because of how dark it is"):
   charcoal body, brighter face glow + a cold chest light, a faint outline/fill in the house (client
   Highlight, occluded, not in the lobby), and the dark house after the blackout is moonlit
@@ -431,6 +432,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   picked up." (down on the floor looking under the bed: her phone lit, his mask behind it on its side, looking at me; it comes
   at you on 22.15 s) → RUN. Under Jamie's bed: a 1.6-stud gap at the foot (x -31.4), the camera at U + 0.85; the mask on its
   side is `head.roll` 1.45. Caption: `don't answer if mom calls 👀 game in comments`.
+  Reel 57 = **#10** (`cant_play_alone_10_v2.mp4`, 31 Oct), the mom thread again: "night 39: mom texted "don't open the door."" (the
+  phone by my pillow) → "night 40: someone knocked." (from the stairs, the front door jumping in its frame) → "night 41: "honey, open
+  the door."" (from mom's window: his mask floating on the dark lawn; lightning shows the rest of him, looking up) → "mom has a key."
+  (close on the knob) → "so i looked through the peephole." (walking up to it) → "nobody was there." (the peephole: a round fisheye
+  porthole, the empty porch in the rain; comp_cantplay **`fr.peep`** = { rain }, drawn under the captions) → ""i'm not outside,
+  sweetie."" (turn round from the door: him in the hall; the mask lunges on 22.15 s) → RUN (out the front door). Caption: `don't
+  open the door for mom 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -633,6 +641,16 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **31 Oct (v129 = place version 128, reel 57)**, the owner: "Make the next reel. Also analyze game statistics and improve". Visits
+  15,732, 25 up / 36 down, 414 favorites. First 2 h of v128 (121 lobby visits, 41 nights, 67 first-nighters): free → dead median
+  140 s (was 61; 0 of 23 within 60 s), but captures 0.58 and deaths 0.34 per first-nighter unchanged, quit mid-night 70%, 20 of 47
+  quits in the hunt (13 before help was called); captures 47 of 66 in open chases. Lobby (first real numbers): feedback mailbox 4
+  visits, friend's house offered 17 / JOIN 3, circle picked 2 players 88 of 101. Lone first nights: 81 of 107 <30 s quitters came
+  from the "2 players" circle (sent alone), 71 went straight back to the lobby (the owner's countdown rule: left as is). Starter
+  2/906 (StarterAuto 0/597; no extra quits after it), Revive 8/21, JumpscareAll 19/165, BecomeHim 16/140; 1,427 R$ total. Done:
+  the rookie chase (see The intruder; GDD "Fair runs"); reel 57 = #10 (see Marketing). Next: `--since=128`: captures/deaths per
+  first-nighter (want captures well under 0.5), hunt quits before the call; reel 57's views against #7 (115K) and #9.
 
 - **31 Oct (v128 = place version 127)**, the owner: "Deeply analyze the statistics and improve the game". Visits 15,507 (+1.4K
   since 30 Oct), 25 up / 36 down, 413 favorites. First-nighters quit mid-night: v119-124 38% (471), v125 52%, **v126-127 66%**
@@ -1095,7 +1113,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 127; the notes' "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 128; the notes' "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
