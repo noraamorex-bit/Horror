@@ -62,12 +62,18 @@ html,body { margin:0; width:1080px; height:1920px; overflow:hidden; background:#
 #camtop { position:absolute; left:60px; right:60px; top:150px; font-family:MO; font-size:40px; letter-spacing:3px; color:#f2f2f2;
           text-shadow: 0 0 6px #000, 0 0 2px #000; display:flex; justify-content:space-between; }
 #camdot { display:inline-block; width:26px; height:26px; border-radius:50%; background:#ff2a2a; margin-right:16px; vertical-align:-2px; }
+/* (reel 57) the front door's peephole: fr.peep = { rain } — a round fisheye porthole in the black, a glass rim, rain beyond */
+#peepui { opacity:0; }
+#peepmask { background: radial-gradient(circle 450px at 50% 44%, rgba(0,0,0,0) 80%, rgba(0,0,0,.7) 92%, rgba(0,0,0,.97) 97%, #000 100%); }
+#peeprim { position:absolute; left:90px; top:395px; width:900px; height:900px; border-radius:50%;
+           box-shadow: inset 0 0 60px 18px rgba(0,0,0,.9), 0 0 0 3px rgba(160,170,190,.18); }
 #camclock { position:absolute; left:60px; top:210px; font-family:MO; font-size:34px; letter-spacing:2px; color:#dcdcdc; text-shadow: 0 0 6px #000; }
 </style></head><body>
 <div id="stage">
   <img id="base"/>
     <div class="l" id="vig"></div>
     <canvas class="l" id="grain" width="540" height="960" style="width:1080px;height:1920px"></canvas>
+  <div class="l" id="peepui"><canvas class="l" id="peeprain" width="540" height="960" style="width:1080px;height:1920px"></canvas><div class="l" id="peepmask"></div><div id="peeprim"></div></div>
   <div class="o hk sh" id="hook1">ROBLOX HORROR GAMES</div>
   <div class="o hk sh" id="hook2">YOU CAN'T PLAY ALONE</div>
   <div class="o sh" id="hook3">#${NUM}</div>
@@ -143,6 +149,22 @@ window.setFrame = (f, fr, cuts) => {
       }
     }
     $('camclock').textContent = (cam.date || 'OCT 31') + '  ' + p2(hh > 12 ? hh - 12 : hh) + ':' + p2(mm) + ':' + p2(ss) + (hh >= 12 ? ' PM' : ' AM');
+  }
+  // (reel 57) the peephole: a little cold and soft, the round glass, rain falling beyond it
+  const peep = fr.peep;
+  $('peepui').style.opacity = peep ? 1 : 0;
+  if (peep) {
+    filt = 'contrast(1.15) saturate(.6) brightness(' + (fr.bright || 1.45) + ') blur(.6px)';
+    zoom = 1.0 + 0.02 * fr.k;
+    const pc = $('peeprain').getContext('2d');
+    pc.clearRect(0, 0, 540, 960);
+    if (peep.rain) {
+      pc.strokeStyle = 'rgba(200,210,230,0.22)'; pc.lineWidth = 1.0;
+      for (let r = 0; r < 110; r++) {
+        const x = 45 + rnd(f * 3.1 + r * 7.7) * 450, y = 190 + rnd(f * 5.3 + r * 3.9) * 470, l = 10 + 16 * rnd(r * 1.3);
+        pc.beginPath(); pc.moveTo(x, y); pc.lineTo(x - l * 0.12, y + l); pc.stroke();
+      }
+    }
   }
   $('base').style.filter = filt;
   let sh = 0;

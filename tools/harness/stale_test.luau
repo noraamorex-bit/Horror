@@ -281,6 +281,22 @@ local ok, err = pcall(function()
 		print("run targets ok")
 	end
 
+	-- 7) (v129) he chases someone on their first night a little slower (Normal); veterans as before
+	do
+		b:SetAttribute("InGame", true)
+		a:SetAttribute("StatNights", 0)
+		b:SetAttribute("StatNights", 3)
+		local rookie, vet = I._chaseSpeed(a), I._chaseSpeed(b)
+		assert(math.abs(vet - rookie - tune.RookieChaseSlowdown) < 1e-6 and tune.RookieChaseSlowdown > 0, "a first-nighter: slower")
+		assert(rookie > ctx.Config.Movement.Walk, "still faster than your walk")
+		assert(I._chaseSpeed(a, true) > rookie, "the lunge is still faster")
+		assert(ctx.Config.Difficulty.Hard.Intruder.RookieChaseSlowdown == 0, "not on Hard")
+		a:SetAttribute("StatNights", nil)
+		b:SetAttribute("StatNights", nil)
+		b:SetAttribute("InGame", nil)
+		print("rookie chase ok")
+	end
+
 	-- 3) the police: the last run for the front door
 	b:SetAttribute("InGame", true)
 	ctx.Util.getRoot(b).CFrame = R.CFrame.new(spot3.Exit.Position + R.Vector3.new(0, 3, 0))

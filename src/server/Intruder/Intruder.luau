@@ -38,6 +38,7 @@ local grabAnyone: () -> boolean
 local patrolRoute: () -> { Vector3 }
 local unstick: (string) -> ()
 local trySurprise: () -> boolean
+local chaseSpeed: (Player?, boolean?) -> number
 local STATES: { [string]: (number, { Player }) -> () } = {}
 
 local function fresh()
@@ -1458,11 +1459,7 @@ STATES.Chase = function(_, visible)
 		end
 		goal = d.LastPos + ahead
 	end
-	local solo = #ctx.Util.sessionPlayers() <= 1
-	local speed = I.ChaseSpeed - (solo and I.SoloChaseSlowdown or 0)
-	if seen and (r.Position - pos()).Magnitude < 10 then
-		speed = I.LungeSpeed
-	end
+	local speed = chaseSpeed(t, seen and (r.Position - pos()).Magnitude < 10)
 	-- circling something low between you? he goes over it (v104)
 	if seen and now() - (S.LastLeap or -1e9) > LEAP.Cooldown then
 		local landing, top = leapOver(r.Position)
@@ -2804,6 +2801,20 @@ Intruder._staleHiding = staleHiding -- (tests)
 	they're out in the open (SenseHoming s), or straight to their hiding spot to listen at it (the
 	heartbeat) if they're hiding. They're told, he says something, the screen shakes.
 ]]
+-- how fast he chases someone: ChaseSpeed (LungeSpeed for the last few steps), a little slower alone, and (v129)
+-- RookieChaseSlowdown slower after someone on their first night (v128 logs: captures 0.58 per first-nighter, 47 of
+-- 66 in open chases; first-nighters quit mid-night 70%)
+chaseSpeed = function(t: Player?, lunge: boolean?): number
+	local I = tune()
+	local solo = #ctx.Util.sessionPlayers() <= 1
+	local speed = (lunge and I.LungeSpeed or I.ChaseSpeed) - (solo and I.SoloChaseSlowdown or 0)
+	if t and (tonumber(t:GetAttribute("StatNights")) or 0) < 1 then
+		speed -= I.RookieChaseSlowdown or 0
+	end
+	return speed
+end
+Intruder._chaseSpeed = chaseSpeed -- (tests)
+
 local SENSE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true }
 
 -- who his runs go for (sense and pursuit): not anyone spared or just freed (LeftAlone); on Normal, anyone

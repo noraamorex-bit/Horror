@@ -186,6 +186,7 @@ Config.Intruder = {
 	HearSprint = 16, -- running
 	HearFlashlight = 12, -- your beam on the walls around him
 	SoloChaseSlowdown = 1, -- studs/s slower when playing alone
+	RookieChaseSlowdown = 1.5, -- (v129) and this much slower after someone on their first night (Normal only)
 	ChaseLoseSightTime = 2.5, -- out of sight this long and he's back to following your trail
 	-- what he knows
 	SenseDelay = 3, -- he feels where you were this many seconds ago
@@ -258,6 +259,7 @@ Config.Difficulty = {
 			SightDark = 15,
 			PatrolCheckChance = 0.55,
 			SoloChaseSlowdown = 0.6,
+			RookieChaseSlowdown = 0,
 			ChargeSpeed = 14,
 			InvestigateSpeed = 11,
 			ChaseSpeed = 14.5, -- (Hard: only a sprint gets away)
