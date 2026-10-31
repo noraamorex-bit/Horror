@@ -176,6 +176,15 @@ The owner: "Make the map (house) much better. Seriously rework the whole map and
 
 Test `haunt_test` (each scare staged and checked). The harness's `CFrame.lookAt` flips a view toward +Z (a lune bug), so the new code faces things with a yaw (`facing`), and env.luau gained `GetBoundingBox`.
 
+### The room scare (v132)
+The owner: "When a person enters the upstairs room to close the window make the light flicker and let him show for a sec and then disappear suddenly with a loud sound effect too. These are the types of scares I want you to add through the game."
+
+Walking into a room (Director.apparitionTick, four times a second, tracks who's in which room; `Director.ApparitionRooms`: every bedroom, bathroom, the living room, kitchen, office, den, mudroom, basement and boiler room, not the halls): the room's lights stutter (six flickers in 0.6 s and a breaker click), go dark, and he's standing there (client `Effects.figure`, Stare); the lights come up on him for 0.75 s (a crack of his neck); then they snap off with a loud hit (HorrorHit + a short screech at him, a shake), and when they come back he's gone. It's all local to the players in that room (client `Effects.apparition`: the room's lights and your flashlight dimmed and put back exactly; in the dark house after the blackout it's your flashlight that stutters and dies). Nerve -14, a thought, a truth line.
+- **The first act's open windows** (the guest room, Lily's room): the first time anyone walks in while the window's open, always, and he stands just inside the window (2.6 studs in from the glass), the one you came to close.
+- **Other rooms**: `Config.Director.Apparition`: by chance (45%) on walking in, once a room a night, 55 s apart, never in the first 25 s of a night or within 10 s of another scare; during the hunt 25%, 100 s apart, and only when he's really 45+ studs away.
+- **Where he stands** (`Director.apparitionSpot`): in the room, in front of you (straight ahead, then 20° and 35° either side), 5.5-13 studs off, with a clear line from your eyes to his knees and his chest, nothing solid where he stands; facing you.
+Test `apparition_test`.
+
 ### Sudden scares, rarely
 A loud musical sting (APM "Fear Hit") lands with the big scares: a door slam, the plate smashing, the window bang, a thunderclap right on top of the house. It plays at most once every 2½ minutes, so it stays a shock.
 

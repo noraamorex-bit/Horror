@@ -1599,6 +1599,33 @@ Events.List = {
 			chair:PivotTo(base)
 		end,
 	},
+	{
+		-- (v132) the room scare: not scheduled; Director.roomEntered fires it as you walk into a room.
+		-- Everyone in that room sees it (client Effects.apparition: the lights stutter and die, he's there,
+		-- the lights come up on him, then snap off with a loud hit, and when they're back he's gone).
+		Id = "Apparition",
+		Acts = {},
+		Tension = 14,
+		Cond = function()
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			local who = {}
+			for _, p in ctx.Util.activePlayers() do
+				local room = roomOf(ctx, p)
+				if p == data.Player or (room and room.Name == data.Room) then
+					table.insert(who, p)
+					ctx.Remotes.Apparition:FireClient(p, data.Spot, data.Room)
+				end
+			end
+			task.wait(1.9)
+			for _, p in who do
+				ctx.PlayerState.addNerve(p, -14)
+			end
+			D.think(who, data.Window and ctx.Story.Thoughts.Events.ApparitionWindow or ctx.Story.Thoughts.Events.Apparition)
+			D.logTruth("Apparition")
+		end,
+	},
 }
 
 return Events

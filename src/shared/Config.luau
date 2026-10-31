@@ -400,6 +400,13 @@ Config.Director = {
 	AfterBedtime = 5, -- (v94: 12; the owner wanted less waiting before the blackout)
 	BedtimeMinAct = 260, -- (v126: 120) -- (but act II still runs at least this long: its scares need room)
 	AfterScare = 22, -- (v117: 30) -- ...and this long after the last scare
+	-- (v132, the owner: "When a person enters the upstairs room to close the window make the light flicker and let
+	-- him show for a sec and then disappear suddenly with a loud sound effect too. These are the types of scares I want
+	-- you to add through the game.") Walking into a room: its lights stutter, he's standing there for a second, then
+	-- they snap off with a loud hit and he's gone. The first act's open-window rooms always (the first time in);
+	-- other rooms by chance, once a night each; in the hunt (power out: your flashlight stutters) less often, and only
+	-- when he's really far away.
+	Apparition = { Chance = 0.45, Cooldown = 55, Spacing = 10, NotBefore = 25, HuntChance = 0.25, HuntCooldown = 100, HuntFar = 45 },
 	CeilingSteps = 20, -- (v113) seconds into the Evening: footsteps cross the ceiling over someone
 }
 

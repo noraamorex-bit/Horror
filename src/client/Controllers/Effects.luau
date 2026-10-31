@@ -405,6 +405,90 @@ function Effects.figure(cf: CFrame, duration: number, gait: string?)
 	end)
 end
 
+-- (v132, the owner: "make the light flicker and let him show for a sec and then disappear suddenly with a loud
+-- sound effect too") walking into a room: its lights stutter and die, and he's standing there; the lights come up
+-- on him; then they snap off with a hit, and when they come back he's gone. The lights are dimmed here, for you
+-- (your flashlight too: in the dark house it's the only light there is), and put back exactly as they were.
+local apparitionBusy = false
+function Effects.apparition(cf: CFrame, roomName: string?)
+	if apparitionBusy or typeof(cf) ~= "CFrame" then
+		return
+	end
+	apparitionBusy = true
+	local lights = {}
+	local function add(l: Light)
+		table.insert(lights, { L = l, B = l.Brightness, Bulb = l.Parent, Mat = l.Parent and l.Parent:IsA("BasePart") and (l.Parent :: BasePart).Material or nil })
+	end
+	local room = roomName and ctx.Rooms.ByName[roomName]
+	local world = workspace:FindFirstChild("World")
+	if room and world then
+		for _, d in world:GetDescendants() do
+			if d:IsA("Light") and d.Parent and d.Parent:IsA("BasePart") then
+				local p = (d.Parent :: BasePart).Position
+				if p.X >= room.Min.X - 0.5 and p.X <= room.Max.X + 0.5 and p.Z >= room.Min.Z - 0.5 and p.Z <= room.Max.Z + 0.5 and p.Y >= room.Min.Y and p.Y <= room.Max.Y + 0.5 then
+					add(d)
+				end
+			end
+		end
+	end
+	local beamPart = workspace:FindFirstChild("LocalFlashlight")
+	for _, d in beamPart and beamPart:GetChildren() or {} do
+		if d:IsA("Light") then
+			add(d)
+		end
+	end
+	local function set(on: boolean)
+		for _, e in lights do
+			if e.L.Parent then
+				e.L.Brightness = on and e.B or 0
+				-- (a lit bulb goes dark with it)
+				if e.Mat == Enum.Material.Neon and e.Bulb.Parent then
+					(e.Bulb :: BasePart).Material = on and Enum.Material.Neon or Enum.Material.SmoothPlastic
+				end
+			end
+		end
+	end
+	local function restore()
+		for _, e in lights do
+			if e.L.Parent then
+				e.L.Brightness = e.B
+			end
+			if e.Bulb and e.Bulb.Parent and e.Mat then
+				(e.Bulb :: BasePart).Material = e.Mat
+			end
+		end
+	end
+	task.spawn(function()
+		local ok = pcall(function()
+			-- the stutter
+			Effects.playSound("BreakerClick", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.35 })
+			for _, step in { { false, 0.07 }, { true, 0.1 }, { false, 0.06 }, { true, 0.16 }, { false, 0.08 }, { true, 0.12 } } do
+				set(step[1])
+				task.wait(step[2])
+			end
+			-- dark: and he's there
+			set(false)
+			Effects.figure(cf, 1.3, "Stare")
+			task.wait(0.3)
+			-- the lights come up on him, standing there looking at you
+			set(true)
+			Effects.playSound("BoneCrack1", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.6 })
+			task.wait(0.75)
+			-- snap: dark, the hit, gone
+			set(false)
+			Effects.playSound("HorrorHit", nil, { Volume = 1 })
+			Effects.playSound("Screech", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.45 })
+			Effects.shake(0.55, 0.35)
+			task.wait(0.4)
+		end)
+		restore()
+		apparitionBusy = false
+		if not ok then
+			warn("[Effects] the room scare didn't finish")
+		end
+	end)
+end
+
 local function buildVignette()
 	local UI = ctx.UI
 	local holder = UI.new("Frame", { Name = "Vignette", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = ctx.UI.Root, ZIndex = 0 })
@@ -453,6 +537,7 @@ function Effects.start()
 		task.spawn(Effects.jumpscare, head)
 	end)
 	ctx.Remotes.Figure.OnClientEvent:Connect(Effects.figure)
+	ctx.Remotes.Apparition.OnClientEvent:Connect(Effects.apparition)
 	ctx.Remotes.PlaySound.OnClientEvent:Connect(Effects.playSound)
 	ctx.Remotes.Zap.OnClientEvent:Connect(function(from, to, hit)
 		if typeof(from) == "Vector3" and typeof(to) == "Vector3" then

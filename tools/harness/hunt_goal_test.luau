@@ -283,7 +283,7 @@ local ok, err = pcall(function()
 	local lastBeat = nil
 	for _, sc in scares do
 		if beatIds[sc.Id] then
-			if lastBeat then assert(sc.T - lastBeat >= 30, "two beats too close: " .. sc.Id) end
+			if lastBeat then assert(sc.T - lastBeat >= ctx.Config.Director.BeatSpacing - 0.5, "two beats too close: " .. sc.Id) end
 			lastBeat = sc.T
 		end
 	end

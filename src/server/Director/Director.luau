@@ -45,6 +45,8 @@ local function fresh()
 		Logged = {},
 		Fired = {},
 		LastFired = {},
+		InRoom = {}, -- (v132) player -> the room they're in (false: none), for the room scare
+		ApparitionRooms = {}, -- room name -> true once it's had its scare tonight
 		NextEventAt = 0,
 		NextLightning = os.clock() + 15,
 		Ready = {},
@@ -1423,6 +1425,156 @@ local function tryEvent(e, force: boolean?): boolean
 	return false
 end
 
+---------------------------------------------------------------------------
+-- (v132) the room scare (Events "Apparition"): walking into a room, its lights stutter and he's standing
+-- there for a second, then a snap of darkness, a loud hit, and he's gone (client Effects.apparition)
+---------------------------------------------------------------------------
+local APPARITION_ROOMS = {
+	Living = true, Kitchen = true, Office = true, Bathroom = true, Den = true, Mudroom = true, Master = true,
+	MasterBath = true, Jamie = true, Guest = true, HallBath = true, Lily = true, Basement = true, Boiler = true,
+}
+Director.ApparitionRooms = APPARITION_ROOMS
+
+-- an open window of the first act in this room: where he stands, just inside it
+local function openWindowIn(room): Vector3?
+	local refs = ctx.World.refs()
+	for _, w in (refs and refs.OpenWindows) or {} do
+		local g = w.Glass
+		if not w.Closed and g and g.Parent then
+			local r = ctx.Rooms.find(g.Position - Vector3.new(0, 2, 0) + Vector3.new(0, 0, -math.sign(g.Position.Z) * 1.5))
+			if r and r.Name == room.Name then
+				local inward = Vector3.new(0, 0, -math.sign(g.Position.Z))
+				return Vector3.new(g.Position.X, room.Min.Y + 0.5, g.Position.Z) + inward * 2.6
+			end
+		end
+	end
+	return nil
+end
+
+local apparitionParams = RaycastParams.new()
+apparitionParams.FilterType = Enum.RaycastFilterType.Exclude
+local apparitionOverlap = OverlapParams.new()
+apparitionOverlap.FilterType = Enum.RaycastFilterType.Exclude
+apparitionOverlap.RespectCanCollide = true
+
+-- where he stands: in the room, in front of you, 5.5-13 studs off, in plain sight, not inside the
+-- furniture; facing you. (A yaw, not CFrame.lookAt: the harness flips a view toward +Z.)
+function Director.apparitionSpot(player: Player, room, prefer: Vector3?): CFrame?
+	local root = ctx.Util.getRoot(player)
+	if not root then
+		return nil
+	end
+	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+	local eye = head and head.Position or root.Position + Vector3.new(0, 1.5, 0)
+	local chars = {}
+	for _, p in ctx.Util.activePlayers() do
+		if p.Character then
+			table.insert(chars, p.Character)
+		end
+	end
+	apparitionParams.FilterDescendantsInstances = chars
+	apparitionOverlap.FilterDescendantsInstances = chars
+	local floorY = room.Min.Y + 0.5
+	local function ok(feet: Vector3): boolean
+		local r = ctx.Rooms.find(feet + Vector3.new(0, 3, 0))
+		if not r or r.Name ~= room.Name then
+			return false
+		end
+		if ((feet - root.Position) * Vector3.new(1, 0, 1)).Magnitude < 5 then
+			return false
+		end
+		for _, h in { 2.5, 6.5 } do
+			if workspace:Raycast(eye, feet + Vector3.new(0, h, 0) - eye, apparitionParams) then
+				return false
+			end
+		end
+		local okBox, parts = pcall(function()
+			return workspace:GetPartBoundsInBox(CFrame.new(feet + Vector3.new(0, 4.6, 0)), Vector3.new(2, 7, 2), apparitionOverlap)
+		end)
+		return not okBox or #parts == 0
+	end
+	local function face(feet: Vector3): CFrame
+		local to = root.Position - feet
+		return CFrame.new(feet + Vector3.new(0, 2.6, 0)) * CFrame.Angles(0, math.atan2(-to.X, -to.Z), 0)
+	end
+	if prefer and ok(prefer) then
+		return face(prefer)
+	end
+	local look = root.CFrame.LookVector * Vector3.new(1, 0, 1)
+	if look.Magnitude < 0.1 then
+		return nil
+	end
+	look = look.Unit
+	for _, a in { 0, -20, 20, -35, 35 } do
+		local dir = CFrame.Angles(0, math.rad(a), 0):VectorToWorldSpace(look)
+		for dist = 13, 5.5, -1.5 do
+			local feet = Vector3.new(root.Position.X, floorY, root.Position.Z) + dir * dist
+			if ok(feet) then
+				return face(feet)
+			end
+		end
+	end
+	return nil
+end
+
+function Director.roomEntered(player: Player, room)
+	local cfg = ctx.Config.Director.Apparition
+	local e = eventById("Apparition")
+	if not cfg or not e or state.ApparitionRooms[room.Name] then
+		return
+	end
+	if player:GetAttribute("Hiding") or player:GetAttribute("Captured") then
+		return
+	end
+	local ts = math.max(ctx.Config.TimeScale, 0.25)
+	local now = os.clock()
+	if now - (state.LastScareAt or -1e9) < cfg.Spacing * ts or not state.GameStart or now - state.GameStart < cfg.NotBefore * ts then
+		return
+	end
+	-- the first act's open window, the first time anyone walks in to close it: always
+	local window = state.Act == "Evening" and openWindowIn(room) or nil
+	local hunting = ctx.Intruder.isHunting()
+	if not window then
+		if now - (state.LastApparition or -1e9) < (hunting and cfg.HuntCooldown or cfg.Cooldown) * ts then
+			return
+		end
+		if math.random() > (hunting and cfg.HuntChance or cfg.Chance) then
+			return
+		end
+		if hunting then
+			local ip = ctx.Intruder.position()
+			local root = ctx.Util.getRoot(player)
+			if not ip or not root or (ip - root.Position).Magnitude < cfg.HuntFar then
+				return
+			end
+		end
+	end
+	local spot = Director.apparitionSpot(player, room, window)
+	if not spot then
+		return
+	end
+	state.ApparitionRooms[room.Name] = true
+	state.LastApparition = now
+	fire(e, { Player = player, Room = room.Name, Spot = spot, Window = window ~= nil })
+end
+
+-- who's in which room: walking into one may bring it on
+function Director.apparitionTick()
+	if state.Act == "Lobby" or state.Act == "Below" then
+		return
+	end
+	for _, p in ctx.Util.activePlayers() do
+		local root = ctx.Util.getRoot(p)
+		local room = root and ctx.Rooms.find(root.Position)
+		local name = room and room.Name
+		local was = state.InRoom[p]
+		state.InRoom[p] = name or false
+		if room and name ~= was and was ~= nil and APPARITION_ROOMS[name] then
+			Director.roomEntered(p, room)
+		end
+	end
+end
+
 -- fire a scripted event now (Events.List id), even if its usual conditions aren't met
 function Director.adminEvent(id: string): boolean
 	local e = eventById(id)
@@ -1906,6 +2058,19 @@ function Director.start()
 				Director.checkAllCaptured()
 			end
 		end)
+	end)
+
+	-- (v132) the room scare watches who walks into which room, four times a second
+	task.spawn(function()
+		while true do
+			task.wait(0.25)
+			if state.Act ~= "Lobby" and not ctx.Ending.isOver() then
+				local ok, err = pcall(Director.apparitionTick)
+				if not ok then
+					warn("[Director] apparition: " .. tostring(err))
+				end
+			end
+		end
 	end)
 
 	task.spawn(function()

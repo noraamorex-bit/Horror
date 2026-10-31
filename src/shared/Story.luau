@@ -712,6 +712,7 @@ Story.Truths = {
 	ClosetKnock = "The knocking came from inside the closet. It was Curtis, folded up in the dark, waiting for you to open it.",
 	HousePhone = "The house phone was Curtis, calling from his own phone in the attic. He hung up when he saw you coming.",
 	Rocker = "The rocking chair in the attic was still rocking when you climbed up. Curtis had just got out of it.",
+	Apparition = "The man in the room when the lights went out was Curtis. He'd been standing in the dark corners all night, waiting for someone to walk in.",
 	BackDoorUnlocked = "The back door was unlocked because Curtis came back in through it at 8:30 PM. When headlights swept the kitchen, he ran for the attic and forgot it.",
 	WarmMug = "The coffee was Curtis's. He made it at 8:15 and left it in the sink when he heard the car.",
 	HatchStuck = "The attic hatch was stuck because Curtis had bungee-corded it shut from above.",
@@ -865,6 +866,9 @@ Story.Thoughts = {
 		HousePhone = "The house phone. Nobody calls the house phone. Nobody even has the number.",
 		HousePhoneStop = "It stopped the second I got close. Like someone was watching me walk over.",
 		Rocker = "The rocking chair. It's still rocking. Someone was just sitting in it.",
+		-- (v132)
+		Apparition = "He was RIGHT THERE. Standing in the room. ...And then he wasn't.",
+		ApparitionWindow = "He was standing at the window. Inside. Right where I have to go.",
 	},
 	Items = {
 		Flashlight = "A flashlight. This could save my life tonight.|light",

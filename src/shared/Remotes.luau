@@ -21,6 +21,7 @@ local NAMES = {
 	"Texts", -- (list of phone messages)
 	"Lobby", -- (state)
 	"Figure", -- (cframe, duration) a figure only this player sees
+	"Apparition", -- (cframe, roomName) the room scare: the lights stutter, him for a second, a snap and a hit (v132)
 	"Knockdown", -- (direction: Vector3) shoved off your feet (your client owns your physics)
 	"Queue", -- (state | nil) lobby: your queue circle
 	"Thought", -- (text, hintKey?) your character thinking out loud

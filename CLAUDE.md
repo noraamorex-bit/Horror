@@ -210,6 +210,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   fridge drawing (him in the attic window) and Lily's (her "frend"), scratches round the hatch, a chair facing the basement wall. Nine
   new scares in Director/Events: Follower, StairBall, ToysTurn, UnderBed (his hand), Scrawl (red writing, sometimes your name),
   KitchenChairs, ClosetKnock, HousePhone, Rocker. GDD "The house haunts you (v131)"; test `haunt_test`.
+- **The room scare (v132**, the owner: "When a person enters the upstairs room to close the window make the light flicker and let
+  him show for a sec and then disappear suddenly with a loud sound effect too. **These are the types of scares I want you to add through
+  the game**"): walking into a room, its lights stutter, he's standing there, the lights come up on him, then snap off with a loud hit
+  and he's gone (client `Effects.apparition`, Director `roomEntered`/`apparitionSpot`, `Config.Director.Apparition`). Always in the
+  first act's open-window rooms (by the window); other rooms by chance once a night; in the hunt your flashlight stutters instead.
+  New scares should be this kind: seen, sudden, loud, gone. GDD "The room scare (v132)"; test `apparition_test`.
 
 **Retention (the 250 highly-engaged goal)**
 - **Invites pay (v121)**: a brand-new friend you bring = +200 coins for you (kept until you're back), +100 for them;
@@ -647,6 +653,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **31 Oct (v132 = place version 131)**, the owner: the room scare (see World/The house haunts you; GDD "The room scare (v132)").
+  Can't see the client here: check on a phone that the flicker reads, he's in view when the lights come up (not half inside the
+  furniture), and the hit is loud. hunt_goal_test's beat check now uses Config.Director.BeatSpacing (it asserted 30 s against 25).
 
 - **31 Oct (v131 = place version 130)**, the owner: "Make the map (house) much better. Seriously rework the whole map and perfect it.
   Add way more scares. Actually scary and creepy stuff." (The only player feedback in Creator Hub so far: "Worst AI slop I have ever
@@ -1130,7 +1140,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 130; the notes' "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 131; the notes' "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
