@@ -131,20 +131,8 @@ function Starter.start()
 		-- (v124: no window by itself in the lobby any more: 0 bought of 197 auto windows, lobby and card
 		-- together, v120-122)
 	else
-		-- (v126) no button in the house; the window by itself once, a few seconds into a night, when
-		-- the gear in it is still worth having
-		local function nightStarted()
-			if workspace:GetAttribute("Act") ~= "Evening" then
-				return
-			end
-			task.delay(Starter.NightDelay, function()
-				if workspace:GetAttribute("Act") == "Evening" and player:GetAttribute("InGame") and not player:GetAttribute("Monster") then
-					Starter.auto("Night")
-				end
-			end)
-		end
-		workspace:GetAttributeChangedSignal("Act"):Connect(nightStarted)
-		nightStarted()
+		-- (v137: no window by itself at the start of a night any more: 0 bought of 824 (v126-136). The window that
+		-- opens by itself now is the revive's, on the death card (client Ending), where it's wanted)
 	end
 	player:GetAttributeChangedSignal("StarterOffer"):Connect(refresh)
 	refresh()

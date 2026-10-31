@@ -52,6 +52,8 @@ local function refresh()
 	button.Visible = show
 end
 Prank._refresh = refresh -- (tests)
+Prank.buy = buy -- (v137: also offered on the result card while you watch the others)
+Prank.others = others
 
 -- a banner low on the screen for a few seconds (works in the lobby and in the house)
 local function banner(gui: ScreenGui, text: string, seconds: number)

@@ -238,6 +238,8 @@ function Ending.playerDone(player: Player, outcome: string, where: string?)
 			RevivePrice = ctx.Config.Shop.Revive and ctx.Config.Shop.Revive.Price or nil,
 			ReviveProduct = canRevive and ctx.Revive.productId() or nil,
 			CanSpectate = #inPlay() > 0,
+			-- (v137) dead with friends still in the hunt: become him and hunt them
+			CanBeHim = outcome == "Died" and ctx.Monster ~= nil and ctx.Monster.canBuy(player) or nil,
 			ReturnToLobby = ctx.Reserved == true,
 			Coins = coins,
 			AdminNight = ctx.Admin ~= nil and ctx.Admin.uncredited(player) or nil,

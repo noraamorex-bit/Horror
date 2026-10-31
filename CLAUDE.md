@@ -347,6 +347,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   the card's window removed, it opens by itself 6 s into a night instead** (the owner: "put it at the beginning")). **Never timed to catch a tap** (waits for no finger down + 1.2 s still): tricking
   players into buying breaks Roblox's rules (moderation, refunds) and the all-ages goal. Funnel: `Ask:StarterAuto`.
 
+- **31 Oct (v137)**, the owner: "CCU and players are good right now but Robux is slow". Bought / windows: Revive 9/23, RocketNight 6/32,
+  JumpscareAll 24/195, BecomeHim 18/149, Starter 2/1211, StarterAuto 0/824. Done (GDD "Selling at the right moment (v137)"): the
+  revive's window opens by itself once a night on the death card (idle-guarded; `Ask:ReviveAuto`), dead players with a friend still
+  in the hunt get 😈 HUNT THEM · BECOME HIM (`Monster.revengeOK`), 😱 JUMPSCARE EVERYONE on out-early cards, the Starter Pack's
+  night-start window removed (it replaced v120/v126's auto windows; the Starter stays in the dock/shop/card).
+
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
 alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
@@ -688,6 +694,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **31 Oct (v137 = place version 136)**, the owner: "CCU and players are good right now but Robux is slow". Done: selling at the right
+  moment (see Economy, v137). Next: `--since=136`: Ask:ReviveAuto / ReviveAuto, BecomeHim bought from dead players (the night log's
+  Monster events after Dead), PrankOffer sales, and any quit spike right after a death.
 
 - **31 Oct (v136 = place version 135)**, the owner forwarded a player's downvote (PC): "how is it scary but fair when the ghost can
   literally find you when you're standing completely still and it's says it hears me also the protag won't shut the hell up every 1

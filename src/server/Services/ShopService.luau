@@ -257,22 +257,24 @@ Shop._asked = asked -- (tests)
 
 -- (v120) a Starter Pack window the client opened by itself counts again as Ask:StarterAuto (and
 -- StarterAuto when bought, at 0 R$: the R$ are on "Starter"), so the auto prompt has its own bought / asked
-local autoAsk: { [Player]: number } = {}
+-- (v137) also the revive's window on the death card (client Ending): Ask:ReviveAuto / ReviveAuto
+local autoAsk: { [Player]: { T: number, Key: string } } = {}
 function Shop._autoFinished(player: Player?, key: string, bought: boolean)
-	if key ~= "Starter" or not player or not autoAsk[player] then
+	local a = player and autoAsk[player]
+	if not a or a.Key ~= key then
 		return
 	end
-	local fresh = os.clock() - autoAsk[player] < 120
-	autoAsk[player] = nil
+	local fresh = os.clock() - a.T < 120
+	autoAsk[player :: Player] = nil
 	if fresh then
-		Shop.logSale("Ask:StarterAuto", 0)
+		Shop.logSale("Ask:" .. key .. "Auto", 0)
 		if bought then
-			Shop.logSale("StarterAuto", 0)
+			Shop.logSale(key .. "Auto", 0)
 		end
 	end
 end
-function Shop._autoAsked(player: Player) -- (tests)
-	autoAsk[player] = os.clock()
+function Shop._autoAsked(player: Player, key: string?) -- (tests)
+	autoAsk[player] = { T = os.clock(), Key = key or "Starter" }
 end
 
 local onReceipt
@@ -478,9 +480,10 @@ function Shop.start()
 	end)
 	-- (v120) the Starter Pack's window opened by itself (client Starter): its own funnel line
 	ctx.Remotes.StarterAuto.OnServerEvent:Connect(function(player, where)
-		autoAsk[player] = os.clock()
+		local key = where == "Revive" and "Revive" or "Starter"
+		autoAsk[player] = { T = os.clock(), Key = key }
 		if ctx.Journey then
-			ctx.Journey.event(player, "StarterAuto", (where == "Lobby" or where == "Night") and where or "Card")
+			ctx.Journey.event(player, key .. "Auto", (where == "Lobby" or where == "Night" or where == "Revive") and where or "Card")
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)

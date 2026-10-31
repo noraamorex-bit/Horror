@@ -147,6 +147,12 @@ local ok, err = pcall(function()
 	assert(today.StarterAuto[2] == 0, "(its R$ count once, on Starter)")
 	productFinished:Fire(2, SID, false)
 	assert(today["Ask:StarterAuto"][1] == 1, "only the window that followed the auto ask")
+	-- (v137) the revive's window opened by itself on the death card: Ask:ReviveAuto / ReviveAuto
+	Shop._autoAsked(b, "Revive")
+	productFinished:Fire(2, SID, false)
+	assert(today["Ask:ReviveAuto"] == nil, "another product's window isn't the revive's")
+	productFinished:Fire(2, ctx.Config.Shop.Revive.Id, true)
+	assert(today["Ask:ReviveAuto"][1] == 1 and today.ReviveAuto[1] == 1, "the revive's auto window, bought")
 	print("funnel ok")
 	-- (v115) JUMPSCARE EVERYONE: everyone else in the server is scared at once, named, and it's logged
 	local JID = ctx.Config.Shop.JumpscareAll.Id

@@ -50,6 +50,12 @@ local function playMusic(_good: boolean)
 	stopMusic()
 end
 
+local revivedAsked = false -- (v137) the revive's window opened by itself this night
+Ending.ReviveAutoDelay = 2.5
+function Ending._resetAuto() -- (tests)
+	revivedAsked = false
+end
+
 local function closeCard()
 	if card then
 		card:Destroy()
@@ -261,6 +267,26 @@ local function showCard(opts)
 			end)
 		end
 	end
+	-- (v137) dead with friends still in there: become him and hunt them (Become Him, the thing that sells)
+	if opts.BeHim and ctx.Config.Shop.BecomeHim and ctx.Config.Shop.BecomeHim.Id > 0 then
+		order += 1
+		local him = ctx.Config.Shop.BecomeHim
+		local saved = (tonumber(player:GetAttribute("MonsterCredits")) or 0) > 0
+		local hb = button(col, "😈  HUNT THEM  ·  BECOME HIM  ·  " .. (saved and "FREE" or ("R$ " .. tostring(him.Price))), true, order, function()
+			if (tonumber(player:GetAttribute("MonsterCredits")) or 0) > 0 then
+				ctx.Remotes.MonsterAction:FireServer("UseCredit")
+			else
+				pcall(function()
+					MarketplaceService:PromptProductPurchase(player, him.Id)
+				end)
+			end
+		end)
+		hb.Name = "RevengeOffer"
+		hb.BackgroundColor3 = Color3.fromRGB(150, 18, 24)
+		hb.TextColor3 = Color3.fromRGB(255, 232, 232)
+		hb.Size = UDim2.fromOffset(340, 52)
+		hb.TextSize = 18
+	end
 	if opts.WinTime then
 		-- a win: your time, for the fastest-wins board in the lobby
 		line({ Text = "YOUR TIME  " .. tostring(opts.WinTime), Font = UI.Font.Bold, TextSize = 20, TextColor3 = UI.Color.Text })
@@ -431,7 +457,10 @@ local function showCard(opts)
 				dbl = ps
 			end
 		end
-		if starter or beHim or dbl then
+		-- (v137) out of the night with others still in the server: scare them all (it sells 1 in 8 windows)
+		local prank = ctx.Prank and ctx.Prank.buy and ctx.Prank.others and ctx.Prank.others() > 0
+			and ctx.Config.Shop.JumpscareAll and ctx.Config.Shop.JumpscareAll.Id > 0 and not opts.ReturnToLobby
+		if starter or beHim or dbl or prank then
 			order += 1
 			local offers = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, Parent = col })
 			UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = offers })
@@ -462,7 +491,10 @@ local function showCard(opts)
 					end)
 				end).Name = "StarterOffer"
 			end
-			if dbl and not (starter and beHim) then
+			if prank then
+				offer("😱 JUMPSCARE EVERYONE  ·  R$ " .. tostring(ctx.Config.Shop.JumpscareAll.Price), Color3.fromRGB(30, 30, 34), Color3.fromRGB(255, 255, 255), 0, ctx.Prank.buy).Name = "PrankOffer"
+			end
+			if dbl and not (starter and beHim) and not prank then
 				offer("💰 2x COINS EVERY NIGHT  ·  R$ " .. tostring(dbl.Price), Color3.fromRGB(40, 36, 18), Color3.fromRGB(255, 226, 120), 3, function()
 					pcall(function()
 						MarketplaceService:PromptGamePassPurchase(player, dbl.Id)
@@ -663,11 +695,32 @@ local function onResult(payload)
 		Revive = payload.CanRevive,
 		ReviveIn = payload.ReviveIn,
 		Spectate = payload.CanSpectate,
+		BeHim = payload.CanBeHim,
 		ReturnToLobby = payload.ReturnToLobby,
 		Coins = payload.Coins,
 		AdminNight = payload.AdminNight,
 	})
-	-- (v126: the Starter Pack's window no longer opens on the result card: it comes at the start of a night)
+	-- (v126: the Starter Pack's window no longer opens on the result card)
+	-- (v137, the Robux were slow: a revive bought 9 of the 23 times its window was opened, but only 23 of ~700 deaths
+	-- ever opened it. Once a night, dead, its window opens by itself, when nobody's touching anything: never timed
+	-- to catch a tap, and not over a saved one)
+	if payload.CanRevive and not revivedAsked and reviveCredits() <= 0 and ctx.Config.Shop.Revive and ctx.Config.Shop.Revive.Id > 0 then
+		revivedAsked = true
+		task.delay(Ending.ReviveAutoDelay, function()
+			if not card or not player:GetAttribute("Dead") or player:GetAttribute("Monster") then
+				return
+			end
+			local t0 = os.clock()
+			while ctx.Starter and not ctx.Starter.idle() do
+				if os.clock() - t0 > 8 or not card or not player:GetAttribute("Dead") then
+					return
+				end
+				task.wait(0.2)
+			end
+			ctx.Remotes.StarterAuto:FireServer("Revive")
+			Ending.revive()
+		end)
+	end
 end
 
 local function onEnding(payload)
@@ -725,8 +778,21 @@ function Ending.start()
 			ctx.Effects.playSound("RisingWhoosh", nil, { Caption = false })
 		end
 	end)
+	-- (v137) dead and became him: the card and the spectator camera make way for him
+	player:GetAttributeChangedSignal("Monster"):Connect(function()
+		if player:GetAttribute("Monster") then
+			closeCard()
+			stopMusic()
+			if ctx.Spectate then
+				ctx.Spectate.stop()
+			end
+		end
+	end)
 	-- the next lobby clears it all
 	workspace:GetAttributeChangedSignal("Act"):Connect(function()
+		if workspace:GetAttribute("Act") == "Evening" then
+			revivedAsked = false -- (a new night: the revive's window may open by itself once again)
+		end
 		if workspace:GetAttribute("Act") == "Lobby" then
 			saidAgain = false
 			leaving = false

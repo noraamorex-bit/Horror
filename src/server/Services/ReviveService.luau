@@ -39,6 +39,7 @@ function Revive.canRevive(player: Player): boolean
 		and player:GetAttribute("InGame") == true
 		and player:GetAttribute("Dead") == true
 		and not player:GetAttribute("Escaped")
+		and not player:GetAttribute("Monster") -- (v137: dead and became him: not revived out of it)
 		and not ctx.Ending.isOver()
 		and workspace:GetAttribute("Act") ~= "Lobby"
 end

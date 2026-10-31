@@ -193,6 +193,28 @@ local ok, err = pcall(function()
 	assert(not M.active(), "released")
 	assert(ctx.Intruder.getState() ~= "Puppet", "the AI hunts again, got " .. ctx.Intruder.getState())
 
+	-- (v137) dead, with a friend still in the hunt: become him and hunt them
+	do
+		local d = mkPlayer("Dee", R.Vector3.new(-24, 4, 6))
+		b:SetAttribute("Dead", nil)
+		b:SetAttribute("Captured", nil)
+		all = { b, d }
+		d:SetAttribute("Dead", true)
+		assert(M.canBuy(d), "dead, Bea still in there: yes")
+		b:SetAttribute("Dead", true)
+		assert(not M.canBuy(d), "nobody left alive: no")
+		b:SetAttribute("Dead", nil)
+		assert(M.grant(d) and M.active() and d:GetAttribute("Monster") == true, "Dee hunts Bea")
+		if ctx.Revive and ctx.Revive.canRevive then
+			assert(not ctx.Revive.canRevive(d), "no revive out of him")
+		end
+		all = { b }
+		rawset(d, "Parent", nil)
+		tick(0.3)
+		assert(not M.active(), "Dee leaves: the AI again")
+		print("revenge ok")
+	end
+
 	-- a saved one: Bea can use it on another night with friends, for free
 	local c = mkPlayer("Cy", R.Vector3.new(-20, 4, 10))
 	all = { b, c }

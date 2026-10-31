@@ -81,7 +81,27 @@ local function survivors(): { Player }
 	return ctx.Util.sessionPlayers()
 end
 
--- a night is on, it's co-op, nobody is him yet, and this player is still in it
+-- (v137, the Robux were slow: of the things that sell, Become Him sold 18 of 149 windows, and the moment a
+-- player wants it most is when he's just killed them) dead, with a friend still alive in the hunt: become him
+-- and hunt them for the rest of the night
+function Monster.revengeOK(p: Player): boolean
+	if not (p:GetAttribute("InGame") and p:GetAttribute("Dead")) or p:GetAttribute("Escaped") then
+		return false
+	end
+	if not (ctx.Intruder.isHunting() or workspace:GetAttribute("Act") == "Guest") then
+		return false
+	end
+	-- (still in the night, as the endings count it: not dead, not out; tied up counts, they can be freed)
+	for _, o in ctx.Util.sessionPlayers() do
+		if o ~= p and not o:GetAttribute("Dead") and not o:GetAttribute("Escaped") then
+			return true
+		end
+	end
+	return false
+end
+
+-- a night is on, it's co-op, nobody is him yet, and this player is still in it (or dead with friends
+-- still in it: Monster.revengeOK)
 function Monster.canBuy(p: Player): (boolean, string?)
 	local act = workspace:GetAttribute("Act")
 	if not (act == "Evening" or act == "SmallThings" or act == "SomeoneElse" or act == "Guest") then
@@ -93,10 +113,16 @@ function Monster.canBuy(p: Player): (boolean, string?)
 	if S.Buyer then
 		return false, "Someone already is."
 	end
+	if p:GetAttribute("Dead") then
+		if Monster.revengeOK(p) then
+			return true, nil
+		end
+		return false, "Only while your friends are still in there."
+	end
 	if #survivors() < (cfg().MinPlayers or 2) then
 		return false, "Only with friends in the house."
 	end
-	if not p:GetAttribute("InGame") or p:GetAttribute("Captured") or p:GetAttribute("Dead") or p:GetAttribute("Escaped") then
+	if not p:GetAttribute("InGame") or p:GetAttribute("Captured") or p:GetAttribute("Escaped") then
 		return false, "Only while you're still in the night."
 	end
 	return true, nil
@@ -178,8 +204,9 @@ function Monster.takeOver(): boolean
 	if not p or S.Active then
 		return false
 	end
-	if not p.Parent or not p:GetAttribute("InGame") or p:GetAttribute("Captured") or p:GetAttribute("Dead") or p:GetAttribute("Escaped")
-		or #survivors() < 2 then
+	local revenge = p.Parent ~= nil and Monster.revengeOK(p)
+	if not revenge and (not p.Parent or not p:GetAttribute("InGame") or p:GetAttribute("Captured") or p:GetAttribute("Dead")
+		or p:GetAttribute("Escaped") or #survivors() < 2) then
 		-- (they're out of the night before it could happen: the purchase is kept for another night)
 		if p.Parent and ctx.Stats and ctx.Stats.addMonsterCredit then
 			ctx.Stats.addMonsterCredit(p)
