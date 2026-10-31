@@ -36,3 +36,4 @@ api 2006721483 -F "price=19"   # Head start (25)
 # v118 (26 Oct): the most-offered things that sold nothing go to the impulse price that sells (Revive: 3 of 12 at 10):
 api 2006193593 -F "price=10"   # Pick your role (15; 0 of 20 offers bought)
 # (Rocket (tonight) developer product 3718739690: 15 -> 10, 0 of 13: PATCH .../developer-products/v2/universes/$U/developer-products/3718739690 -F price=10)
+# v130 (31 Oct): Starter Pack developer product 3721088307: 19 -> 9 (2 of 906 windows bought): PATCH .../developer-products/v2/universes/$U/developer-products/3721088307 -F price=9

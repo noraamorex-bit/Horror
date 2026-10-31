@@ -274,7 +274,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   Pick your role, donations, 2 revives of 74 deaths), falling; no data on how often anything was offered.
   Done: **funnel** (every purchase window: `Ask:<key>` in Sales_v1 + `Ask` in the night log; pull_stats
   prints bought / asked); **Starter Pack** (`Config.Shop.Starter`, 19 R$ once: 500 coins + a rocket + a
-  revive; top of the SHOP and a small button on the result card); **live since v110**
+  revive; top of the SHOP and a small button on the result card; **v130: 9 R$**, the old 19 struck through); **live since v110**
   (product 3721088307, made through the API);
   **😈 BE HIM NEXT NIGHT** on a group's result card (bought now, used when the next night opens);
   the 🚀 button says **STOP HIM** and flashes while he chases you. Also fixed: Mom's texts (and her
@@ -641,6 +641,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **31 Oct (v130 = place version 129)**, the owner: "Make starter pack cheaper maybe then we get purchases." Starter Pack 19 → 9 R$
+  (product 3721088307 through the API; 2 bought of 906 windows at 19). Shop button shows the old price struck through, the card says
+  "(was 19)". Next: `--since=129`: Starter / StarterAuto bought / asked (want well above 1 in 100), and revive sales (the pack holds one).
 
 - **31 Oct (v129 = place version 128, reel 57)**, the owner: "Make the next reel. Also analyze game statistics and improve". Visits
   15,732, 25 up / 36 down, 414 favorites. First 2 h of v128 (121 lobby visits, 41 nights, 67 first-nighters): free → dead median
@@ -1113,7 +1117,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 128; the notes' "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 129; the notes' "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

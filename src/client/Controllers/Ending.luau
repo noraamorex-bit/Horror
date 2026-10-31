@@ -456,7 +456,7 @@ local function showCard(opts)
 				return b
 			end
 			if starter then
-				offer("🎁 STARTER PACK  ·  500 coins + rocket + revive  ·  R$ " .. tostring(st.Price), Color3.fromRGB(255, 205, 90), Color3.fromRGB(16, 14, 10), 1, function()
+				offer("🎁 STARTER PACK  ·  500 coins + rocket + revive  ·  R$ " .. tostring(st.Price) .. (if st.WasPrice then " (was " .. st.WasPrice .. ")" else ""), Color3.fromRGB(255, 205, 90), Color3.fromRGB(16, 14, 10), 1, function()
 					pcall(function()
 						MarketplaceService:PromptProductPurchase(player, st.Id)
 					end)
