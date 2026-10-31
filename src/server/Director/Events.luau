@@ -11,6 +11,8 @@
 		Force(ctx, D) -> data | nil    relaxed condition for guaranteed beats past their deadline
 ]]
 
+local Haunt = require(script.Parent.Parent.World.Haunt)
+
 local Events = {}
 
 local V = Vector3.new
@@ -72,6 +74,87 @@ local function roomOf(ctx, p: Player)
 	local root = ctx.Util.getRoot(p)
 	return root and ctx.Rooms.find(root.Position), root
 end
+
+-- (v131) someone on their own: nobody else within `r` studs, not hiding
+local function alone(ctx, p: Player, root: BasePart, r: number): boolean
+	if p:GetAttribute("Hiding") then
+		return false
+	end
+	for _, o in ctx.Util.activePlayers() do
+		local q = ctx.Util.getRoot(o)
+		if o ~= p and q and (q.Position - root.Position).Magnitude < r then
+			return false
+		end
+	end
+	return true
+end
+
+-- (v131) is p looking at pos (within the cone cos >= dot), with nothing in between?
+local function looksAt(ctx, D, p: Player, pos: Vector3, dot: number): boolean
+	local root = ctx.Util.getRoot(p)
+	if not root then
+		return false
+	end
+	local to = pos - root.Position
+	local flat = V(to.X, 0, to.Z)
+	if flat.Magnitude < 0.5 then
+		return true
+	end
+	local look = root.CFrame.LookVector
+	if V(look.X, 0, look.Z).Unit:Dot(flat.Unit) < dot then
+		return false
+	end
+	return D.Perception == nil or D.Perception.playerSees(p, pos)
+end
+
+-- (v131) can anyone see this point right now?
+local function D_sees(ctx, pos: Vector3): boolean
+	local P = ctx.Director and ctx.Director.Perception
+	return P ~= nil and P.anyoneSees(pos)
+end
+
+-- (v131) a CFrame at pos facing a horizontal direction (a yaw: lune's lookAt mishandles +Z, and these
+-- are all level)
+local function facing(pos: Vector3, dir: Vector3): CFrame
+	return CFrame.new(pos) * CFrame.Angles(0, math.atan2(-dir.X, -dir.Z), 0)
+end
+
+-- (v131) models in a room folder by PropKey (or name)
+local function modelsIn(ctx, roomName: string, match: (Model) -> boolean): { Model }
+	local out = {}
+	local folder = ctx.World.folder() and ctx.World.folder():FindFirstChild(roomName)
+	if not folder then
+		return out
+	end
+	for _, d in folder:GetDescendants() do
+		if d:IsA("Model") and match(d) and not d:FindFirstAncestor("Prop") then
+			table.insert(out, d)
+		end
+	end
+	return out
+end
+
+-- (v131) turn a model in place round its middle by `rot`
+local function turnInPlace(m: Model, target: CFrame)
+	local cf = m:GetBoundingBox()
+	local now = m:GetPivot()
+	m:PivotTo(target * cf:ToObjectSpace(now))
+end
+
+-- (v131) red writing on the walls: where it can go (on the face of a wall, -Z into the room), and what it
+-- says ({NAME}: one of you). Placed where nobody is and nobody can see; found later.
+local SCRAWLS = {
+	{ Room = "UpperHall", At = V(-7.66, 21.5, 5), Into = V(1, 0, 0), W = 8, H = 2.6 }, -- over the stairwell
+	{ Room = "Jamie", At = V(-35, 23.2, 12.34), Into = V(0, 0, 1), W = 6, H = 2 }, -- over Jamie's bed
+	{ Room = "Master", At = V(-12.5, 22, -0.34), Into = V(0, 0, -1), W = 6, H = 2.2 },
+	{ Room = "Basement", At = V(-6, -7, 29.46), Into = V(0, 0, -1), W = 8, H = 2.4 },
+	{ Room = "Den", At = V(20, 11.6, 4.34), Into = V(0, 0, 1), W = 6, H = 1.8 }, -- over the TV
+	{ Room = "Garage", At = V(40.54, 10, -26), Into = V(1, 0, 0), W = 6, H = 2 },
+}
+Events.Scrawls = SCRAWLS
+local SCRAWL_TEXT = { "I'M IN THE WALLS", "WE'RE A FAMILY NOW", "{NAME} IS MINE", "DON'T LOOK UP", "NOBODY LEAVES", "I LIKE IT WHEN YOU SLEEP", "{NAME}, COME UPSTAIRS" }
+local scrawled: { [any]: { [number]: boolean } } = {}
+local scrawlLines: { [any]: { [string]: boolean } } = {}
 
 Events.List = {
 	---------------------------------------------------------------------------
@@ -966,6 +1049,554 @@ Events.List = {
 			end
 			D.thinkNear(door.Position, 60, ctx.Story.Thoughts.Events.BackDoorOpen)
 			D.logTruth("BackDoorOpen")
+		end,
+	},
+	---------------------------------------------------------------------------
+	-- v131 (the owner: "Add way more scares. Actually scary and creepy stuff.")
+	---------------------------------------------------------------------------
+	{
+		-- someone walking on their own hears footsteps behind them, step for step; they stop when you
+		-- stop. Then one more step, and a breath, right behind you.
+		Id = "Follower",
+		Acts = { Evening = true, SmallThings = true },
+		Weight = 3,
+		Tension = 12,
+		Cooldown = 200,
+		Cond = function(ctx)
+			for _, p in ctx.Util.activePlayers() do
+				local root = ctx.Util.getRoot(p)
+				if root and alone(ctx, p, root, 30) and floorOf(ctx, root) ~= "Attic" then
+					local v = root.AssemblyLinearVelocity
+					if V(v.X, 0, v.Z).Magnitude > 4 then
+						return p
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, p: Player)
+			local t0, still, steps = os.clock(), 0, 0
+			while os.clock() - t0 < 10 and p.Parent do
+				local root = ctx.Util.getRoot(p)
+				if not root then
+					break
+				end
+				local v = root.AssemblyLinearVelocity
+				local flat = V(v.X, 0, v.Z)
+				if flat.Magnitude > 3 then
+					still = 0
+					ctx.Remotes.PlaySound:FireClient(p, "Footstep", root.Position - flat.Unit * 6 - V(0, 2.5, 0), { Volume = 0.55, Pitch = 0.9 })
+					steps += 1
+					task.wait(0.5)
+				else
+					still += 0.25
+					if still >= 1 and steps >= 4 then
+						break
+					end
+					task.wait(0.25)
+				end
+			end
+			local root = ctx.Util.getRoot(p)
+			if steps >= 4 and root and p.Parent then
+				local back = root.Position - root.CFrame.LookVector * 3.5
+				task.wait(0.6)
+				ctx.Remotes.PlaySound:FireClient(p, "Footstep", back - V(0, 2.5, 0), { Volume = 0.75, Pitch = 0.85 })
+				task.wait(0.5)
+				ctx.Remotes.PlaySound:FireClient(p, "IntruderBreath", back + V(0, 1.5, 0), { Volume = 0.6 })
+				ctx.PlayerState.addNerve(p, -8)
+				D.think(p, ctx.Story.Thoughts.Events.Follower)
+				D.logTruth("Follower")
+			end
+		end,
+	},
+	{
+		-- standing at the bottom of the stairs: a red ball comes bouncing down them, from nobody
+		Id = "StairBall",
+		Acts = { SmallThings = true },
+		Weight = 2,
+		Tension = 10,
+		Once = true,
+		Cond = function(ctx)
+			local L = ctx.Layout
+			local st = L.Stairs.Main
+			local bottom = V((st.x0 + st.x1) / 2, st.yStart, st.zStart)
+			local top = V((st.x0 + st.x1) / 2, st.yEnd, st.zEnd)
+			local nobodyUp = everyone(ctx, function(_, root)
+				return (root.Position - top).Magnitude > 16
+			end)
+			if not nobodyUp then
+				return nil
+			end
+			for _, p in ctx.Util.activePlayers() do
+				local root = ctx.Util.getRoot(p)
+				if root and not p:GetAttribute("Hiding") and math.abs(root.Position.Y - bottom.Y - 3) < 3 then
+					local d = (root.Position - bottom).Magnitude
+					local to = (top - root.Position) * V(1, 0, 1)
+					if d > 3 and d < 18 and to.Magnitude > 0.5 and root.CFrame.LookVector:Dot(to.Unit) > 0.35 then
+						return { Player = p, Top = top }
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			local top = data.Top
+			ctx.Audio.playAt("StairCreak", top + V(0, 3, 0), { Volume = 0.5 })
+			task.wait(0.8)
+			local ball = Instance.new("Part")
+			ball.Name = "LilyBall"
+			ball.Shape = Enum.PartType.Ball
+			ball.Size = V(0.85, 0.85, 0.85)
+			ball.Color = Color3.fromRGB(210, 40, 40)
+			ball.Material = Enum.Material.SmoothPlastic
+			ball.CustomPhysicalProperties = PhysicalProperties.new(0.4, 0.4, 0.7, 1, 1)
+			ball.CFrame = CFrame.new(top + V(0, 1.2, -0.6))
+			ball.CanQuery = false
+			ball.Parent = ctx.World.folder()
+			ball.AssemblyLinearVelocity = V(0, 2, -9)
+			-- a bounce on every tread on the way down
+			for _ = 1, 14 do
+				if not ball.Parent then
+					break
+				end
+				ctx.Audio.playAt("ToolDrop", ball.Position, { Volume = 0.25, Pitch = 1.7, Range = 50, Caption = false })
+				task.wait(0.28)
+			end
+			D.think(data.Player, ctx.Story.Thoughts.Events.StairBall)
+			ctx.PlayerState.addNerve(data.Player, -6)
+			D.logTruth("StairBall")
+			task.delay(30, function()
+				ball:Destroy()
+			end)
+		end,
+	},
+	{
+		-- with nobody in Lily's room, every bear in it turns to face the door, and her rocking horse rocks.
+		-- Whoever walks in first finds them all looking at them.
+		Id = "ToysTurn",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 3,
+		Tension = 10,
+		Once = true,
+		Cond = function(ctx)
+			local door = ctx.Doors.get("Lily")
+			if not door then
+				return nil
+			end
+			local inLily, near = false, false
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if room and room.Name == "Lily" then
+					inLily = true
+				elseif root and (root.Position - door.Position).Magnitude < 24 then
+					near = true
+				end
+			end
+			-- (nobody watching her tea party when it happens)
+			if inLily or not near or D_sees(ctx, V(24, ctx.Layout.Y.Upstairs + 1.5, 15.2)) then
+				return nil
+			end
+			return door
+		end,
+		Run = function(ctx, D, door)
+			local target = V(door.Position.X, 0, door.Position.Z)
+			for _, m in modelsIn(ctx, "Lily", function(m)
+				local k = m:GetAttribute("PropKey")
+				return m.Name == "Teddy" or (type(k) == "string" and k:sub(1, 5) == "Teddy")
+			end) do
+				local c = m:GetBoundingBox()
+				turnInPlace(m, facing(c.Position, target - c.Position))
+			end
+			-- the rocking horse: rocking, slower and slower
+			local horse = modelsIn(ctx, "Lily", function(m)
+				return m:GetAttribute("PropKey") == "RockingHorse"
+			end)[1]
+			if horse then
+				task.spawn(function()
+					local base = horse:GetPivot()
+					local t0 = os.clock()
+					local nextCreak = 0
+					while os.clock() - t0 < 14 and horse.Parent do
+						local t = os.clock() - t0
+						local a = 0.16 * math.exp(-t / 7) * math.sin(t * 4.2)
+						horse:PivotTo(base * CFrame.Angles(0, 0, a))
+						if t >= nextCreak then
+							nextCreak = t + 0.75
+							ctx.Audio.playAt("Floorboard", base.Position, { Volume = 0.25, Pitch = 1.4, Range = 30, Caption = false })
+						end
+						task.wait(0.05)
+					end
+					horse:PivotTo(base)
+				end)
+			end
+			-- whoever comes in first
+			task.spawn(function()
+				local t0 = os.clock()
+				while os.clock() - t0 < 60 do
+					for _, p in ctx.Util.activePlayers() do
+						local room = roomOf(ctx, p)
+						if room and room.Name == "Lily" then
+							ctx.PlayerState.addNerve(p, -8)
+							D.think(p, ctx.Story.Thoughts.Events.ToysTurn)
+							return
+						end
+					end
+					task.wait(0.4)
+				end
+			end)
+			D.logTruth("ToysTurn")
+		end,
+	},
+	{
+		-- someone alone, looking at a bed: a long charcoal hand slides out from under it, fingers
+		-- spread on the floor... and snaps back
+		Id = "UnderBed",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		Weight = 3,
+		Tension = 16,
+		Cooldown = 150,
+		Cond = function(ctx, D)
+			for _, spot in ctx.Hiding.all() do
+				if type(spot.Name) == "string" and spot.Name:find("bed") and not ctx.Hiding.occupant(spot) then
+					local exitP = spot.Exit.Position
+					local out = (spot.Exit.Position - spot.Inside.Position) * V(1, 0, 1)
+					if out.Magnitude > 0.5 then
+						for _, p in ctx.Util.activePlayers() do
+							local root = ctx.Util.getRoot(p)
+							if root and alone(ctx, p, root, 20) then
+								local d = (root.Position - exitP).Magnitude
+								local floorY = exitP.Y > 10 and ctx.Layout.Y.Upstairs or ctx.Layout.Y.Ground
+								local edge = V(exitP.X, floorY, exitP.Z) - out.Unit * 1.6
+								if d > 4 and d < 12 and looksAt(ctx, D, p, edge + V(0, 0.4, 0), 0.75) then
+									return { Player = p, Edge = edge, Out = out.Unit }
+								end
+							end
+						end
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			local out: Vector3 = data.Out
+			local edge: Vector3 = data.Edge
+			local folder = ctx.World.folder()
+			local function at(k: number): CFrame
+				return facing(edge + out * k, out)
+			end
+			local hand = Haunt.hand(folder, at(-2.6))
+			ctx.Audio.playAt("ClawStep", edge, { Volume = 0.6, Range = 30 })
+			-- out, the fingers dragging on the floor
+			for i = 1, 10 do
+				hand:PivotTo(at(-2.6 + 3.6 * (i / 10) ^ 0.7))
+				task.wait(0.045)
+			end
+			ctx.PlayerState.addNerve(data.Player, -14)
+			ctx.Remotes.Shake:FireClient(data.Player, 0.25, 0.4)
+			sting(ctx, { data.Player })
+			task.wait(1.0)
+			ctx.Audio.playAt("ClawStep", edge, { Volume = 0.8, Range = 30 })
+			-- and gone, fast
+			for i = 1, 3 do
+				hand:PivotTo(at(1.0 - 3.8 * i / 3))
+				task.wait(0.03)
+			end
+			hand:Destroy()
+			D.think(data.Player, ctx.Story.Thoughts.Events.UnderBed)
+			D.logTruth("UnderBed")
+		end,
+	},
+	{
+		-- red writing on a wall, in a room nobody's in: found later. Sometimes it has your name in it.
+		Id = "Scrawl",
+		Acts = { SmallThings = true, SomeoneElse = true },
+		DuringHunt = true,
+		Weight = 3,
+		Tension = 10,
+		Cooldown = 100,
+		Cond = function(ctx, D)
+			local folder = ctx.World.folder()
+			if not folder then
+				return nil
+			end
+			scrawled[folder] = scrawled[folder] or {}
+			local used = scrawled[folder]
+			local n = 0
+			for _ in used do
+				n += 1
+			end
+			if n >= 4 then
+				return nil
+			end
+			local order = {}
+			for i in SCRAWLS do
+				table.insert(order, i)
+			end
+			for i = #order, 2, -1 do
+				local j = math.random(1, i)
+				order[i], order[j] = order[j], order[i]
+			end
+			for _, i in order do
+				local s = SCRAWLS[i]
+				if not used[i] then
+					local busy = false
+					for _, p in ctx.Util.activePlayers() do
+						local room, root = roomOf(ctx, p)
+						if (room and room.Name == s.Room) or (root and (root.Position - s.At).Magnitude < 22) then
+							busy = true
+						end
+					end
+					if not busy and not D_sees(ctx, s.At) then
+						return i
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, i: number)
+			local folder = ctx.World.folder()
+			local s = SCRAWLS[i]
+			scrawled[folder] = scrawled[folder] or {}
+			scrawled[folder][i] = true
+			scrawlLines[folder] = scrawlLines[folder] or {}
+			local lines = {}
+			for _, l in SCRAWL_TEXT do
+				if not scrawlLines[folder][l] then
+					table.insert(lines, l)
+				end
+			end
+			local line = #lines > 0 and lines[math.random(1, #lines)] or SCRAWL_TEXT[1]
+			scrawlLines[folder][line] = true
+			if line:find("{NAME}") then
+				local ps = ctx.Util.activePlayers()
+				local who = #ps > 0 and ps[math.random(1, #ps)] or nil
+				line = (line:gsub("{NAME}", who and string.upper(who.DisplayName) or "YOU"))
+			end
+			local part = Haunt.scrawl(folder:FindFirstChild(s.Room) or folder, facing(s.At, s.Into), s.W, s.H, line)
+			D.logTruth("Scrawl")
+			-- the first to see it
+			task.spawn(function()
+				local t0 = os.clock()
+				while part.Parent and os.clock() - t0 < 600 do
+					for _, p in ctx.Util.activePlayers() do
+						local room, root = roomOf(ctx, p)
+						-- (in the room, facing that wall: furniture under the words doesn't hide them)
+						local facing = root ~= nil and room ~= nil and room.Name == s.Room and root.CFrame.LookVector:Dot(-s.Into) > 0.6
+						if root and (root.Position - s.At).Magnitude < 22 and (facing or looksAt(ctx, D, p, s.At, 0.8)) then
+							ctx.Remotes.PlaySound:FireClient(p, "HorrorHitLow", nil, { Volume = 0.7 })
+							ctx.PlayerState.addNerve(p, -10)
+							D.think(p, ctx.Story.Thoughts.Events.Scrawl)
+							return
+						end
+					end
+					task.wait(0.5)
+				end
+			end)
+		end,
+	},
+	{
+		-- with the kitchen empty, every chair at the table is pulled out and turned to face the doorway.
+		-- They're put back before he comes (the hiding spot under the table stays clear).
+		Id = "KitchenChairs",
+		Acts = { SmallThings = true },
+		Weight = 2,
+		Tension = 10,
+		Once = true,
+		Cond = function(ctx)
+			local r = ctx.Rooms.ByName.Kitchen
+			local inKitchen, near = false, false
+			for _, p in ctx.Util.activePlayers() do
+				local room, root = roomOf(ctx, p)
+				if room and room.Name == "Kitchen" then
+					inKitchen = true
+				elseif root and root.Position.Y < 12 and (root.Position - r.Center).Magnitude < 45 then
+					near = true
+				end
+			end
+			if inKitchen or not near or D_sees(ctx, V(-15, 3.5, 17.5)) then
+				return nil
+			end
+			local chairs = modelsIn(ctx, "Kitchen", function(m)
+				return m:GetAttribute("PropKey") == "DiningChair"
+			end)
+			return #chairs > 0 and chairs or nil
+		end,
+		Run = function(ctx, D, chairs: { Model })
+			local door = V(-8, 0, 26) -- (the kitchen's doorway from the front hall)
+			local table0 = V(-15, 0, 17.5)
+			local before = {}
+			for _, m in chairs do
+				before[m] = m:GetPivot()
+				local c = m:GetBoundingBox()
+				local away = (c.Position - table0) * V(1, 0, 1)
+				local pos = c.Position + (away.Magnitude > 0.1 and V(away.Unit.X, 0, 0) * 1.0 or Vector3.zero)
+				turnInPlace(m, facing(pos, door - c.Position))
+			end
+			ctx.Audio.playAt("ChairDrop", table0 + V(0, 3, 0), { Volume = 0.25, Range = 40, Caption = false })
+			D.logTruth("KitchenChairs")
+			task.spawn(function()
+				local seen = false
+				local t0 = os.clock()
+				while os.clock() - t0 < 900 do
+					if not seen then
+						for _, p in ctx.Util.activePlayers() do
+							local room = roomOf(ctx, p)
+							if room and room.Name == "Kitchen" then
+								seen = true
+								ctx.PlayerState.addNerve(p, -8)
+								D.think(p, ctx.Story.Thoughts.Events.KitchenChairs)
+								break
+							end
+						end
+					end
+					-- back as they were once he's hunting, so nobody trips on them under the table
+					if ctx.Intruder.isHunting() then
+						break
+					end
+					task.wait(0.5)
+				end
+				for m, cf in before do
+					if m.Parent then
+						m:PivotTo(cf)
+					end
+				end
+			end)
+		end,
+	},
+	{
+		-- alone by a closed closet: three slow knocks from inside it. Then scratching.
+		Id = "ClosetKnock",
+		Acts = { Evening = true, SmallThings = true, SomeoneElse = true },
+		DuringHunt = true, -- (during the hunt too: you'll never know if it's him)
+		Weight = 2,
+		Tension = 10,
+		Cooldown = 180,
+		Cond = function(ctx)
+			for _, spot in ctx.Hiding.all() do
+				local name = type(spot.Name) == "string" and spot.Name:lower() or ""
+				if (name:find("closet") or name:find("wardrobe") or name:find("cupboard") or name:find("cabinet")) and not ctx.Hiding.occupant(spot) then
+					local inside = spot.Inside.Position
+					for _, p in ctx.Util.activePlayers() do
+						local root = ctx.Util.getRoot(p)
+						if root and alone(ctx, p, root, 25) then
+							local d = (root.Position - inside).Magnitude
+							if d > 3.5 and d < 10 then
+								return { Player = p, At = inside }
+							end
+						end
+					end
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			for _ = 1, 3 do
+				ctx.Audio.playAt("Knock", data.At, { Volume = 0.45, Pitch = 0.8, Range = 25, Caption = false })
+				task.wait(0.9)
+			end
+			task.wait(1.4)
+			ctx.Audio.playAt("ClawStep", data.At, { Volume = 0.5, Range = 20, Caption = false })
+			task.wait(0.5)
+			ctx.Audio.playAt("ClawStep", data.At, { Volume = 0.5, Pitch = 0.8, Range = 20, Caption = false })
+			ctx.PlayerState.addNerve(data.Player, -8)
+			D.think(data.Player, ctx.Story.Thoughts.Events.ClosetKnock)
+			D.logTruth("ClosetKnock")
+		end,
+	},
+	{
+		-- the house phone in the kitchen rings. It stops the moment anyone gets close to it.
+		Id = "HousePhone",
+		Acts = { Evening = true, SmallThings = true },
+		Weight = 2,
+		Tension = 8,
+		Once = true,
+		Cond = function(ctx)
+			local folder = ctx.World.folder()
+			local kitchen = folder and folder:FindFirstChild("Kitchen")
+			local phone = kitchen and kitchen:FindFirstChild("Landline", true)
+			if not phone then
+				return nil
+			end
+			local pos = phone:IsA("Model") and phone:GetPivot().Position or (phone :: BasePart).Position
+			local near, close = false, false
+			for _, p in ctx.Util.activePlayers() do
+				local root = ctx.Util.getRoot(p)
+				if root then
+					local d = (root.Position - pos).Magnitude
+					if d < 14 then
+						close = true
+					elseif d < 60 then
+						near = true
+					end
+				end
+			end
+			return (near and not close) and pos or nil
+		end,
+		Run = function(ctx, D, pos: Vector3)
+			-- (the ring loops: it goes on for 15 s, or until someone gets close)
+			local ring = ctx.Audio.playAt("PhoneRing", pos, { Volume = 0.7, Duration = 15 })
+			local stopped = false
+			local t0 = os.clock()
+			while os.clock() - t0 < 15 and not stopped do
+				for _, p in ctx.Util.activePlayers() do
+					local root = ctx.Util.getRoot(p)
+					if root and (root.Position - pos).Magnitude < 7 then
+						stopped = true
+						if ring then
+							ring:Stop()
+						end
+						D.think(p, ctx.Story.Thoughts.Events.HousePhoneStop)
+						break
+					end
+				end
+				task.wait(0.2)
+			end
+			if not stopped then
+				D.thinkNear(pos, 60, ctx.Story.Thoughts.Events.HousePhone)
+			end
+			D.logTruth("HousePhone")
+		end,
+	},
+	{
+		-- climbing into the attic: the rocking chair by his nest is rocking. Nobody's in it.
+		Id = "Rocker",
+		Acts = { SmallThings = true, SomeoneElse = true, Guest = true },
+		DuringHunt = true,
+		Weight = 5,
+		Tension = 6,
+		Once = true,
+		Cond = function(ctx)
+			local folder = ctx.World.folder()
+			local junk = folder and folder:FindFirstChild("AtticJunk")
+			local rocker = junk and junk:FindFirstChild("Rocker")
+			if not rocker or not rocker:IsA("Model") then
+				return nil
+			end
+			for _, p in ctx.Util.activePlayers() do
+				local root = ctx.Util.getRoot(p)
+				if root and root.Position.Y > 29 then
+					return { Player = p, Chair = rocker }
+				end
+			end
+			return nil
+		end,
+		Run = function(ctx, D, data)
+			local chair: Model = data.Chair
+			local base = chair:GetPivot()
+			ctx.PlayerState.addNerve(data.Player, -6)
+			D.think(data.Player, ctx.Story.Thoughts.Events.Rocker)
+			D.logTruth("Rocker")
+			local t0, nextCreak = os.clock(), 0
+			while os.clock() - t0 < 16 and chair.Parent do
+				local t = os.clock() - t0
+				chair:PivotTo(base * CFrame.Angles(0.14 * math.exp(-t / 8) * math.sin(t * 3.2), 0, 0))
+				if t >= nextCreak then
+					nextCreak = t + math.pi / 3.2
+					ctx.Audio.playAt("Floorboard", base.Position, { Volume = 0.3, Pitch = 1.25, Range = 40, Caption = false })
+				end
+				task.wait(0.05)
+			end
+			chair:PivotTo(base)
 		end,
 	},
 }

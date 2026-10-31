@@ -702,6 +702,16 @@ Story.Dialogue = {
 -- What Really Happened — explanations logged when events actually fire.
 ---------------------------------------------------------------------------
 Story.Truths = {
+	-- (v131)
+	Follower = "The footsteps behind you were Curtis. He walked in step with you, close enough to touch, and stopped when you did.",
+	StairBall = "Curtis rolled Lily's ball down the stairs to you. He'd been playing with it in the attic for days.",
+	ToysTurn = "Curtis turned Lily's bears to face the door. He wanted them to see who was coming.",
+	UnderBed = "The hand under the bed was Curtis's. He'd been lying under there since dinner.",
+	Scrawl = "Curtis wrote on the walls while you were in another room. He used his own blood. It was still wet when you found it.",
+	KitchenChairs = "Curtis turned the kitchen chairs to face the door. He sat in every one of them first.",
+	ClosetKnock = "The knocking came from inside the closet. It was Curtis, folded up in the dark, waiting for you to open it.",
+	HousePhone = "The house phone was Curtis, calling from his own phone in the attic. He hung up when he saw you coming.",
+	Rocker = "The rocking chair in the attic was still rocking when you climbed up. Curtis had just got out of it.",
 	BackDoorUnlocked = "The back door was unlocked because Curtis came back in through it at 8:30 PM. When headlights swept the kitchen, he ran for the attic and forgot it.",
 	WarmMug = "The coffee was Curtis's. He made it at 8:15 and left it in the sink when he heard the car.",
 	HatchStuck = "The attic hatch was stuck because Curtis had bungee-corded it shut from above.",
@@ -844,6 +854,17 @@ Story.Thoughts = {
 		BackDoorOpen = "The back door is wide open. Rain's blowing in... and those are footprints.",
 		WallKnock = "Something is knocking. Inside the wall. Right next to me.",
 		InvestigateDone = "Just the attic hatch. The cord is swinging... it's nothing. It has to be nothing.",
+		-- (v131)
+		Follower = "Those weren't my footsteps. They stopped when I stopped.",
+		StairBall = "That's Lily's ball. ...Who threw it down the stairs?",
+		ToysTurn = "Her bears. They're all turned to face the door. To face me.",
+		UnderBed = "Something just reached out from under the bed. A HAND. Fingers like that aren't human.",
+		Scrawl = "That wasn't there before. It's still wet.",
+		KitchenChairs = "Every chair in here is turned to face the door. Nobody's been in the kitchen.",
+		ClosetKnock = "Something knocked. From INSIDE the closet.",
+		HousePhone = "The house phone. Nobody calls the house phone. Nobody even has the number.",
+		HousePhoneStop = "It stopped the second I got close. Like someone was watching me walk over.",
+		Rocker = "The rocking chair. It's still rocking. Someone was just sitting in it.",
 	},
 	Items = {
 		Flashlight = "A flashlight. This could save my life tonight.|light",

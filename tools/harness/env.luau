@@ -106,6 +106,23 @@ function EXTRA.GetPivot(self)
 	if M.realModels and self:IsA("Model") then return modelPivot(self) end
 	return roblox.CFrame.new()
 end
+-- (v131) a model's box, turned with its pivot (as Roblox's: centre and size in the pivot's frame)
+function EXTRA.GetBoundingBox(self)
+	local P = modelPivot(self)
+	local mn, mx
+	for _, d in self:GetDescendants() do
+		if d:IsA("BasePart") then
+			local s = d.Size
+			for _, sx in { -1, 1 } do for _, sy in { -1, 1 } do for _, sz in { -1, 1 } do
+				local q = P:PointToObjectSpace(d.CFrame:PointToWorldSpace(roblox.Vector3.new(sx * s.X / 2, sy * s.Y / 2, sz * s.Z / 2)))
+				mn = mn and roblox.Vector3.new(math.min(mn.X, q.X), math.min(mn.Y, q.Y), math.min(mn.Z, q.Z)) or q
+				mx = mx and roblox.Vector3.new(math.max(mx.X, q.X), math.max(mx.Y, q.Y), math.max(mx.Z, q.Z)) or q
+			end end end
+		end
+	end
+	if not mn then return P, roblox.Vector3.new() end
+	return P * roblox.CFrame.new((mn + mx) / 2), mx - mn
+end
 function EXTRA.GetScale(self) return self:GetAttribute("_Scale") or 1 end
 function EXTRA.ScaleTo(self, s)
 	if not M.realModels then return end

@@ -154,6 +154,28 @@ No ➕ INVITE A FRIEND and no Starter Pack button in the house (the owner: "UI i
 ### Over the furniture (v104)
 A player: "most loopable enemy in horror games". He's slower than your sprint by design, so circling the dining table, a bed or the kitchen island kept him going round forever. Chasing someone in sight with something low between them (anything under his chest, never a wall, never onto another floor) when going round is 1.3x the distance or more, he pounces over it in stop-motion and lands on the far side with a thud (`leapOver` / `leap`; every 3 s at most; `Leaps` in the night log). And running dry winds you: no sprint until your breath is back to 35% (`Movement.WindedRecover`; the stamina bar goes red). Before, a sprint at 0 flickered back on at 1, so you could stutter-sprint forever at about his speed.
 
+### The house haunts you (v131)
+The owner: "Make the map (house) much better. Seriously rework the whole map and perfect it. Add way more scares. Actually scary and creepy stuff." The floor plan stays (his navigation survey, the hiding spots, every task and prompt depend on it); what's in it, and what it does, changes.
+
+**What he's done to the house** (`World/Haunt.luau`, built after Dress into the same room folders, under the same rules: `dress_test` checks every part):
+- **The attic** is a real attic now (`AtticJunk`): a sheeted armchair and a sheeted standing mirror, a headless dress form in a yellowed wedding dress turned to the hatch, an old steamer trunk, a white crib with one of Lily's dolls in it face down, a row of five porcelain dolls on a plank between two boxes all looking at the hatch, stacked moving boxes and Christmas tubs, an old portrait leaning on the boxes with the eyes scratched out, three bare bulbs hanging from the ridge on long cords, cobwebs where the rafters meet the boards, and a rocking chair by his nest.
+- **The back half of the front hall**: a runner past the stairs, four family photos on the wall by the basement stairs (Grandma's face gouged out, four nails at a time), a sconce.
+- **The fridge drawing** (the blank paper under the menu): MY FAMLY, the house, Mom, Jamie and Lily, and in the round attic window something black with white eyes, "and HIM". **Lily's drawing** on her wall: ME AND MY FREND, her holding the hand of something three times her height. (Crayon: frames on a SurfaceGui, `Haunt.familyDrawing` / `friendDrawing`.)
+- Long scratches in the upstairs hall ceiling round the attic hatch; a child's chair in the basement against the far wall, facing it, a doll sat on it.
+
+**New scares** (`Director/Events`; each has a thought and a truth):
+- **Follower** (acts I-II): walking alone, footsteps behind you step for step (the client hears them 6 studs back); they stop when you stop; then one more step, and a breath, right behind you.
+- **StairBall** (act II, once): at the bottom of the stairs looking up, a red ball comes bouncing down them.
+- **ToysTurn** (once): with nobody in Lily's room, every bear in it turns to face her door and the rocking horse rocks; whoever walks in first finds them looking at them.
+- **UnderBed** (cooldown 150 s): alone, looking at a bed from 4-12 studs, his long charcoal hand slides out from under it, fingers spread on the floor (`Haunt.hand`), a sting, then it snaps back.
+- **Scrawl** (act II and the hunt, up to 4 a night): red writing (Creepster, runs) appears on a wall in a room nobody's in (`Events.Scrawls`: over the stairwell, over Jamie's bed, the master bedroom, the basement, over the den TV, the garage): I'M IN THE WALLS / WE'RE A FAMILY NOW / {NAME} IS MINE / DON'T LOOK UP / NOBODY LEAVES / I LIKE IT WHEN YOU SLEEP / {NAME}, COME UPSTAIRS. Found later (in the room facing it, or in sight within 22): a low hit and a thought.
+- **KitchenChairs** (act II, once): with the kitchen empty, every dining chair is pulled out and turned to face the doorway; put back when he starts hunting (the hiding spot under the table stays clear).
+- **ClosetKnock** (any act, the hunt too, cooldown 180 s): alone by a closet, three slow knocks from inside it, then scratching.
+- **HousePhone** (acts I-II, once): the kitchen landline rings, up to 15 s; it stops the moment anyone gets within 7 studs.
+- **Rocker** (once, the hunt too): climbing into the attic, the rocking chair by his nest is rocking.
+
+Test `haunt_test` (each scare staged and checked). The harness's `CFrame.lookAt` flips a view toward +Z (a lune bug), so the new code faces things with a yaw (`facing`), and env.luau gained `GetBoundingBox`.
+
 ### Sudden scares, rarely
 A loud musical sting (APM "Fear Hit") lands with the big scares: a door slam, the plate smashing, the window bang, a thunderclap right on top of the house. It plays at most once every 2½ minutes, so it stays a shock.
 

@@ -6,6 +6,7 @@
 local House = require(script.Parent.House)
 local Interior = require(script.Parent.Interior)
 local Dress = require(script.Parent.Dress)
+local Haunt = require(script.Parent.Haunt)
 local Finish = require(script.Parent.Finish)
 local Exterior = require(script.Parent.Exterior)
 local Neighborhood = require(script.Parent.Neighborhood)
@@ -34,6 +35,10 @@ function World.build()
 	Interior.build(ctx, f, refs)
 	-- the lived-in layer: laundry, posters, toasters, toys
 	refs.Dressing = Dress.build(ctx, f)
+	-- (v131) what he's done to the house: the attic, the scratched photo, the drawings
+	for _, p in Haunt.build(ctx, f) do
+		table.insert(refs.Dressing, p)
+	end
 	Exterior.build(ctx, f, refs)
 	Neighborhood.build(ctx, f)
 	-- under it all: what he dug (the secret ending, FinaleService)
