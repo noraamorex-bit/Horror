@@ -118,6 +118,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   1.5, NIGHTMARE 1): the same one for up to `PursueFor` 18 s (re-aiming at them), then whoever he went for longest ago;
   hiding, he runs to the spot and listens. These runs are quiet (no roar); the player gets "He's after me" at most every
   25 s. Not while he carries someone off (the rescue window stays), is stunned or listens at a door.
+  **v128 (the stats: deaths x6 in pairs)**: those quiet runs go at `PursueSpeed` (11.5 / Hard 13 / NM 14.5, the loud ones keep
+  SenseSpeed), Normal's freed grace 60 s + `FreedLeaveAlone` 45 s, not-caught-yet players picked before last-life ones
+  (`LastLifeLast`, Normal), `HideStaleAgain` 25. Don't make Normal's runs faster again without checking deaths/player.
 - **You must be able to see him** (v102: "I can't even see the monster… because of how dark it is"):
   charcoal body, brighter face glow + a cold chest light, a faint outline/fill in the house (client
   Highlight, occluded, not in the lobby), and the dark house after the blackout is moonlit
@@ -631,6 +634,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
 
+- **31 Oct (v128 = place version 127)**, the owner: "Deeply analyze the statistics and improve the game". Visits 15,507 (+1.4K
+  since 30 Oct), 25 up / 36 down, 413 favorites. First-nighters quit mid-night: v119-124 38% (471), v125 52%, **v126-127 66%**
+  (223); 69 of them quit in the hunt (was 12%), 58 of those had been caught, 41 dead; captures per first-nighter 0.30 → 0.57;
+  pairs lost a player to death 6% → 36%; free → dead median 61 s (46 of 96 within 60 s; grace was 40). Night length is right
+  (median 15.3 min to the ending). Act I <30 s quits unchanged (37/223, the circle split). Phones quit 80%. Heartbeat 264 pass /
+  58 fail; stale 131 listens / 50 rip-opens; 57 out the front door. Sales 1,417 R$ total: JumpscareAll 19/156, BecomeHim 16/137,
+  Revive 7/20, RocketNight 5/26, Starter 2/815 (StarterAuto 0/526, but only 10 of 107 quit within 20 s of it). The lobby log
+  never saved Leave / Feedback / FriendSeen / FriendJoin (always 0 in pull_stats): fixed. Done: fair runs (see The intruder;
+  GDD "Fair runs (v128)"). Next: `--since=127`: deaths/player (want ~0.1), free → dead gap, hunt quits, the friend card and
+  mailbox numbers (first real ones).
+
 - **31 Oct (v127 = place version 126)**, the owner: "Make him constantly run after someone". Done: constant pursuit (see
   The intruder; GDD "Always after someone"). Next: `--since=126`: `Pursued` per player, captures and deaths per player,
   quits in the hunt (the hunt is much harder now: watch for rage-quits).
@@ -1081,7 +1095,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 126; the notes' "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 127; the notes' "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

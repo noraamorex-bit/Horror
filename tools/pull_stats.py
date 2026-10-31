@@ -218,6 +218,19 @@ def report_nights(nights):
         sensed = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Sensed" and len(ev) > 2)
         if sensed:
             print(f"      his runs at someone's position (v126): {dict(sensed)}  per player {sum(sensed.values()) / n:.2f}")
+        # (v128) caught twice: how soon after getting free (v126-127: median 61 s, half within 60 s)
+        gaps = []
+        for r in group:
+            ev = r[2].get("Ev") or []
+            for i, e in enumerate(ev):
+                if e[1] == "Dead":
+                    fr = [x for x in ev[:i] if x[1] == "Free"]
+                    if fr:
+                        gaps.append(e[0] - fr[-1][0])
+        dead = sum(1 for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Dead")
+        if dead:
+            print(f"      deaths/player {dead / n:.2f}  free -> dead: median "
+                  f"{round(median(gaps)) if gaps else '-'} s, within 60 s {sum(g < 60 for g in gaps)} of {len(gaps)}")
     # devices and frame rates: quitters vs the rest
     def perf(rows_):
         p = [r[2].get("Perf") or {} for r in rows_]

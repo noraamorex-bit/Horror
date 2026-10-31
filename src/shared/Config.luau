@@ -166,6 +166,14 @@ Config.Intruder = {
 	-- the spot and listens. (Not while he's carrying someone off, stunned, or listening at a door.)
 	PursueGap = 2.5,
 	PursueFor = 18,
+	-- (v128) those quiet runs go at PursueSpeed, under the loud SenseSpeed: still faster than your walk, so
+	-- walking away doesn't lose him, but a sprint does (v126-127 logs: first-nighters' captures doubled and
+	-- groups of two lost one in three to a second capture)
+	PursueSpeed = 11.5,
+	-- (v128) just freed: after FreedGrace, neither run picks you for this much longer, and while anyone else
+	-- hasn't been caught yet they come first (v126-127: half the deaths came within 60 s of getting free)
+	FreedLeaveAlone = 45,
+	LastLifeLast = true,
 	GrabRange = 4.5,
 	FOV = 90, -- degrees
 	-- (short sight: he hunts by sound. Lit rooms and your beam still give you away)
@@ -188,7 +196,7 @@ Config.Intruder = {
 	-- left, and he rips it open: move between hiding spots, don't camp one.
 	HideStale = 30, -- (v125: 40)
 	HideStaleWarn = 8,
-	HideStaleAgain = 15, -- (v125: 20)
+	HideStaleAgain = 25, -- (v128: 15; v125: 20)
 	-- searching hiding spots
 	SearchChecks = 2,
 	TrueSpotWeight = 1.5, -- the spot you're really in is this much likelier to be opened
@@ -207,7 +215,7 @@ Config.Intruder = {
 	RetreatBlind = 4, -- ...ignoring everyone only this long; then whoever he sees close, he chases
 	RetreatBlindStun = 10, -- (pepper-sprayed: a longer head start)
 	CaptiveGrace = 45, -- and for this long ignores the basement (struggling, rescues): the rescue window
-	FreedGrace = 40, -- just got free (yourself or a friend): he can't see, hear or grab you for this long
+	FreedGrace = 60, -- (v128: 40) just got free (yourself or a friend): he can't see, hear or grab you for this long
 	-- patrolling (nobody to sense): he sweeps the rooms you were last in, listening
 	PatrolSpeed = 9.5, -- (v125: 8.5)
 	PatrolPause = { 1.5, 3 },
@@ -262,6 +270,9 @@ Config.Difficulty = {
 			SenseEvery = { 16, 24 },
 			SenseSpeed = 15,
 			PursueGap = 1.5,
+			PursueSpeed = 13,
+			FreedLeaveAlone = 15,
+			LastLifeLast = false,
 		},
 		Heartbeat = { Interval = 0.8, Misses = 2, Window = 0.22, Travel = 0.9, Lead = 1.2, ForgiveWrong = false },
 		BatteryMultiplier = 0.7, -- flashlights die faster
@@ -300,6 +311,8 @@ Config.Difficulty = {
 			SenseEvery = { 11, 17 },
 			SenseSpeed = 16,
 			PursueGap = 1,
+			PursueSpeed = 14.5,
+			FreedLeaveAlone = 0,
 		},
 	},
 }

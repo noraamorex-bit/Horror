@@ -361,6 +361,10 @@ local function lobbyLeave(p: Player)
 		Off = s.Off,
 		TpFail = s.TpFail,
 		MatchSlow = s.MatchSlow,
+		Leave = s.Leave,
+		Feedback = s.Feedback,
+		FriendSeen = s.FriendSeen,
+		FriendJoin = s.FriendJoin,
 		Perf = perfOf(p),
 	})
 end

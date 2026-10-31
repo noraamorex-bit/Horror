@@ -99,7 +99,7 @@ function Capture.release(player: Player, by: Player?)
 	-- a head start: he can't see, hear or grab them for a little while (the second capture kills)
 	local grace = ctx.Intruder and ctx.Intruder._tune and ctx.Intruder._tune().FreedGrace or 0
 	if grace > 0 and ctx.Intruder.spare then
-		ctx.Intruder.spare(player, grace)
+		ctx.Intruder.spare(player, grace, true)
 		task.delay(3.5, function()
 			if ctx.Director and player.Parent and not player:GetAttribute("Captured") and not player:GetAttribute("Dead") then
 				ctx.Director.think(player, "Get out of the basement. Quietly. Find somewhere to hide.")

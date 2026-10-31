@@ -83,6 +83,7 @@ local function fresh()
 		PursueTarget = nil,
 		PursueUntil = 0,
 		PursueTold = {}, -- player -> when they were last told he's after them
+		LeftAlone = {}, -- (v128) player -> until when his runs don't pick them (just freed)
 		Tracks = {},
 		CurrentTrack = nil,
 		StepClock = 0,
@@ -2804,6 +2805,36 @@ Intruder._staleHiding = staleHiding -- (tests)
 	heartbeat) if they're hiding. They're told, he says something, the screen shakes.
 ]]
 local SENSE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true }
+
+-- who his runs go for (sense and pursuit): not anyone spared or just freed (LeftAlone); on Normal, anyone
+-- not caught yet before anyone on their last life (LastLifeLast); then whoever he went for longest ago,
+-- the closest on a tie
+local function runTarget(ok: ((Player) -> boolean)?): Player?
+	local I = tune()
+	local best, bestKey = nil, nil
+	for _, p in ctx.Util.activePlayers() do
+		local r = not spared(p) and now() >= (S.LeftAlone[p] or 0) and (not ok or ok(p)) and rootOf(p)
+		if r then
+			local last = (I.LastLifeLast and (tonumber(p:GetAttribute("NightCaught")) or 0) > 0) and 1 or 0
+			local key = { last, S.SensedAt[p] or -1e9, (r.Position - pos()).Magnitude }
+			local better = not bestKey
+			if bestKey then
+				for i = 1, 3 do
+					if key[i] ~= bestKey[i] then
+						better = key[i] < bestKey[i]
+						break
+					end
+				end
+			end
+			if better then
+				best, bestKey = p, key
+			end
+		end
+	end
+	return best
+end
+Intruder._runTarget = runTarget -- (tests)
+
 local function senseTick(): boolean
 	local I = tune()
 	if not I.SenseEvery then
@@ -2816,16 +2847,7 @@ local function senseTick(): boolean
 	if now() < S.NextSense or not SENSE_FREE[S.State] then
 		return false
 	end
-	local best, bestKey = nil, nil
-	for _, p in ctx.Util.activePlayers() do
-		local r = not spared(p) and rootOf(p)
-		if r then
-			local key = { S.SensedAt[p] or -1e9, (r.Position - pos()).Magnitude }
-			if not bestKey or key[1] < bestKey[1] or (key[1] == bestKey[1] and key[2] < bestKey[2]) then
-				best, bestKey = p, key
-			end
-		end
-	end
+	local best = runTarget()
 	S.NextSense = now() + I.SenseEvery[1] + math.random() * (I.SenseEvery[2] - I.SenseEvery[1])
 	if not best then
 		return false
@@ -2874,7 +2896,7 @@ Intruder._senseTick = senseTick -- (tests)
 	Always after someone (v127, the owner: "Make him constantly run after someone"). Whenever he has
 	nothing else to do (patrolling, searching, lying low), PursueGap s later he's running after one of
 	you: the same one for up to PursueFor s, re-aiming at where they are, then whoever he went for
-	longest ago. Out in the open it's a charge at SenseSpeed; hiding, he runs to the spot and listens
+	longest ago. Out in the open it's a charge at PursueSpeed (v128; was SenseSpeed); hiding, he runs to the spot and listens
 	(the heartbeat). The one he's after is told (at most every 25 s), quietly: the loud announcement is
 	senseTick's.
 ]]
@@ -2888,17 +2910,8 @@ local function pursueTick(): boolean
 		return p ~= nil and valid(p) and not spared(p) and not p:GetAttribute("Captured") and rootOf(p) ~= nil
 	end
 	local target = S.PursueTarget
-	if not (usable(target) and now() < (S.PursueUntil or 0)) then
-		target = nil
-		local bestKey = nil
-		for _, p in ctx.Util.activePlayers() do
-			if usable(p) then
-				local key = { S.SensedAt[p] or -1e9, ((rootOf(p) :: BasePart).Position - pos()).Magnitude }
-				if not bestKey or key[1] < bestKey[1] or (key[1] == bestKey[1] and key[2] < bestKey[2]) then
-					target, bestKey = p, key
-				end
-			end
-		end
+	if not (usable(target) and now() < (S.PursueUntil or 0) and now() >= (S.LeftAlone[target :: Player] or 0)) then
+		target = runTarget(usable)
 		if not target then
 			return false
 		end
@@ -2922,7 +2935,7 @@ local function pursueTick(): boolean
 			return false
 		end
 		S.HeardHide[spot] = now()
-		inspect(spot, I.SenseSpeed)
+		inspect(spot, I.PursueSpeed or I.SenseSpeed)
 		return S.State == "Inspect"
 	end
 	local r = rootOf(who)
@@ -2931,7 +2944,7 @@ local function pursueTick(): boolean
 	end
 	charge(r.Position, who, true)
 	if S.State == "Charge" then
-		S.Data.Speed = I.SenseSpeed
+		S.Data.Speed = I.PursueSpeed or I.SenseSpeed
 		S.Data.Homing = who
 		S.Data.HomingUntil = math.min(S.PursueUntil, now() + (I.PursueFor or 18))
 	end
@@ -3179,11 +3192,15 @@ end
 -- just broke free (or was cut free): for a few seconds he can't see, hear or grab them, and he
 -- forgets where they were, so they get out of the basement (second capture = death; logs: 9 of 35
 -- deaths came within a minute of getting free)
-function Intruder.spare(player: Player, seconds: number)
+function Intruder.spare(player: Player, seconds: number, leaveAlone: boolean?)
 	if not S.Spared or seconds <= 0 then
 		return
 	end
 	S.Spared[player] = now() + seconds
+	-- (v128) just freed: his runs leave them be a while longer (FreedLeaveAlone) after the grace
+	if leaveAlone and S.LeftAlone then
+		S.LeftAlone[player] = now() + seconds + (tune().FreedLeaveAlone or 0)
+	end
 	if S.Trails then
 		S.Trails[player] = {}
 	end

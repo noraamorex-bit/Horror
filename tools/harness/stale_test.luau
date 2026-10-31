@@ -181,7 +181,7 @@ local ok, err = pcall(function()
 		b:SetAttribute("InGame", nil)
 		patrolling(spot2.Exit.Position + R.Vector3.new(40, 0, 0))
 		S.SensedAt = {}
-		S.Spared = {} -- (she was freed in section 1: her FreedGrace would hide her from him)
+		S.Spared, S.LeftAlone = {}, {} -- (she was freed in section 1: her FreedGrace would hide her from him)
 		S.NextSense = T - 1
 		tick(0.2)
 		assert(S.State == "Charge" and S.Data.Homing == a and S.Data.Speed == tune.SenseSpeed, "he sprints at her, got " .. S.State)
@@ -218,14 +218,15 @@ local ok, err = pcall(function()
 	do
 		local aRoot = ctx.Util.getRoot(a)
 		aRoot.CFrame = R.CFrame.new(spot.Exit.Position + R.Vector3.new(0, 3, 0))
-		S.Spared = {}
+		S.Spared, S.LeftAlone = {}, {}
 		patrolling(spot2.Exit.Position + R.Vector3.new(40, 0, 0))
 		S.PursueTarget = nil
 		S.NextPursue = T - 1
 		local said = 0
 		for _, f in fired do if f[1] == "HisVoice" then said += 1 end end
 		tick(0.2)
-		assert(S.State == "Charge" and S.Data.Homing == a and S.Data.Speed == tune.SenseSpeed, "patrolling with nothing to do: after her, got " .. S.State)
+		assert(S.State == "Charge" and S.Data.Homing == a and S.Data.Speed == tune.PursueSpeed, "patrolling with nothing to do: after her, got " .. S.State)
+		assert(tune.PursueSpeed < tune.SenseSpeed and tune.PursueSpeed > ctx.Config.Movement.Walk, "quiet runs: under the sense sprint, over your walk")
 		assert(thought(a, Hunt.Pursued), "she's told, quietly")
 		-- done with that run: back on her within PursueGap, not patrolling
 		patrolling(spot2.Exit.Position + R.Vector3.new(40, 0, 0))
@@ -244,6 +245,40 @@ local ok, err = pcall(function()
 		S.PursueTarget = nil
 		patrolling(spot.Exit.Position + R.Vector3.new(60, 0, 0))
 		print("constant pursuit ok")
+	end
+
+	-- 6) (v128) who his runs pick: anyone not caught yet before anyone on their last life (Normal), and
+	--    someone just freed is left alone FreedLeaveAlone s past their grace
+	do
+		b:SetAttribute("InGame", true)
+		local aRoot, bRoot = ctx.Util.getRoot(a), ctx.Util.getRoot(b)
+		aRoot.CFrame = R.CFrame.new(S.Root.Position + R.Vector3.new(4, 0, 0))
+		bRoot.CFrame = R.CFrame.new(S.Root.Position + R.Vector3.new(60, 0, 0))
+		S.Spared, S.LeftAlone, S.SensedAt = {}, {}, {}
+		a:SetAttribute("NightCaught", 1)
+		b:SetAttribute("NightCaught", 0)
+		assert(I._runTarget() == b, "last life last: the one not caught yet, though she's further")
+		a:SetAttribute("NightCaught", 0)
+		assert(I._runTarget() == a, "both uncaught: the closest")
+		I.spare(a, 5, true)
+		assert(I._runTarget() == b, "spared: not her")
+		-- (both well away from him while the clock runs: no physics, he'd only have to turn round to grab her)
+		aRoot.CFrame = R.CFrame.new(S.Root.Position + R.Vector3.new(0, 300, 400))
+		bRoot.CFrame = R.CFrame.new(S.Root.Position + R.Vector3.new(0, 300, -400))
+		S.NextSense, S.NextPursue = 1e12, 1e12
+		tick(6)
+		assert(I._runTarget() == b, "grace over, still left alone")
+		b:SetAttribute("InGame", nil)
+		assert(I._runTarget() == nil, "nobody else: he still leaves her be")
+		tick(tune.FreedLeaveAlone)
+		assert(I._runTarget() == a, "then she's fair game again")
+		I.spare(a, 5) -- (not a release: a caller's head start)
+		tick(6)
+		assert(I._runTarget() == a, "a plain head start isn't left alone")
+		a:SetAttribute("NightCaught", nil)
+		b:SetAttribute("NightCaught", nil)
+		S.Spared, S.LeftAlone, S.SensedAt = {}, {}, {}
+		print("run targets ok")
 	end
 
 	-- 3) the police: the last run for the front door
