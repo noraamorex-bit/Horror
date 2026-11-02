@@ -492,6 +492,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   my doorway) → "night 47: "playing lily's lullaby."" (him bent over her bed) → "so i asked who was home." → ""three people are home.""
   (the ring pulsing) → "mom's at work." (her bed, empty) → ""the third one is behind you."" (turn round at the speaker: him; the mask
   lunges on 22.15 s) → RUN. Caption: `don't ask it who's home 👀 game in comments`.
+  Reel 60 = **#13** (`cant_play_alone_13_v2.mp4`, 2 Nov), another everyday hook: **the house alarm** (a film2 keypad by the front door,
+  flashing red / armed green). "night 48: our alarm went off. 3 am." → "night 49: "motion: stairs."" (him at the bottom of the stairs)
+  → "night 50: "motion: upstairs hall."" (him at the end of it) → "so mom changed the code." → "tonight it went off again." (my phone
+  by the pillow) → ""motion: jamie's room."" (my door, shut) → "i was the only one in here." (turn in bed: he's crouched there; the
+  lunge on 22.15 s) → RUN. Caption: `the alarm was right 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
