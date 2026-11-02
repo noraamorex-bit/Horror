@@ -497,6 +497,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   → "night 50: "motion: upstairs hall."" (him at the end of it) → "so mom changed the code." → "tonight it went off again." (my phone
   by the pillow) → ""motion: jamie's room."" (my door, shut) → "i was the only one in here." (turn in bed: he's crouched there; the
   lunge on 22.15 s) → RUN. Caption: `the alarm was right 👀 game in comments`.
+  Reel 61 = **#14** (`cant_play_alone_14_v2.mp4`, 2 Nov), the texts again with a new twist: **the family group chat**. "night 51:
+  "dad" joined our family chat." (the phone by my pillow) → "we don't have a dad." (him at the bottom of the stairs) → "night 52:
+  "which room is lily's?"" (him in Lily's doorway) → "so mom blocked him." (my phone in my hand) → "tonight he texted me." → ""you
+  look so peaceful."" (my door, open a crack) → ""goodnight, son."" (turn in bed: he's crouched there; the lunge on 22.15 s) → RUN.
+  Caption: `we don't have a dad 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
