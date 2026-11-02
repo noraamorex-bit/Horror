@@ -211,9 +211,9 @@ function Store.start()
 	end
 	local UI = ctx.UI
 	local Dock = ctx.Dock
-	P = Dock.panel("STORE", { "Items", "Crates", "Coins" }, { Items = "ITEMS", Crates = "CRATES", Coins = "GET COINS" })
+	P = Dock.panel("Store", { "Items", "Crates", "Coins" }, { Items = "ITEMS", Crates = "CRATES", Coins = "GET COINS" })
 	P.OnOpen = refresh
-	Dock.add({ Order = 1, Glyph = "🛒", Label = "STORE", Color = Dock.Gold, OnClick = function()
+	Dock.add({ Order = Dock.Order.Store, Glyph = "🛒", Label = "STORE", Color = Dock.Gold, OnClick = function()
 		P.toggle()
 	end })
 

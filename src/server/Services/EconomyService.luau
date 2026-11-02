@@ -576,6 +576,42 @@ function Economy.achieve(player: Player, id: string): boolean
 	return true
 end
 
+-- (v138) a code from the lobby's CODES panel (Cat.Codes): coins and a title, once per player
+function Economy.redeem(player: Player, text: any): any
+	local d = docs[player.UserId]
+	local out
+	local c = Cat.code(text)
+	if not d or not loaded[player.UserId] then
+		out = { Kind = "Code", Ok = false, Text = "Still loading your coins. Try again in a moment." }
+	elseif not c then
+		out = { Kind = "Code", Ok = false, Text = "That code doesn't work." }
+	elseif d.Owned["Code_" .. c.Code] then
+		out = { Kind = "Code", Ok = false, Code = c.Code, Text = "You've already used " .. c.Code .. "." }
+	else
+		d.Owned["Code_" .. c.Code] = true
+		local title = c.Title and Cat.cosmetic(c.Title)
+		if title then
+			d.Owned[c.Title] = true
+			-- (worn straight away if you had no title on: it shows over your head in the lobby)
+			if not d.Equip.Title then
+				d.Equip.Title = c.Title
+				d.EquipDirty = true
+			end
+		end
+		mirror(player)
+		queueSave(player.UserId)
+		if (c.Coins or 0) > 0 then
+			Economy.addCoins(player, c.Coins, false, "Onboarding", "Code_" .. c.Code)
+		end
+		out = { Kind = "Code", Ok = true, Code = c.Code, Coins = c.Coins or 0, Title = title and title.Name or nil, TitleId = c.Title }
+		if ctx.Telemetry and ctx.Telemetry.custom then
+			ctx.Telemetry.custom(player, "CodeRedeemed", 1, c.Code)
+		end
+	end
+	result(player, out)
+	return out
+end
+
 function Economy.equip(player: Player, id: string): boolean
 	local d = docs[player.UserId]
 	local c = type(id) == "string" and Cat.cosmetic(id)
@@ -1125,6 +1161,8 @@ function Economy.start()
 			Economy.unequip(player, arg)
 		elseif action == "Daily" then
 			Economy.claimDaily(player)
+		elseif action == "Code" then
+			Economy.redeem(player, arg)
 		end
 	end)
 	local function added(player: Player)

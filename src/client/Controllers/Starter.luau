@@ -123,7 +123,7 @@ function Starter.start()
 
 	if ctx.Mode == "Lobby" then
 		if ctx.Dock then
-			local b, badge = ctx.Dock.add({ Order = 0, Glyph = "⭐", Label = "STARTER", Color = Color3.fromRGB(255, 205, 90), OnClick = prompt })
+			local b, badge = ctx.Dock.add({ Order = ctx.Dock.Order.Starter, Glyph = "⭐", Label = "STARTER", Color = Color3.fromRGB(255, 205, 90), OnClick = prompt })
 			b.Name = "StarterDock"
 			badge.Visible = true
 			button = b

@@ -12,6 +12,9 @@ local ctx
 local player = Players.LocalPlayer
 
 Dock.Gold = Color3.fromRGB(255, 205, 80)
+Dock.Icon = 66 -- (v138) an icon's size
+-- the dock's icon order (a second column wraps in after four)
+Dock.Order = { Starter = 0, Store = 10, Rewards = 20, Codes = 25, Locker = 30, Shop = 40, Scare = 50, Invite = 60 }
 local column: Frame
 local openPanel: Frame? = nil
 
@@ -45,31 +48,43 @@ end
 ]]
 function Dock.add(spec): (TextButton, Frame)
 	local UI = ctx.UI
+	-- (v138) one look for every icon: dark glass, a hairline, the glyph (its own colour) and a
+	-- small label; it dips when pressed
 	local b = UI.new("TextButton", {
-		LayoutOrder = spec.Order or 10,
-		Size = UDim2.fromOffset(70, 70),
+		LayoutOrder = spec.Order or 100,
+		Size = UDim2.fromOffset(Dock.Icon, Dock.Icon),
 		Text = "",
-		BackgroundColor3 = Color3.fromRGB(12, 12, 14),
+		AutoButtonColor = false,
+		BackgroundColor3 = UI.Color.Glass,
 		BackgroundTransparency = 0.22,
 		ZIndex = 30,
 		Parent = column,
 	})
-	UI.corner(b, 14)
-	UI.stroke(b, spec.Color or Color3.new(1, 1, 1), 1.5, 0.55)
-	UI.label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 7), Size = UDim2.fromOffset(60, 34), Text = spec.Glyph, Font = UI.Font.Bold, TextSize = 28, TextColor3 = spec.Color or Color3.new(1, 1, 1), ZIndex = 31, Parent = b })
-	UI.label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6), Size = UDim2.fromOffset(68, 16), Text = spec.Label, Font = UI.Font.Bold, TextSize = 12, ZIndex = 31, Parent = b })
+	UI.corner(b, 12)
+	local st = UI.stroke(b, Color3.new(1, 1, 1), 1, 0.82)
+	UI.label({ Name = "Glyph", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 7), Size = UDim2.fromOffset(56, 30), Text = spec.Glyph, Font = UI.Font.Bold, TextSize = 25, TextColor3 = spec.Color or Color3.new(1, 1, 1), ZIndex = 31, Parent = b })
+	UI.label({ Name = "Label", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6), Size = UDim2.fromOffset(Dock.Icon - 4, 14), Text = spec.Label, Font = UI.Font.Bold, TextSize = 11, TextColor3 = Color3.fromRGB(222, 218, 210), ZIndex = 31, Parent = b })
 	local badge = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(1, -6, 0, 6),
-		Size = UDim2.fromOffset(18, 18),
-		BackgroundColor3 = Color3.fromRGB(235, 60, 50),
+		Position = UDim2.new(1, -5, 0, 5),
+		Size = UDim2.fromOffset(16, 16),
+		BackgroundColor3 = UI.Color.Blood,
 		Visible = false,
 		ZIndex = 33,
 		Parent = b,
 	})
-	UI.corner(badge, 9)
-	UI.label({ Name = "Text", Size = UDim2.fromScale(1, 1), Text = "!", Font = UI.Font.Bold, TextSize = 13, ZIndex = 34, Parent = badge })
+	UI.corner(badge, 8)
+	UI.stroke(badge, Color3.new(0, 0, 0), 1.5, 0.3)
+	UI.label({ Name = "Text", Size = UDim2.fromScale(1, 1), Text = "!", Font = UI.Font.Bold, TextSize = 11, ZIndex = 34, Parent = badge })
+	local press = UI.new("UIScale", { Parent = b })
+	UI.hover(b, function()
+		st.Transparency = 0.45
+	end, function()
+		st.Transparency = 0.82
+	end)
 	b.Activated:Connect(function()
+		press.Scale = 0.9
+		UI.tween(press, 0.18, { Scale = 1 }, Enum.EasingStyle.Back)
 		spec.OnClick()
 	end)
 	-- the badge pulses while it's showing
@@ -103,10 +118,12 @@ function Dock.panel(title: string, tabNames: { string }?, tabLabels: { [string]:
 		Parent = UI.Root,
 	})
 	UI.corner(frame, 14)
-	UI.stroke(frame, Color3.new(1, 1, 1), 1, 0.78)
+	UI.stroke(frame, Color3.new(1, 1, 1), 1, 0.8)
 	UI.new("UISizeConstraint", { MaxSize = Vector2.new(600, 480), Parent = frame })
 	UI.modal(frame)
-	UI.label({ Position = UDim2.fromOffset(18, 12), Size = UDim2.new(1, -200, 0, 30), Text = title, Font = UI.Font.Bold, TextSize = 24, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 41, Parent = frame })
+	-- (v138) the title in the house's typewriter face over a short red bar
+	UI.label({ Name = "Title", Position = UDim2.fromOffset(18, 10), Size = UDim2.new(1, -200, 0, 30), Text = title, Font = UI.Font.Title, TextSize = 26, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 41, Parent = frame })
+	UI.new("Frame", { Position = UDim2.fromOffset(19, 41), Size = UDim2.fromOffset(34, 3), BackgroundColor3 = UI.Color.Blood, ZIndex = 41, Parent = frame })
 	-- your coins, in every panel
 	local wallet = UI.new("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -62, 0, 14), Size = UDim2.fromOffset(120, 30), BackgroundTransparency = 1, ZIndex = 41, Parent = frame })
 	Dock.coin(wallet, 22, 42).Position = UDim2.fromOffset(0, 4)
@@ -120,9 +137,9 @@ function Dock.panel(title: string, tabNames: { string }?, tabLabels: { [string]:
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -10, 0, 10),
 		Size = UDim2.fromOffset(44, 38),
-		Text = "X",
+		Text = "✕",
 		Font = UI.Font.Bold,
-		TextSize = 18,
+		TextSize = 17,
 		TextColor3 = UI.Color.Text,
 		BackgroundColor3 = Color3.fromRGB(40, 40, 44),
 		ZIndex = 41,
@@ -135,8 +152,8 @@ function Dock.panel(title: string, tabNames: { string }?, tabLabels: { [string]:
 	for i, name in names do
 		if tabNames then
 			local t = UI.new("TextButton", {
-				Position = UDim2.fromOffset(18 + (i - 1) * 124, 50),
-				Size = UDim2.fromOffset(116, 32),
+				Position = UDim2.fromOffset(18 + (i - 1) * 124, 52),
+				Size = UDim2.fromOffset(116, 30),
 				Text = (tabLabels and tabLabels[name]) or string.upper(name),
 				Font = UI.Font.Bold,
 				TextSize = 13,
@@ -174,7 +191,7 @@ function Dock.panel(title: string, tabNames: { string }?, tabLabels: { [string]:
 			page.Visible = k == name
 			local t = P.Tabs[k]
 			if t then
-				t.BackgroundTransparency = k == name and 0 or 0.85
+				t.BackgroundTransparency = k == name and 0 or 0.88
 				t.TextColor3 = k == name and Color3.fromRGB(14, 14, 16) or UI.Color.Text
 			end
 		end
@@ -252,13 +269,13 @@ function Dock.start()
 	column = UI.new("Frame", {
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -math.max(14, inset.X + 14), 0.5, 10),
-		Size = UDim2.fromOffset(148, 4 * 70 + 3 * 8),
+		Size = UDim2.fromOffset(2 * Dock.Icon + 8, 4 * Dock.Icon + 3 * 8),
 		BackgroundTransparency = 1,
 		ZIndex = 30,
 		Parent = UI.Root,
 	})
 	UI.new("UIGridLayout", {
-		CellSize = UDim2.fromOffset(70, 70),
+		CellSize = UDim2.fromOffset(Dock.Icon, Dock.Icon),
 		CellPadding = UDim2.fromOffset(8, 8),
 		FillDirection = Enum.FillDirection.Vertical,
 		FillDirectionMaxCells = 4,
@@ -272,13 +289,13 @@ function Dock.start()
 		Position = UDim2.new(1, -math.max(14, inset.X + 14), 0, inset.Y + 10),
 		Size = UDim2.fromOffset(150, 40),
 		Text = "",
-		BackgroundColor3 = Color3.fromRGB(12, 12, 14),
-		BackgroundTransparency = 0.2,
+		BackgroundColor3 = UI.Color.Glass,
+		BackgroundTransparency = 0.22,
 		ZIndex = 30,
 		Parent = UI.Root,
 	})
 	UI.corner(pill, 20)
-	UI.stroke(pill, Dock.Gold, 1.5, 0.45)
+	UI.stroke(pill, Dock.Gold, 1, 0.55)
 	Dock.coin(pill, 26, 31).Position = UDim2.fromOffset(8, 7)
 	local amount = UI.label({ Position = UDim2.fromOffset(40, 0), Size = UDim2.new(1, -46, 1, 0), Text = "0", Font = UI.Font.Bold, TextSize = 20, TextColor3 = Dock.Gold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 31, Parent = pill })
 	local shown = tonumber(player:GetAttribute("Coins")) or 0
@@ -329,6 +346,8 @@ function Dock.start()
 		end
 	end)
 	Dock.Pill = pill
+	-- (v138) what sits under the coins and the level, top right (the codes chip)
+	Dock.UnderPill = UDim2.new(1, -math.max(14, inset.X + 14), 0, inset.Y + 10 + 40 + 30)
 end
 
 return Dock

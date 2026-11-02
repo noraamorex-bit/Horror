@@ -28,6 +28,10 @@ UI.Color = {
 	Good = Color3.fromRGB(215, 215, 215),
 	Danger = Color3.fromRGB(255, 255, 255),
 	Info = Color3.fromRGB(200, 200, 200),
+	-- (v138 lobby) the one colour: a dried-blood red, used sparingly (accent bars, LEAVE, badges)
+	Blood = Color3.fromRGB(196, 34, 34),
+	-- dark glass behind lobby panels and buttons
+	Glass = Color3.fromRGB(10, 10, 12),
 }
 
 function UI.new(className: string, props: { [string]: any }?, children: { Instance }?): any
@@ -132,6 +136,14 @@ function UI.tween(inst: Instance, time: number, props: { [string]: any }, style:
 	local tw = TweenService:Create(inst, TweenInfo.new(time, style or Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
 	tw:Play()
 	return tw
+end
+
+-- hover in / out on a mouse (nothing on touch; and nothing where the events don't exist)
+function UI.hover(b: GuiObject, enter: () -> (), leave: () -> ())
+	pcall(function()
+		b.MouseEnter:Connect(enter)
+		b.MouseLeave:Connect(leave)
+	end)
 end
 
 -- A button that frees the mouse while visible (first-person locks the cursor otherwise)

@@ -220,7 +220,7 @@ end
 function Social.dockIcon()
 	if ctx.Mode == "Lobby" and ctx.Dock then
 		-- (no pulsing "!": the shop and rewards have those; the coins are on the invite prompt itself)
-		local b = ctx.Dock.add({ Order = 6, Glyph = "👥", Label = "INVITE", Color = Color3.fromRGB(120, 230, 150), OnClick = Social.invite })
+		local b = ctx.Dock.add({ Order = ctx.Dock.Order.Invite, Glyph = "👥", Label = "INVITE", Color = Color3.fromRGB(120, 230, 150), OnClick = Social.invite })
 		b.Name = "InviteDock"
 	end
 end

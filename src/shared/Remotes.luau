@@ -33,7 +33,7 @@ local NAMES = {
 	"Heartbeat", -- ({Id, Start, Beats, Travel, Window, Misses} | {Id, Result}) the heartbeat minigame
 	"Vote", -- (state | nil) the difficulty vote before the night: {Ends, Votes, Mine}
 	"Puzzle", -- ({Id, Kind, Data} | {Id, Result}) a puzzle at the electrics (PuzzleService)
-	"EconomyResult", -- ({Kind = "Crate"|"Buy"|"Daily"|"Quest"|"Error", ...}) coins: what just happened
+	"EconomyResult", -- ({Kind = "Crate"|"Buy"|"Daily"|"Quest"|"Code"|"Error", ...}) coins: what just happened
 	"Finale", -- ({Phase, ...}) the secret ending's state for the HUD (FinaleService)
 	"Zap", -- (from, to, hit) a taser shot, for everyone to see
 	"Rocket", -- (from, to, seconds, hit, shooterName) a rocket in flight, then the blast
@@ -71,7 +71,7 @@ local NAMES = {
 	"HeartbeatInput", -- (sessionId, beatIndex, hit) one beat of the heartbeat minigame
 	"AdminReply", -- (text) result of an admin command
 	"PuzzleInput", -- (puzzleId, action, payload) "Slip" | "Click" | "Submit" | "Cancel"
-	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily"
+	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily" | "Code" text
 	"PlayAgain", -- () from a result card: stay with this group for another night
 	"ClientInfo", -- ({Dev, Mem, Fps, Q}) the device and how well it's running (JourneyService)
 	"MonsterAction", -- (action, arg) as him: "Grab" | "Search" | "Lunge"

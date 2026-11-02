@@ -34,7 +34,8 @@ S.Lighting = H.wrap(roblox.Instance.new("Lighting"))
 S.StarterGui = { SetCoreGuiEnabled = function() end, SetCore = function() end }
 S.RunService.IsServer = function() return false end
 
-local LOBBY = SCENE == "lobby"
+H.services.HttpService = { JSONEncode = function(_, v) return serde.encode("json", v) end, JSONDecode = function(_, v) return serde.decode("json", v) end }
+local LOBBY = string.sub(SCENE, 1, 5) == "lobby" -- (lobby, lobby_codes, lobby_queue, lobby_back, lobby_endings)
 player:SetAttribute("StarterOffer", true) -- (v120: the Starter Pack on the side, while it's on offer)
 local ctx: any = { Player = player, Mode = LOBBY and "Lobby" or "Game" }
 ctx.Config = H.load("RS/Shared/Config")
@@ -48,9 +49,10 @@ ctx.Remotes = setmetatable({}, { __index = function(t, k)
 	rawset(t, k, r)
 	return r
 end })
-local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Prank", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 local mods = {}
 for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
+ctx.LobbyHubMod = mods.LobbyHub
 for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
 for _, n in ORDER do
 	if mods[n].start then
@@ -71,6 +73,29 @@ if LOBBY then
 	player:SetAttribute("Coins", 1234)
 	player:SetAttribute("Level", 4)
 	frames(10)
+	if SCENE == "lobby_codes" then
+		ctx.Codes.open()
+	elseif SCENE == "lobby_queue" then
+		R.Queue.OnClientEvent:Fire({ Size = 2, Count = 1, Status = "Starting", Countdown = 7 })
+	elseif SCENE == "lobby_back" then
+		player:SetAttribute("StatNights", 6)
+		player:SetAttribute("StatEscapes", 2)
+		player:SetAttribute("Eco", '{"Daily":{"CanClaim":true},"Quests":[{"Text":"Survive a night","Progress":0,"Goal":1,"Coins":60,"Done":false}]}')
+		H.task.spawn(ctx.LobbyHubMod.welcomeBack)
+	elseif SCENE == "lobby_store" then
+		ctx.StoreUI.open("Items")
+	elseif SCENE == "lobby_shop" then
+		ctx.ShopUI.open()
+	elseif SCENE == "lobby_locker" then
+		ctx.LockerUI.open()
+	elseif SCENE == "lobby_rewards" then
+		ctx.RewardsUI.open()
+	elseif SCENE == "lobby_settings" then
+		ctx.Settings.open()
+	elseif SCENE == "lobby_endings" then
+		H.wrap(H.unwrap(pg):FindFirstChild("Endings", true)).Activated:Fire()
+	end
+	frames(5)
 else
 -- into the house, a night under way
 R.Lobby.OnClientEvent:Fire({ Phase = "InGame" })

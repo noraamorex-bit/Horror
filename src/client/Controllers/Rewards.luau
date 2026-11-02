@@ -89,10 +89,10 @@ function Rewards.start()
 	end
 	local UI = ctx.UI
 	local Dock = ctx.Dock
-	P = Dock.panel("REWARDS")
+	P = Dock.panel("Rewards")
 	P.OnOpen = refresh
 	local _
-	_, badge = Dock.add({ Order = 2, Glyph = "🎁", Label = "REWARDS", Color = Color3.fromRGB(255, 140, 120), OnClick = function()
+	_, badge = Dock.add({ Order = Dock.Order.Rewards, Glyph = "🎁", Label = "REWARDS", Color = Color3.fromRGB(255, 140, 120), OnClick = function()
 		P.toggle()
 	end })
 	local page = P.Pages.Main

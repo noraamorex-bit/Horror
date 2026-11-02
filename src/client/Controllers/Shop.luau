@@ -131,7 +131,7 @@ function Shop.start()
 
 	-- the button: an icon in the lobby dock, with a "!" until you've had a look
 	local _
-	_, badge = ctx.Dock.add({ Order = 4, Glyph = "R$", Label = "SHOP", Color = GOLD, OnClick = function()
+	_, badge = ctx.Dock.add({ Order = ctx.Dock.Order.Shop, Glyph = "R$", Label = "SHOP", Color = GOLD, OnClick = function()
 		if panel.Visible then
 			panel.Visible = false
 		else
@@ -152,16 +152,18 @@ function Shop.start()
 		Parent = UI.Root,
 	})
 	UI.corner(panel, 14)
-	UI.stroke(panel, Color3.new(1, 1, 1), 1, 0.78)
+	UI.stroke(panel, Color3.new(1, 1, 1), 1, 0.8)
 	UI.new("UISizeConstraint", { MaxSize = Vector2.new(560, 470), Parent = panel })
-	UI.label({ Position = UDim2.fromOffset(18, 12), Size = UDim2.new(1, -80, 0, 30), Text = "SHOP", Font = UI.Font.Bold, TextSize = 24, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 41, Parent = panel })
+	-- (v138: the same header as every lobby panel, Dock.panel)
+	UI.label({ Position = UDim2.fromOffset(18, 10), Size = UDim2.new(1, -80, 0, 30), Text = "Shop", Font = UI.Font.Title, TextSize = 26, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 41, Parent = panel })
+	UI.new("Frame", { Position = UDim2.fromOffset(19, 41), Size = UDim2.fromOffset(34, 3), BackgroundColor3 = UI.Color.Blood, ZIndex = 41, Parent = panel })
 	local close = UI.new("TextButton", {
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -10, 0, 10),
-		Size = UDim2.fromOffset(40, 36),
-		Text = "X",
+		Size = UDim2.fromOffset(44, 38),
+		Text = "✕",
 		Font = UI.Font.Bold,
-		TextSize = 18,
+		TextSize = 17,
 		TextColor3 = UI.Color.Text,
 		BackgroundColor3 = Color3.fromRGB(40, 40, 44),
 		ZIndex = 41,
@@ -173,8 +175,8 @@ function Shop.start()
 	end)
 	for i, name in { "Passes", "Support" } do
 		local t = UI.new("TextButton", {
-			Position = UDim2.fromOffset(18 + (i - 1) * 132, 50),
-			Size = UDim2.fromOffset(124, 32),
+			Position = UDim2.fromOffset(18 + (i - 1) * 132, 52),
+			Size = UDim2.fromOffset(124, 30),
 			Text = name == "Passes" and "GAME PASSES" or "SUPPORT",
 			Font = UI.Font.Bold,
 			TextSize = 14,

@@ -67,6 +67,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **Friends find each other (v124):** a Roblox friend's house you can still join shows a small "👥 Sam is in a house ·
   JOIN ▶" card at the top of the lobby (MatchService `friendHouse`, `FriendNights_v1`); the house reads "Bo is in the lobby:
   they can join you" (the quick quitters were players going back for a friend the countdown left behind).
+- **Codes (v138**, the owner: "Like ratio is really low... 'Use Code RELEASE'"): 🎟️ CODES dock icon + a gold "USE CODE: RELEASE"
+  chip under the coins; RELEASE = 300 coins + the title Day One, once per player (server `EconomyService.redeem`, `Economy.Codes`).
+  The panel asks for a 👍 ("new codes at 50 · 100 · 250 likes"); nothing is gated on liking (Roblox can't check it and doesn't
+  allow rewards for votes). Next code: add to `Economy.Codes` when the likes reach a milestone.
+- **Lobby look (v138**, "heavily rework the UI... particularly lobby"): dark glass, hairlines, the typewriter face for titles over
+  a short red bar (`UI.Color.Blood`, the one colour). Left column: the name, your record, PLAY SOLO / FIND PLAYERS (with a line under
+  each: "N players here now"), then one card with Endings · How to play · Settings. Top centre left free; dock icons one size,
+  monochrome. GDD "The lobby's look (v138)".
 - **Feedback mailbox (v123, the owner):** across the walk from the donation board, "📝 LEAVE FEEDBACK!"; its prompt opens
   Roblox's own feedback window (`Social.feedback`). Read what players send in Creator Hub → Audience → Feedback.
 
@@ -694,6 +702,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **2 Nov (v138 = place version 137)**, the owner: "Like ratio is really low. Create a code section in lobby in the UI and make it say
+  'Use Code RELEASE' and make it say that you have to like the game before using codes. Make the code give coins and a title or
+  something. Also heavily rework the UI of the game particularly lobby." Done: codes (RELEASE: 300 coins + Day One) and the lobby's
+  new look (see Lobby). The "like before using codes" gate became a like ask + like-milestone codes (Roblox doesn't allow rewards for
+  votes and can't tell who liked). Next: the like ratio on the page; when it reaches 50 / 100 / 250 likes, add the next code
+  (`Economy.Codes`) and say so in a reel/caption; Telemetry `CodeRedeemed` count. Can't see the real client: check on a phone that
+  the chip and the dock fit under the coins, the CODES box takes typing, and the left column isn't cramped.
+
 - **28 Oct (v122 = place version 121)**, the owner: "Deeply analyze statistics and improve the game." Visits 13,405 (+158 in a
   day), rating 20 up / 33 down. Logs since 112 (1,082 lobby visits, 446 nights): first-nighters quit mid-night 41%, 185 of 672
   in act I (median minute 1.3); **lone first nights: 46% gone within 30 s** (groups 6-7%), and 30 of those 35 had others in
@@ -1222,7 +1238,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 136; the notes' "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 137; the notes' "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

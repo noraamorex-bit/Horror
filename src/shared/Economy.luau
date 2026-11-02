@@ -75,6 +75,8 @@ Economy.Special = {
 	{ Id = "Beam_Pumpkin", Kind = "Beam", Name = "Pumpkin", Rarity = "Rare", Color = Color3.fromRGB(255, 132, 24), Event = "Halloween", Candy = 5, How = "Halloween: find 5 candy" },
 	{ Id = "Trail_CandyCorn", Kind = "Trail", Name = "Candy Corn", Rarity = "Epic", Color = Color3.fromRGB(255, 176, 40), Event = "Halloween", Candy = 15, How = "Halloween: find 15 candy" },
 	{ Id = "Title_TrickOrTreat", Kind = "Title", Name = "Trick or Treat", Rarity = "Legendary", Color = Color3.fromRGB(255, 140, 30), Event = "Halloween", Candy = 30, How = "Halloween: find 30 candy" },
+	-- a code (Economy.Codes): RELEASE, for the all-ages release (2 Nov 2026)
+	{ Id = "Title_DayOne", Kind = "Title", Name = "Day One", Rarity = "Epic", Color = Color3.fromRGB(255, 120, 110), How = "Code RELEASE (lobby: CODES)" },
 	-- earned by levelling up (Economy.Levels)
 	{ Id = "Title_Lv5", Kind = "Title", Name = "Insomniac", Rarity = "Rare", Color = Color3.fromRGB(150, 190, 255), Level = 5 },
 	{ Id = "Title_Lv10", Kind = "Title", Name = "Still Breathing", Rarity = "Epic", Color = Color3.fromRGB(120, 230, 150), Level = 10 },
@@ -203,6 +205,31 @@ Economy.Night = {
 function Economy.chainBonus(n: number): number
 	local b = Economy.Night.ChainBonus
 	return b[math.clamp(math.floor(n), 1, #b)] or 0
+end
+
+--[[
+	Codes (v138, the owner: "Like ratio is really low. Create a code section in lobby"): typed into the
+	lobby's CODES panel, checked on the server (EconomyService.redeem), each once per player (saved as
+	Owned["Code_<CODE>"]). The panel asks for a like and says new codes come at like milestones; it
+	can't (and doesn't) check who liked. Until = unix time it stops working (nil: no end).
+]]
+Economy.Codes = {
+	{ Code = "RELEASE", Coins = 300, Title = "Title_DayOne" },
+}
+Economy.LikeMilestones = { 50, 100, 250 } -- more likes on the page: the next code (the CODES panel says so)
+
+-- the code `text` names (spaces and case don't matter), or nil
+function Economy.code(text: any, now: number?): any
+	if type(text) ~= "string" or #text > 40 then
+		return nil
+	end
+	local k = string.upper((string.gsub(text, "%s", "")))
+	for _, c in Economy.Codes do
+		if c.Code == k and (c.Until == nil or (now or os.time()) < c.Until) then
+			return c
+		end
+	end
+	return nil
 end
 
 local byId: { [string]: any } = {}

@@ -369,6 +369,33 @@ local ok, err = pcall(function()
 	E._save(88)
 	assert(saved.u88.LevelPaid == 15, "merge keeps the highest paid level")
 	print(("levels ok: level %d -> %d, %d coins for levelling"):format(before, 14, paid))
+	-- (v138) codes: RELEASE once per player, coins + the Day One title (worn if no title was on)
+	local c1 = E.coins(q)
+	local r1 = E.redeem(q, "  release ")
+	assert(r1.Ok and r1.Coins == 300 and r1.Title == "Day One", "RELEASE redeemed: " .. tostring(r1.Text))
+	assert(E.coins(q) == c1 + 300 and E.owns(q, "Title_DayOne"), "300 coins and the title")
+	assert(Cat.levelOf(d88.Earned) == 14, "code coins aren't XP")
+	assert(d88.Equip.Title == "Title_DayOne" and q:GetAttribute("TitleText") == "Day One", "worn straight away")
+	local r2 = E.redeem(q, "RELEASE")
+	assert(not r2.Ok and E.coins(q) == c1 + 300, "only once: " .. tostring(r2.Text))
+	assert(not E.redeem(q, "FREECOINS").Ok and not E.redeem(q, 12).Ok and not E.redeem(q, string.rep("A", 99)).Ok, "nonsense refused")
+	E._save(88)
+	assert(saved.u88.Owned.Code_RELEASE == true, "the code is saved as used")
+	E._load(q)
+	assert(not E.redeem(q, "release").Ok and E.coins(q) == c1 + 300, "still used after a reload (another server)")
+	-- someone who already wore a title keeps it
+	E.grantCosmetic(p, "Title_Pizza")
+	assert(E.equip(p, "Title_Pizza"), "wearing Pizza Lover")
+	local before77 = E._docs[77].Equip.Title
+	assert(E.redeem(p, "RELEASE").Ok and E._docs[77].Equip.Title == before77, "a worn title stays on")
+	local codeMsgs = 0
+	for _, f in fired do
+		if f[1] == "EconomyResult" and type(f[3]) == "table" and f[3].Kind == "Code" then
+			codeMsgs += 1
+		end
+	end
+	assert(codeMsgs >= 6, "every try gets an answer: " .. codeMsgs)
+	print("codes ok")
 	E._save(77)
 	assert(saved.u77.Coins == E.coins(p), "all saved")
 end)

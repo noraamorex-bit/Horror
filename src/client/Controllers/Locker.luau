@@ -156,9 +156,9 @@ function Locker.start()
 		return
 	end
 	local UI = ctx.UI
-	P = ctx.Dock.panel("LOCKER", { "Beam", "Title", "Trail" }, { Beam = "FLASHLIGHT", Title = "TITLES", Trail = "TRAILS" })
+	P = ctx.Dock.panel("Locker", { "Beam", "Title", "Trail" }, { Beam = "FLASHLIGHT", Title = "TITLES", Trail = "TRAILS" })
 	P.OnOpen = refresh
-	ctx.Dock.add({ Order = 3, Glyph = "🔦", Label = "LOCKER", Color = Color3.fromRGB(255, 244, 222), OnClick = function()
+	ctx.Dock.add({ Order = ctx.Dock.Order.Locker, Glyph = "🔦", Label = "LOCKER", Color = Color3.fromRGB(255, 244, 222), OnClick = function()
 		P.toggle()
 	end })
 	UI.label({ LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 20), Text = "Your beam colour. Everyone in the house sees it.", TextSize = 13, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 42, Parent = P.Pages.Beam })

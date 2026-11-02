@@ -203,7 +203,7 @@ function Prank.start()
 	local UI = ctx.UI
 	if ctx.Mode == "Lobby" then
 		if ctx.Dock then
-			button = ctx.Dock.add({ Order = 5, Glyph = "😱", Label = "SCARE", Color = Color3.fromRGB(255, 96, 90), OnClick = buy })
+			button = ctx.Dock.add({ Order = ctx.Dock.Order.Scare, Glyph = "😱", Label = "SCARE", Color = Color3.fromRGB(255, 96, 90), OnClick = buy })
 		end
 	else
 		local b = UI.new("TextButton", {

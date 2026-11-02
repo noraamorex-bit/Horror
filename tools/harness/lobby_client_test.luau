@@ -39,7 +39,7 @@ local ok, err = pcall(function()
 		return r
 	end })
 	-- (the client's lobby list, init.client.luau; the owner's panel too)
-	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Prank", "LobbyHub", "Admin" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub", "Admin" }
 	player:SetAttribute("IsAdmin", true)
 	player:SetAttribute("Coins", 1234)
 	player:SetAttribute("Candy", 7)
@@ -142,6 +142,29 @@ local ok, err = pcall(function()
 	S.ProximityPromptService.PromptTriggered:Fire({ Name = "FeedbackPrompt" })
 	H.task.wait(0.05)
 	assert(feedbackAsked == 1, "the mailbox opens the feedback window once, got " .. feedbackAsked)
+	-- (v138) codes: the CODES icon and the gold chip until RELEASE is used; USE asks the server; the answer shows
+	local codesDock = H.unwrap(pg):FindFirstChild("CodesDock", true)
+	local chip = H.unwrap(pg):FindFirstChild("CodeChip", true)
+	assert(codesDock and chip and chip.Visible and string.find(chip.Text, "RELEASE"), "the CODES icon and the RELEASE chip")
+	player:SetAttribute("Eco", '{"Owned":[]}')
+	ctx.Codes._refresh()
+	H.wrap(chip).Activated:Fire()
+	local cp = H.unwrap(pg):FindFirstChild("Featured", true)
+	assert(cp and string.find(cp:FindFirstChild("Code").Text, "RELEASE"), "the panel shows the code")
+	local like = H.unwrap(pg):FindFirstChild("LikeAsk", true)
+	assert(like, "the panel asks for a like")
+	local ns = #sent
+	H.wrap(cp:FindFirstChild("Use")).Activated:Fire()
+	assert(sent[ns + 1] == "Economy", "USE asks the server: " .. tostring(sent[ns + 1]))
+	ctx.Remotes.EconomyResult.OnClientEvent:Fire({ Kind = "Code", Ok = true, Code = "RELEASE", Coins = 300, Title = "Day One" })
+	local st = H.unwrap(pg):FindFirstChild("Status", true)
+	assert(st and string.find(st.Text, "300") and string.find(st.Text, "Day One"), "the answer: " .. tostring(st and st.Text))
+	player:SetAttribute("Eco", '{"Owned":["Code_RELEASE","Title_DayOne"]}')
+	ctx.Codes._refresh()
+	assert(not chip.Visible, "used: the chip goes")
+	ctx.Remotes.EconomyResult.OnClientEvent:Fire({ Kind = "Code", Ok = false, Text = "You've already used RELEASE." })
+	assert(string.find(st.Text, "already"), "a refusal is shown")
+	print("codes ok")
 	-- count UI objects
 	local n = 0
 	for _ in H.unwrap(pg):GetDescendants() do n += 1 end
