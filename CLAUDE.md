@@ -16,8 +16,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   camera across a button must never press it).
 - The owner posts reels on **Instagram** (several accounts) to bring players.
 - **Goal: maximize players and engagement** ("a game that will get millions of visits"). Numbers so far:
-  0 → 500 → 850 → 1.1k → 1.8k → 13.5k visits; **400 / 250 highly engaged players** (29 Oct; Roblox's 250-highly-engaged
-  requirement for all-ages play is met: what's left is the refundable 1,000 R$ publishing fee). Reels are what brought the traffic.
+  0 → 500 → 850 → 1.1k → 1.8k → 13.5k → 19k visits (2 Nov); **all ages since 2 Nov** (400 highly engaged players, the owner
+  paid the 1,000 R$ publishing fee; the API reports AGE_RATING_ALL). Reels are what brought the traffic.
 
 ## How the owner wants work done
 
@@ -682,10 +682,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
   #roblox #robloxhorror #horror #fyp
   ```
-  **Pinned comment (26 Oct on, the owner's text):**
+  **Pinned comment (2 Nov on: the game is all ages now; the 26 Oct text asked for Robux to unlock it):**
   ```
   Game- someone lives in our attic.
-  Play on Roblox. It is currently ages 16+ only and I need 200 more Robux to make it accessible to all ages. Appreciate all donations
+  Free on Roblox, now for ALL ages. Play it with a friend 👀
   ```
   **Every reel: give the caption and this comment as separate code blocks** (copyable; the owner asked).
 - **The beat** is original (synthesized in code, no samples): "someone lives in our attic". Viewers ask
@@ -704,6 +704,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   panel 249 on 28 Oct, Starter 1 of 70 windows, StarterAuto 0/39, Jumpscare Everyone 10/66). "Hunt quits" in the report are
   mostly players leaving after the ending (his state Stopped). Next: `--since=121`: lone nights' "someone followed" line,
   solo <30 s quits (want well under 46%), wedges/night and `Owner`/night.
+
+- **2 Nov**, the owner: "I paid the 1000". The universe API now reports `ageRating: AGE_RATING_ALL` (was UNSPECIFIED): every age
+  can play. 19,084 visits, 433 favorites, 6 playing. The in-game Halloween event ended at 12:00 UTC today (`Economy.Halloween.Until`);
+  the page title still reads "[🎃] someone lives in our attic. [HORROR]" and the key can't rename the place (Scope not authorized):
+  the owner swaps the title and icon back in Creator Hub. New pinned comment (see Marketing). Next: `--since=136` once traffic
+  from the all-ages opening shows: new players' devices/ages behaviour, first-night quits, sales.
 
 - **31 Oct (v137 = place version 136)**, the owner: "CCU and players are good right now but Robux is slow". Done: selling at the right
   moment (see Economy, v137). Next: `--since=136`: Ask:ReviveAuto / ReviveAuto, BecomeHim bought from dead players (the night log's
