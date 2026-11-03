@@ -239,6 +239,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   white hit-frame + blur punch, the shudder, then a hard cut to black that the capture fade takes over (`Effects.jumpscare`,
   `ScareTime` 1.05, CaptureService waits for it). The room scare: a string stab as the lights come up, he lunges at you, then
   the snap. Small scares a little further apart (Gap Evening 26-42, SmallThings 22-38, BeatSpacing 30).
+  **The hunt's surprises were dead from v127 to v139** (the logs: 0.00 surprised/player): the constant pursuit took every idle
+  moment before `trySurprise` was reached. Now a due surprise (the closet ambush, "behind you") goes first (leap_test checks
+  it through the brain). When adding anything to the brain's think order, check the surprises still fire.
 
 **World**
 - Warm, cozy, polished interior; real textures; models from anywhere (Creator Store/UGC) when they look
@@ -722,7 +725,9 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   effects for the smaller things too. Make the next 2 reels." Done: less talk, the new jumpscare, Foley (see HUD / Audio; GDD "Less
   talk, better scares (v139)"). A night sim's message log (night_test with every remote): thoughts 31 -> 20, his lines 5 -> 3, no
   spoken thoughts, captions off. Can't hear or see the client here: check on a PC that the jumpscare reads (his face lit, the hard
-  cut to black) and the Foley sounds aren't too loud. Next: `--since=138`: rating trend, quits in act I.
+  cut to black) and the Foley sounds aren't too loud. Logs since v135 (2,628 lobby visits, 991 nights): first-nighters quit
+  mid-night 49%, 473 of 765 of those quits in act I (median minute 2.4, him offstage); solo nights 87% no ending; surprises 0.00 per
+  player (fixed, place version 139). Next: `--since=139`: surprised/player (want ~1), rating trend, quits in act I.
 
 - **2 Nov (v138 = place version 137)**, the owner: "Like ratio is really low. Create a code section in lobby in the UI and make it say
   'Use Code RELEASE' and make it say that you have to like the game before using codes. Make the code give coins and a title or

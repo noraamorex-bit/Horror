@@ -195,6 +195,19 @@ local ok3, err3 = pcall(function()
 	tick(8)
 	print("never turned:", S.State)
 	assert(S.State ~= "Stalk" and S.State ~= "Chase", "he's gone again")
+	-- (v139) through the brain itself: a surprise that's due goes before his constant pursuit (since v127 the
+	-- pursuit took every idle moment: 0.00 surprises per player in the logs)
+	S.Mode = "Hunt"
+	S.FinalRun = nil
+	S.State = "Patrol"
+	S.Root.Anchored = false
+	place(here)
+	S.NextSurprise = 0
+	S.NextPursue = 0
+	S.NextSense = math.huge
+	tick(0.3)
+	print("brain with a surprise due:", S.State)
+	assert(S.State == "Stalk" or S.State == "Closet", "the surprise, not the pursuit: " .. tostring(S.State))
 end)
 print(ok3 and "SURPRISE OK" or ("SURPRISE FAIL: " .. tostring(err3)))
 

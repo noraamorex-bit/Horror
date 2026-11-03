@@ -3148,13 +3148,15 @@ local function think(dt: number)
 	if S.Mode == "Hunt" and figure() and not S.FinalRun and senseTick() then
 		return
 	end
-	-- (v127) and in between, he's always running after one of you
-	if S.Mode == "Hunt" and figure() and not S.FinalRun and pursueTick() then
+	-- now and then, a surprise instead of the plain patrol (v104; never while he's lying low: that's
+	-- the breather to move in). (v139: tried before the pursuit below: since v127 the pursuit took every idle
+	-- moment and the logs show 0.00 surprises per player from then on: the closet ambush and "behind you"
+	-- never happened)
+	if S.Mode == "Hunt" and (state == "Patrol" or state == "Search") and #visible == 0 and not S.FinalRun and trySurprise() then
 		return
 	end
-	-- now and then, a surprise instead of the plain patrol (v104; never while he's lying low: that's
-	-- the breather to move in)
-	if S.Mode == "Hunt" and state == "Patrol" and #visible == 0 and not S.FinalRun and trySurprise() then
+	-- (v127) and in between, he's always running after one of you
+	if S.Mode == "Hunt" and figure() and not S.FinalRun and pursueTick() then
 		return
 	end
 	local handler = STATES[state]
