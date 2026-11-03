@@ -529,6 +529,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   "which room is lily's?"" (him in Lily's doorway) → "so mom blocked him." (my phone in my hand) → "tonight he texted me." → ""you
   look so peaceful."" (my door, open a crack) → ""goodnight, son."" (turn in bed: he's crouched there; the lunge on 22.15 s) → RUN.
   Caption: `we don't have a dad 👀 game in comments`.
+  Reel 62 = **#15** (`cant_play_alone_15_v2.mp4`, 3 Nov): **a voicemail from my own number**. "night 53: a voicemail from my own
+  number." (the phone by my pillow) → "it was my voice." (him at the bottom of the stairs) → "night 54: "i'm outside lily's room.""
+  (him stooped in her doorway) → "so i turned my phone off." (in my hand: lit, then black) → "tonight it rang anyway." → ""i'm in your
+  room."" (my door ajar, nobody) → ""in your closet."" (turn to my wardrobe: its left leaf creaks open, his mask in the gap; it comes at
+  you on 22.15 s) → RUN. film2 gained `door2` (a second rig per shot: `shotCfg.door2` + `fr.door2`). Caption: `don't listen to the
+  voicemail 👀 game in comments`.
+  Reel 63 = **#16** (`cant_play_alone_16_v2.mp4`, 3 Nov): **Lily's walkie-talkie**. "night 55: my walkie-talkie crackled." (a yellow
+  kid's walkie standing by my pillow, its red light) → ""is she asleep?"" (him at the foot of Lily's bed) → "night 56: "which bed is
+  hers?"" (bent over her bed, his head comes round) → "so i took lily's walkie." (in my hand in the hall) → "tonight mine crackled
+  again." → ""i can see you."" (the empty hall) → ""turn around."" (he's right behind you; the lunge on 22.15 s) → RUN. Caption:
+  `don't answer the walkie talkie 👀 game in comments`. (Waiting for a render: `pgrep -f` on a pattern that's also in the waiting
+  command's own line never ends; match the node process another way.)
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
