@@ -18,6 +18,7 @@ H.schedule = true
 local function setup()
 	local ctx: any = {}
 	ctx.Config = H.load("RS/Shared/Config")
+	ctx.Config.Thoughts.ReactGap = 0 -- (v139: the reaction gate is haunt_test's; random scares here mustn't swallow the line checked)
 	ctx.Rooms = H.load("RS/Shared/Rooms")
 	ctx.Sounds = H.load("RS/Shared/Sounds")
 	ctx.Story = H.load("RS/Shared/Story")
