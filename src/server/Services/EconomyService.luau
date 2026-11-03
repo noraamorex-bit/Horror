@@ -444,7 +444,7 @@ function Economy.addCandy(player: Player, n: number): number
 			local c = Cat.cosmetic(id)
 			if c and d.Candy >= c.Candy and not d.Owned[id] then
 				Economy.grantCosmetic(player, id)
-				ctx.Remotes.Notify:FireClient(player, "🎃 " .. c.Name .. " unlocked! (" .. string.lower(c.Kind == "Beam" and "flashlight colour" or c.Kind) .. ", in the lobby LOCKER)", "done")
+				ctx.Remotes.Notify:FireClient(player, "🎃 " .. c.Name .. " unlocked! (" .. string.lower(c.Kind == "Beam" and "flashlight colour" or c.Kind) .. ", from 🔦 in the lobby)", "done")
 				if ctx.Telemetry then
 					ctx.Telemetry.custom(player, "TitleEarned", 1, id)
 				end
@@ -569,7 +569,7 @@ function Economy.achieve(player: Player, id: string): boolean
 	if not c or not Economy.grantCosmetic(player, id) then
 		return false
 	end
-	ctx.Remotes.Notify:FireClient(player, "Title unlocked: " .. c.Name .. " (equip it in the lobby LOCKER)", "done")
+	ctx.Remotes.Notify:FireClient(player, "Title unlocked: " .. c.Name .. " (wear it from 🔦 in the lobby)", "done")
 	if ctx.Telemetry and ctx.Telemetry.custom then
 		ctx.Telemetry.custom(player, "TitleEarned", 1, id)
 	end

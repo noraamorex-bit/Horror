@@ -12,7 +12,7 @@ local ctx
 local player = Players.LocalPlayer
 
 Dock.Gold = Color3.fromRGB(255, 205, 80)
-Dock.Icon = 66 -- (v138) an icon's size
+Dock.Icon = 48 -- (v140, the owner: "Make everything smaller… Use only icons": no labels)
 -- the dock's icon order (a second column wraps in after four)
 Dock.Order = { Starter = 0, Store = 10, Rewards = 20, Codes = 25, Locker = 30, Shop = 40, Scare = 50, Invite = 60 }
 local column: Frame
@@ -60,22 +60,22 @@ function Dock.add(spec): (TextButton, Frame)
 		ZIndex = 30,
 		Parent = column,
 	})
-	UI.corner(b, 12)
+	UI.corner(b, 10)
 	local st = UI.stroke(b, Color3.new(1, 1, 1), 1, 0.82)
-	UI.label({ Name = "Glyph", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 7), Size = UDim2.fromOffset(56, 30), Text = spec.Glyph, Font = UI.Font.Bold, TextSize = 25, TextColor3 = spec.Color or Color3.new(1, 1, 1), ZIndex = 31, Parent = b })
-	UI.label({ Name = "Label", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6), Size = UDim2.fromOffset(Dock.Icon - 4, 14), Text = spec.Label, Font = UI.Font.Bold, TextSize = 11, TextColor3 = Color3.fromRGB(222, 218, 210), ZIndex = 31, Parent = b })
+	UI.label({ Name = "Glyph", Size = UDim2.fromScale(1, 1), Text = spec.Glyph, Font = UI.Font.Bold, TextSize = 22, TextColor3 = spec.Color or Color3.new(1, 1, 1), ZIndex = 31, Parent = b })
+	b:SetAttribute("Label", spec.Label) -- (what it is, for tests and tools: no label on screen)
 	local badge = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(1, -5, 0, 5),
-		Size = UDim2.fromOffset(16, 16),
+		Position = UDim2.new(1, -4, 0, 4),
+		Size = UDim2.fromOffset(12, 12),
 		BackgroundColor3 = UI.Color.Blood,
 		Visible = false,
 		ZIndex = 33,
 		Parent = b,
 	})
-	UI.corner(badge, 8)
+	UI.corner(badge, 6)
 	UI.stroke(badge, Color3.new(0, 0, 0), 1.5, 0.3)
-	UI.label({ Name = "Text", Size = UDim2.fromScale(1, 1), Text = "!", Font = UI.Font.Bold, TextSize = 11, ZIndex = 34, Parent = badge })
+	UI.label({ Name = "Text", Size = UDim2.fromScale(1, 1), Text = "", Font = UI.Font.Bold, TextSize = 9, ZIndex = 34, Parent = badge })
 	local press = UI.new("UIScale", { Parent = b })
 	UI.hover(b, function()
 		st.Transparency = 0.45
@@ -269,14 +269,14 @@ function Dock.start()
 	column = UI.new("Frame", {
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -math.max(14, inset.X + 14), 0.5, 10),
-		Size = UDim2.fromOffset(2 * Dock.Icon + 8, 4 * Dock.Icon + 3 * 8),
+		Size = UDim2.fromOffset(2 * Dock.Icon + 6, 4 * Dock.Icon + 3 * 6),
 		BackgroundTransparency = 1,
 		ZIndex = 30,
 		Parent = UI.Root,
 	})
 	UI.new("UIGridLayout", {
 		CellSize = UDim2.fromOffset(Dock.Icon, Dock.Icon),
-		CellPadding = UDim2.fromOffset(8, 8),
+		CellPadding = UDim2.fromOffset(6, 6),
 		FillDirection = Enum.FillDirection.Vertical,
 		FillDirectionMaxCells = 4,
 		StartCorner = Enum.StartCorner.TopRight,
@@ -287,17 +287,17 @@ function Dock.start()
 	local pill = UI.new("TextButton", {
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -math.max(14, inset.X + 14), 0, inset.Y + 10),
-		Size = UDim2.fromOffset(150, 40),
+		Size = UDim2.fromOffset(102, 30),
 		Text = "",
 		BackgroundColor3 = UI.Color.Glass,
 		BackgroundTransparency = 0.22,
 		ZIndex = 30,
 		Parent = UI.Root,
 	})
-	UI.corner(pill, 20)
+	UI.corner(pill, 15)
 	UI.stroke(pill, Dock.Gold, 1, 0.55)
-	Dock.coin(pill, 26, 31).Position = UDim2.fromOffset(8, 7)
-	local amount = UI.label({ Position = UDim2.fromOffset(40, 0), Size = UDim2.new(1, -46, 1, 0), Text = "0", Font = UI.Font.Bold, TextSize = 20, TextColor3 = Dock.Gold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 31, Parent = pill })
+	Dock.coin(pill, 20, 31).Position = UDim2.fromOffset(6, 5)
+	local amount = UI.label({ Position = UDim2.fromOffset(31, 0), Size = UDim2.new(1, -36, 1, 0), Text = "0", Font = UI.Font.Bold, TextSize = 15, TextColor3 = Dock.Gold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 31, Parent = pill })
 	local shown = tonumber(player:GetAttribute("Coins")) or 0
 	amount.Text = Dock.format(shown)
 	-- counts up (or down) when it changes
@@ -321,9 +321,9 @@ function Dock.start()
 		end
 	end)
 	-- your level, under the coins: a thin XP bar and "LV 7"
-	local lvl = UI.new("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -4, 1, 6), Size = UDim2.fromOffset(142, 16), BackgroundTransparency = 1, ZIndex = 30, Parent = pill })
-	local lvText = UI.label({ Size = UDim2.new(0, 46, 1, 0), Text = "", Font = UI.Font.Bold, TextSize = 13, TextColor3 = Dock.Gold, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, ZIndex = 31, Parent = lvl })
-	local track = UI.new("Frame", { Position = UDim2.new(0, 48, 0.5, -3), Size = UDim2.new(1, -52, 0, 6), BackgroundColor3 = Color3.fromRGB(40, 38, 36), BackgroundTransparency = 0.2, ZIndex = 31, Parent = lvl })
+	local lvl = UI.new("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -2, 1, 4), Size = UDim2.fromOffset(98, 13), BackgroundTransparency = 1, ZIndex = 30, Parent = pill })
+	local lvText = UI.label({ Size = UDim2.new(0, 38, 1, 0), Text = "", Font = UI.Font.Bold, TextSize = 11, TextColor3 = Dock.Gold, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, ZIndex = 31, Parent = lvl })
+	local track = UI.new("Frame", { Position = UDim2.new(0, 40, 0.5, -2), Size = UDim2.new(1, -42, 0, 4), BackgroundColor3 = Color3.fromRGB(40, 38, 36), BackgroundTransparency = 0.2, ZIndex = 31, Parent = lvl })
 	UI.corner(track, 3)
 	local fill = UI.new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Dock.Gold, ZIndex = 32, Parent = track })
 	UI.corner(fill, 3)
@@ -347,7 +347,7 @@ function Dock.start()
 	end)
 	Dock.Pill = pill
 	-- (v138) what sits under the coins and the level, top right (the codes chip)
-	Dock.UnderPill = UDim2.new(1, -math.max(14, inset.X + 14), 0, inset.Y + 10 + 40 + 30)
+	Dock.UnderPill = UDim2.new(1, -math.max(14, inset.X + 14), 0, inset.Y + 10 + 30 + 24)
 end
 
 return Dock

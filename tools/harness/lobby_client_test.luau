@@ -69,18 +69,21 @@ local ok, err = pcall(function()
 	assert(panel, "admin panel built in the lobby")
 	local pill = H.unwrap(pg):FindFirstChild("AdminPill", true)
 	assert(pill, "admin pill")
-	-- Halloween: the event line under PLAY, with your candy and the next reward
-	local Cat = H.load("RS/Shared/Economy")
-	local hl = H.unwrap(pg):FindFirstChild("HalloweenLine", true)
-	assert(hl, "the Halloween line")
-	if Cat.halloweenLive(os.time()) then
-		assert(hl.Visible and string.find(hl.Text, "7", 1, true) and string.find(hl.Text, "Candy Corn (15)", 1, true), "candy and the next reward: " .. hl.Text)
-	end
+	-- (v140) Halloween ended on 2 Nov: its line under PLAY is gone
+	assert(not H.unwrap(pg):FindFirstChild("HalloweenLine", true), "no Halloween line")
 	local row = H.unwrap(pg):FindFirstChild("StarterRow", true)
 	assert(row and row.Visible, "the Starter Pack at the top of the shop")
 	-- (v120) and in the dock, and its window by itself when someone who's played steps into a circle
 	-- (v121) an INVITE icon in the dock too (a friend who joins pays you both)
-	assert(H.unwrap(pg):FindFirstChild("InviteDock", true), "an INVITE icon in the dock")
+	-- (v140, the owner: "Cut invite") no INVITE icon; one PLAY, then icons only
+	assert(not H.unwrap(pg):FindFirstChild("InviteDock", true), "no INVITE icon in the dock")
+	assert(H.unwrap(pg):FindFirstChild("Play", true) and not H.unwrap(pg):FindFirstChild("FindPlayers", true)
+		and not H.unwrap(pg):FindFirstChild("HowToPlay", true) and not H.unwrap(pg):FindFirstChild("GameTitle", true), "PLAY, no title, no FIND PLAYERS, no How to play")
+	for _, d in H.unwrap(pg):GetDescendants() do
+		if d:IsA("TextButton") and d:GetAttribute("Label") then
+			assert(not d:FindFirstChild("Label"), "dock icons carry no label: " .. tostring(d:GetAttribute("Label")))
+		end
+	end
 	assert(ctx.Social.inviteData() == "ref:" .. tostring(player.UserId), "a lobby invite says who sent it")
 	local dockIcon = H.unwrap(pg):FindFirstChild("StarterDock", true)
 	assert(dockIcon and dockIcon.Visible, "a STARTER icon in the dock")

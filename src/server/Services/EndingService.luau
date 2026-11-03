@@ -372,7 +372,7 @@ function Ending.trigger(kind: string)
 		if kind == "NotYourFamily" then
 			for _, p in credited do
 				if not p:GetAttribute("Dead") and ctx.Economy.grantCosmetic(p, "Title_Family") then
-					ctx.Remotes.Notify:FireClient(p, "Title unlocked: Not Your Family (equip it in the lobby LOCKER)", "done")
+					ctx.Remotes.Notify:FireClient(p, "Title unlocked: Not Your Family (wear it from 🔦 in the lobby)", "done")
 				end
 			end
 		end

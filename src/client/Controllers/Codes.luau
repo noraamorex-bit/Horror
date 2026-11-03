@@ -192,8 +192,8 @@ function Codes.start()
 			Name = "CodeChip",
 			AnchorPoint = Vector2.new(1, 0),
 			Position = Dock.UnderPill or UDim2.new(1, -14, 0, 116),
-			Size = UDim2.fromOffset(176, 30),
-			Text = "🎟️ USE CODE: <b>" .. c.Code .. "</b>",
+			Size = UDim2.fromOffset(102, 24),
+			Text = "🎟️ <b>" .. c.Code .. "</b>",
 			RichText = true,
 			Font = UI.Font.Body,
 			TextSize = 12,
@@ -202,7 +202,7 @@ function Codes.start()
 			ZIndex = 30,
 			Parent = UI.Root,
 		})
-		UI.corner(chip, 15)
+		UI.corner(chip, 12)
 		local s = UI.new("UIScale", { Parent = chip })
 		chip.Activated:Connect(Codes.open)
 		-- (a slow breath, so it's noticed without nagging)
@@ -223,7 +223,7 @@ function Codes.start()
 		end
 		waiting = false
 		if res.Ok then
-			say(string.format("✓ %s: +%d coins%s", tostring(res.Code), tonumber(res.Coins) or 0, res.Title and (" and the title " .. tostring(res.Title) .. " (it's on: LOCKER to change it)") or ""), true)
+			say(string.format("✓ %s: +%d coins%s", tostring(res.Code), tonumber(res.Coins) or 0, res.Title and (" and the title " .. tostring(res.Title) .. " (it's on: 🔦 to change it)") or ""), true)
 			box.Text = ""
 			if ctx.Effects then
 				ctx.Effects.playSound("UISelect", nil, { Caption = false })

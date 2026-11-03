@@ -92,7 +92,7 @@ local function backLines(player: Player): { string }
 	end)
 	if ok and type(data) == "table" then
 		if type(data.Daily) == "table" and data.Daily.CanClaim then
-			table.insert(lines, "<b>DAILY REWARD</b> ready: open REWARDS on the right")
+			table.insert(lines, "<b>DAILY REWARD</b> ready: tap 🎁 on the right")
 		end
 		local n = 0
 		for _, q in (type(data.Quests) == "table" and data.Quests or {}) do
@@ -106,7 +106,7 @@ local function backLines(player: Player): { string }
 	if ctx and ctx.Codes and ctx.Codes.featured and #lines < 4 then
 		local c = ctx.Codes.featured()
 		if c and not ctx.Codes._used(c.Code) then
-			table.insert(lines, string.format("<font color=\"#ffcd5a\"><b>CODE %s</b></font>  +%d coins and a title: tap CODES", c.Code, c.Coins or 0))
+			table.insert(lines, string.format("<font color=\"#ffcd5a\"><b>CODE %s</b></font>  +%d coins and a title: tap 🎟️", c.Code, c.Coins or 0))
 		end
 	end
 	if (tonumber(player:GetAttribute("StatEscapes")) or 0) >= 1 and #lines < 5 then
@@ -130,7 +130,7 @@ function LobbyHub.welcomeBack()
 		Name = "WelcomeBack",
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, inset.Y + 62),
-		Size = UDim2.fromOffset(410, 64 + 20 * #lines),
+		Size = UDim2.fromOffset(360, 52 + 18 * #lines),
 		BackgroundColor3 = UI.Color.Glass,
 		BackgroundTransparency = 0.16,
 		Parent = UI.Root,
@@ -140,14 +140,14 @@ function LobbyHub.welcomeBack()
 	-- (v138) a red edge, like the lobby's other cards' accent bars
 	local edge = UI.new("Frame", { Position = UDim2.fromOffset(0, 12), Size = UDim2.new(0, 3, 1, -24), BackgroundColor3 = UI.Color.Blood, Parent = card })
 	UI.corner(edge, 2)
-	UI.label({ Position = UDim2.fromOffset(16, 8), Size = UDim2.new(1, -150, 0, 22), Text = "BACK FOR ANOTHER NIGHT?", Font = UI.Font.Bold, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+	UI.label({ Position = UDim2.fromOffset(16, 8), Size = UDim2.new(1, -150, 0, 22), Text = "BACK FOR ANOTHER NIGHT?", Font = UI.Font.Bold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
 	for i, line in lines do
 		UI.label({
-			Position = UDim2.fromOffset(16, 32 + (i - 1) * 20),
-			Size = UDim2.new(1, -28, 0, 20),
+			Position = UDim2.fromOffset(16, 42 + (i - 1) * 18),
+			Size = UDim2.new(1, -28, 0, 18),
 			Text = line,
 			RichText = true,
-			TextSize = 13,
+			TextSize = 11,
 			TextWrapped = false,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTruncate = Enum.TextTruncate.AtEnd,
@@ -230,9 +230,7 @@ end
 function LobbyHub.start()
 	local UI = ctx.UI
 	thirdPerson()
-	if ctx.Social then
-		ctx.Social.dockIcon()
-	end
+	-- (v140, the owner: "Cut invite": no INVITE icon in the dock)
 	local Players = game:GetService("Players")
 	local lp = Players.LocalPlayer
 	lp.CharacterAdded:Connect(function()
@@ -243,9 +241,10 @@ function LobbyHub.start()
 	local inset = GuiService:GetGuiInset()
 	local player = lp
 	-- (v138, the owner: "heavily rework the UI... particularly lobby") everything on the left in one
-	-- column: the name, your record, the two ways to play, then the three extras. The top centre is
+	-- column (v140: only PLAY and two icons). The top centre is
 	-- left free (a friend's house card, the welcome-back card, toasts) and the middle stays clear.
-	local MENU_W = 236
+	local MENU_W = 136
+	local ICON = 40
 	local menu = UI.new("Frame", {
 		Name = "LobbyMenu",
 		Position = UDim2.new(0, math.max(16, inset.X + 16), 0, inset.Y + 8),
@@ -257,71 +256,34 @@ function LobbyHub.start()
 	UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = menu })
 	lobbyMenu = menu
 
-	-- the name, typed out, a short red bar, and your record under it
-	local brand = UI.new("Frame", { Name = "Brand", LayoutOrder = 1, Size = UDim2.fromOffset(MENU_W, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = menu })
-	UI.new("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder, Parent = brand })
-	UI.label({ Name = "GameTitle", LayoutOrder = 1, Size = UDim2.fromOffset(MENU_W, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = (string.gsub(ctx.Story.Title, " in our ", "\nin our ")), Font = UI.Font.Title, TextSize = 29, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.55, Parent = brand })
-	UI.new("Frame", { LayoutOrder = 2, Size = UDim2.fromOffset(40, 3), BackgroundColor3 = UI.Color.Blood, Parent = brand })
-	local record = UI.label({ Name = "Record", LayoutOrder = 3, Size = UDim2.fromOffset(MENU_W, 16), Text = "HORROR  ·  1-4 PLAYERS", Font = UI.Font.Bold, TextSize = 11, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.6, Parent = brand })
-	local function showRecord()
-		local nights = tonumber(player:GetAttribute("StatNights"))
-		if not nights or nights == 0 then
-			record.Text = "HORROR  ·  1-4 PLAYERS"
-			return
-		end
-		record.Text = string.format("NIGHTS %d  ·  SURVIVED %d  ·  ENDINGS %d/%d", nights, tonumber(player:GetAttribute("StatEscapes")) or 0, tonumber(player:GetAttribute("StatEndings")) or 0, tonumber(player:GetAttribute("StatEndingTotal")) or #ctx.Story.EndingOrder)
-	end
-	for _, a in { "StatNights", "StatEscapes", "StatEndings", "StatEndingTotal" } do
-		player:GetAttributeChangedSignal(a):Connect(showRecord)
-	end
-	showRecord()
-
-	-- the two ways to play: big, bright, a line under each (hidden while you're in a queue)
+	-- (v140, the owner, crossing out the title, FIND PLAYERS and How to play: "Do UI properly this is so bad.. Make
+	-- everything smaller… Use only icons..") one small PLAY, then two icons: the endings and the settings
 	quick = UI.new("Frame", { Name = "Quick", LayoutOrder = 3, Size = UDim2.fromOffset(MENU_W, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = menu })
-	UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = quick })
-	local function playButton(name: string, text: string, sub: string, order: number): (TextButton, TextLabel)
-		local b = UI.new("TextButton", {
-			Name = name,
-			LayoutOrder = order,
-			Size = UDim2.fromOffset(MENU_W, 60),
-			Text = "",
-			AutoButtonColor = true,
-			BackgroundColor3 = Color3.fromRGB(240, 236, 228),
-			Parent = quick,
-		})
-		UI.corner(b, 10)
-		UI.stroke(b, Color3.new(1, 1, 1), 1, 0.5)
-		UI.label({ Name = "Text", Position = UDim2.fromOffset(18, 9), Size = UDim2.new(1, -30, 0, 24), Text = text, Font = UI.Font.Bold, TextSize = 21, TextColor3 = Color3.fromRGB(12, 12, 14), TextXAlignment = Enum.TextXAlignment.Left, Parent = b })
-		local subL = UI.label({ Name = "Sub", Position = UDim2.fromOffset(18, 34), Size = UDim2.new(1, -30, 0, 16), Text = sub, Font = UI.Font.Body, TextSize = 12, TextColor3 = Color3.fromRGB(96, 92, 86), TextXAlignment = Enum.TextXAlignment.Left, Parent = b })
-		local press = UI.new("UIScale", { Parent = b })
-		b.Activated:Connect(function()
-			press.Scale = 0.95
-			UI.tween(press, 0.2, { Scale = 1 }, Enum.EasingStyle.Back)
-		end)
-		return b, subL
-	end
-	local solo = playButton("PlaySolo", "▶  PLAY SOLO", "just you and him", 1)
-	local group, groupSub = playButton("FindPlayers", "FIND PLAYERS", "", 2)
-	for b, kind in { [solo] = "Solo", [group] = "Group" } do
-		b.Activated:Connect(function()
-			ctx.Remotes.QuickPlay:FireServer(kind)
-			if ctx.Effects then
-				ctx.Effects.playSound("UISelect", nil, { Caption = false })
-			end
-		end)
-	end
-	-- (groups finish their nights far more often than solo players: say who's here to play with)
-	local function showHere()
-		local n = #Players:GetPlayers()
-		groupSub.Text = n > 1 and string.format("%d players here now  ·  up to 4", n) or "1-4 players  ·  best with friends"
-	end
-	Players.PlayerAdded:Connect(showHere)
-	Players.PlayerRemoving:Connect(function()
-		task.defer(showHere)
+	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = quick })
+	local play = UI.new("TextButton", {
+		Name = "Play",
+		LayoutOrder = 1,
+		Size = UDim2.fromOffset(MENU_W, 42),
+		Text = "▶  PLAY",
+		Font = UI.Font.Bold,
+		TextSize = 18,
+		TextColor3 = Color3.fromRGB(12, 12, 14),
+		BackgroundColor3 = Color3.fromRGB(240, 236, 228),
+		Parent = quick,
+	})
+	UI.corner(play, 10)
+	local press = UI.new("UIScale", { Parent = play })
+	play.Activated:Connect(function()
+		press.Scale = 0.94
+		UI.tween(press, 0.2, { Scale = 1 }, Enum.EasingStyle.Back)
+		-- (into a group circle with whoever's here: alone, the countdown still takes you in)
+		ctx.Remotes.QuickPlay:FireServer("Group")
+		if ctx.Effects then
+			ctx.Effects.playSound("UISelect", nil, { Caption = false })
+		end
 	end)
-	showHere()
 	-- the night streak: start another night soon and it pays more (EconomyService)
-	local streak = UI.label({ Name = "StreakLine", LayoutOrder = 3, Size = UDim2.fromOffset(MENU_W, 16), Text = "", Font = UI.Font.Bold, TextSize = 12, TextColor3 = Color3.fromRGB(255, 205, 90), TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, Visible = false, Parent = quick })
+	local streak = UI.label({ Name = "StreakLine", LayoutOrder = 2, Size = UDim2.fromOffset(MENU_W, 14), Text = "", Font = UI.Font.Bold, TextSize = 11, TextColor3 = Color3.fromRGB(255, 205, 90), TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, Visible = false, Parent = quick })
 	task.spawn(function()
 		while streak.Parent do
 			local untilT = tonumber(player:GetAttribute("ChainUntil"))
@@ -329,66 +291,43 @@ function LobbyHub.start()
 			local left = untilT and math.floor(untilT - workspace:GetServerTimeNow()) or 0
 			streak.Visible = left > 0 and bonus > 0
 			if streak.Visible then
-				streak.Text = string.format("🔥 NIGHT STREAK  +%d%% coins  ·  %d:%02d", bonus, left // 60, left % 60)
+				streak.Text = string.format("🔥 +%d%%  %d:%02d", bonus, left // 60, left % 60)
 			end
 			task.wait(1)
 		end
 	end)
-	-- Halloween (until 2 Nov): candy hidden in the house, and what it unlocks
-	local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
-	local event = UI.label({ LayoutOrder = 4, Size = UDim2.fromOffset(MENU_W, 16), AutomaticSize = Enum.AutomaticSize.Y, Text = "", Font = UI.Font.Bold, TextSize = 12, TextColor3 = Color3.fromRGB(255, 150, 50), TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5, Visible = false, Name = "HalloweenLine", Parent = quick })
-	local function eventLine()
-		local live = Cat.halloweenLive(workspace:GetServerTimeNow())
-		event.Visible = live
-		if live then
-			local candy = tonumber(player:GetAttribute("Candy")) or 0
-			local nxt = Cat.nextCandyReward(candy)
-			event.Text = "🎃 HALLOWEEN  ·  🍬 " .. candy .. (nxt and ("  ·  next: " .. nxt.Name .. " (" .. nxt.Candy .. ")") or "  ·  all unlocked")
-		end
-	end
-	eventLine()
-	player:GetAttributeChangedSignal("Candy"):Connect(eventLine)
-
-	-- the three extras: one glass card, a row each, hairlines between
-	local extras = glass(UI, { Name = "Extras", LayoutOrder = 5, Size = UDim2.fromOffset(MENU_W, 3 * 40 + 2), Parent = menu })
-	UI.new("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Parent = extras })
-	local function extraRow(name: string, text: string, order: number): (TextButton, TextLabel)
-		if order > 1 then
-			UI.new("Frame", { LayoutOrder = order * 2 - 1, Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.88, Parent = extras })
-		end
-		local b = UI.new("TextButton", { Name = name, LayoutOrder = order * 2, Size = UDim2.new(1, 0, 0, 40), Text = "", BackgroundTransparency = 1, Parent = extras })
-		UI.label({ Position = UDim2.fromOffset(16, 0), Size = UDim2.new(1, -60, 1, 0), Text = text, Font = UI.Font.Body, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, Parent = b })
-		local right = UI.label({ Name = "Right", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 0), Size = UDim2.new(0, 70, 1, 0), Text = "›", Font = UI.Font.Bold, TextSize = 16, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Right, Parent = b })
-		UI.hover(b, function()
-			b.BackgroundTransparency = 0.92
-		end, function()
-			b.BackgroundTransparency = 1
-		end)
-		return b, right
-	end
-	local endingsBtn, endingsCount = extraRow("Endings", "Endings", 1)
-	local howBtn = extraRow("HowToPlay", "How to play", 2)
-	local settingsBtn = extraRow("Settings", "Settings", 3)
-	local function showEndingCount()
-		local n = tonumber(player:GetAttribute("StatEndings"))
-		endingsCount.Text = n and string.format("%d / %d  ›", n, #ctx.Story.EndingOrder) or "›"
-	end
-	player:GetAttributeChangedSignal("StatEndings"):Connect(showEndingCount)
-	showEndingCount()
-	howBtn.Activated:Connect(function()
-		ctx.Notice.show({
-			Title = "HOW TO PLAY",
-			Body = "It's a normal Friday night at the Whitaker house: pizza, chores, the storm. Then the power goes out, and you find out someone has been living in your attic.\n\n"
-				.. "• Do your tasks (the ! markers and the panel at the top right show what's next).\n"
-				.. "• When he's hunting, he hunts by SOUND: crouch and he can't hear you, run and he will. Or HIDE: closets, wardrobes, under beds. Keep still and he loses you.\n"
-				.. "• If he stops at your hiding spot to listen, keep your heartbeat steady (press the side each half-heart flies in from).\n"
-				.. "• Get help: call 911 from the one bar of signal by the upstairs bathroom window, reach the neighbor, or take the car.\n"
-				.. "• Caught once, you're tied up in the boiler room: struggle free, or a friend can cut you loose. Caught twice and you're out.\n"
-				.. "• Every night pays COINS. Spend them in the STORE on gear for your next night, or on crates.\n\n"
-				.. #ctx.Story.EndingOrder .. " endings to find. Some of them are secret.",
-			Button = "GOT IT",
+	local icons = UI.new("Frame", { Name = "Icons", LayoutOrder = 5, Size = UDim2.fromOffset(MENU_W, ICON), BackgroundTransparency = 1, Parent = menu })
+	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = icons })
+	local function iconButton(name: string, glyph: string, order: number): TextButton
+		local b = UI.new("TextButton", {
+			Name = name,
+			LayoutOrder = order,
+			Size = UDim2.fromOffset(ICON, ICON),
+			Text = glyph,
+			Font = UI.Font.Bold,
+			TextSize = 20,
+			TextColor3 = Color3.fromRGB(235, 232, 226),
+			AutoButtonColor = false,
+			BackgroundColor3 = UI.Color.Glass,
+			BackgroundTransparency = GLASS_T,
+			Parent = icons,
 		})
-	end)
+		UI.corner(b, 10)
+		local st = UI.stroke(b, Color3.new(1, 1, 1), 1, 0.84)
+		UI.hover(b, function()
+			st.Transparency = 0.5
+		end, function()
+			st.Transparency = 0.84
+		end)
+		local sc = UI.new("UIScale", { Parent = b })
+		b.Activated:Connect(function()
+			sc.Scale = 0.9
+			UI.tween(sc, 0.18, { Scale = 1 }, Enum.EasingStyle.Back)
+		end)
+		return b
+	end
+	local endingsBtn = iconButton("Endings", "🏆", 1)
+	local settingsBtn = iconButton("Settings", "⚙️", 2)
 	settingsBtn.Activated:Connect(function()
 		if ctx.Settings then
 			ctx.Settings.open()
@@ -445,7 +384,7 @@ function LobbyHub.start()
 			-- (one tap and you're in: new players took a median 39 s to queue, a third never did)
 			ctx.Notice.show({
 				Title = "Welcome to Hollis Creek",
-				Body = "Someone lives in the attic. Survive the night, alone or with friends.\n\nPLAY puts you in a group with whoever's here. Here are 100 coins to start: the STORE is on the right.",
+				Body = "Someone lives in the attic. Survive the night, alone or with friends.\n\nPLAY puts you in a group with whoever's here. Here are 100 coins to start: spend them at 🛒 on the right.",
 				Button = "▶  PLAY",
 			}, function()
 				ctx.Remotes.QuickPlay:FireServer("Group") -- (ignored if they've already stepped into a circle)
@@ -454,21 +393,21 @@ function LobbyHub.start()
 	end)
 
 	-- your queue: at the top of the left-hand menu, in place of the play buttons
-	panel = glass(UI, { Name = "QueuePanel", LayoutOrder = 2, Size = UDim2.fromOffset(MENU_W, 124), BackgroundTransparency = 0.18, Visible = false, Parent = lobbyMenu })
-	queueTitle = UI.label({ Position = UDim2.fromOffset(14, 10), Size = UDim2.new(1, -28, 0, 20), Text = "", Font = UI.Font.Bold, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
-	queueStatus = UI.label({ Position = UDim2.fromOffset(14, 32), Size = UDim2.new(1, -28, 0, 34), Text = "", TextSize = 12, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
+	panel = glass(UI, { Name = "QueuePanel", LayoutOrder = 2, Size = UDim2.fromOffset(190, 108), BackgroundTransparency = 0.18, Visible = false, Parent = lobbyMenu })
+	queueTitle = UI.label({ Position = UDim2.fromOffset(12, 8), Size = UDim2.new(1, -24, 0, 18), Text = "", Font = UI.Font.Bold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
+	queueStatus = UI.label({ Position = UDim2.fromOffset(12, 27), Size = UDim2.new(1, -24, 0, 28), Text = "", TextSize = 11, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
 	-- (v138) the countdown as a bar draining under the text
-	local track = UI.new("Frame", { Name = "CountdownBar", Position = UDim2.fromOffset(14, 70), Size = UDim2.new(1, -28, 0, 3), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.85, Parent = panel })
+	local track = UI.new("Frame", { Name = "CountdownBar", Position = UDim2.fromOffset(12, 59), Size = UDim2.new(1, -24, 0, 3), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.85, Parent = panel })
 	queueBar = UI.new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.new(1, 1, 1), Parent = track })
 	-- (v118) the only way out of a circle once you're in it: the walls hold queued players in
 	local leave = UI.new("TextButton", {
 		Name = "LeaveQueue",
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, -10, 1, -10),
-		Size = UDim2.fromOffset(110, 36),
+		Size = UDim2.fromOffset(96, 32),
 		Text = "✕  LEAVE",
 		Font = UI.Font.Bold,
-		TextSize = 14,
+		TextSize = 13,
 		TextColor3 = Color3.fromRGB(255, 236, 232),
 		BackgroundColor3 = Color3.fromRGB(120, 24, 26),
 		Parent = panel,
