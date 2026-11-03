@@ -292,6 +292,13 @@ for (const fr of spec.frames) {
           o.material.transparent = true; o.material.opacity = tl.opacity; o.material.depthWrite = false;
         } else if (o.userData.mat0) { o.material = o.userData.mat0; o.userData.mat0 = null; }
       });
+      // (reel 62) a second rig in the same shot (shotCfg.door2 / fr.door2: the bedroom door ajar and a wardrobe leaf opening)
+      for (const o of (window.DOOR2 || [])) if (o.userData.m0) o.matrix.copy(o.userData.m0);
+      window.DOOR2 = [];
+      if (shotCfg.door2) {
+        const dc2 = new T.Vector3(...shotCfg.door2.near);
+        scene.traverse(o => { if (o.isMesh && o.userData.pos && (shotCfg.door2.names || []).includes(o.userData.name) && o.userData.pos.distanceTo(dc2) < shotCfg.door2.r) { o.userData.m0 = o.userData.m0 || o.matrix.clone(); window.DOOR2.push(o); } });
+      }
       window.DOOR = [];
       if (shotCfg.door) {
         const dc = new T.Vector3(...shotCfg.door.near);
@@ -323,6 +330,12 @@ for (const fr of spec.frames) {
       const R = shotCfg.door.axis === 'x' ? new T.Matrix4().makeRotationX(a) : shotCfg.door.axis === 'z' ? new T.Matrix4().makeRotationZ(a) : new T.Matrix4().makeRotationY(a);
       const M = new T.Matrix4().makeTranslation(h[0], h[1] || 0, h[2]).multiply(R).multiply(new T.Matrix4().makeTranslation(-h[0], -(h[1] || 0), -h[2]));
       for (const o of window.DOOR) o.matrix.copy(M.clone().multiply(o.userData.m0));
+    }
+    if (window.DOOR2 && window.DOOR2.length) {
+      const h = shotCfg.door2.hinge, a = fr.door2 || 0;
+      const R = shotCfg.door2.axis === 'x' ? new T.Matrix4().makeRotationX(a) : shotCfg.door2.axis === 'z' ? new T.Matrix4().makeRotationZ(a) : new T.Matrix4().makeRotationY(a);
+      const M = new T.Matrix4().makeTranslation(h[0], h[1] || 0, h[2]).multiply(R).multiply(new T.Matrix4().makeTranslation(-h[0], -(h[1] || 0), -h[2]));
+      for (const o of window.DOOR2) o.matrix.copy(M.clone().multiply(o.userData.m0));
     }
     // extras taken away on this frame (fr.hideExtras: points; anything of an extra within 1 stud)
     for (const m of (window.EXTRAS || [])) m.visible = !(fr.hideExtras || []).some(p => Math.hypot(m.position.x - p[0], m.position.y - p[1] - 0.22, m.position.z - p[2]) < 1.0);
