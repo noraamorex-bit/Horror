@@ -41,7 +41,7 @@ local ok, err = pcall(function()
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Foley", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -194,6 +194,29 @@ local ok, err = pcall(function()
 	print("notice open:", ctx.Notice.isOpen())
 	ctx.Input.fire("Close", true)
 	print("notice open after OK:", ctx.Notice.isOpen())
+	-- (v139) sound captions are off unless turned on in Settings; spoken/story captions still show
+	do
+		assert(ctx.Settings.captionsOn() == false, "captions off by default")
+		local function captions(): number
+			local n = 0
+			for _, d in H.unwrap(pg):GetDescendants() do
+				if d:IsA("TextLabel") and (d.Text == "[Floorboards creak]" or d.Text == "A hand clamps over your mouth.") then n += 1 end
+			end
+			return n
+		end
+		R.Caption.OnClientEvent:Fire("[Floorboards creak]")
+		assert(captions() == 0, "no sound caption by default")
+		print("captions gated ok")
+	end
+	-- (v139) Foley: what a prompt sounds like; thoughts read, not spoken
+	do
+		local F = mods.Foley
+		assert(F.forAction("Search the cushions") == "DrawerOpen" and select(3, F.forAction("Search")) == "Hold", "a search rummages as you hold")
+		assert(F.forAction("Read") == "Paper" and F.forAction("Enter code") == "CountBeep" and F.forAction("Flip MAIN breaker") == "BreakerClick", "pages, beeps, the breaker")
+		assert(F.forAction("Open") == nil and F.forAction("Hide") == nil and F.forAction("Call 911") == nil, "doors, hiding, the call: the server's own sounds")
+		assert(ctx.Config.Thoughts.Spoken == false, "thoughts aren't spoken")
+		print("foley ok")
+	end
 	R.Caption.OnClientEvent:Fire("[Footsteps]")
 	R.Notify.OnClientEvent:Fire("Hello", "danger")
 	R.Objectives.OnClientEvent:Fire({ { Id = "A", Text = "Make popcorn", Done = false, Steps = { { Text = "Get a bag", Done = true }, { Text = "Microwave", Done = false } }, StepsDone = 1, Current = "Microwave", Targets = { roblox.Vector3.new(1, 2, 3) } }, { Id = "B", Text = "Done thing", Done = true, Optional = true, Steps = {}, Targets = {} } })

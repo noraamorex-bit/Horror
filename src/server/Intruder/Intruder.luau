@@ -2947,7 +2947,7 @@ local function senseTick(): boolean
 	if ctx.Journey then
 		ctx.Journey.event(best, "Sensed", spot and "Hiding" or "Open")
 	end
-	speak("Sense", true)
+	speak("Sense") -- (v139: not forced any more: it came with every loud run)
 	ctx.Remotes.Shake:FireClient(best, 0.6, 0.8)
 	ctx.PlayerState.addNerve(best, -10)
 	runLine(best, spot and ctx.Story.Hunt.SensedHiding or ctx.Story.Hunt.Sensed)

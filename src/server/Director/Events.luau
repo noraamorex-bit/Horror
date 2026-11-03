@@ -191,7 +191,7 @@ Events.List = {
 			end
 			ctx.Audio.playAt("HatchCreak", path[#path] + V(0, 12, 0))
 			D.logTruth("FootstepsUpstairs")
-			D.think(nil, ctx.Story.Thoughts.Events.FootstepsUpstairs)
+			D.react(nil, ctx.Story.Thoughts.Events.FootstepsUpstairs)
 			if ctx.Director.getAct() == "SmallThings" then
 				ctx.Objectives.add("Investigate")
 			end
@@ -233,7 +233,7 @@ Events.List = {
 		end,
 		Run = function(ctx, D, door)
 			ctx.Doors.setAjar(door, 35)
-			D.thinkNear(door.Position, 50, ctx.Story.Thoughts.Events.DoorAjar)
+			D.reactNear(door.Position, 50, ctx.Story.Thoughts.Events.DoorAjar)
 			ctx.Audio.playAt("DoorOpen", door.Position, { Volume = 0.35, CaptionText = "[A door creaks open, somewhere close]", CaptionRange = 45 })
 			D.logTruth("DoorAjar")
 		end,
@@ -258,7 +258,7 @@ Events.List = {
 			local hatch = ctx.World.refs().AtticHatch
 			if hatch and not hatch.Open then
 				hatch.swing(9)
-				D.thinkNear(hatch.Handle.Position, 40, ctx.Story.Thoughts.Events.CordSwing)
+				D.reactNear(hatch.Handle.Position, 40, ctx.Story.Thoughts.Events.CordSwing)
 				ctx.Audio.playAt("HatchCreak", hatch.Handle.Position + V(0, 3, 0))
 				D.logTruth("CordSwing")
 			end
@@ -314,7 +314,7 @@ Events.List = {
 			ctx.Escape.ringLandline("Silent", function()
 				ctx.PlayerState.scareNear(V(-9, 5, 6), 20, ctx.Config.Nerve.ScareEvent)
 				task.delay(8, function()
-					D.thinkNear(V(-9, 5, 6), 30, ctx.Story.Thoughts.Events.SilentCall)
+					D.reactNear(V(-9, 5, 6), 30, ctx.Story.Thoughts.Events.SilentCall)
 				end)
 			end)
 			D.logTruth("SilentCall")
@@ -357,7 +357,7 @@ Events.List = {
 			local tv = ctx.World.refs().TV
 			if tv and tv.emergencyAlert(18) then
 				D.logTruth("TVAlert")
-				D.thinkNear(V(-24, 4, -24), 60, ctx.Story.Thoughts.Events.TVAlert)
+				D.reactNear(V(-24, 4, -24), 60, ctx.Story.Thoughts.Events.TVAlert)
 			end
 		end,
 	},
@@ -431,7 +431,7 @@ Events.List = {
 			task.delay(0.3, function()
 				ctx.PlayerState.addNerve(data.Player, -12)
 				ctx.Remotes.Shake:FireClient(data.Player, 0.35, 0.8)
-				D.think(data.Player, ctx.Story.Thoughts.Events.FigureWindow)
+				D.react(data.Player, ctx.Story.Thoughts.Events.FigureWindow)
 			end)
 			D.logTruth("FigureWindow")
 		end,
@@ -473,7 +473,7 @@ Events.List = {
 			ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(at, V(w.Face.X, at.Y, w.Face.Z)), 0.9, "Stare")
 			task.delay(0.35, function()
 				ctx.PlayerState.addNerve(data.Player, -8)
-				D.think(data.Player, ctx.Story.Thoughts.Events.YardFigure)
+				D.react(data.Player, ctx.Story.Thoughts.Events.YardFigure)
 			end)
 			D.logTruth("YardFigure")
 		end,
@@ -539,7 +539,7 @@ Events.List = {
 			task.delay(0.5, function()
 				ctx.PlayerState.addNerve(data.Player, -12)
 				ctx.Remotes.Shake:FireClient(data.Player, 0.25, 0.6)
-				D.think(data.Player, ctx.Story.Thoughts.Events.HallStare)
+				D.react(data.Player, ctx.Story.Thoughts.Events.HallStare)
 			end)
 			task.delay(1.75, function()
 				ctx.Remotes.PlaySound:FireClient(data.Player, "BoneCrack1", feet + V(0, 6, 0), { Volume = 0.9 })
@@ -750,7 +750,7 @@ Events.List = {
 			ctx.Audio.playAt("DoorSlam", door.Position, { Volume = 1, Range = 160 })
 			D.lightning(0.8)
 			local hit = jolt(ctx, door.Position, 70, 8, 0.4)
-			D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.WindSlam)
+			D.react(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.WindSlam)
 			D.logTruth("WindSlam")
 		end,
 	},
@@ -787,7 +787,7 @@ Events.List = {
 			end
 			folder.Parent = ctx.World.folder():FindFirstChild("Kitchen") or ctx.World.folder()
 			local hit = jolt(ctx, pos, 60, 12, 0.5)
-			D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.PlateCrash)
+			D.react(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.PlateCrash)
 			D.logTruth("PlateCrash")
 		end,
 	},
@@ -836,7 +836,7 @@ Events.List = {
 			end)
 			game:GetService("Debris"):AddItem(dust, 4)
 			local hit = jolt(ctx, data.Pos - V(0, 12, 0), 26, 10, 0.55)
-			D.think(#hit > 0 and hit or data.Player, ctx.Story.Thoughts.Events.CeilingThud)
+			D.react(#hit > 0 and hit or data.Player, ctx.Story.Thoughts.Events.CeilingThud)
 			D.logTruth("CeilingThud")
 		end,
 	},
@@ -874,7 +874,7 @@ Events.List = {
 				end
 				task.wait(0.28)
 			end
-			D.think(data.Player, ctx.Story.Thoughts.Events.WindowBang)
+			D.react(data.Player, ctx.Story.Thoughts.Events.WindowBang)
 			D.logTruth("WindowBang")
 		end,
 	},
@@ -909,7 +909,7 @@ Events.List = {
 				ctx.Audio.playAt("DoorYank", door.Position, { Volume = 1, Caption = i == 1 })
 				if i == 1 then
 					local hit = jolt(ctx, door.Position, 40, 12, 0.45)
-					D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.DoorRattle)
+					D.react(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.DoorRattle)
 				end
 				task.wait(0.5 + math.random() * 0.4)
 			end
@@ -952,7 +952,7 @@ Events.List = {
 			local pos = room.Center + V(0, 2, 0)
 			ctx.Audio.playAt("ChairDrop", pos, { Volume = 1 })
 			local hit = jolt(ctx, pos, 45, 8, 0.35)
-			D.think(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.ChairDrop)
+			D.react(#hit > 0 and hit or nil, ctx.Story.Thoughts.Events.ChairDrop)
 			D.logTruth("ChairDrop")
 		end,
 	},
@@ -984,7 +984,7 @@ Events.List = {
 		end,
 		Run = function(ctx, D, box)
 			ctx.Audio.playAt("MusicBox", box.Position + V(0, 0.5, 0), { Volume = 0.9 })
-			D.thinkNear(box.Position, 60, ctx.Story.Thoughts.Events.MusicBox)
+			D.reactNear(box.Position, 60, ctx.Story.Thoughts.Events.MusicBox)
 			D.logTruth("MusicBox")
 		end,
 	},
@@ -1009,7 +1009,7 @@ Events.List = {
 		end,
 		Run = function(ctx, D)
 			ctx.Power.setSwitch("Lily", true)
-			D.think(nil, ctx.Story.Thoughts.Events.LightUpstairs)
+			D.react(nil, ctx.Story.Thoughts.Events.LightUpstairs)
 			D.logTruth("LightUpstairs")
 		end,
 	},
@@ -1051,7 +1051,7 @@ Events.List = {
 				fp.Transparency = 0.35 + i * 0.07
 				fp.Reflectance = 0.25
 			end
-			D.thinkNear(door.Position, 60, ctx.Story.Thoughts.Events.BackDoorOpen)
+			D.reactNear(door.Position, 60, ctx.Story.Thoughts.Events.BackDoorOpen)
 			D.logTruth("BackDoorOpen")
 		end,
 	},
@@ -1108,7 +1108,7 @@ Events.List = {
 				task.wait(0.5)
 				ctx.Remotes.PlaySound:FireClient(p, "IntruderBreath", back + V(0, 1.5, 0), { Volume = 0.6 })
 				ctx.PlayerState.addNerve(p, -8)
-				D.think(p, ctx.Story.Thoughts.Events.Follower)
+				D.react(p, ctx.Story.Thoughts.Events.Follower)
 				D.logTruth("Follower")
 			end
 		end,
@@ -1166,7 +1166,7 @@ Events.List = {
 				ctx.Audio.playAt("ToolDrop", ball.Position, { Volume = 0.25, Pitch = 1.7, Range = 50, Caption = false })
 				task.wait(0.28)
 			end
-			D.think(data.Player, ctx.Story.Thoughts.Events.StairBall)
+			D.react(data.Player, ctx.Story.Thoughts.Events.StairBall)
 			ctx.PlayerState.addNerve(data.Player, -6)
 			D.logTruth("StairBall")
 			task.delay(30, function()
@@ -1241,7 +1241,7 @@ Events.List = {
 						local room = roomOf(ctx, p)
 						if room and room.Name == "Lily" then
 							ctx.PlayerState.addNerve(p, -8)
-							D.think(p, ctx.Story.Thoughts.Events.ToysTurn)
+							D.react(p, ctx.Story.Thoughts.Events.ToysTurn)
 							return
 						end
 					end
@@ -1306,7 +1306,7 @@ Events.List = {
 				task.wait(0.03)
 			end
 			hand:Destroy()
-			D.think(data.Player, ctx.Story.Thoughts.Events.UnderBed)
+			D.react(data.Player, ctx.Story.Thoughts.Events.UnderBed)
 			D.logTruth("UnderBed")
 		end,
 	},
@@ -1389,7 +1389,7 @@ Events.List = {
 						if root and (root.Position - s.At).Magnitude < 22 and (facing or looksAt(ctx, D, p, s.At, 0.8)) then
 							ctx.Remotes.PlaySound:FireClient(p, "HorrorHitLow", nil, { Volume = 0.7 })
 							ctx.PlayerState.addNerve(p, -10)
-							D.think(p, ctx.Story.Thoughts.Events.Scrawl)
+							D.react(p, ctx.Story.Thoughts.Events.Scrawl)
 							return
 						end
 					end
@@ -1448,7 +1448,7 @@ Events.List = {
 							if room and room.Name == "Kitchen" then
 								seen = true
 								ctx.PlayerState.addNerve(p, -8)
-								D.think(p, ctx.Story.Thoughts.Events.KitchenChairs)
+								D.react(p, ctx.Story.Thoughts.Events.KitchenChairs)
 								break
 							end
 						end
@@ -1503,7 +1503,7 @@ Events.List = {
 			task.wait(0.5)
 			ctx.Audio.playAt("ClawStep", data.At, { Volume = 0.5, Pitch = 0.8, Range = 20, Caption = false })
 			ctx.PlayerState.addNerve(data.Player, -8)
-			D.think(data.Player, ctx.Story.Thoughts.Events.ClosetKnock)
+			D.react(data.Player, ctx.Story.Thoughts.Events.ClosetKnock)
 			D.logTruth("ClosetKnock")
 		end,
 	},
@@ -1549,14 +1549,14 @@ Events.List = {
 						if ring then
 							ring:Stop()
 						end
-						D.think(p, ctx.Story.Thoughts.Events.HousePhoneStop)
+						D.react(p, ctx.Story.Thoughts.Events.HousePhoneStop)
 						break
 					end
 				end
 				task.wait(0.2)
 			end
 			if not stopped then
-				D.thinkNear(pos, 60, ctx.Story.Thoughts.Events.HousePhone)
+				D.reactNear(pos, 60, ctx.Story.Thoughts.Events.HousePhone)
 			end
 			D.logTruth("HousePhone")
 		end,
@@ -1588,7 +1588,7 @@ Events.List = {
 			local chair: Model = data.Chair
 			local base = chair:GetPivot()
 			ctx.PlayerState.addNerve(data.Player, -6)
-			D.think(data.Player, ctx.Story.Thoughts.Events.Rocker)
+			D.react(data.Player, ctx.Story.Thoughts.Events.Rocker)
 			D.logTruth("Rocker")
 			local t0, nextCreak = os.clock(), 0
 			while os.clock() - t0 < 16 and chair.Parent do
@@ -1634,7 +1634,7 @@ Events.List = {
 			for _, p in who do
 				ctx.PlayerState.addNerve(p, -14)
 			end
-			D.think(who, data.Window and ctx.Story.Thoughts.Events.ApparitionWindow or ctx.Story.Thoughts.Events.Apparition)
+			D.react(who, data.Window and ctx.Story.Thoughts.Events.ApparitionWindow or ctx.Story.Thoughts.Events.Apparition)
 			D.logTruth("Apparition")
 		end,
 	},

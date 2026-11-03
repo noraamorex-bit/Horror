@@ -72,6 +72,19 @@ local ok, err = pcall(function()
 		table.insert(thoughts, { players, line })
 		return think(players, line, ...)
 	end
+	-- (v139) a scare's reaction line comes at most every ReactGap s per player: checked here, then off so each
+	-- event below can show its own line
+	do
+		local n0 = #thoughts
+		ctx.Director.react(a, "first")
+		ctx.Director.react({ a, b }, "second")
+		local got = {}
+		for k = n0 + 1, #thoughts do table.insert(got, thoughts[k]) end
+		assert(#got == 2 and got[1][2] == "first" and got[2][2] == "second", "two lines: " .. #got)
+		assert(type(got[2][1]) == "table" and #got[2][1] == 1 and got[2][1][1] == b, "the second only to the one who hadn't just had one")
+		ctx.Config.Thoughts.ReactGap = 0
+		print("react gap ok")
+	end
 	local function thought(p, line)
 		for _, t in thoughts do
 			local list = t[1]

@@ -26,10 +26,14 @@ local function setCalling(on: boolean)
 end
 
 function Phone.toggle(force: boolean?)
+	local was = open
 	if force ~= nil then
 		open = force
 	else
 		open = not open
+	end
+	if open ~= was and ctx.Foley then
+		ctx.Foley.phone(open) -- (v139: out of your pocket, and back)
 	end
 	-- on touch screens the right side belongs to the action buttons
 	if ctx.UI.isTouch() then

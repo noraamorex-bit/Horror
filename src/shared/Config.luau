@@ -398,15 +398,16 @@ Config.Help = {
 Config.Director = {
 	Ceiling = { Evening = 25, SmallThings = 65, SomeoneElse = 85, Guest = 100 },
 	Gap = {
-		Evening = { 18, 32 }, -- (v126: 25-45; constantly scary)
-		SmallThings = { 16, 30 }, -- (v126: 25-42)
+		-- (v139, a downvote: "crappy jumpscares": fewer small ones, so each lands; v126: 18-32 / 16-30)
+		Evening = { 26, 42 },
+		SmallThings = { 22, 38 },
 		SomeoneElse = { 32, 55 },
 		Guest = { 45, 80 },
 	},
 	TensionDecay = 0.5, -- per second
 	Lightning = { 20, 50 },
 	SmallThingsQuiet = 40, -- act II ends (after Min) once tension falls below this
-	BeatSpacing = 25, -- a scripted scare waits this long after the last one (one thing at a time) (v126: 35)
+	BeatSpacing = 30, -- (v139: 25) a scripted scare waits this long after the last one (one thing at a time) (v126: 35)
 	AfterNews = 22, -- (v117: 28) -- act II ends this long after the news was watched at the soonest...
 	BedtimeAfterNews = 4, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
 	AfterBedtime = 5, -- (v94: 12; the owner wanted less waiting before the blackout)
@@ -425,15 +426,23 @@ Config.Director = {
 -- Inner monologue: the character thinking out loud about what to do next
 Config.Thoughts = {
 	Duration = 5, -- seconds each line stays on screen
-	IdleHint = 35, -- seconds without progress before they remind themselves of the next task
+	IdleHint = 45, -- seconds without progress before they remind themselves of the next task
 	-- (v136, a player: "the protag won't shut the hell up every 1 minutes spilling some worthless info") each reminder of
 	-- the same step waits twice as long as the last, never more often than IdleHintHunt once he's hunting, and never
 	-- within HintQuiet s of any other line
 	IdleHintMax = 180,
-	IdleHintHunt = 90,
+	IdleHintHunt = 120,
 	HintQuiet = 20,
 	-- his runs' lines ("Footsteps. Running.", "He's after me.") at most this often per player
 	RunLineGap = 90,
+	-- (v139, a downvote: "bro too many voicelines, crappy jumpscares"; the owner: "reduce the amount of information
+	-- constantly coming and make it more relevant") a scare's reaction line at most this often per player
+	-- (Director.react), no first-visit room lines, thoughts are read, not spoken (client Thoughts)
+	ReactGap = 45,
+	RoomLines = false,
+	Spoken = false,
+	BanterPerAct = 1, -- the friends' conversations (Story.Banter): one per act
+	BanterReacts = 2, -- their reactions after a scare: this many a night
 	FirstHint = 3, -- seconds into the night before the first task nudge (it queues behind the opening line)
 	QuietGap = 4, -- seconds of quiet after a thought or conversation before a text or banter comes in
 }

@@ -29,7 +29,7 @@ end
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, MonsterCredits = 0, RocketCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true, Voice = 1 } }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, MonsterCredits = 0, RocketCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true, Voice = 1, Captions = false } }
 end
 
 --[[
@@ -120,6 +120,7 @@ local function mirror(player: Player)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
 	player:SetAttribute("SetVoice", d.Settings.Voice or 1)
+	player:SetAttribute("SetCaptions", d.Settings.Captions == true)
 	for _, b in Stats.Beams do
 		if b.Id == beam then
 			player:SetAttribute("StatBeamColor", b.Color)
@@ -155,6 +156,7 @@ local function load(player: Player)
 				Sfx = math.clamp(tonumber(set.Sfx) or 1, 0, 1),
 				Shake = set.Shake ~= false,
 				Voice = math.clamp(tonumber(set.Voice) or 1, 0, 1), -- (v106: text-to-speech voices)
+				Captions = set.Captions == true, -- (v139: sound captions, off unless turned on)
 			}
 			for k, v in (type(data.Endings) == "table" and data.Endings or {}) do
 				if v then
@@ -353,7 +355,7 @@ end
 -- the settings panel: music and sound volume (0-1), camera shake. Saved a few seconds after the
 -- last change, so dragging through the options doesn't spam the DataStore.
 local settingsSave: { [number]: boolean } = {}
-function Stats.setSettings(player: Player, music: any, sfx: any, shake: any, voice: any)
+function Stats.setSettings(player: Player, music: any, sfx: any, shake: any, voice: any, captions: any)
 	local d = cache[player.UserId]
 	if not d or type(music) ~= "number" or type(sfx) ~= "number" or type(shake) ~= "boolean" then
 		return
@@ -362,7 +364,8 @@ function Stats.setSettings(player: Player, music: any, sfx: any, shake: any, voi
 		return
 	end
 	local v = (type(voice) == "number" and voice == voice) and math.clamp(voice, 0, 1) or (d.Settings.Voice or 1)
-	d.Settings = { Music = math.clamp(music, 0, 1), Sfx = math.clamp(sfx, 0, 1), Shake = shake, Voice = v }
+	local cap = if type(captions) == "boolean" then captions else (d.Settings.Captions == true)
+	d.Settings = { Music = math.clamp(music, 0, 1), Sfx = math.clamp(sfx, 0, 1), Shake = shake, Voice = v, Captions = cap }
 	mirror(player)
 	local userId = player.UserId
 	if not settingsSave[userId] then
@@ -744,8 +747,8 @@ function Stats.start()
 		ctx.Remotes.SetBeam.OnServerEvent:Connect(function(player, id)
 			Stats.setBeam(player, id)
 		end)
-		ctx.Remotes.SaveSettings.OnServerEvent:Connect(function(player, music, sfx, shake, voice)
-			Stats.setSettings(player, music, sfx, shake, voice)
+		ctx.Remotes.SaveSettings.OnServerEvent:Connect(function(player, music, sfx, shake, voice, captions)
+			Stats.setSettings(player, music, sfx, shake, voice, captions)
 		end)
 	end
 	for _, p in Players:GetPlayers() do

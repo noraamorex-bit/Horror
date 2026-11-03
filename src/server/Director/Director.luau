@@ -246,6 +246,48 @@ function Director.isQuiet(): boolean
 end
 
 -- once per player per key
+--[[
+	(v139) A reaction to a scare: "Did a chair just fall over?" after you've just seen it fall said
+	nothing new and buried the scare in text. Reactions now come at most once per
+	Config.Thoughts.ReactGap seconds per player, and only to those it's new to; the scare itself
+	speaks for itself the rest of the time.
+]]
+function Director.react(players, line: string?)
+	if not line then
+		return
+	end
+	local list = players
+	if list == nil then
+		list = ctx.Util.sessionPlayers()
+	elseif typeof(list) == "Instance" then
+		list = { list }
+	end
+	state.ReactAt = state.ReactAt or {}
+	local gap = ctx.Config.Thoughts.ReactGap or 45
+	local t = os.clock()
+	local out = {}
+	for _, p in list do
+		if t - (state.ReactAt[p] or -1e9) >= gap then
+			state.ReactAt[p] = t
+			table.insert(out, p)
+		end
+	end
+	if #out > 0 then
+		Director.think(out, line)
+	end
+end
+
+function Director.reactNear(position: Vector3, radius: number, line: string?)
+	local list = {}
+	for _, p in ctx.Util.activePlayers() do
+		local root = ctx.Util.getRoot(p)
+		if root and (root.Position - position).Magnitude <= radius then
+			table.insert(list, p)
+		end
+	end
+	Director.react(list, line)
+end
+
 function Director.thinkOnce(player: Player, key: string, line: string?)
 	state.Thought = state.Thought or {}
 	local seen = state.Thought[player] or {}
@@ -825,7 +867,11 @@ function Director.startAct(name: string, cause: Player?)
 					-- (v122: and if others were left in the lobby, by name: they can follow)
 					local behind = tonumber(workspace:GetAttribute("LobbyBehind")) or 0
 					local names = workspace:GetAttribute("LobbyBehindNames")
-					local text = open and ctx.Story.SoloFinding or ctx.Story.SoloInvite
+					-- (v139: only when players really can land here; the invite nudge went: too much text)
+					if not open then
+						return
+					end
+					local text = ctx.Story.SoloFinding
 					if open and behind > 0 then
 						local who = (type(names) == "string" and #names > 0) and names or (behind .. " others")
 						local plural = behind > 1 or string.find(who, " and ", 1, true) ~= nil
@@ -945,7 +991,6 @@ function Director.startAct(name: string, cause: Player?)
 				end
 				if #far > 0 then
 					Director.think(far, lines[1], #near > 0)
-					Director.think(far, lines[2])
 				end
 				-- (so the idle reminder names the exact step next time)
 				state.Hinted = state.Hinted or {}
@@ -972,8 +1017,7 @@ function Director.startAct(name: string, cause: Player?)
 					end
 				end
 			end
-			task.wait(6)
-			ctx.Remotes.Notify:FireAllClients("Someone flipped the main breaker. He's in the house.", "danger")
+			-- (v139: no "Someone flipped the main breaker" banner: the line above already says it)
 			-- a glimpse or two of him in the dark, then the hunt begins
 			local myState = state
 			task.wait(ctx.Config.Director.HuntDelay or 35)
@@ -1002,8 +1046,8 @@ function Director.startAct(name: string, cause: Player?)
 		end
 		ctx.Intruder.setMode("Hunt", cause)
 		Director.addTension(30)
-		Director.think(nil, "Somewhere in the house, something heavy hits the floor.")
-		Director.think(nil, "He knows.")
+		-- (v139: one line, not four: "too much information constantly coming")
+		Director.think(nil, ctx.Story.Thoughts.GuestStart)
 	end
 end
 
@@ -1801,9 +1845,14 @@ function Director.reactBanter(id: string)
 	if not scene or state.BanterDone["React" .. id] or (ctx.Dialogue and ctx.Dialogue.isActive()) then
 		return
 	end
+	-- (v139: a couple a night, not one after every scare)
+	if (state.BanterReacts or 0) >= (ctx.Config.Thoughts.BanterReacts or 2) then
+		return
+	end
 	local lines, audience = castBanter(scene)
 	if lines then
 		state.BanterDone["React" .. id] = true
+		state.BanterReacts = (state.BanterReacts or 0) + 1
 		task.spawn(ctx.Dialogue.say, lines, audience)
 	end
 end
@@ -1811,6 +1860,11 @@ end
 function Director.banterTick(actTime: number)
 	local scenes = ctx.Story.Banter and ctx.Story.Banter[state.Act]
 	if not scenes or not Director.isQuiet() then
+		return
+	end
+	-- (v139: one conversation per act: the friends chatting were most of the voice lines)
+	state.BanterInAct = state.BanterInAct or {}
+	if (state.BanterInAct[state.Act] or 0) >= (ctx.Config.Thoughts.BanterPerAct or 1) then
 		return
 	end
 	for i, scene in scenes do
@@ -1821,6 +1875,7 @@ function Director.banterTick(actTime: number)
 		local lines, audience = castBanter(scene)
 		if lines then
 			state.BanterDone[key] = true
+			state.BanterInAct[state.Act] = (state.BanterInAct[state.Act] or 0) + 1
 			task.spawn(ctx.Dialogue.say, lines, audience)
 		elseif actTime > (scene.At + 120) * ctx.Config.TimeScale then
 			state.BanterDone[key] = true -- nobody was together to say it; let it go
@@ -1864,8 +1919,9 @@ local function actTick()
 		state.OkaforCalled = true
 		ctx.Escape.okaforCalls()
 	end
-	-- first visits to each room in the first act get a line of their own
-	if state.Act == "Evening" and Director.isQuiet() then
+	-- first visits to each room in the first act got a line of their own (v139: off, flavour text
+	-- nobody needed: a downvote said "too many voicelines", the owner "reduce the information")
+	if ctx.Config.Thoughts.RoomLines and state.Act == "Evening" and Director.isQuiet() then
 		for _, p in ctx.Util.activePlayers() do
 			local root = ctx.Util.getRoot(p)
 			local room = root and ctx.Rooms.find(root.Position)

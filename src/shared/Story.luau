@@ -276,14 +276,12 @@ Story.SoloTexts = {
 }
 
 Story.Texts = {
+	-- (v139: only the texts that matter to the night: the flood (why nobody comes) and the neighbour who saw a man)
 	Evening = {
-		{ At = 35, From = "Mom", Body = "Landed! Hotel is nice. Eat something real please. Love you", Role = "Host" },
-		{ At = 150, From = "Dad", Body = "Don't touch the thermostat. And lock the back door, it sticks.", Role = "Host" },
 		{ At = 250, From = "Hollis Creek Alerts", Body = "FLASH FLOOD WARNING in effect until 6 AM. Creek Rd closed. Avoid travel." },
 	},
 	SmallThings = {
 		{ At = 60, From = "Mrs. Okafor (next door)", Body = "Hi Jamie honey! Is your dad's friend still staying with you? I saw a man at the side door Tuesday. Stay dry!", Role = "Host" },
-		{ At = 230, From = "Riley's mom", Body = "Roads are bad honey, stay over at Jamie's tonight ok?", Role = "Tinkerer" },
 	},
 }
 
@@ -547,8 +545,10 @@ Story.Mirror = { "I WATCH YOU SLEEP", "YOUR BED IS WARM", "I SAW YOU BRUSH", "GO
 		Closet   waiting in a hiding spot as someone comes near
 ]]
 Story.HisLines = {
-	Gap = 9,
-	Every = { Murmur = 22, Found = 14, Lost = 18, Inspect = 16, Heart = 30, Grab = 0, Behind = 0, Closet = 0, Sense = 0 },
+	-- (v139, a downvote: "too many voicelines") he speaks rarely, so each line lands: at least Gap s between any two,
+	-- each kind no more often than Every; only a grab, "turn around" and the closet are said whatever the gap
+	Gap = 35,
+	Every = { Murmur = 75, Found = 60, Lost = 90, Inspect = 60, Heart = 60, Grab = 0, Behind = 0, Closet = 0, Sense = 150 },
 	Murmur = {
 		"I know you're in here.",
 		"Come out, come out... wherever you are.",
@@ -817,19 +817,13 @@ Story.Thoughts = {
 		Rescue = "He took someone down to the basement. We can't leave them there.",
 	},
 	-- act III, for whoever is at the bathroom window when the lights go (they usually are: bedtime)
+	-- (v139: act IV opens on one line: it was four)
+	GuestStart = "He's been living in our attic. And he knows we found out.",
 	CallHere = "Those footsteps... the man from the news is IN the house. One bar, right here: call 911. NOW.|phone",
 	Acts = {
-		SmallThings = {
-			"If the creek road's closed, nobody's getting in or out tonight.",
-			"It's just the storm. Old houses make noise.",
-		},
+		-- (v139: one line where there were two, and none that only fill the air)
 		SomeoneElse = {
-			"Someone switched the power off. And those footsteps... the man from the news. He's IN the house.",
-			"Call 911! My phone only gets a bar at the upstairs bathroom window.|phone",
-		},
-		Guest = {
-			"Someone has been living in the attic. And he's still in the house.",
-			"We need to get help. And when we hear him coming, we hide.",
+			"The power's off. He's IN the house. Call 911: one bar at the upstairs bathroom window.|phone",
 		},
 	},
 	Events = {

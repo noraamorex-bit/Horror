@@ -62,6 +62,10 @@ function HUD.caption(text: string, _position: Vector3?)
 		return
 	end
 	local isSound = text:sub(1, 1) == "["
+	-- (v139) sound captions only for those who turned them on in Settings
+	if isSound and ctx.Settings and ctx.Settings.captionsOn and not ctx.Settings.captionsOn() then
+		return
+	end
 	-- sound captions are extras: skip them while something else is being said (spoken lines
 	-- and answers to what you just did always show, once the screen is clear of cards)
 	if isSound and ctx.Pace and not ctx.Pace.tryTake(1.6) then

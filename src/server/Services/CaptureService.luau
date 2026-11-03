@@ -172,7 +172,7 @@ function Capture.kill(player: Player): boolean
 	local scareTime = 0
 	if head and head.Parent then
 		ctx.Remotes.Jumpscare:FireClient(player, head)
-		scareTime = 0.9
+		scareTime = 1.05 -- (v139: the client's Effects.ScareTime)
 	end
 	Capture.takenSounds(player)
 	task.delay(scareTime, function()
@@ -258,7 +258,7 @@ function Capture.capture(player: Player)
 	local scareTime = 0
 	if head and head.Parent then
 		ctx.Remotes.Jumpscare:FireClient(player, head)
-		scareTime = 0.9
+		scareTime = 1.05 -- (v139: the client's Effects.ScareTime)
 	end
 	Capture.takenSounds(player)
 	task.delay(scareTime, function()

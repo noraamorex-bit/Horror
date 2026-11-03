@@ -254,8 +254,14 @@ function Effects.fade(toBlack: boolean, duration: number)
 	ctx.UI.tween(fadeFrame, duration or 0.5, { BackgroundTransparency = toBlack and 0 or 1 })
 end
 
--- he got you: the camera snaps onto his face, a scream hit, a red flash, then the capture fade
+-- he got you. (v139, a downvote: "crappy jumpscares": the old one was a red tint over a dark blob, then the
+-- normal camera for a frame before the fade.) Now: a beat of dead silence and a hard cut, his face lit cold
+-- from the lens and SLAMMING in (fast, a hard stop an arm's length away), a white hit-frame and a blur punch on
+-- contact, the picture shuddering on his screaming face, then a hard cut to black that the capture fade takes
+-- over from (never back to the game camera first).
 local scaring = false
+local SFX_GROUP = "EffectsGroup" -- (Settings)
+Effects.ScareTime = 1.05
 function Effects.jumpscare(head: BasePart?)
 	if scaring or not head or not head.Parent then
 		return
@@ -264,52 +270,118 @@ function Effects.jumpscare(head: BasePart?)
 	local cam = workspace.CurrentCamera
 	local oldType, oldFov = cam.CameraType, cam.FieldOfView
 	cam.CameraType = Enum.CameraType.Scriptable
-	cam.FieldOfView = 48
-	-- the screech, the scream hit, a low hit under it, and your own gasp
-	for _, name in { "Screech", "Jumpscare", "HorrorHitLow", "Gasp" } do
-		local s = localSound(name)
-		if s then
-			s:Play()
-			game:GetService("Debris"):AddItem(s, 14)
+	-- (the skinned body: the camera on the maw splitting open from his face down his chest)
+	local focus = ctx.Creature and ctx.Creature.focusFor(head)
+	local function faceCF(): CFrame
+		return focus and focus() or head.CFrame
+	end
+	local far, near = 7, 1.35
+	if focus then
+		far, near = 9, 2.2
+	end
+	-- the beat before: everything drops out for a moment (the world's sound and the picture)
+	pcall(function()
+		local sfx = SoundService:FindFirstChild(SFX_GROUP)
+		if sfx and sfx:IsA("SoundGroup") then
+			local v0 = sfx.Volume
+			sfx.Volume = v0 * 0.12
+			task.delay(0.1, function()
+				sfx.Volume = v0
+			end)
+		end
+	end)
+	fadeFrame.BackgroundTransparency = 0
+	-- a cold light from the lens, so his face reads in the darkest room
+	local lamp = Instance.new("Part")
+	lamp.Name = "ScareLight"
+	lamp.Anchored, lamp.CanCollide, lamp.CanQuery, lamp.CanTouch = true, false, false, false
+	lamp.Transparency = 1
+	lamp.Size = Vector3.one * 0.2
+	local spot = Instance.new("SpotLight")
+	spot.Brightness = 6
+	spot.Range = 16
+	spot.Angle = 70
+	spot.Color = Color3.fromRGB(215, 228, 255)
+	spot.Shadows = false
+	spot.Face = Enum.NormalId.Front
+	spot.Parent = lamp
+	lamp.Parent = workspace
+	local grade = Instance.new("ColorCorrectionEffect")
+	grade.Saturation = -0.55
+	grade.Contrast = 0.45
+	grade.Parent = Lighting
+	local blur = Instance.new("BlurEffect")
+	blur.Size = 0
+	blur.Parent = Lighting
+	local function place(reach: number, jerk: CFrame)
+		local hcf = faceCF()
+		local eye = hcf.Position + hcf.LookVector * reach + Vector3.new(0, 0.08, 0)
+		cam.CFrame = CFrame.lookAt(eye, hcf.Position) * jerk
+		lamp.CFrame = CFrame.lookAt(eye, hcf.Position)
+	end
+	cam.FieldOfView = 70
+	place(far, CFrame.identity)
+	task.wait(0.12)
+	-- the slam
+	fadeFrame.BackgroundTransparency = 1
+	for _, name in { "Screech", "Jumpscare", "HorrorHitLow", "HorrorHit", "Gasp" } do
+		local snd = localSound(name)
+		if snd then
+			snd:Play()
+			game:GetService("Debris"):AddItem(snd, 14)
 		end
 	end
-	local flash = Instance.new("ColorCorrectionEffect")
-	flash.TintColor = Color3.fromRGB(255, 120, 110)
-	flash.Contrast = 0.4
-	flash.Brightness = 0.12
-	flash.Parent = Lighting
-	ctx.UI.tween(flash, 0.9, { TintColor = Color3.new(1, 1, 1), Contrast = 0, Brightness = 0 })
-	Effects.shake(1.4, 0.9)
 	if ctx.Creature then
-		ctx.Creature.scream(1.3) -- (the mask's mouth stretched wide open)
+		ctx.Creature.scream(1.3) -- (the mouth stretched wide open)
 	end
 	local t0 = os.clock()
+	local hit = false
 	local jerk = CFrame.identity
 	local nextJerk = 0
-	-- (v112) the skinned body: the camera on the maw splitting open from his face down his chest
-	local focus = ctx.Creature and ctx.Creature.focusFor(head)
-	local far, near = 3.6, 1.3
-	if focus then
-		far, near = 5.6, 2.3
-		cam.FieldOfView = 55
-	end
-	while os.clock() - t0 < 0.95 and head.Parent do
-		-- right in front of his face as it lunges at you (fast, then the last stretch slow), the
-		-- picture jerking from one angle to the next
-		local k = (os.clock() - t0) / 0.95
-		local reach = far - (far - near) * (1 - (1 - math.min(k * 1.6, 1)) ^ 3)
-		if os.clock() >= nextJerk then
-			nextJerk = os.clock() + 0.06 + math.random() * 0.06
-			jerk = CFrame.Angles(0, 0, (math.random() - 0.5) * 0.35)
+	local SLAM, TOTAL = 0.16, Effects.ScareTime - 0.12
+	while os.clock() - t0 < TOTAL and head.Parent do
+		local t = os.clock() - t0
+		local reach
+		if t < SLAM then
+			local k = t / SLAM
+			reach = far - (far - near) * (k * k) -- accelerating into you
+			cam.FieldOfView = 70 - 26 * k
+		else
+			if not hit then
+				hit = true
+				-- contact: a white frame, a blur punch, the shudder
+				grade.Brightness = 0.55
+				blur.Size = 14
+				ctx.UI.tween(grade, 0.3, { Brightness = 0, TintColor = Color3.fromRGB(255, 200, 196) })
+				ctx.UI.tween(blur, 0.35, { Size = 2 })
+				Effects.shake(1.8, 0.8)
+			end
+			-- pressed right up against you, breathing in and out a little
+			reach = near - 0.25 * math.sin((t - SLAM) * 22)
+			cam.FieldOfView = 44
 		end
-		local hcf = focus and focus() or head.CFrame
-		cam.CFrame = CFrame.lookAt(hcf.Position + hcf.LookVector * reach + Vector3.new(0, 0.05, 0), hcf.Position) * jerk
+		if os.clock() >= nextJerk then
+			nextJerk = os.clock() + 0.045 + math.random() * 0.05
+			local amt = hit and 0.3 or 0.08
+			jerk = CFrame.Angles((math.random() - 0.5) * amt * 0.5, (math.random() - 0.5) * amt * 0.5, (math.random() - 0.5) * amt)
+		end
+		place(reach, jerk)
 		task.wait()
 	end
-	flash:Destroy()
+	-- hard cut to black: the capture fade carries on from here
+	fadeFrame.BackgroundTransparency = 0
+	lamp:Destroy()
+	grade:Destroy()
+	blur:Destroy()
 	cam.FieldOfView = oldFov
 	cam.CameraType = oldType
 	scaring = false
+	-- (a safety net: if no fade follows, give the picture back)
+	task.delay(2.5, function()
+		if not scaring and fadeFrame.BackgroundTransparency == 0 and not Players.LocalPlayer:GetAttribute("Captured") then
+			Effects.fade(false, 0.4)
+		end
+	end)
 end
 
 function Effects.shake(mag: number, duration: number)
@@ -320,8 +392,8 @@ function Effects.shake(mag: number, duration: number)
 	shakeUntil = math.max(shakeUntil, os.clock() + duration)
 end
 
--- a figure only you can see (built locally, gone in a moment)
-function Effects.figure(cf: CFrame, duration: number, gait: string?)
+-- a figure only you can see (built locally, gone in a moment). Returns the model (v139: the room scare moves it).
+function Effects.figure(cf: CFrame, duration: number, gait: string?): Model?
 	-- him: a copy of the real thing, posed (staring, head laid over, by default) and twitching
 	-- in stop-motion while it's there (the old block man if he isn't loaded)
 	local real = ctx.Util.creature()
@@ -374,7 +446,7 @@ function Effects.figure(cf: CFrame, duration: number, gait: string?)
 			task.delay(duration, function()
 				copy:Destroy()
 			end)
-			return
+			return copy
 		end
 	end
 	local model = Instance.new("Model")
@@ -403,6 +475,7 @@ function Effects.figure(cf: CFrame, duration: number, gait: string?)
 	task.delay(duration, function()
 		model:Destroy()
 	end)
+	return model
 end
 
 -- (v132, the owner: "make the light flicker and let him show for a sec and then disappear suddenly with a loud
@@ -443,17 +516,41 @@ function Effects.apparition(cf: CFrame, roomName: string?, powered: boolean?)
 			end
 			-- a blink of dark: and he's there
 			set(false)
-			Effects.figure(cf, 1.06, "Stare")
+			local fig = Effects.figure(cf, 1.15, "Stare")
 			task.wait(0.25)
-			-- the lights come up on him, standing there looking at you
+			-- the lights come up on him, standing there looking at you (a sharp string stab)
 			set(true)
-			Effects.playSound("BoneCrack1", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.6 })
-			task.wait(0.7)
-			-- snap: dark, the hit, gone
+			Effects.playSound("Stinger", nil, { Volume = 0.55, Caption = false })
+			Effects.playSound("BoneCrack1", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.6, Caption = false })
+			task.wait(0.5)
+			-- (v139, "crappy jumpscares": he no longer just stands there) he lunges at you...
+			local cam = workspace.CurrentCamera
+			if fig and fig.Parent and cam then
+				local from = fig:GetPivot()
+				local to = cam.CFrame.Position
+				local flat = Vector3.new(to.X - from.Position.X, 0, to.Z - from.Position.Z)
+				local step = flat.Magnitude > 0.1 and flat.Unit * math.min(3.5, flat.Magnitude * 0.45) or Vector3.zero
+				local t0 = os.clock()
+				while os.clock() - t0 < 0.18 and fig.Parent do
+					local k = (os.clock() - t0) / 0.18
+					fig:PivotTo(from + step * (k * k))
+					task.wait()
+				end
+			end
+			-- ...snap: dark, the hit, gone
 			set(false)
-			Effects.playSound("HorrorHit", nil, { Volume = 1 })
-			Effects.playSound("Screech", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.45 })
-			Effects.shake(0.55, 0.35)
+			if fig and fig.Parent then
+				fig:Destroy()
+			end
+			Effects.playSound("HorrorHit", nil, { Volume = 1, Caption = false })
+			Effects.playSound("HorrorHitLow", nil, { Volume = 0.8, Caption = false })
+			Effects.playSound("Screech", cf.Position + Vector3.new(0, 6, 0), { Volume = 0.8, Caption = false })
+			Effects.shake(0.9, 0.4)
+			if cam then
+				local fov = cam.FieldOfView
+				cam.FieldOfView = fov - 10
+				ctx.UI.tween(cam, 0.35, { FieldOfView = fov })
+			end
 			task.wait(0.35)
 		end)
 		set(true)

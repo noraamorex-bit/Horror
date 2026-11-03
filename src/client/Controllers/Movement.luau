@@ -27,6 +27,9 @@ local function send()
 	local sprint = (sprintHeld or sprintToggled) and not blocked()
 	local c = crouch and not blocked()
 	if sprint ~= lastSent.Sprint or c ~= lastSent.Crouch then
+		if c ~= lastSent.Crouch and ctx.Foley then
+			ctx.Foley.crouch(c) -- (v139: a creak as you kneel / stand)
+		end
 		lastSent = { Sprint = sprint, Crouch = c }
 		ctx.Remotes.Movement:FireServer(lastSent)
 	end

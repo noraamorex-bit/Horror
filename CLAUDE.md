@@ -95,6 +95,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   `Gear` draws a slot for every item, sized to fit; Roblox's backpack stays off.
   Touch buttons are only SPRINT and CROUCH (plus BREATH/LEAVE/STRUGGLE in context).
 - Secret-ending HUD is one slim bar at the top (it was "way too big" before).
+- **Less talk (v139**, a PC downvote: "bro too many voicelines, crappy jumpscares"; the owner: "reduce the amount of
+  information constantly coming and make it more relevant"): thoughts are read, not spoken (`Config.Thoughts.Spoken`); his
+  voice lines rare (`Story.HisLines` Gap 35, each kind 60-150 s; Sense no longer forced); the friends' banter one per act + 2
+  reactions a night; a scare's reaction line at most every 45 s per player (`Director.react`, `ReactGap`); no room-entry lines,
+  no flavour act lines, act IV opens on one line, no "Someone flipped the main breaker" banner, no in-house invite nudge,
+  filler texts cut (Mom landed, Dad, Riley's mom); idle hints 45 s first, 120 s in the hunt; **sound captions ("[Joints
+  cracking]") off unless turned on in Settings** (saved `Captions`). Don't add lines that only narrate what the player just saw.
 
 **Pacing / story**
 - It's a horror game, not a chore simulator: few tasks, multi-step, no dead time. No "stay together"
@@ -224,6 +231,14 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **No loud music**: none at night start/end, no chase/tension music, no music in the secret ending.
 - No coughing/grunting breath loop on the player (it sounded like someone saying "hello").
 - The text-message buzz is one short quiet buzz (the 3 s one was "so loud, long and annoying").
+- **Small sounds (v139**, the owner: "Add more sound effects for the smaller things"): client `Foley`, quiet and local: a
+  prompt's action (search = a drawer, read/look = paper, code = keypad beep, switches/breaker clicks, splice = tape, cut =
+  scissors, take = pickup, drive = keys), items out of your pocket (the flashlight clicks) and back, the phone out/away,
+  crouching (a floorboard), landing a real drop. Doors, hiding, the call keep the server's sounds.
+- **The jumpscare (v139**, "crappy jumpscares"): a beat of silence and black, his face lit cold from the lens slamming in, a
+  white hit-frame + blur punch, the shudder, then a hard cut to black that the capture fade takes over (`Effects.jumpscare`,
+  `ScareTime` 1.05, CaptureService waits for it). The room scare: a string stab as the lights come up, he lunges at you, then
+  the snap. Small scares a little further apart (Gap Evening 26-42, SmallThings 22-38, BeatSpacing 30).
 
 **World**
 - Warm, cozy, polished interior; real textures; models from anywhere (Creator Store/UGC) when they look
@@ -701,6 +716,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **3 Nov (v139 = place version 138, reels 62-63)**, the owner forwarded a PC downvote ("bro too many voicelines, crappy jumpscares.
+  its just...") and asked: "Fix this and reduce the amount of information constantly coming and make it more relevant. Add more sound
+  effects for the smaller things too. Make the next 2 reels." Done: less talk, the new jumpscare, Foley (see HUD / Audio; GDD "Less
+  talk, better scares (v139)"). A night sim's message log (night_test with every remote): thoughts 31 -> 20, his lines 5 -> 3, no
+  spoken thoughts, captions off. Can't hear or see the client here: check on a PC that the jumpscare reads (his face lit, the hard
+  cut to black) and the Foley sounds aren't too loud. Next: `--since=138`: rating trend, quits in act I.
 
 - **2 Nov (v138 = place version 137)**, the owner: "Like ratio is really low. Create a code section in lobby in the UI and make it say
   'Use Code RELEASE' and make it say that you have to like the game before using codes. Make the code give coins and a title or
@@ -1238,7 +1260,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 137; the notes' "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 138; the notes' "v139" = place version 138, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

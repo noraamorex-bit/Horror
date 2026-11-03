@@ -31,7 +31,8 @@ local sfxGroup: SoundGroup
 local panel: Frame
 local rows: { [string]: { [number]: TextButton } } = {}
 local shakeButton: TextButton
-local current = { Music = 1, Sfx = 1, Shake = true, Voice = 1 }
+local current = { Music = 1, Sfx = 1, Shake = true, Voice = 1, Captions = false }
+local captionButton: TextButton
 
 local function sort(s: Instance)
 	if s:IsA("Sound") and s.SoundGroup == nil then
@@ -56,12 +57,15 @@ local function refresh()
 	shakeButton.Text = current.Shake and "ON" or "OFF"
 	shakeButton.BackgroundColor3 = current.Shake and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(28, 28, 32)
 	shakeButton.TextColor3 = current.Shake and Color3.fromRGB(15, 15, 15) or UI.Color.Text
+	captionButton.Text = current.Captions and "ON" or "OFF"
+	captionButton.BackgroundColor3 = current.Captions and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(28, 28, 32)
+	captionButton.TextColor3 = current.Captions and Color3.fromRGB(15, 15, 15) or UI.Color.Text
 end
 
 local function save()
 	apply()
 	refresh()
-	ctx.Remotes.SaveSettings:FireServer(current.Music, current.Sfx, current.Shake, current.Voice)
+	ctx.Remotes.SaveSettings:FireServer(current.Music, current.Sfx, current.Shake, current.Voice, current.Captions)
 end
 
 -- the saved values, once the server has loaded them
@@ -76,6 +80,10 @@ local function fromAttributes()
 	if type(sh) == "boolean" then
 		current.Shake = sh
 	end
+	local cap = player:GetAttribute("SetCaptions")
+	if type(cap) == "boolean" then
+		current.Captions = cap
+	end
 	local v = player:GetAttribute("SetVoice")
 	if type(v) == "number" then
 		current.Voice = v
@@ -84,6 +92,12 @@ local function fromAttributes()
 	if panel then
 		refresh()
 	end
+end
+
+-- (v139) sound captions ("[Joints cracking]"): off unless turned on (the owner: "reduce the amount of
+-- information constantly coming")
+function Settings.captionsOn(): boolean
+	return current.Captions
 end
 
 function Settings.shakeOn(): boolean
@@ -169,6 +183,12 @@ local function build()
 	shakeButton = pill(shakeRow, "ON", 1, 90)
 	shakeButton.Activated:Connect(function()
 		current.Shake = not current.Shake
+		save()
+	end)
+	local capRow = row(5, "Sound captions")
+	captionButton = pill(capRow, "OFF", 1, 90)
+	captionButton.Activated:Connect(function()
+		current.Captions = not current.Captions
 		save()
 	end)
 

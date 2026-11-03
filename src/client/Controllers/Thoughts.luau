@@ -106,8 +106,9 @@ local function run()
 			break
 		end
 		line.Text = item.Text
-		-- (your inner voice, quietly: client Voices)
-		if ctx.Voices then
+		-- (your inner voice, quietly: client Voices. v139: off, Config.Thoughts.Spoken: a downvote said
+		-- "too many voicelines"; people and he still speak)
+		if ctx.Voices and ctx.Config.Thoughts.Spoken then
 			ctx.Voices.say(item.Text, ctx.Voices.forPlayer(Players.LocalPlayer), { Channel = "Thought", Volume = ctx.Story.Voices.Thought })
 		end
 		tip.Text = hintText(item.Hint)
