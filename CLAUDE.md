@@ -541,6 +541,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   again." → ""i can see you."" (the empty hall) → ""turn around."" (he's right behind you; the lunge on 22.15 s) → RUN. Caption:
   `don't answer the walkie talkie 👀 game in comments`. (Waiting for a render: `pgrep -f` on a pattern that's also in the waiting
   command's own line never ends; match the node process another way.)
+  Reel 64 = **#17** (`cant_play_alone_17_v2.mp4`, 3 Nov): **the sleep app** that records you at night. "night 57: my sleep app
+  recorded something." (the phone by my pillow: a waveform) → ""3:12 am: footsteps."" (from my doorway: him at the end of the hall)
+  → ""3:14 am: breathing."" (him bent over my bed, his head comes round) → "so i slept with the lamp on." → "i woke up in the dark."
+  (my door open a crack) → "new recording. 3:16 am." → "it was 3:16 am." (turn from the phone: he's crouched by the bed; the lunge
+  on 22.15 s) → RUN. Caption: `don't check your sleep app 👀 game in comments`.
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
