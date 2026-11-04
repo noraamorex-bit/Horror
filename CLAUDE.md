@@ -691,6 +691,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   the `Peek` gait leans him sideways out of a crack's view) → the doors torn open on 22.15 s → RUN.
   Glitch "he got back up". Caption: `he got back up game in comments` + the hashtags. (In the garage keep
   cameras off the workbench: x 61.6..65, z -27..-16.)
+- **PEAK, again from Part 1 (4 Nov**, the owner: "Bring back the peak Roblox game thing with this sound. Start from part 1."):
+  `peak_horror_game_friends_v2_part1.mp4` / `_part2.mp4`, reel 25's format (`comp_peak.mjs`) on #2's track, cut from reels 61-64's
+  full-size renders by `marketing/reel_source/peak_r1/edit.py 1|2` (no new render: the raw frames were still in the scratchpad).
+  Part 1: Lily's dark room, him in her doorway, at the end of the hall, bent over my bed, the lamp on then dark, my door ajar, the
+  wardrobe creaks open (his mask in the gap) → scare → RUN; glitch "he was in the closet". Part 2: the empty upstairs hall, him at
+  the foot of Lily's bed and bent over it, the stairs, my lit room, my door ajar, the hall, turn round: right behind you → RUN;
+  glitch "don't turn around". Captions: `he was in the closet game in comments` / `don't turn around game in comments` + hashtags.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
