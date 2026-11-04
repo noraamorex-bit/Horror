@@ -698,6 +698,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   wardrobe creaks open (his mask in the gap) → scare → RUN; glitch "he was in the closet". Part 2: the empty upstairs hall, him at
   the foot of Lily's bed and bent over it, the stairs, my lit room, my door ajar, the hall, turn round: right behind you → RUN;
   glitch "don't turn around". Captions: `he was in the closet game in comments` / `don't turn around game in comments` + hashtags.
+  **Part 3** (`reel65`, `peak_horror_game_friends_v2_part3.mp4`, 4 Nov): new footage (scene.py, downstairs): the fridge open a crack,
+  it swings open by itself, him bent into it (his head turns right round), down behind the island, his legs go by, the kitchen empty
+  over the counter, crawl for the arch: he's standing in it; back behind the island, look up: his mask over the counter edge, it comes
+  at you on 22.15 s → RUN; glitch "he was in the kitchen". `reel65/edit.py` is the PEAK edit (no per-reel audio: #2's track).
+  Crouched shots: keep the camera ~3 studs off the island or its edge hides him. Caption: `he was in the kitchen game in comments`.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
