@@ -270,10 +270,10 @@ local ok, err = pcall(function()
 		local asked = false
 		for _ = 1, 40 do
 			for _, d in H.unwrap(pg):GetDescendants() do
-				if d:IsA("TextLabel") and string.find(d.Text, "on the game page", 1, true) then asked = true end
+				if d.Name == "LikeAsk" then asked = true end -- (v141: the gold LIKE pill)
 			end
 			if asked then break end
-			task.wait(0.1)
+			H.task.wait(0.1)
 		end
 		assert(asked, "a win asks for a like")
 		print("like ask ok")
@@ -298,6 +298,12 @@ local ok, err = pcall(function()
 			if d:IsA("TextLabel") and string.find(d.Text, "+3 candy tonight", 1, true) and string.find(d.Text, "Candy Corn at 15", 1, true) then found = true end
 		end
 		assert(found, "the card's candy line")
+		-- (v141) a good night: the gold LIKE pill on the card; a death card has none
+		local likes = 0
+		for _, d in H.unwrap(pg):GetDescendants() do
+			if d.Name == "LikeAsk" then likes += 1 end
+		end
+		assert(likes >= 1, "the like pill on a good card")
 		print("candy line ok")
 	end
 	-- v98: the card's offers: the Starter Pack while it's on offer (and made on Roblox); BE HIM NEXT

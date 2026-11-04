@@ -243,6 +243,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **The hunt's surprises were dead from v127 to v139** (the logs: 0.00 surprised/player): the constant pursuit took every idle
   moment before `trySurprise` was reached. Now a due surprise (the closet ambush, "behind you") goes first (leap_test checks
   it through the brain). When adding anything to the brain's think order, check the surprises still fire.
+  **v141**: they still logged 0.01 per player on place version 140: "behind you" only counted when you turned round, and almost
+  nobody did. Now if you never turn, he screeches right behind you before he's gone (it lands, and counts).
 
 **World**
 - Warm, cozy, polished interior; real textures; models from anywhere (Creator Store/UGC) when they look
@@ -260,6 +262,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   and he's gone (client `Effects.apparition`, Director `roomEntered`/`apparitionSpot`, `Config.Director.Apparition`). Always in the
   first act's open-window rooms (by the window); other rooms by chance once a night; in the hunt your flashlight stutters instead.
   New scares should be this kind: seen, sudden, loud, gone. GDD "The room scare (v132)"; test `apparition_test`.
+  **v141: the first sighting**: `Apparition.FirstAt` 50 s into every night's act I, the room scare comes to whoever is in a room
+  he fits in (`Director.firstScare`; act I was where most first-nighters quit, a median 3 min in, before ever seeing him).
   **v133**: the server drives the room's lights (`Power.flickerRoom`; act I's rooms start dark, so nothing flickered before) and
   leaves them on; dark only 0.25 s + 0.35 s (the owner: "the lights out time is way too long people would leave").
 
@@ -295,6 +299,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   else is going on, the TV alert never during the news, a breather before the blackout.
 - The heartbeat minigame must stay passable (logs: 0/22 passes before the fix); Normal is
   forgiving, Hard is tight.
+- **Asking for likes (v141**, the owner: "Likes have fallen much more. Fix." 28 up / 53 down on 4 Nov; 25 / 36 on 31 Oct): on
+  every good result card a gold pill bounces in, "👍 Did he scare you? LIKE the game!" (`LikeAsk`; it was one dim line, only for a
+  player's first 5 nights); the welcome-back card for anyone who's survived says to like it (new codes at 50 likes). Never reward
+  a like (Roblox's rules); only ask at good moments, never on a death card.
 - Chat: name tags ★ (supporter) and the equipped title in its colour; no level (the owner asked).
   Level and nights survived are in the server's player list (leaderstats; not for the owner).
 - **No quick exits (v116**, a player: "escaped in 3 mins"): the car and Mrs. Okafor's door only work 90 s into
@@ -737,6 +745,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **4 Nov (v141 = place version 141, PEAK Parts 1-2 again)**, the owner: "Likes have fallen much more. Fix. Also make next two reels.
+  Bring back the peak Roblox game thing with this sound. Start from part 1." Votes 28 up / 53 down (31 Oct: 25 / 36), 21.9K visits,
+  451 favorites. Logs since 137 (1,500 lobby visits, 634 nights): first-nighters quit mid-night 48%, 286 of 501 in act I (median minute
+  3.1, him offstage); deaths 0.13 / player (not the cause); surprises still 0.01 / player on 140. Done: the first sighting at 50 s,
+  surprises that land, the like pill (see World, The intruder, Retention). Reels: PEAK Part 1 and Part 2 again (see Marketing). Next:
+  votes in a day or two (want the downs to stop climbing); `--since=141`: quits in act I (want well under 286/501), surprised/player.
 
 - **3 Nov (v140 = place version 140)**, the owner (the v138 lobby with the title, FIND PLAYERS and How to play crossed out): "Do UI
   properly this is so bad.. Cut all things i crossed. Cut invite. Make everything smaller… Use only icons..". Done: see Lobby (v140).
@@ -1287,7 +1302,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 140; the notes' "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 141; the notes' "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

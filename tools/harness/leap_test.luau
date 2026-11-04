@@ -192,7 +192,19 @@ local ok3, err3 = pcall(function()
 	S.Root.Anchored = false
 	place(here)
 	assert(I._surprise("behind"), "behind them again")
+	local surprised0 = 0
+	local jc = ctx.Journey and ctx.Journey.count
+	local counted = 0
+	if ctx.Journey then
+		ctx.Journey.count = function(pl, k, ...)
+			if k == "Surprised" and pl == p then counted += 1 end
+			if jc then return jc(pl, k, ...) end
+		end
+	else
+		ctx.Journey = { count = function(pl, k) if k == "Surprised" and pl == p then counted += 1 end end }
+	end
 	tick(8)
+	assert(counted > surprised0, "(v141) never turned: a screech behind them anyway, and it counts")
 	print("never turned:", S.State)
 	assert(S.State ~= "Stalk" and S.State ~= "Chase", "he's gone again")
 	-- (v139) through the brain itself: a surprise that's due goes before his constant pursuit (since v127 the

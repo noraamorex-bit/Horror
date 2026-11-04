@@ -2247,7 +2247,16 @@ STATES.Stalk = function(_, visible)
 		return
 	end
 	if not r or now() >= d.Until then
-		-- they never turned round: a whisper, and he's gone
+		-- they never turned round: (v141: the logs had 0.01 surprises landing per player, nearly everyone just walked on and
+		-- never knew) a SCREECH right behind them; they whip round and he's already gone
+		if r then
+			ctx.Audio.playAt("Screech", S.Head.Position, { Caption = false, Volume = 0.9 })
+			ctx.Audio.playFor(p, "Stinger")
+			ctx.Remotes.Shake:FireClient(p, 0.8, 0.5)
+			if ctx.Journey then
+				ctx.Journey.count(p, "Surprised")
+			end
+		end
 		ctx.Audio.playAt("CreatureWhisper", S.Head.Position, { Caption = false })
 		S.Root.Anchored = false
 		serverOwn()

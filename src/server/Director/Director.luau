@@ -1640,6 +1640,54 @@ function Director.apparitionTick()
 			Director.roomEntered(p, room)
 		end
 	end
+	Director.firstScare()
+end
+
+--[[
+	(v141) The first sighting. The v137-140 logs: first-nighters who quit left in act I (286 of 501), a median 3.1 min in,
+	with him offstage: the first minutes were pizza and popcorn, the first real scare came whenever someone first walked
+	into a new room, often minutes later. Now, Config.Director.Apparition.FirstAt s into every night's first act (while
+	nobody's talking), whoever is in a room he can stand in gets the room scare right there: the lights stutter, he's
+	standing in front of you, then the snap. Once a night; it counts as that room's scare.
+]]
+function Director.firstScare()
+	local cfg = ctx.Config.Director.Apparition
+	if not cfg or not cfg.FirstAt or state.Act ~= "Evening" or state.FirstScareDone or not state.ActStart then
+		return
+	end
+	local ts = math.max(ctx.Config.TimeScale, 0.25)
+	local now = os.clock()
+	if now - state.ActStart < cfg.FirstAt * ts or not Director.isQuiet() then
+		return
+	end
+	if now - (state.LastScareAt or -1e9) < cfg.Spacing * ts then
+		return
+	end
+	if (ctx.Cutscene and ctx.Cutscene.isPlaying and ctx.Cutscene.isPlaying()) or (ctx.Dialogue and ctx.Dialogue.isActive and ctx.Dialogue.isActive()) then
+		return
+	end
+	local e = eventById("Apparition")
+	if not e then
+		return
+	end
+	for _, p in ctx.Util.activePlayers() do
+		local root = ctx.Util.getRoot(p)
+		local room = root and ctx.Rooms.find(root.Position)
+		if room and APPARITION_ROOMS[room.Name] and not p:GetAttribute("Hiding") then
+			local spot = Director.apparitionSpot(p, room)
+			if spot then
+				state.FirstScareDone = true
+				state.ApparitionRooms[room.Name] = true
+				state.LastApparition = now
+				fire(e, { Player = p, Room = room.Name, Spot = spot, Window = false, First = true })
+				return
+			end
+		end
+	end
+	-- (nowhere he fits in view yet: try again next tick, until the act is a minute past the mark)
+	if now - state.ActStart > (cfg.FirstAt + 60) * ts then
+		state.FirstScareDone = true
+	end
 end
 
 -- fire a scripted event now (Events.List id), even if its usual conditions aren't met

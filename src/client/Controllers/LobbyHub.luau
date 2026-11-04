@@ -112,6 +112,10 @@ local function backLines(player: Player): { string }
 	if (tonumber(player:GetAttribute("StatEscapes")) or 0) >= 1 and #lines < 5 then
 		table.insert(lines, "<b>NIGHTMARE</b> is open to you: vote for it in the house, 2x coins")
 	end
+	-- (v141) survived one: a like, please (likes decide how often Roblox shows the game to others)
+	if (tonumber(player:GetAttribute("StatEscapes")) or 0) >= 1 and #lines < 5 then
+		table.insert(lines, "<font color=\"#ffcd5a\"><b>👍 LIKE</b></font> the game on its page: new codes at 50 likes")
+	end
 	return lines
 end
 LobbyHub._backLines = backLines -- (tests)

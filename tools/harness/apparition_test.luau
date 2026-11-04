@@ -101,6 +101,8 @@ local ok, err = pcall(function()
 		return out
 	end
 	local Story = ctx.Story
+	local firstAt = ctx.Config.Director.Apparition.FirstAt
+	ctx.Config.Director.Apparition.FirstAt = nil -- (the first sighting has its own check below)
 	ctx.Director.adminStart("Normal")
 	assert(ctx.Director.getAct() == "Evening", "the first act")
 	away(b)
@@ -166,6 +168,22 @@ local ok, err = pcall(function()
 	tick(0.6)
 	assert(#apparitions(a) == 2, "the cooldown between room scares")
 	print("other rooms ok")
+	-- 3) (v141) the first sighting: FirstAt s into a new night's first act, wherever you are (the kitchen here, at the
+	-- start), the room scare comes to you; once a night
+	ctx.Config.Director.Apparition.FirstAt = firstAt
+	ctx.Director.startAct("Evening")
+	assert(ctx.Director.getAct() == "Evening", "back to the first act")
+	local n0 = #apparitions(a)
+	put(a, V(-24, 4, 22), V(-24, 4, 8))
+	tick(firstAt - 5)
+	assert(#apparitions(a) == n0, "not before FirstAt")
+	tick(15)
+	local got3 = apparitions(a)
+	assert(#got3 == n0 + 1, "the first sighting, in the kitchen: " .. (#got3 - n0))
+	assert(got3[#got3][4] == "Kitchen", "in the room you're in")
+	tick(60)
+	assert(#apparitions(a) == n0 + 1, "only once")
+	print("first sighting ok")
 end)
 if not ok then
 	print("FAIL: " .. tostring(err))

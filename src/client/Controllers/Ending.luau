@@ -214,10 +214,43 @@ local function showCard(opts)
 	end)
 	-- a good night: the moment to ask for a like (20 votes so far, 45%: happy players rarely vote
 	-- unless asked; only on wins, and only for a player's first few)
-	if opts.Good and (tonumber(player:GetAttribute("StatNights")) or 0) < 5 then
-		local ask = line({ Text = "Liked tonight? A 👍 on the game page helps a lot.", Font = UI.Font.Body, TextSize = 15, TextColor3 = UI.Color.Dim, TextTransparency = 1 })
-		task.delay(1.6, function()
-			UI.tween(ask, 0.6, { TextTransparency = 0 })
+	-- (v141, the likes fell to 28 up / 53 down: the ask was one dim line among many) a gold pill that bounces in a moment
+	-- after the headline, on every good night: you made it, he scared you, this is when people like a game
+	if opts.Good then
+		order += 1
+		local pill = UI.new("Frame", {
+			Name = "LikeAsk",
+			LayoutOrder = order,
+			Size = UDim2.fromOffset(0, 44),
+			AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundColor3 = GOLD,
+			Parent = col,
+		})
+		UI.corner(pill, 22)
+		UI.new("UIPadding", { PaddingLeft = UDim.new(0, 18), PaddingRight = UDim.new(0, 18), Parent = pill })
+		UI.label({
+			Size = UDim2.fromOffset(0, 44),
+			AutomaticSize = Enum.AutomaticSize.X,
+			Text = "👍  Did he scare you? <b>LIKE</b> the game!",
+			RichText = true,
+			Font = UI.Font.Bold,
+			TextSize = 18,
+			TextWrapped = false,
+			TextColor3 = Color3.fromRGB(24, 18, 6),
+			Parent = pill,
+		})
+		local sc = UI.new("UIScale", { Scale = 0, Parent = pill })
+		task.delay(1.4, function()
+			UI.tween(sc, 0.45, { Scale = 1 }, Enum.EasingStyle.Back)
+			if ctx.Effects then
+				ctx.Effects.playSound("UISelect", nil, { Caption = false })
+			end
+			-- (a slow breath while the card is up)
+			local t = 0
+			while pill.Parent do
+				t += task.wait(1 / 20)
+				sc.Scale = 1 + 0.035 * math.sin(t * 3)
+			end
 		end)
 	end
 	-- he got you: how, and how not to next time
@@ -556,10 +589,7 @@ local function showCard(opts)
 		ctx.Social.button(social, "favorite")
 		ctx.Social.button(social, "remind")
 	end
-	if opts.Good then
-		-- (likes decide how often Roblox recommends the game)
-		line({ Text = "Enjoyed it? A 👍 on the game page helps more people find it.", TextSize = 13, TextColor3 = UI.Color.Dim })
-	end
+	-- (v141: the second, dim like line went: one clear ask above)
 	if opts.RestartIn then
 		local countdown = line({ Text = "", TextSize = 14, TextColor3 = UI.Color.Dim })
 		task.spawn(function()

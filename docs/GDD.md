@@ -157,6 +157,15 @@ A player: "most loopable enemy in horror games". He's slower than your sprint by
 ### A short blackout (v134)
 The owner: "Blackout part is too long." The dark ran ~6-7 minutes when help was called (Config.MinNight 900 held the police off until 15:00) and up to ~19 when it wasn't (act III's 10-12 minutes before Mrs. Okafor's part began). Now: MinNight 600; police 90 s after the call (neighbour 90, car 60); the car and her door after 90 s of dark; act III 3-4 min with no help called, then Mrs. Okafor calls 30 s into the last act and the police come 60 s later; the final run to the front door 30 s (Hard 25). ~3 minutes of dark typically, ~6 at most; nights ~11-12 min.
 
+### Likes (v141)
+The owner: "Likes have fallen much more. Fix." 28 up / 53 down (31 Oct: 25 / 36): 3 likes against 17 dislikes in four days, the days the game opened to all ages. The v137-140 logs: deaths were low (0.13 per first-nighter); the leak was act I: 286 of 501 first-night quits, a median 3.1 minutes in, before he'd been seen. And the hunt's surprises still logged 0.01 per player.
+
+**The first sighting.** `Config.Director.Apparition.FirstAt` (50 s) into every night's first act, as soon as nobody's talking and no cutscene runs, whoever is in a room he can stand in gets the room scare there and then (`Director.firstScare`, called from `apparitionTick`): the lights stutter, he's standing in front of you, the snap. Once a night (it counts as that room's scare); if he fits nowhere in view it keeps trying for a minute. apparition_test "first sighting".
+
+**Surprises that land.** "Behind you" counted only when the player turned round within 7 s, which almost nobody did: he vanished unseen. Now, not turned, he screeches right behind them (Screech + Stinger + a shake) and is gone when they whip round; it counts as Surprised. leap_test checks it.
+
+**The ask.** Likes decide how often Roblox shows the game. The good result card's dim lines are replaced by one gold pill that bounces in 1.4 s after the headline: "👍 Did he scare you? LIKE the game!" (every good night, not only a player's first five). The lobby's welcome-back card adds "👍 LIKE the game on its page: new codes at 50 likes" for anyone who has survived a night. Never on a death card; never a reward for a like.
+
 ### Less talk, better scares (v139)
 A PC downvote: "bro too many voicelines, crappy jumpscares. its just..."; the owner: "reduce the amount of information constantly coming and make it more relevant. Add more sound effects for the smaller things too."
 
