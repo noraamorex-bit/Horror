@@ -245,6 +245,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   it through the brain). When adding anything to the brain's think order, check the surprises still fire.
   **v141**: they still logged 0.01 per player on place version 140: "behind you" only counted when you turned round, and almost
   nobody did. Now if you never turn, he screeches right behind you before he's gone (it lands, and counts).
+  **v142**: still 5 players of 456 on 141: the brain only tried from Patrol / Search, which the pursuit hardly leaves him in, and the
+  hunt is 2-3 min. Now from any `PURSUE_FREE` state, the first 22 s into the hunt, then every 40-65 s; each one begun is logged
+  (`Surp` Behind / Closet).
 
 **World**
 - Warm, cozy, polished interior; real textures; models from anywhere (Creator Store/UGC) when they look
@@ -264,6 +267,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   New scares should be this kind: seen, sudden, loud, gone. GDD "The room scare (v132)"; test `apparition_test`.
   **v141: the first sighting**: `Apparition.FirstAt` 50 s into every night's act I, the room scare comes to whoever is in a room
   he fits in (`Director.firstScare`; act I was where most first-nighters quit, a median 3 min in, before ever seeing him).
+  **v142: a second one** at `SecondAt` 150 s, in a room that hasn't had it; every room scare is in the night log (`Appar`).
   **v133**: the server drives the room's lights (`Power.flickerRoom`; act I's rooms start dark, so nothing flickered before) and
   leaves them on; dark only 0.25 s + 0.35 s (the owner: "the lights out time is way too long people would leave").
 
@@ -757,6 +761,15 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **5 Nov (v142 = place version 142, PEAK Parts 4-5)**, the owner: "Analyze statistics and improve. Make the next 2 reels." Votes
+  30 up / 55 down (+2 / +2 in a day), 22.9K visits, 461 favorites. Logs since 141 (570 lobby visits, 248 nights): first-nighters
+  quit mid-night 49%; of 118 act I quits, 55 within 30 s (mostly solo: the circle split, left as is) and ~45 at 2.5-4 min, 114 never
+  having seen his body; surprises 5 of 456 players; room scares weren't logged. Sales since 15 Oct 2,691 R$ (Starter at 9 R$: 13 of
+  1,735 windows; JumpscareAll 79/480, BecomeHim 34/283). Done: a second act I sighting, surprises from any free state, both logged
+  (see The intruder, World; GDD "Seen and surprised (v142)"). Next: `--since=142`: `room scares/player` and "quitters who'd seen a
+  room scare first", surprises begun/player (want ~1), act I quits at 2.5-4 min; votes. His route to the attic fails ~2 times a
+  night (FailGrid_UpperHall_Attic 530): not looked into yet.
 
 - **4 Nov (v141 = place version 141, PEAK Parts 1-2 again)**, the owner: "Likes have fallen much more. Fix. Also make next two reels.
   Bring back the peak Roblox game thing with this sound. Start from part 1." Votes 28 up / 53 down (31 Oct: 25 / 36), 21.9K visits,
@@ -1314,7 +1327,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 141; the notes' "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 142; the notes' "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

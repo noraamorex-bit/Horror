@@ -1652,12 +1652,25 @@ end
 ]]
 function Director.firstScare()
 	local cfg = ctx.Config.Director.Apparition
-	if not cfg or not cfg.FirstAt or state.Act ~= "Evening" or state.FirstScareDone or not state.ActStart then
+	if not cfg or not cfg.FirstAt or state.Act ~= "Evening" or not state.ActStart then
+		return
+	end
+	-- (v142) and a second one later in the act: the v141 logs had first-nighters who quit in act I leaving at 2.5-4 min
+	-- having seen nothing of him since (a median 3.7 min in; the act runs ~4)
+	local marks = { cfg.FirstAt, cfg.SecondAt }
+	local n = state.FirstScares or 0
+	local at = marks[n + 1]
+	if not at then
 		return
 	end
 	local ts = math.max(ctx.Config.TimeScale, 0.25)
 	local now = os.clock()
-	if now - state.ActStart < cfg.FirstAt * ts or not Director.isQuiet() then
+	local since = now - state.ActStart
+	if since < at * ts then
+		return
+	end
+	-- (quiet if it can be: after 20 s of waiting, a line being thought won't hold it back)
+	if not Director.isQuiet() and since < (at + 20) * ts then
 		return
 	end
 	if now - (state.LastScareAt or -1e9) < cfg.Spacing * ts then
@@ -1670,12 +1683,15 @@ function Director.firstScare()
 	if not e then
 		return
 	end
+	-- (a room that hasn't had its scare yet if there is one; after 30 s of waiting, any)
+	local anyRoom = since > (at + 30) * ts
 	for _, p in ctx.Util.activePlayers() do
 		local root = ctx.Util.getRoot(p)
 		local room = root and ctx.Rooms.find(root.Position)
-		if room and APPARITION_ROOMS[room.Name] and not p:GetAttribute("Hiding") then
+		if room and APPARITION_ROOMS[room.Name] and not p:GetAttribute("Hiding") and (anyRoom or not state.ApparitionRooms[room.Name]) then
 			local spot = Director.apparitionSpot(p, room)
 			if spot then
+				state.FirstScares = n + 1
 				state.FirstScareDone = true
 				state.ApparitionRooms[room.Name] = true
 				state.LastApparition = now
@@ -1685,7 +1701,8 @@ function Director.firstScare()
 		end
 	end
 	-- (nowhere he fits in view yet: try again next tick, until the act is a minute past the mark)
-	if now - state.ActStart > (cfg.FirstAt + 60) * ts then
+	if since > (at + 60) * ts then
+		state.FirstScares = n + 1
 		state.FirstScareDone = true
 	end
 end

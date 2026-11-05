@@ -205,6 +205,14 @@ def report_nights(nights):
               f"seen/player {sum((r[2].get('Seen') or 0) for r in group) / n:.1f}  "
               f"surprised/player {sum((r[2].get('Surprised') or 0) for r in group) / n:.2f}  "
               f"leaps over furniture/player {sum((r[2].get('Leaps') or 0) for r in group) / n:.2f}")
+        # (v142) the room scares each saw (Appar: First = the act I sightings) and the hunt's surprises begun (Surp)
+        appar = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Appar" and len(ev) > 2)
+        surp = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Surp" and len(ev) > 2)
+        if appar or surp:
+            firsts = [next((ev[0] for ev in r[2].get("Ev") or [] if ev[1] == "Appar"), None) for r in out]
+            beforeQuit = sum(1 for t, r in zip(firsts, out) if t is not None and t <= r[2]["Out"]["t"])
+            print(f"      room scares/player {sum(appar.values()) / n:.2f} (act I sightings {appar.get('First', 0)})  surprises begun/player "
+                  f"{sum(surp.values()) / n:.2f} {dict(surp)}  quitters who'd seen a room scare first: {beforeQuit} of {len(out)}")
         beats = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Beat" and len(ev) > 2)
         if beats:
             print(f"      heartbeat minigames: {dict(beats)}")

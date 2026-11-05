@@ -157,6 +157,15 @@ A player: "most loopable enemy in horror games". He's slower than your sprint by
 ### A short blackout (v134)
 The owner: "Blackout part is too long." The dark ran ~6-7 minutes when help was called (Config.MinNight 900 held the police off until 15:00) and up to ~19 when it wasn't (act III's 10-12 minutes before Mrs. Okafor's part began). Now: MinNight 600; police 90 s after the call (neighbour 90, car 60); the car and her door after 90 s of dark; act III 3-4 min with no help called, then Mrs. Okafor calls 30 s into the last act and the police come 60 s later; the final run to the front door 30 s (Hard 25). ~3 minutes of dark typically, ~6 at most; nights ~11-12 min.
 
+### Seen and surprised (v142)
+The owner: "Analyze statistics and improve." Votes 30 up / 55 down (+2 / +2 in a day), 22.9K visits. The v141 logs (570 lobby visits, 248 nights): first-nighters quit mid-night 49%, 118 of them in act I: 55 within 30 s of the start (mostly alone, sent by a "2 players" circle: the owner's countdown rule, left as is) and ~45 between minute 2.5 and 4, 114 of the 118 having never seen his body. Surprises: 5 players of 456 in 248 nights. The room scare wasn't in the night log at all, so the first sighting couldn't be checked.
+
+**A second sighting.** `Apparition.SecondAt` (150 s): the room scare comes a second time in act I, in a room that hasn't had one if the player's in one (after 30 s of waiting, any room); while waiting, a thought being read no longer holds it back after 20 s (`Director.firstScare`, two marks). apparition_test "first sighting" checks both.
+
+**Surprises from any free state.** The brain only tried a surprise while he was in Patrol / Search; the constant pursuit (v127) keeps him in a run or a spot check, and the hunt is 2-3 minutes since v134, so a first one at 35 s and then every 55-90 s gave a night one try at most. Now any state the pursuit may take him from (`PURSUE_FREE`), the first 22 s into the hunt, then every 40-65 s (retry 6 s).
+
+**Logged.** Every room scare goes in the night log as `Appar` (`First` for the act I ones, else the room), every surprise begun as `Surp` (`Behind` / `Closet`, to whoever it was for). pull_stats prints room scares / surprises per player and how many act I quitters had seen a room scare before leaving.
+
 ### Likes (v141)
 The owner: "Likes have fallen much more. Fix." 28 up / 53 down (31 Oct: 25 / 36): 3 likes against 17 dislikes in four days, the days the game opened to all ages. The v137-140 logs: deaths were low (0.13 per first-nighter); the leak was act I: 286 of 501 first-night quits, a median 3.1 minutes in, before he'd been seen. And the hunt's surprises still logged 0.01 per player.
 

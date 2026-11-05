@@ -1625,6 +1625,10 @@ Events.List = {
 				if p == data.Player or (room and room.Name == data.Room) then
 					table.insert(who, p)
 					ctx.Remotes.Apparition:FireClient(p, data.Spot, data.Room, powered)
+					-- (v142: in the night log, so we can see who saw him before they quit)
+					if ctx.Journey then
+						ctx.Journey.event(p, "Appar", data.First and "First" or data.Room)
+					end
 				end
 			end
 			if powered then

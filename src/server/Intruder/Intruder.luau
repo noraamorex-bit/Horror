@@ -38,6 +38,7 @@ local grabAnyone: () -> boolean
 local patrolRoute: () -> { Vector3 }
 local unstick: (string) -> ()
 local trySurprise: () -> boolean
+local SURPRISE_FIRST = 22 -- (seconds into the hunt before the first surprise)
 local chaseSpeed: (Player?, boolean?) -> number
 local STATES: { [string]: (number, { Player }) -> () } = {}
 
@@ -812,7 +813,7 @@ local function startHunt()
 	end
 	S.LastHuntAt = now()
 	S.LastContact = S.LastContact or now()
-	S.NextSurprise = S.NextSurprise or now() + 35
+	S.NextSurprise = S.NextSurprise or now() + SURPRISE_FIRST
 	S.Waves += 1
 	local justEntered = S.JustEntered
 	S.JustEntered = nil
@@ -2037,7 +2038,10 @@ end
 ]]
 -- (v105: the v104 logs had 0.07 surprises per player: the hunt runs ~3 minutes, so a first one at a
 -- minute and then every 75-120 s rarely came round. Sooner, and a little more often.)
-local SURPRISE = { Gap = { 55, 90 }, Retry = 8, ClosetWait = 40, Warn = 15, Burst = 7.5, StalkWait = 7 }
+-- (v142: the v141 logs still had 5 players in 456 surprised: since v134 the hunt is 2-3 minutes, so a first one at 35 s and
+-- then every 55-90 s gave a night one try at most, and the brain only tried from Patrol / Search, which the constant
+-- pursuit (v127) hardly leaves him in. Now from any state the pursuit can take him from, sooner and more often.)
+local SURPRISE = { Gap = { 40, 65 }, Retry = 6, ClosetWait = 40, Warn = 15, Burst = 7.5, StalkWait = 7 }
 
 local function nextSurprise()
 	S.NextSurprise = now() + SURPRISE.Gap[1] + math.random() * (SURPRISE.Gap[2] - SURPRISE.Gap[1])
@@ -2078,6 +2082,14 @@ local function hideInCloset(): boolean
 	S.Root.Anchored = true
 	S.Model:PivotTo(OFFSTAGE)
 	setState("Closet", { Spot = best, Until = now() + SURPRISE.ClosetWait })
+	if ctx.Journey then
+		for _, p in ctx.Util.activePlayers() do
+			local r = outInTheOpen(p)
+			if r and (r.Position - best.Exit.Position).Magnitude < 34 then
+				ctx.Journey.event(p, "Surp", "Closet")
+			end
+		end
+	end
 	if ctx.Director.logTruthRaw and not S.LoggedCloset then
 		S.LoggedCloset = true
 		ctx.Director.logTruthRaw("He hid in the closets too. Not to sleep: to wait for someone to walk past.")
@@ -2187,6 +2199,9 @@ local function standBehind(): boolean
 						S.Nav:stop()
 						placeAt(floor + V(0, 1, 0), r.Position)
 						S.Root.Anchored = true
+						if ctx.Journey then
+							ctx.Journey.event(p, "Surp", "Behind")
+						end
 						setState("Stalk", { Target = p, Start = now(), Until = now() + SURPRISE.StalkWait })
 						-- (a couple of seconds in: "Turn around.")
 						local mine = S.Data
@@ -3161,7 +3176,8 @@ local function think(dt: number)
 	-- the breather to move in). (v139: tried before the pursuit below: since v127 the pursuit took every idle
 	-- moment and the logs show 0.00 surprises per player from then on: the closet ambush and "behind you"
 	-- never happened)
-	if S.Mode == "Hunt" and (state == "Patrol" or state == "Search") and #visible == 0 and not S.FinalRun and trySurprise() then
+	-- (v142: from any state the pursuit could take him from, not just Patrol / Search: see SURPRISE)
+	if S.Mode == "Hunt" and PURSUE_FREE[state] and #visible == 0 and not S.FinalRun and trySurprise() then
 		return
 	end
 	-- (v127) and in between, he's always running after one of you

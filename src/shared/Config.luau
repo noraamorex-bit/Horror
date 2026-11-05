@@ -419,8 +419,9 @@ Config.Director = {
 	-- they snap off with a loud hit and he's gone. The first act's open-window rooms always (the first time in);
 	-- other rooms by chance, once a night each; in the hunt (power out: your flashlight stutters) less often, and only
 	-- when he's really far away.
-	-- (v141) FirstAt: the night's first sighting, this many seconds into act I, wherever you are (Director.firstScare)
-	Apparition = { Chance = 0.45, Cooldown = 55, Spacing = 10, NotBefore = 25, HuntChance = 0.25, HuntCooldown = 100, HuntFar = 45, FirstAt = 50 },
+	-- (v141) FirstAt: the night's first sighting, this many seconds into act I, wherever you are (Director.firstScare);
+	-- (v142) SecondAt: a second one, in another room if it can be
+	Apparition = { Chance = 0.45, Cooldown = 55, Spacing = 10, NotBefore = 25, HuntChance = 0.25, HuntCooldown = 100, HuntFar = 45, FirstAt = 50, SecondAt = 150 },
 	CeilingSteps = 20, -- (v113) seconds into the Evening: footsteps cross the ceiling over someone
 }
 
