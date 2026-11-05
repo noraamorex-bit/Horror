@@ -1626,7 +1626,7 @@ Events.List = {
 					table.insert(who, p)
 					ctx.Remotes.Apparition:FireClient(p, data.Spot, data.Room, powered)
 					-- (v142: in the night log, so we can see who saw him before they quit)
-					if ctx.Journey then
+					if ctx.Journey and ctx.Journey.event then
 						ctx.Journey.event(p, "Appar", data.First and "First" or data.Room)
 					end
 				end

@@ -2082,7 +2082,7 @@ local function hideInCloset(): boolean
 	S.Root.Anchored = true
 	S.Model:PivotTo(OFFSTAGE)
 	setState("Closet", { Spot = best, Until = now() + SURPRISE.ClosetWait })
-	if ctx.Journey then
+	if ctx.Journey and ctx.Journey.event then
 		for _, p in ctx.Util.activePlayers() do
 			local r = outInTheOpen(p)
 			if r and (r.Position - best.Exit.Position).Magnitude < 34 then
@@ -2199,7 +2199,7 @@ local function standBehind(): boolean
 						S.Nav:stop()
 						placeAt(floor + V(0, 1, 0), r.Position)
 						S.Root.Anchored = true
-						if ctx.Journey then
+						if ctx.Journey and ctx.Journey.event then
 							ctx.Journey.event(p, "Surp", "Behind")
 						end
 						setState("Stalk", { Target = p, Start = now(), Until = now() + SURPRISE.StalkWait })
