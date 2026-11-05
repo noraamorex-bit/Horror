@@ -8,7 +8,7 @@ FPS = 30
 SH = {s["name"]: s["start"] for s in json.load(open(f"{S}/reel66/shots.json"))}
 # (shot, first frame in it, speed, brightness lift)
 SLOTS = [("hook", 0, 1.0, 1.0), ("card", 0, 0.64, 1.0), ("turn", 0, 1.0, 1.0), ("hide", 0, 1.0, 1.4), ("legs", 0, 1.0, 1.6),
-         ("peek", 0, 1.0, 1.2), ("crawl", 0, 1.0, 1.6), ("stood", 0, 1.0, 1.3), ("knew", 0, 1.0, 1.25), ("run", 0, 1.0, 1.0)]
+         ("peek", 0, 1.0, 0.9), ("crawl", 0, 1.0, 2.0), ("stood", 0, 1.0, 1.3), ("knew", 0, 1.0, 1.25), ("run", 0, 1.0, 1.0)]
 TEXT = {"part": "(Part 4)", "glitch": "he was behind the sofa"}
 LENS = [105, 120, 72, 33, 90, 60, 60, 60, 75, 30]
 CARD_POPS = [3.85, 4.55, 5.25, 5.95]

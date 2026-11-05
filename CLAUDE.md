@@ -707,6 +707,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   over the counter, crawl for the arch: he's standing in it; back behind the island, look up: his mask over the counter edge, it comes
   at you on 22.15 s → RUN; glitch "he was in the kitchen". `reel65/edit.py` is the PEAK edit (no per-reel audio: #2's track).
   Crouched shots: keep the camera ~3 studs off the island or its edge hides him. Caption: `he was in the kitchen game in comments`.
+  **Part 4** (`reel66`, `peak_horror_game_friends_v2_part4.mp4`, 5 Nov): the living room: the TV clicks on by itself, him standing
+  in its static with his back to you (his head turns right round), down behind the sofa, his legs round its end, over the back: the
+  static, nobody; crawl for the hall door: he's crouched in it; back behind the sofa, the TV goes dark, turn round: his mask right
+  there, down at your level → RUN; glitch "he was behind the sofa". Caption: `he was behind the sofa game in comments`.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
