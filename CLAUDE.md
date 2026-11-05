@@ -711,6 +711,10 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   in its static with his back to you (his head turns right round), down behind the sofa, his legs round its end, over the back: the
   static, nobody; crawl for the hall door: he's crouched in it; back behind the sofa, the TV goes dark, turn round: his mask right
   there, down at your level → RUN; glitch "he was behind the sofa". Caption: `he was behind the sofa game in comments`.
+  **Part 5** (`reel67`, `peak_horror_game_friends_v2_part5.mp4`, 5 Nov): reel 50's bathroom night (#5 of the #N run) re-shot with the
+  masked creature and cut as PEAK (the old shower PEAK Part 5 was 24K): lightning, him on the garage roof outside the window, his face
+  at the glass, his shape behind the shower curtain (head turning), in the doorway, the door locked, inside the shower: he's in its
+  corner → RUN; glitch "he was in the shower". Caption: `he was in the shower game in comments`.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
@@ -766,7 +770,7 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
-- **5 Nov (v142 = place version 142, PEAK Parts 4-5)**, the owner: "Analyze statistics and improve. Make the next 2 reels." Votes
+- **5 Nov (v142 = place version 142, PEAK Parts 4-5, see Marketing)**, the owner: "Analyze statistics and improve. Make the next 2 reels." Votes
   30 up / 55 down (+2 / +2 in a day), 22.9K visits, 461 favorites. Logs since 141 (570 lobby visits, 248 nights): first-nighters
   quit mid-night 49%; of 118 act I quits, 55 within 30 s (mostly solo: the circle split, left as is) and ~45 at 2.5-4 min, 114 never
   having seen his body; surprises 5 of 456 players; room scares weren't logged. Sales since 15 Oct 2,691 R$ (Starter at 9 R$: 13 of
