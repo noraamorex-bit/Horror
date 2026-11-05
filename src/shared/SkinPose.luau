@@ -279,39 +279,43 @@ function SkinPose.sample(gait: string, phase: number, t: number, seed: number?, 
 	local P: { [string]: any } = {}
 	local s, c = sin(phase), cos(phase)
 	if gait == "Chase" then
-		-- on all fours: the torso flat out in front of him, long arms reaching and slapping down like
-		-- front legs, the hind legs bounding together, the head craned up so it never stops looking at you
+		-- (v143, the owner: "better run animation... creepier") a low splayed scuttle, not a gallop: the torso flat and
+		-- close to the floor with the hips high behind it, the long arms thrown out wide and planted far ahead like a
+		-- spider's front legs, elbows and knees jutting up and out, the hind legs splayed and bounding a beat apart, the
+		-- head cocked over and locked on you, snapping round now and then; one arm reaches a little further than the other
 		local flex = sin(phase)
-		set(P, "Hips", -0.28)
-		set(P, "Spine", -0.85 + 0.16 * flex)
-		set(P, "Spine2", -0.5 + 0.12 * flex)
-		set(P, "Chest", -0.3 + 0.05 * flex)
-		set(P, "Neck", 0.95 - 0.08 * flex)
-		set(P, "Neck2", 0.5)
-		set(P, "Head", 0.38 + 0.1 * cos(phase * 2), 0.08 * drift(t * 2, sd), 0.12 * drift(t, sd + 3))
-		local function hind(side: string, ph: number)
+		local wave = sin(phase + 0.9)
+		set(P, "Hips", -0.42 + 0.06 * wave)
+		set(P, "Spine", -1.0 + 0.22 * flex, 0.1 * sin(phase * 0.5), 0.08 * wave)
+		set(P, "Spine2", -0.55 + 0.16 * wave, 0, -0.06 * flex)
+		set(P, "Chest", -0.32 + 0.08 * flex, 0.06 * cos(phase), 0)
+		set(P, "Neck", 1.08 - 0.1 * flex)
+		set(P, "Neck2", 0.52)
+		local jerk, js = snap(t, sd + 11, 1.7)
+		set(P, "Head", 0.42 + 0.08 * cos(phase * 2), 0.06 * drift(t * 2, sd) + 0.5 * jerk * js, 0.42 + 0.1 * drift(t, sd + 3))
+		local function hind(side: string, ph: number, out: number)
 			local ss, cc = sin(ph), cos(ph)
-			set(P, side .. "Thigh", 1.15 + 0.6 * ss)
-			set(P, side .. "Shin", -1.5 - 0.45 * sin(ph + 0.9))
-			set(P, side .. "Foot", 0.45 - 0.35 * cc)
-			set(P, side .. "Toe", 0.3 * max(0, -cc))
+			set(P, side .. "Thigh", 1.25 + 0.62 * ss, 0, out * (0.32 + 0.1 * cc))
+			set(P, side .. "Shin", -1.7 - 0.45 * sin(ph + 0.9))
+			set(P, side .. "Foot", 0.5 - 0.35 * cc)
+			set(P, side .. "Toe", 0.35 * max(0, -cc))
 		end
-		hind("L", phase)
-		hind("R", phase - 0.35)
-		local function front(side: string, ph: number, roll: number)
+		hind("L", phase, -1)
+		hind("R", phase - 0.55, 1)
+		local function front(side: string, ph: number, roll: number, reach: number)
 			local ss, cc = sin(ph), cos(ph)
-			set(P, side .. "Clav", 0.25 + 0.15 * ss, 0, 0)
-			set(P, side .. "Arm", 1.42 + 0.72 * ss, 0, roll)
-			-- (the elbow folds as the hand comes forward off the floor; straight while it's planted)
-			set(P, side .. "Fore", 0.08 + 0.8 * max(0, cc))
-			set(P, side .. "Hand", -0.6 + 0.5 * max(0, cc))
+			set(P, side .. "Clav", 0.32 + 0.18 * ss, 0, 0.12 * roll)
+			set(P, side .. "Arm", 1.35 + reach * ss, 0, roll)
+			-- (the elbow juts up and out as the hand swings forward; locked straight while it's planted)
+			set(P, side .. "Fore", 0.1 + 1.0 * max(0, cc), 0, 0.25 * roll * max(0, cc))
+			set(P, side .. "Hand", -0.7 + 0.55 * max(0, cc))
 		end
-		front("L", phase + PI + 0.3, 0.42)
-		front("R", phase + PI + 0.62, -0.42)
-		P.Root = { 0, -1.95 + 0.38 * sin(phase + 1.2), 1.9 }
-		P.CurlL, P.CurlR = 0.12, 0.12
+		front("L", phase + PI + 0.3, 0.78, 0.86)
+		front("R", phase + PI + 0.78, -0.72, 1.02)
+		P.Root = { 0.12 * sin(phase * 0.5), -2.45 + 0.42 * sin(phase + 1.2), 2.1 }
+		P.CurlL, P.CurlR = -0.05, 0.02
 		P.Mouth = 0.25 + 0.15 * sin(phase)
-		P.Twitch = 0.3
+		P.Twitch = 0.65
 	elseif gait == "Walk" or gait == "Search" then
 		local search = gait == "Search"
 		stance(P, 1)

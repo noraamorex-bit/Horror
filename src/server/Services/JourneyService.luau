@@ -420,6 +420,14 @@ function Journey.start()
 			Journey.serverError(message, trace)
 		end)
 	end)
+	-- (v143) the result card's feedback button: once a night per player in the log
+	local fedBack = {}
+	ctx.Remotes.CardFeedback.OnServerEvent:Connect(function(p)
+		if not fedBack[p] then
+			fedBack[p] = true
+			Journey.event(p, "Feedback")
+		end
+	end)
 	ctx.Remotes.ClientInfo.OnServerEvent:Connect(function(p, info)
 		if type(info) ~= "table" then
 			return

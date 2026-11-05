@@ -12,7 +12,10 @@ local ctx
 local player = Players.LocalPlayer
 
 Dock.Gold = Color3.fromRGB(255, 205, 80)
-Dock.Icon = 48 -- (v140, the owner: "Make everything smaller… Use only icons": no labels)
+Dock.Icon = 48 -- (v140, the owner: "Make everything smaller… Use only icons")
+-- (v143, the owner: "UI should have names under them": each icon's name, small, under its tile)
+Dock.LabelH = 14
+Dock.CellW = 58
 -- the dock's icon order (a second column wraps in after four)
 Dock.Order = { Starter = 0, Store = 10, Rewards = 20, Codes = 25, Locker = 30, Shop = 40, Scare = 50, Invite = 60 }
 local column: Frame
@@ -51,19 +54,44 @@ function Dock.add(spec): (TextButton, Frame)
 	-- (v138) one look for every icon: dark glass, a hairline, the glyph (its own colour) and a
 	-- small label; it dips when pressed
 	local b = UI.new("TextButton", {
+		Name = "Dock_" .. tostring(spec.Label or "Icon"),
 		LayoutOrder = spec.Order or 100,
-		Size = UDim2.fromOffset(Dock.Icon, Dock.Icon),
+		Size = UDim2.fromOffset(Dock.CellW, Dock.Icon + Dock.LabelH + 2),
 		Text = "",
 		AutoButtonColor = false,
-		BackgroundColor3 = UI.Color.Glass,
-		BackgroundTransparency = 0.22,
+		BackgroundTransparency = 1,
 		ZIndex = 30,
 		Parent = column,
 	})
-	UI.corner(b, 10)
-	local st = UI.stroke(b, Color3.new(1, 1, 1), 1, 0.82)
-	UI.label({ Name = "Glyph", Size = UDim2.fromScale(1, 1), Text = spec.Glyph, Font = UI.Font.Bold, TextSize = 22, TextColor3 = spec.Color or Color3.new(1, 1, 1), ZIndex = 31, Parent = b })
-	b:SetAttribute("Label", spec.Label) -- (what it is, for tests and tools: no label on screen)
+	-- the tile: dark glass, a hairline, the glyph in its own colour
+	local tile = UI.new("Frame", {
+		Name = "Tile",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.fromScale(0.5, 0),
+		Size = UDim2.fromOffset(Dock.Icon, Dock.Icon),
+		BackgroundColor3 = UI.Color.Glass,
+		BackgroundTransparency = 0.22,
+		ZIndex = 30,
+		Parent = b,
+	})
+	UI.corner(tile, 10)
+	local st = UI.stroke(tile, Color3.new(1, 1, 1), 1, 0.82)
+	UI.label({ Name = "Glyph", Size = UDim2.fromScale(1, 1), Text = spec.Glyph, Font = UI.Font.Bold, TextSize = 22, TextColor3 = spec.Color or Color3.new(1, 1, 1), ZIndex = 31, Parent = tile })
+	b:SetAttribute("Label", spec.Label)
+	-- and its name under it (v143)
+	UI.label({
+		Name = "Name",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, Dock.Icon + 2),
+		Size = UDim2.new(1, 8, 0, Dock.LabelH),
+		Text = string.upper(tostring(spec.Label or "")),
+		Font = UI.Font.Bold,
+		TextSize = 10,
+		TextColor3 = Color3.fromRGB(226, 222, 214),
+		TextStrokeTransparency = 0.45,
+		ZIndex = 31,
+		Parent = b,
+	})
 	local badge = UI.new("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(1, -4, 0, 4),
@@ -71,7 +99,7 @@ function Dock.add(spec): (TextButton, Frame)
 		BackgroundColor3 = UI.Color.Blood,
 		Visible = false,
 		ZIndex = 33,
-		Parent = b,
+		Parent = tile,
 	})
 	UI.corner(badge, 6)
 	UI.stroke(badge, Color3.new(0, 0, 0), 1.5, 0.3)
@@ -269,14 +297,14 @@ function Dock.start()
 	column = UI.new("Frame", {
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -math.max(14, inset.X + 14), 0.5, 10),
-		Size = UDim2.fromOffset(2 * Dock.Icon + 6, 4 * Dock.Icon + 3 * 6),
+		Size = UDim2.fromOffset(2 * Dock.CellW + 4, 4 * (Dock.Icon + Dock.LabelH + 2) + 3 * 6),
 		BackgroundTransparency = 1,
 		ZIndex = 30,
 		Parent = UI.Root,
 	})
 	UI.new("UIGridLayout", {
-		CellSize = UDim2.fromOffset(Dock.Icon, Dock.Icon),
-		CellPadding = UDim2.fromOffset(6, 6),
+		CellSize = UDim2.fromOffset(Dock.CellW, Dock.Icon + Dock.LabelH + 2),
+		CellPadding = UDim2.fromOffset(4, 6),
 		FillDirection = Enum.FillDirection.Vertical,
 		FillDirectionMaxCells = 4,
 		StartCorner = Enum.StartCorner.TopRight,

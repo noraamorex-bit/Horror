@@ -588,6 +588,7 @@ local function showCard(opts)
 		ctx.Social.button(social, "invite")
 		ctx.Social.button(social, "favorite")
 		ctx.Social.button(social, "remind")
+		ctx.Social.button(social, "feedback")
 	end
 	-- (v141: the second, dim like line went: one clear ask above)
 	if opts.RestartIn then

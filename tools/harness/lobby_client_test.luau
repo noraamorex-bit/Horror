@@ -81,7 +81,9 @@ local ok, err = pcall(function()
 		and not H.unwrap(pg):FindFirstChild("HowToPlay", true) and not H.unwrap(pg):FindFirstChild("GameTitle", true), "PLAY, no title, no FIND PLAYERS, no How to play")
 	for _, d in H.unwrap(pg):GetDescendants() do
 		if d:IsA("TextButton") and d:GetAttribute("Label") then
-			assert(not d:FindFirstChild("Label"), "dock icons carry no label: " .. tostring(d:GetAttribute("Label")))
+			-- (v143, the owner: "UI should have names under them")
+			local nm = d:FindFirstChild("Name")
+			assert(nm and nm.Text == string.upper(d:GetAttribute("Label")), "each dock icon has its name under it: " .. tostring(d:GetAttribute("Label")))
 		end
 	end
 	assert(ctx.Social.inviteData() == "ref:" .. tostring(player.UserId), "a lobby invite says who sent it")

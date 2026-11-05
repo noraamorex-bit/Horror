@@ -300,8 +300,9 @@ function LobbyHub.start()
 			task.wait(1)
 		end
 	end)
-	local icons = UI.new("Frame", { Name = "Icons", LayoutOrder = 5, Size = UDim2.fromOffset(MENU_W, ICON), BackgroundTransparency = 1, Parent = menu })
-	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = icons })
+	-- (v143, the owner: "UI should have names under them")
+	local icons = UI.new("Frame", { Name = "Icons", LayoutOrder = 5, Size = UDim2.fromOffset(MENU_W, ICON + 15), BackgroundTransparency = 1, Parent = menu })
+	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder, Parent = icons })
 	local function iconButton(name: string, glyph: string, order: number): TextButton
 		local b = UI.new("TextButton", {
 			Name = name,
@@ -317,6 +318,18 @@ function LobbyHub.start()
 			Parent = icons,
 		})
 		UI.corner(b, 10)
+		UI.label({
+			Name = "Name",
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.new(0.5, 0, 1, 2),
+			Size = UDim2.new(1, 18, 0, 12),
+			Text = string.upper(name),
+			Font = UI.Font.Bold,
+			TextSize = 10,
+			TextColor3 = Color3.fromRGB(226, 222, 214),
+			TextStrokeTransparency = 0.45,
+			Parent = b,
+		})
 		local st = UI.stroke(b, Color3.new(1, 1, 1), 1, 0.84)
 		UI.hover(b, function()
 			st.Transparency = 0.5

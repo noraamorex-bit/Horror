@@ -102,10 +102,14 @@ function Social.button(parent: Instance, kind: string, props): TextButton
 	local UI = ctx.UI
 	local isInvite = kind == "invite"
 	local isRemind = kind == "remind"
-	-- minimal: dark glass, thin outline, white text
+	local isFeedback = kind == "feedback"
+	-- minimal: dark glass, thin outline, white text (v143: sized to its text, so four fit on a row)
 	local b = UI.new("TextButton", {
-		Size = UDim2.fromOffset(150, 34),
-		Text = isInvite and (Social.bonus() > 0 and ("Invite  ·  +" .. Social.bonus() .. " coins") or "Invite friends") or (isRemind and "🔔 Remind me" or "Favorite"),
+		Name = isFeedback and "FeedbackButton" or nil,
+		Size = UDim2.fromOffset(0, 34),
+		AutomaticSize = Enum.AutomaticSize.X,
+		Text = isInvite and (Social.bonus() > 0 and ("Invite  ·  +" .. Social.bonus() .. " coins") or "Invite friends")
+			or (isRemind and "🔔 Remind me" or (isFeedback and "📝 Feedback" or "Favorite")),
 		Font = Enum.Font.GothamMedium,
 		TextSize = 15,
 		TextColor3 = Color3.fromRGB(235, 232, 226),
@@ -119,8 +123,18 @@ function Social.button(parent: Instance, kind: string, props): TextButton
 	end
 	UI.corner(b, 6)
 	UI.stroke(b, Color3.new(1, 1, 1), 1, 0.8)
+	UI.new("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14), Parent = b })
 	b.Activated:Connect(function()
-		if isInvite then
+		if isFeedback then
+			-- (v143, the owner: "add a feedback thing in the result card": Roblox's own feedback window, as at the lobby's
+			-- mailbox; what's sent shows in Creator Hub → Audience → Feedback)
+			Social.feedback()
+			if ctx.Remotes and ctx.Remotes.CardFeedback then
+				ctx.Remotes.CardFeedback:FireServer()
+			end
+			b.Text = "📝 Thanks!"
+			b.AutoButtonColor = false
+		elseif isInvite then
 			Social.invite()
 		elseif isRemind then
 			Social.remind()

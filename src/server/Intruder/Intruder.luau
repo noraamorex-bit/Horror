@@ -421,12 +421,22 @@ local function runLine(p: Player, line: string?)
 	ctx.Director.think(p, line)
 end
 Intruder._keepingStill = keepingStill -- (tests)
+-- (v143, the owner: "much better sounds") his breathing in three takes, not the same breath every time
+local BREATHS = { "ManWhisper", "Breath2", "Breath3" }
+local function breathKey(): string
+	return BREATHS[soundDice:NextInteger(1, #BREATHS)]
+end
 local function runSounds(target: Player?)
 	if not (S.Head and target and valid(target)) then
 		return
 	end
 	local hr = rootOf(target)
 	local dd = hr and (hr.Position - pos()).Magnitude or math.huge
+	-- (v143) a big spider's legs and hiss under the run, every couple of seconds while you're within earshot
+	if dd < 50 and now() >= (S.NextSkitter or 0) then
+		S.NextSkitter = now() + 1.6 + soundDice:NextNumber() * 1.4
+		ctx.Audio.playAt("Skitter" .. soundDice:NextInteger(1, 3), pos() - V(0, 2.5, 0), { Pitch = 0.72 + soundDice:NextNumber() * 0.16, Caption = false })
+	end
 	if dd < 45 and now() >= (S.NextCrack or 0) then
 		S.NextCrack = now() + 2.2 + soundDice:NextNumber() * 2.5
 		ctx.Audio.playAt("BoneCrack" .. soundDice:NextInteger(1, 2), S.Head.Position - V(0, 2, 0), { Caption = false })
@@ -434,7 +444,9 @@ local function runSounds(target: Player?)
 	S.CloseSting = S.CloseSting or {}
 	if dd < 16 and now() - (S.CloseSting[target] or -1e9) > 20 then
 		S.CloseSting[target] = now()
-		ctx.Audio.playAt("Screech", S.Head.Position, { CaptionText = "[A shriek, right behind you]", CaptionRange = 30 })
+		-- (v143: the pterodactyl screech and a pained, wheezing demon's, by turns)
+		S.CloseFlip = not S.CloseFlip
+		ctx.Audio.playAt(S.CloseFlip and "DemonScreech" or "Screech", S.Head.Position, { CaptionText = "[A shriek, right behind you]", CaptionRange = 30 })
 		ctx.Remotes.Shake:FireClient(target, 0.8, 0.5)
 		ctx.PlayerState.addNerve(target, -6)
 	end
@@ -1562,7 +1574,7 @@ STATES.Search = function(_, visible)
 		if not d.ListenUntil then
 			d.ListenUntil = now() + 2 + math.random() * 1.5
 			S.Nav:stop()
-			ctx.Audio.playAt("ManWhisper", S.Head.Position, { CaptionText = "[Slow, heavy breathing. Listening.]", CaptionRange = 22 })
+			ctx.Audio.playAt(breathKey(), S.Head.Position, { CaptionText = "[Slow, heavy breathing. Listening.]", CaptionRange = 22 })
 			return
 		end
 		if now() < d.ListenUntil then
@@ -1764,7 +1776,7 @@ STATES.CheckSpot = function(_, visible)
 	end
 	if occupant then
 		-- so close. they hear him breathing on the other side
-		ctx.Audio.playAt("ManWhisper", spot.Position, { Only = { occupant }, Caption = true })
+		ctx.Audio.playAt(breathKey(), spot.Position, { Only = { occupant }, Caption = true })
 		ctx.PlayerState.addNerve(occupant, -10)
 	end
 	if d.Return == "Search" and d.ReturnData then
@@ -2211,7 +2223,7 @@ local function standBehind(): boolean
 							end
 						end)
 						-- (his breathing, right there; a joint cracks)
-						ctx.Audio.playAt("ManWhisper", S.Head.Position, { CaptionRange = 14 })
+						ctx.Audio.playAt(breathKey(), S.Head.Position, { CaptionRange = 14 })
 						if ctx.Director.logTruthRaw and not S.LoggedStalk then
 							S.LoggedStalk = true
 							ctx.Director.logTruthRaw("Sometimes, when you were alone, he was right behind you. Most of the time you never turned round.")
@@ -2332,7 +2344,7 @@ STATES.Inspect = function(_, visible)
 			local dur = I.InspectTime[1] + math.random() * (I.InspectTime[2] - I.InspectTime[1])
 			d.Phase = "Listen"
 			d.Until = now() + dur
-			ctx.Audio.playAt("ManWhisper", spot.Position, { CaptionText = "[Something right outside. Listening.]", CaptionRange = 18 })
+			ctx.Audio.playAt(breathKey(), spot.Position, { CaptionText = "[Something right outside. Listening.]", CaptionRange = 18 })
 			local who = ctx.Hiding.occupant(spot)
 			d.Occupant = who
 			if who then
@@ -2752,7 +2764,8 @@ local function animate(dt: number)
 				end
 			end
 			if near then
-				ctx.Audio.playAt("BoneCrack" .. math.random(1, 2), S.Head.Position - V(0, 2, 0), { Caption = math.random() < 0.5 })
+				-- (v143: now and then a long run of wet cracks, as if he's unfolding)
+				ctx.Audio.playAt(math.random() < 0.3 and "BoneRun" or ("BoneCrack" .. math.random(1, 2)), S.Head.Position - V(0, 2, 0), { Caption = math.random() < 0.5 })
 			end
 		end
 	end
@@ -3057,7 +3070,9 @@ local function pursueTick(): boolean
 	-- (v135) a quiet run, but never a silent one: a growl where he is, if they're close enough to hear it
 	if S.Head and (r.Position - pos()).Magnitude < 55 and now() - (S.LastPursueGrowl or -1e9) > 7 then
 		S.LastPursueGrowl = now()
-		ctx.Audio.playAt("Growl", S.Head.Position, { Caption = true })
+		-- (v143: the growl, a big spider's attack hiss and steps, or the deep throaty growl, by turns)
+		S.GrowlTurn = ((S.GrowlTurn or 0) % 3) + 1
+		ctx.Audio.playAt(({ "Growl", "RunAttack" .. soundDice:NextInteger(1, 2), "DeepGrowl" })[S.GrowlTurn], S.Head.Position, { Caption = true })
 	end
 	if S.State == "Charge" then
 		S.Data.Speed = I.PursueSpeed or I.SenseSpeed

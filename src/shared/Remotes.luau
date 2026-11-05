@@ -73,6 +73,7 @@ local NAMES = {
 	"PuzzleInput", -- (puzzleId, action, payload) "Slip" | "Click" | "Submit" | "Cancel"
 	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily" | "Code" text
 	"PlayAgain", -- () from a result card: stay with this group for another night
+	"CardFeedback", -- () (v143) the result card's 📝 Feedback button was pressed (logged in the night log)
 	"ClientInfo", -- ({Dev, Mem, Fps, Q}) the device and how well it's running (JourneyService)
 	"MonsterAction", -- (action, arg) as him: "Grab" | "Search" | "Lunge"
 }

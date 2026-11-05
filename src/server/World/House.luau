@@ -325,9 +325,12 @@ function House.build(ctx, root: Instance)
 	---------------------------------------------------------------------------
 	for room, positions in L.Lights do
 		for _, pos in positions do
-			local range = (room == "Hallway" or room == "UpperHall") and 20 or 26
-			local shadows = room ~= "Hallway" and room ~= "UpperHall"
-			local bulb, light = B.ceilingLight(lightsFolder, pos, { range = range, shadows = shadows })
+			-- (v143: dimmer and warmer, so the lamps and sconces make pools of light instead of one flat wash; the halls'
+			-- globes are the dimmest, their sconces do the work)
+			local hall = room == "Hallway" or room == "UpperHall"
+			local range = hall and 19 or 24
+			local shadows = not hall
+			local bulb, light = B.ceilingLight(lightsFolder, pos, { range = range, shadows = shadows, brightness = hall and 0.95 or 1.2, color = Color3.fromRGB(255, 190, 128) })
 			ctx.Power.registerLight(room, bulb, light)
 		end
 	end

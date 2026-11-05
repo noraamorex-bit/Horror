@@ -139,6 +139,22 @@ Sounds.Library = {
 	-- v99: wet, rasping, not-quite-human breathing (ProSoundEffects "Creature Mix Weird Deep
 	-- Monster Breathing 3"; the loop: "Creature Dying Pterodactyl Breathing 2", slowed)
 	ManWhisper = { Id = "rbxassetid://9113984056", Volume = 0.7, Pitch = 0.85, Range = 22, Caption = "[Wet, rasping breathing, very close]", Gain = 3.5 },
+	-- (v143, the owner: "much better sounds") more of him, all ProSoundEffects (licensed): two more takes of the deep
+	-- monster breathing ("Creature Mix Weird Deep Monster Breathing 1 / 2"), so it isn't the same breath every time;
+	-- a big spider's legs and hiss as he scuttles ("Creature Mix Spiders Hiss Snarl Movement 10 / 12 / 13"); a big
+	-- spider's attack, vocal and footsteps, as a run starts ("Creature Mix Big Spider Attack Vocal Footsteps"); a
+	-- pained, wheezing demon screech up close ("Demon Scream By Pained Screeches Wheezing 4", its first seconds); a
+	-- long run of wet bone cracks as he unfolds ("Squishy Bone Cracks 1"); a constant deep throaty growl
+	Breath2 = { Id = "rbxassetid://9113983944", Volume = 0.7, Pitch = 0.85, Range = 22, Caption = "[Wet, rasping breathing, very close]", Gain = 3.5 },
+	Breath3 = { Id = "rbxassetid://9113984054", Volume = 0.7, Pitch = 0.8, Range = 22, Caption = "[Wet, rasping breathing, very close]", Gain = 3.5 },
+	Skitter1 = { Id = "rbxassetid://9113983544", Volume = 0.8, Pitch = 0.8, Range = 55, Caption = "[Something skittering, fast]" },
+	Skitter2 = { Id = "rbxassetid://9113983657", Volume = 0.8, Pitch = 0.8, Range = 55, Caption = "[Something skittering, fast]" },
+	Skitter3 = { Id = "rbxassetid://9113983665", Volume = 0.8, Pitch = 0.8, Range = 55, Caption = "[Something skittering, fast]" },
+	RunAttack1 = { Id = "rbxassetid://9125471800", Volume = 0.95, Pitch = 0.75, Range = 80, Caption = "[A hiss, and something coming fast]" },
+	RunAttack2 = { Id = "rbxassetid://9125472062", Volume = 0.95, Pitch = 0.75, Range = 80, Caption = "[A hiss, and something coming fast]" },
+	DemonScreech = { Id = "rbxassetid://9114038247", Volume = 1, Pitch = 0.9, Range = 40, Length = 2.4, Caption = "[A shriek, right behind you]" },
+	BoneRun = { Id = "rbxassetid://9119560554", Volume = 0.8, Pitch = 0.9, Range = 30, Length = 3.5, Caption = "[Bones cracking, one after another]", Gain = 2.2 },
+	DeepGrowl = { Id = "rbxassetid://9113985445", Volume = 0.9, Pitch = 0.7, Range = 60, Caption = "[A deep, wet growl]", Gain = 1.3 },
 	-- his breathing, always with him: you hear it only when he's a few steps away
 	IntruderBreath = { Id = "rbxassetid://9113971010", Volume = 0.4, Pitch = 0.8, Range = 26, Looped = true, Gain = 3 },
 	-- Creator Store (public): "Phone Vibrating On Table"
