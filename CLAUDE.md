@@ -729,6 +729,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   masked creature and cut as PEAK (the old shower PEAK Part 5 was 24K): lightning, him on the garage roof outside the window, his face
   at the glass, his shape behind the shower curtain (head turning), in the doorway, the door locked, inside the shower: he's in its
   corner → RUN; glitch "he was in the shower". Caption: `he was in the shower game in comments`.
+  **Part 6** (`reel68`, `peak_horror_game_friends_v2_part6.mp4`, 5 Nov): the first reel of the v143 house and his v143 scuttle,
+  rendered from a fresh stage dump (`$S/map143/stage3.json`): the upstairs hall's new console, lamp, paintings and sconces; the
+  lights stutter out; him crouched low at the far end, head cocked; he scuttles at you and after you down the hall; down in the
+  master bedroom's corner, the door creaks open (him low in the doorway), he crawls in; turn: his mask right beside you → RUN out
+  of the door; glitch "he crawls now". Caption: `he crawls now game in comments`.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
