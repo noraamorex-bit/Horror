@@ -136,21 +136,28 @@ local ok, err = pcall(function()
 		PlayerState = { addNerve = function() end },
 		Story = Story,
 	}
-	local D = { lightning = function() end, think = function() end, logTruth = function() end }
+	local D = { lightning = function() end, think = function() end, logTruth = function() end, react = function() end }
 	local who = H.wrap(R.Instance.new("Player"))
 	found.YardFigure.Run(ctx, D, { Player = who, Watch = { Stand = V(-50, 4, -22), Face = V(-40, 4, -22) } })
 	local fig = nil
 	for _, f in fired do if f[1] == "Figure" then fig = f end end
 	assert(fig and fig[5] == "Stare" and fig[3].Position.X < -60, "the yard figure stands well out in the yard, staring")
 	fired = {}
+	-- (v144: act II's one scare, in two beats: at the far end, then halfway to you with a hit; its timed beats run at once here)
+	local realDelay = H.task.delay
+	H.task.delay = function(_, f, ...) f(...) end
 	found.HallStare.Run(ctx, D, { Player = who, Feet = V(2, 15, -25), From = V(2, 16, 10) })
-	local sound = false
-	fig = nil
+	H.task.delay = realDelay
+	local sound, hit = false, false
+	local figs = {}
 	for _, f in fired do
-		if f[1] == "Figure" then fig = f end
+		if f[1] == "Figure" then table.insert(figs, f) end
 		if f[1] == "PlaySound" and f[3] == "CreatureWhisper" then sound = true end
+		if f[1] == "PlaySound" and f[3] == "HorrorHit" then hit = true end
 	end
+	fig = figs[1]
 	assert(fig and fig[5] == "Stare" and math.abs(fig[3].Position.Y - 17.6) < 0.01 and sound, "the hall figure, at the far end, and a whisper")
+	assert(figs[2] and figs[2][3].Position.Z > fig[3].Position.Z + 10 and hit, "then halfway to you, with a hit")
 	print("scares ok")
 
 	-- v106: the mimic: a friend's voice (or Mom's) calling you from the other floor

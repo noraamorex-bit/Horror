@@ -548,12 +548,12 @@ Events.List = {
 			local near = feet + flat.Unit * math.max(0, flat.Magnitude - 8)
 			local rooms = {}
 			for _, pos in { from, feet } do
-				local r = ctx.Rooms.find(pos + V(0, 3, 0))
+				local r = ctx.Rooms and ctx.Rooms.find(pos + V(0, 3, 0))
 				if r and not table.find(rooms, r.Name) then
 					table.insert(rooms, r.Name)
 				end
 			end
-			local powered = ctx.Power.isOn()
+			local powered = ctx.Power and ctx.Power.isOn and ctx.Power.isOn()
 			if powered then
 				for _, name in rooms do
 					task.spawn(ctx.Power.flickerRoom, name, Events.HallStareLights, true)
@@ -1647,7 +1647,7 @@ Events.List = {
 			-- leave." The first act's upstairs rooms start with their lights off: there was nothing to flicker, and it
 			-- stayed dark. Now the server drives the room's lights, switch or no switch: stuttering on, a blink of dark
 			-- as he appears, up on him, a snap of dark with the hit, then on, and left on.)
-			local powered = ctx.Power.isOn()
+			local powered = ctx.Power and ctx.Power.isOn and ctx.Power.isOn()
 			local who = {}
 			for _, p in ctx.Util.activePlayers() do
 				local room = roomOf(ctx, p)

@@ -396,10 +396,16 @@ local ok, err = pcall(function()
 	assert(not runner:GetAttribute("Escaped"), "too early: the car doesn't start")
 	assert(string.find(caps[#caps] or "", "Flooded"), "and says why: " .. tostring(caps[#caps]))
 	rroot.CFrame = R.CFrame.new(ctx.Layout.Outside.NeighborPorch)
+	local since = #caps
 	H.task.spawn(function() rawget(knock, "__signals").Triggered:Fire(runner) end) -- (the handler waits)
 	H.flush(ctx.Config.Help.NeighborWait + 2)
 	assert(not runner:GetAttribute("Escaped"), "too early: nobody answers her door")
-	assert(string.find(caps[#caps] or "", "Nobody comes"), "and says so: " .. tostring(caps[#caps]))
+	-- (any caption since the knock: the house's own sounds, a dog next door, can come after it)
+	local said = false
+	for i = since + 1, #caps do
+		if string.find(caps[i] or "", "Nobody comes") then said = true end
+	end
+	assert(said, "and says so: " .. tostring(caps[#caps]))
 	-- (v135) the hunt has run long enough: she lets you in, however early in the night
 	huntT, nightT = ctx.Config.Help.ExitsAfter + 1, 60
 	H.task.spawn(function() rawget(knock, "__signals").Triggered:Fire(runner) end) -- (the handler waits)
