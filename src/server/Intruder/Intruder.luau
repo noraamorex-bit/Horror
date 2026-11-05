@@ -2765,7 +2765,8 @@ local function animate(dt: number)
 			end
 			if near then
 				-- (v143: now and then a long run of wet cracks, as if he's unfolding)
-				ctx.Audio.playAt(math.random() < 0.3 and "BoneRun" or ("BoneCrack" .. math.random(1, 2)), S.Head.Position - V(0, 2, 0), { Caption = math.random() < 0.5 })
+				local long = soundDice:NextNumber() < 0.3 -- (its own dice, so the night's other rolls stay as they were)
+				ctx.Audio.playAt(long and "BoneRun" or ("BoneCrack" .. math.random(1, 2)), S.Head.Position - V(0, 2, 0), { Caption = math.random() < 0.5 })
 			end
 		end
 	end
