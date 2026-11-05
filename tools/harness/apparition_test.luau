@@ -110,6 +110,16 @@ local ok, err = pcall(function()
 	put(a, V(6, 18, -14), V(20, 18, -14))
 	tick(30)
 	assert(#apparitions(a) == 0, "nothing in the hall")
+	-- (v144, the owner: "Way too many scares... Make it 1-2 scares the whole run before blackout") before the blackout,
+	-- walking into a room brings nothing, not even the open window's room (the first act's one scare is firstScare's)
+	put(a, V(15, 18, -15), V(26, 18, -27))
+	tick(1)
+	assert(#apparitions(a) == 0, "no room scare walking in before the blackout")
+	put(a, V(6, 18, -14), V(20, 18, -14))
+	tick(1)
+	-- (the room scare itself still runs after the blackout: tested below as it was, the quiet acts switched off)
+	local quiet = ctx.Config.Director.QuietActs
+	ctx.Config.Director.QuietActs = {}
 	-- 1) into the guest room to close its window: the lights stutter (on, though its switch is off), and he's
 	-- standing by the window
 	assert(not ctx.Power.isRoomSwitchOn("Guest"), "the guest room starts dark")
@@ -146,6 +156,9 @@ local ok, err = pcall(function()
 
 	-- 2) later, another room, by chance (forced here): him in front of you, in the room
 	ctx.Config.Director.Apparition.Chance = 1
+	-- (v144: act II's first beat, the footsteps upstairs, can land just before: the spacing between scares would hold it)
+	local spacing = ctx.Config.Director.Apparition.Spacing
+	ctx.Config.Director.Apparition.Spacing = 0
 	ctx.Director.startAct("SmallThings")
 	put(a, V(-4, 18, 24), V(-30, 18, 24))
 	tick(70)
@@ -167,7 +180,9 @@ local ok, err = pcall(function()
 	put(a, V(-11, 18, -10), V(-30, 18, -10))
 	tick(0.6)
 	assert(#apparitions(a) == 2, "the cooldown between room scares")
+	ctx.Config.Director.Apparition.Spacing = spacing
 	print("other rooms ok")
+	ctx.Config.Director.QuietActs = quiet
 	-- 3) (v141) the first sighting: FirstAt s into a new night's first act, wherever you are (the kitchen here, at the
 	-- start), the room scare comes to you; once a night
 	ctx.Config.Director.Apparition.FirstAt = firstAt
@@ -181,18 +196,11 @@ local ok, err = pcall(function()
 	local got3 = apparitions(a)
 	assert(#got3 == n0 + 1, "the first sighting, in the kitchen: " .. (#got3 - n0))
 	assert(got3[#got3][4] == "Kitchen", "in the room you're in")
-	tick(40)
-	assert(#apparitions(a) == n0 + 1, "only once till the second mark")
-	-- (v142) the second sighting: SecondAt s in, in a room that hasn't had its scare (the living room here)
-	local secondAt = ctx.Config.Director.Apparition.SecondAt
-	assert(secondAt and secondAt > firstAt + 50, "a second mark later in the act")
+	-- (v144: one in act I, no second one: v142's SecondAt went)
+	assert(ctx.Config.Director.Apparition.SecondAt == nil, "one room scare in act I")
 	put(a, V(-24, 4, -8), V(-24, 4, -20))
-	tick(secondAt - (firstAt + 50) + 8)
-	local got4 = apparitions(a)
-	assert(#got4 == n0 + 2, "the second sighting: " .. (#got4 - n0))
-	assert(got4[#got4][4] == "Living", "in another room: " .. tostring(got4[#got4][4]))
-	tick(120)
-	assert(#apparitions(a) == n0 + 2, "two in the act, no more")
+	tick(200)
+	assert(#apparitions(a) == n0 + 1, "only once in the act, walking about included")
 	print("first sighting ok")
 end)
 if not ok then

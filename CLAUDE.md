@@ -107,6 +107,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   cracking]") off unless turned on in Settings** (saved `Captions`). Don't add lines that only narrate what the player just saw.
 
 **Pacing / story**
+- **v144 — TWO SCARES BEFORE THE BLACKOUT, NO MORE (the owner: "Way too many scares there is like one every single room. Also
+  they aren't even scary. Check doors that is your only reference. Make it 1-2 scares the whole run before blackout.")**: acts I-II
+  are quiet, Doors-style (`Config.Director.QuietActs`): the scheduler only picks the house's own sounds there (`Director.Ambient`:
+  thunder, the dog), the story beats stay (footsteps upstairs → "Check upstairs", the TV's alert), and the only scares are the
+  act I room scare (`Apparition.FirstAt` 90 s) and act II's **HallStare** (rebuilt: the lights stutter, he's at the end of the hall,
+  dark, he's halfway to you with a loud hit, dark, gone). No room-by-room scares, no window glance, no knocks/slams/flickers/
+  figures/haunt events before the blackout; after it, everything as before. Test `quiet_test`. Don't add scares to acts I-II.
 - It's a horror game, not a chore simulator: few tasks, multi-step, no dead time. No "stay together"
   task that solo can't do.
 - Friends speak in dialogue boxes (not texts), **out loud (v106: Roblox text-to-speech, client
@@ -279,9 +286,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   and he's gone (client `Effects.apparition`, Director `roomEntered`/`apparitionSpot`, `Config.Director.Apparition`). Always in the
   first act's open-window rooms (by the window); other rooms by chance once a night; in the hunt your flashlight stutters instead.
   New scares should be this kind: seen, sudden, loud, gone. GDD "The room scare (v132)"; test `apparition_test`.
+  (**v144**: before the blackout only the scripted act I one; walking into rooms brings it only after the blackout.)
   **v141: the first sighting**: `Apparition.FirstAt` 50 s into every night's act I, the room scare comes to whoever is in a room
   he fits in (`Director.firstScare`; act I was where most first-nighters quit, a median 3 min in, before ever seeing him).
-  **v142: a second one** at `SecondAt` 150 s, in a room that hasn't had it; every room scare is in the night log (`Appar`).
+  ~~v142: a second one at SecondAt 150 s~~ (removed in v144); every room scare is in the night log (`Appar`).
   **v133**: the server drives the room's lights (`Power.flickerRoom`; act I's rooms start dark, so nothing flickered before) and
   leaves them on; dark only 0.25 s + 0.35 s (the owner: "the lights out time is way too long people would leave").
 
@@ -313,7 +321,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **Night length: 15-20 minutes (v126**, the owner: "The game is too short... I want this to be a fully polished 15-20
   minute game where BPM goes 120+. Make it constantly scary"; replaces v117's ~10 min average). `Config.Acts` (Evening
   2.5-5, SmallThings 4.5-6), police 150 s, `Config.MinNight` 900 (police/car/next door wait for it, skip nights
-  excepted), exits 240 s into the hunt, Mrs. Okafor 300 s. Scares 16-32 s apart; every sighting of him is a beat. Every night still gets the full build-up. Act II events take turns: scares 35 s apart, Mom's texts only when nothing
+  excepted), exits 240 s into the hunt, Mrs. Okafor 300 s. ~~Scares 16-32 s apart~~ (v144: two before the blackout, see Pacing). Every night still gets the full build-up. Act II events take turns: scares 35 s apart, Mom's texts only when nothing
   else is going on, the TV alert never during the news, a breather before the blackout.
 - The heartbeat minigame must stay passable (logs: 0/22 passes before the fix); Normal is
   forgiving, Hard is tight.
@@ -788,6 +796,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **5 Nov (v144 = place version 144)**, the owner: "Way too many scares there is like one every single room. Also they aren't even
+  scary. Check doors that is your only reference. Make it 1-2 scares the whole run before blackout." Done: the quiet acts (see
+  Pacing, v144; GDD "Two scares before the blackout (v144)"). Can't see the client: check that HallStare reads (the hall's lights
+  stutter, him far then close, the hit) and that acts I-II don't feel empty. Next: `--since=144`: act I-II quits (want fewer),
+  room scares/player (want 1 + HallStare), votes.
 
 - **5 Nov (v143 = place version 143, reel 68 = PEAK Part 6)**, the owner: "Is there a way to add a feedback thing in the result card
   if so add it. Improve monster design make creepier, better run animation, much better sounds. Map is still bad. Heavily rework
@@ -1362,7 +1376,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 143; the notes' "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 144; the notes' "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

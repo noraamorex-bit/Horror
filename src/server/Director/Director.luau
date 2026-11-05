@@ -28,9 +28,14 @@ local ACT_ORDER = { "Evening", "SmallThings", "SomeoneElse", "Guest" }
 -- guaranteed beats per act: { event id, deadline as a fraction of the act's Max }
 -- (v126, the owner: "I barely saw the monster once throughout the run": every sighting is a beat now,
 -- not left to chance: him in the yard in act I; at the window and staring down the hall in act II)
+-- (v144, the owner: "Way too many scares there is like one every single room. Also they aren't even scary. Check doors
+-- that is your only reference. Make it 1-2 scares the whole run before blackout.") Before the blackout the acts are quiet,
+-- Doors-style: the house's own sounds and the story, and exactly two scares: the room scare in act I
+-- (Config.Director.Apparition.FirstAt, Director.firstScare) and HallStare late in act II. Act I has no scheduled beat;
+-- act II's are the footsteps upstairs (they start "Check upstairs"), the TV's alert (the news) and HallStare.
 local BEATS = {
-	Evening = { { "WindSlam", 0.3 }, { "YardFigure", 0.55 } },
-	SmallThings = { { "PlateCrash", 0.15 }, { "FootstepsUpstairs", 0.28 }, { "FigureWindow", 0.42 }, { "TVAlert", 0.55 }, { "HallStare", 0.7 }, { "Mimic", 0.85 } },
+	Evening = {},
+	SmallThings = { { "FootstepsUpstairs", 0.25 }, { "TVAlert", 0.5 }, { "HallStare", 0.8 } },
 }
 
 local state: any = {}
@@ -1430,7 +1435,10 @@ end
 local function fire(e, data)
 	state.Fired[e.Id] = true
 	state.LastFired[e.Id] = os.clock()
-	state.LastScareAt = os.clock()
+	-- (v144: the house's own sounds, thunder and the dog, aren't scares: they don't hold the next one back)
+	if not (ctx.Config.Director.Ambient or {})[e.Id] then
+		state.LastScareAt = os.clock()
+	end
 	Director.addTension(e.Tension or 5)
 	if ctx.Config.Debug then
 		print("[Director] event " .. e.Id)
@@ -1455,7 +1463,8 @@ end
 -- out of it: a moment later, lightning, and him standing out in the yard below (YardFigure, once a
 -- night). glassPos: the window; out: straight out of the house through it.
 function Director.windowGlance(player: Player, glassPos: Vector3, out: Vector3)
-	if state.Act ~= "Evening" then
+	-- (v144: off in the quiet acts before the blackout, where it lived: two scares before the blackout, no more)
+	if state.Act ~= "Evening" or (ctx.Config.Director.QuietActs or {})[state.Act] then
 		return
 	end
 	local e = eventById("YardFigure")
@@ -1591,6 +1600,10 @@ function Director.roomEntered(player: Player, room)
 		return
 	end
 	if player:GetAttribute("Hiding") or player:GetAttribute("Captured") then
+		return
+	end
+	-- (v144: not room after room before the blackout: the first act's one room scare is Director.firstScare's)
+	if (ctx.Config.Director.QuietActs or {})[state.Act] then
 		return
 	end
 	local ts = math.max(ctx.Config.TimeScale, 0.25)
@@ -1777,8 +1790,11 @@ local function schedule(actTime: number)
 		return
 	end
 	local pool = {}
+	local quiet = (ctx.Config.Director.QuietActs or {})[state.Act]
+	local ambient = ctx.Config.Director.Ambient or {}
 	for _, e in Events.List do
-		if canFire(e) then
+		-- (v144: before the blackout, only the house's own sounds: no knocks, slams, flickers or figures)
+		if canFire(e) and (not quiet or ambient[e.Id]) then
 			table.insert(pool, { e, e.Weight or 1 })
 		end
 	end

@@ -157,6 +157,17 @@ A player: "most loopable enemy in horror games". He's slower than your sprint by
 ### A short blackout (v134)
 The owner: "Blackout part is too long." The dark ran ~6-7 minutes when help was called (Config.MinNight 900 held the police off until 15:00) and up to ~19 when it wasn't (act III's 10-12 minutes before Mrs. Okafor's part began). Now: MinNight 600; police 90 s after the call (neighbour 90, car 60); the car and her door after 90 s of dark; act III 3-4 min with no help called, then Mrs. Okafor calls 30 s into the last act and the police come 60 s later; the final run to the front door 30 s (Hard 25). ~3 minutes of dark typically, ~6 at most; nights ~11-12 min.
 
+### Two scares before the blackout (v144)
+The owner: "Way too many scares there is like one every single room. Also they aren't even scary. Check doors that is your only reference. Make it 1-2 scares the whole run before blackout."
+
+Doors earns its scares with long quiet stretches: the house's own sounds, then one big, staged moment. Before the blackout (acts I and II, `Config.Director.QuietActs`) the Director now does just that:
+- **The scheduler** picks only ambient events (`Config.Director.Ambient`: Thunderclap, DogBark), and they no longer count as scares for spacing. No knocks, slams, flickers, figures, haunt events or moving toys in these acts.
+- **The beats**: act I has none; act II keeps its story (FootstepsUpstairs, which starts "Check upstairs"; TVAlert, the news) and one scare, HallStare, at 80% of the act.
+- **The room scare**: once in act I, scripted (`Apparition.FirstAt` 90 s, `Director.firstScare`); walking into rooms (the open-window rooms included) and the window glance (YardFigure) bring nothing before the blackout. v142's `SecondAt` is gone.
+- **HallStare, rebuilt to land** (Rush-style): the lights of your room and his stutter (`Events.HallStareLights`); up, he's standing at the end of the hall; dark; up again and he's halfway to you, a loud hit and a screech, the screen shakes; dark again and he's gone.
+
+After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
+
 ### Doors-grade pass (v143)
 The owner: "Is there a way to add a feedback thing in the result card if so add it. Improve monster design make creepier, better run animation, much better sounds. Map is still bad. Heavily rework map. Make next reel. UI should have names under them. Imagine this is doors and make it as good as that."
 

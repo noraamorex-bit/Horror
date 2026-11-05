@@ -420,8 +420,12 @@ Config.Director = {
 	-- other rooms by chance, once a night each; in the hunt (power out: your flashlight stutters) less often, and only
 	-- when he's really far away.
 	-- (v141) FirstAt: the night's first sighting, this many seconds into act I, wherever you are (Director.firstScare);
-	-- (v142) SecondAt: a second one, in another room if it can be
-	Apparition = { Chance = 0.45, Cooldown = 55, Spacing = 10, NotBefore = 25, HuntChance = 0.25, HuntCooldown = 100, HuntFar = 45, FirstAt = 50, SecondAt = 150 },
+	-- (v142's SecondAt, a second one in act I, went in v144: one scare in act I, one in act II, nothing else before the blackout)
+	-- (v144) the acts before the blackout are quiet: the scheduler only picks these ambient events in them (no knocks, slams,
+	-- flickers, figures); their scares are the act I room scare (Apparition.FirstAt) and act II's HallStare (Director BEATS)
+	QuietActs = { Evening = true, SmallThings = true },
+	Ambient = { Thunderclap = true, DogBark = true },
+	Apparition = { Chance = 0.45, Cooldown = 55, Spacing = 10, NotBefore = 25, HuntChance = 0.25, HuntCooldown = 100, HuntFar = 45, FirstAt = 90 },
 	CeilingSteps = 20, -- (v113) seconds into the Evening: footsteps cross the ceiling over someone
 }
 

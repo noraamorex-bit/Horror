@@ -155,6 +155,8 @@ Events.Scrawls = SCRAWLS
 -- (v133) the room scare's lights (Power.flickerRoom: { on, seconds }); the client's timeline (Effects.apparition)
 -- matches it: he appears at 0.54 s in the dark, the lights come up on him at 0.79, the snap and the hit at 1.49,
 -- and they're on again (and stay on) at 1.84
+-- (v144) HallStare's lights: a stutter, up on him at the end of the hall, dark, up on him halfway, dark, back on
+Events.HallStareLights = { { true, 0.1 }, { false, 0.08 }, { true, 0.9 }, { false, 0.35 }, { true, 0.5 }, { false, 0.12 } }
 Events.ApparitionLights = { { true, 0.12 }, { false, 0.08 }, { true, 0.1 }, { false, 0.1 }, { true, 0.14 }, { false, 0.25 }, { true, 0.7 }, { false, 0.35 } }
 local SCRAWL_TEXT = { "I'M IN THE WALLS", "WE'RE A FAMILY NOW", "{NAME} IS MINE", "DON'T LOOK UP", "NOBODY LEAVES", "I LIKE IT WHEN YOU SLEEP", "{NAME}, COME UPSTAIRS" }
 local scrawled: { [any]: { [number]: boolean } } = {}
@@ -533,16 +535,43 @@ Events.List = {
 			return nil
 		end,
 		Run = function(ctx, D, data)
+			-- (v144: act II's one scare, so it has to land, Doors' Rush-style: the lights stutter and in the light he's
+			-- standing at the end of the hall; dark; the lights come back and he's halfway to you, with a loud hit; dark
+			-- again, and he's gone)
 			local feet = data.Feet
-			ctx.Remotes.Figure:FireClient(data.Player, CFrame.lookAt(feet + V(0, 2.6, 0), V(data.From.X, feet.Y + 2.6, data.From.Z)), 1.7, "Stare")
-			ctx.Remotes.PlaySound:FireClient(data.Player, "CreatureWhisper", feet + V(0, 8, 0), { Volume = 0.8 })
-			task.delay(0.5, function()
-				ctx.PlayerState.addNerve(data.Player, -12)
-				ctx.Remotes.Shake:FireClient(data.Player, 0.25, 0.6)
-				D.react(data.Player, ctx.Story.Thoughts.Events.HallStare)
+			local p = data.Player
+			local from = data.From
+			local function at(pos: Vector3): CFrame
+				return CFrame.lookAt(pos + V(0, 2.6, 0), V(from.X, pos.Y + 2.6, from.Z))
+			end
+			local flat = V(from.X - feet.X, 0, from.Z - feet.Z)
+			local near = feet + flat.Unit * math.max(0, flat.Magnitude - 8)
+			local rooms = {}
+			for _, pos in { from, feet } do
+				local r = ctx.Rooms.find(pos + V(0, 3, 0))
+				if r and not table.find(rooms, r.Name) then
+					table.insert(rooms, r.Name)
+				end
+			end
+			local powered = ctx.Power.isOn()
+			if powered then
+				for _, name in rooms do
+					task.spawn(ctx.Power.flickerRoom, name, Events.HallStareLights, true)
+				end
+			end
+			task.delay(0.18, function()
+				ctx.Remotes.Figure:FireClient(p, at(feet), 0.9, "Stare")
+				ctx.Remotes.PlaySound:FireClient(p, "CreatureWhisper", feet + V(0, 8, 0), { Volume = 0.8 })
 			end)
-			task.delay(1.75, function()
-				ctx.Remotes.PlaySound:FireClient(data.Player, "BoneCrack1", feet + V(0, 6, 0), { Volume = 0.9 })
+			task.delay(1.43, function()
+				ctx.Remotes.Figure:FireClient(p, at(near), 0.5, "Chase")
+				ctx.Remotes.PlaySound:FireClient(p, "HorrorHit", near + V(0, 5, 0), { Volume = 1 })
+				ctx.Remotes.PlaySound:FireClient(p, "Screech", near + V(0, 6, 0), { Volume = 0.9 })
+				ctx.Remotes.Shake:FireClient(p, 0.9, 0.6)
+				ctx.PlayerState.addNerve(p, -16)
+			end)
+			task.delay(2.6, function()
+				D.react(p, ctx.Story.Thoughts.Events.HallStare)
 			end)
 			D.logTruth("HallStare")
 		end,
