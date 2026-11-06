@@ -835,7 +835,7 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
-- **6 Nov (v146 = place version 146)**, the owner (a screenshot: him a dark upright statue with an outline, no mask): "Now the map is
+- **6 Nov (v146 = place version 146)**, published; the owner (a screenshot: him a dark upright statue with an outline, no mask): "Now the map is
   too brown. Tone it down. Also many models still floating/pushed into ground. Check each one and improve. Also the models are still
   blocky/squares. Make them proper models. And the monster still isn't loading as in the image." Done: the client pose fix (see The
   intruder, v146), the toned palette, thin rugs, floor-snapped bases, 15 kinds of furniture as Creator Store models stretched to their

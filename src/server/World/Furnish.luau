@@ -168,7 +168,7 @@ function Furnish.build(ctx, root: Instance): { BasePart }
 	end
 	do
 		local dir = V(-0.5, 0, -1).Unit
-		Kit.armchair(guest, CFrame.lookAt(V(26.9, U, -10.4), V(26.9, U, -10.4) + dir), Color3.fromRGB(150, 130, 100))
+		Kit.armchair(guest, CFrame.lookAt(V(26.9, U, -9.85), V(26.9, U, -9.85) + dir), Color3.fromRGB(150, 130, 100))
 		lamp(guest, "Guest", F(29.4, U, -7.9, NZ), "floor", nil, Color3.fromRGB(232, 216, 190))
 	end
 	-- what nobody uses, under dust sheets
