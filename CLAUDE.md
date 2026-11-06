@@ -794,6 +794,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   door creaks open on the dark room and his desk lamp, his mask rises behind the desk, he comes over it, after you into the hall; in the
   coat closet watching through the crack (the north leaf open 0.5: film2 rig, positive opens it outward), he comes into the hall, his mask
   at the crack, he backs off... the door torn open on 22.15 s → RUN; glitch "he was in dad's office". Caption: `he was in dad's office game in comments`.
+  **Part 9** (`reel71`, `peak_horror_game_friends_v2_part9.mp4`, 6 Nov): the first with the v147 creature and the game's new PEEK
+  (stage `$S/map146/stage_reel.json`): the dark master bedroom, pushing in on the wardrobe; through its crack the bedroom door eases
+  open, him stooped in the doorway; peek (the left leaf eases out): him in the middle of the room, back turned, long arms hanging;
+  his head snaps round; back in, he walks right past the crack; peek again: empty, the door empty; back in, nothing; one more peek...
+  his mask right there (22.15 s) → RUN. (From the left leaf's gap the bed side is hidden behind the open leaf: keep him right of the
+  wardrobe's middle; the rig opens that leaf with a negative angle, scene.py flips every `door` value.) Glitch "he saw me peeking".
+  Caption: `he saw me peeking game in comments`.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
