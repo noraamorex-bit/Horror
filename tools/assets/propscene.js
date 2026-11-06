@@ -38,8 +38,11 @@ window.addProps = async function (scene, stage, models, meshes, textures) {
     }
     return { grp, mn, mx };
   }
-  for (const h of stage.holders) {
-    const model = models[String(h.entry.Id)]; if (!model) continue;
+  for (const h0 of stage.holders) {
+    const model = models[String(h0.entry.Id)]; if (!model) continue;
+    // (v146) a base a little under its floor is the floor (World/Props fit())
+    const h = Object.assign({}, h0, { min: h0.min.slice() });
+    for (const fy of [-13, 1, 15, 29]) { const by = h0.frame[1] + h0.min[1]; if (by < fy && by > fy - 0.3) h.min[1] = fy - h0.frame[1]; }
     const { grp, mn, mx } = authored(model);
     // 1. turn about its centre by Yaw
     const c0 = new T.Vector3((mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2);
@@ -61,7 +64,15 @@ window.addProps = async function (scene, stage, models, meshes, textures) {
     const cz = h.entry.Back ? h.max[2] - bs[2] * s / 2 : (h.min[2] + h.max[2]) / 2;
     const at = new T.Vector3((h.min[0] + h.max[0]) / 2, h.min[1] + hgt / 2, cz).applyMatrix4(frame);
     const frot = new T.Matrix4().extractRotation(frame);
-    const M = new T.Matrix4().makeTranslation(at.x, at.y, at.z).multiply(frot).multiply(new T.Matrix4().makeScale(s, s, s)).multiply(new T.Matrix4().makeTranslation(-c1.x, -c1.y, -c1.z)).multiply(rot);
+    let M = new T.Matrix4().makeTranslation(at.x, at.y, at.z).multiply(frot).multiply(new T.Matrix4().makeScale(s, s, s)).multiply(new T.Matrix4().makeTranslation(-c1.x, -c1.y, -c1.z)).multiply(rot);
+    // (v146, Stretch) then each axis scaled on its own to fill the placeholder's box exactly (World/Props stretch())
+    if (h.entry.Stretch) {
+      const cur = [(h.min[0] + h.max[0]) / 2, h.min[1] + hgt / 2, cz], dims = [bs[0] * s, bs[1] * s, bs[2] * s];
+      const tc = [(h.min[0] + h.max[0]) / 2, (h.min[1] + h.max[1]) / 2, (h.min[2] + h.max[2]) / 2];
+      const r = [0, 1, 2].map(k => Math.min(2.5, Math.max(0.4, ps[k] / Math.max(dims[k], 0.01))));
+      const local = new T.Matrix4().makeTranslation(tc[0], tc[1], tc[2]).multiply(new T.Matrix4().makeScale(r[0], r[1], r[2])).multiply(new T.Matrix4().makeTranslation(-cur[0], -cur[1], -cur[2]));
+      M = frame.clone().multiply(local).multiply(frame.clone().invert()).multiply(M);
+    }
     const outer = new T.Group(); outer.matrixAutoUpdate = false; outer.matrix.copy(M); outer.add(grp);
     outer.traverse(o => { if (o.isMesh) o.userData.pos = at.clone(); });
     outer.userData.holder = h; outer.userData.at = at.clone();

@@ -119,10 +119,30 @@ local function setFallback(m: Instance, on: boolean)
 	end
 end
 
-local function applySkin(rig, pose)
-	for bone, cf in Skin.transforms(rig, pose) do
+-- (v146, the owner's screenshot again: him a dark statue standing in his rest pose, no mask.) The pose was written once,
+-- on Stepped; anything that writes his joints later in the frame (his Humanoid's Animator, which steps after) puts the
+-- bones back to rest before he's drawn. Now the last pose is kept and written again just before every render, the
+-- Animator is taken off his Humanoid on this device (the server never plays animations on him), and a pose found
+-- undone at the next step is counted (status "reset", the night log's Perf.Skin).
+local lastBones: { [Bone]: CFrame } = {}
+local lastNeck: { Neck: Motor6D, CF: CFrame }? = nil
+local resetCount = 0
+local function writeLast()
+	for bone, cf in lastBones do
 		bone.Transform = cf
 	end
+	if lastNeck and lastNeck.Neck.Parent then
+		lastNeck.Neck.Transform = lastNeck.CF
+	end
+end
+local function applySkin(rig, pose)
+	local bones = {}
+	for bone, cf in Skin.transforms(rig, pose) do
+		bone.Transform = cf
+		bones[bone] = cf
+	end
+	lastBones = bones
+	lastNeck = nil
 	local mk = rig.Mask
 	if mk then
 		-- the neck joint turned so the Head part lands where the posed head bone puts it
@@ -131,8 +151,17 @@ local function applySkin(rig, pose)
 		if p0 then
 			local want = mk.Bone.TransformedWorldCFrame * mk.Rel
 			neck.Transform = neck.C0:Inverse() * p0.CFrame:Inverse() * want * neck.C1
+			lastNeck = { Neck = neck, CF = neck.Transform }
 		end
 		Pose.setJaw(mk.Jaw, math.clamp((pose.Mouth or 0) * 1.2, 0, 1))
+	end
+end
+-- (v146) no Animator of his own on this device: it would put his bones back to rest every frame
+local function dropAnimator(m: Instance)
+	for _, d in m:GetDescendants() do
+		if d:IsA("Animator") then
+			d:Destroy()
+		end
 	end
 end
 
@@ -150,6 +179,18 @@ local function bind(m: Model?)
 		return
 	end
 	jawList = Pose.jawMeshes(m)
+	lastBones = {}
+	lastNeck = nil
+	dropAnimator(m)
+	m.DescendantAdded:Connect(function(d)
+		if d:IsA("Animator") then
+			task.defer(function()
+				if d.Parent then
+					d:Destroy()
+				end
+			end)
+		end
+	end)
 	skin = skinOf(m)
 	-- (v102: in the house he wears a faint pale outline and fill wherever you can actually see
 	-- him, never through walls, so he reads in the dark; not in the lobby, where he's a shape in
@@ -281,7 +322,7 @@ function Creature.poseCopy(copy: Instance, gait: string, t: number, seed: number
 	return true
 end
 
--- (v135) how his skinned body did on this device: nil (not seen yet), "ok", "stale", "fallback"
+-- (v135) how his skinned body did on this device: nil (not seen yet), "ok", "stale", "fallback", (v146) "reset"
 function Creature.status(): string?
 	return skinStatus
 end
@@ -292,7 +333,25 @@ Creature._setFallback = setFallback
 
 function Creature.start()
 	local lastStride = 0
+	-- (v146) the pose again just before every render, whatever stepped after it
+	local preRender = (RunService :: any).PreRender or RunService.RenderStepped
+	preRender:Connect(function()
+		if skin and model and model.Parent then
+			writeLast()
+		end
+	end)
 	RunService.Stepped:Connect(function(_, dt)
+		-- (v146) was last frame's pose undone before this step? (something else writes his bones)
+		if skin and next(lastBones) then
+			local bone, cf = next(lastBones)
+			if bone and bone.Parent and (bone.Transform.Position - cf.Position).Magnitude + (bone.Transform.LookVector - cf.LookVector).Magnitude > 1e-3
+				and cf.LookVector:Dot(Vector3.new(0, 0, -1)) < 0.9999 then
+				resetCount += 1
+				if resetCount >= 30 and skinStatus ~= "fallback" then
+					skinStatus = "reset"
+				end
+			end
+		end
 		lookClock -= dt
 		if lookClock <= 0 then
 			lookClock = 1.5

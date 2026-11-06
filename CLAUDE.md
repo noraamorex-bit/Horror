@@ -150,6 +150,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **v133** (the owner: "he's still so dumb sometimes just walks past me. Make him constantly run after players"): sharper senses
   (SightDark 18 / Hard 21 / NM 24, was 13/15/14; PeripheralRange 10, was 7; HearWalk 15 / Hard 17), he chases anyone he sees within
   16 studs on his way to a hiding spot (was 9), and running to a spot shows as running (it showed as a walk).
+- **v146 (the owner's screenshot: him a dark statue in his rest pose, no mask, again)**: the client posed his bones once per frame on
+  Stepped, and his Humanoid's Animator (replicated from the server's loadAnims) could put them back to rest before render. Now the pose
+  is written again on PreRender, the Animator is destroyed on clients (the server never plays animations on him), and a pose found
+  undone is logged as Perf.Skin "reset" (pull_stats: check it).
 - **v135 (the owner's screenshot: him a grey statue on the stairs again, "make it scarier... he isn't chasing")**: the client drops
   a skeleton that's no longer the model's own (body streamed out and back in) and rebinds; if the skinned body can't be driven for 2 s
   the part-built figure shows instead (server keeps each hidden part's `T0`); night log `Perf.Skin` ok/stale/fallback (pull_stats:
@@ -265,6 +269,16 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   (`Surp` Behind / Closet).
 
 **World**
+- **v146 (the owner, a screenshot of him as a dark statue: "Now the map is too brown. Tone it down. Also many models still
+  floating/pushed into ground. Check each one and improve. Also the models are still blocky/squares. Make them proper models.")**:
+  walnut only in the den, Dad's office and on the doors; the halls sage-grey damask over slate-green panels with cream trim, cream
+  panelling and casings elsewhere, cream stair risers/balusters, beams only in the den and office (Finish `Palette`). Rugs are two
+  thin layers (they stood 0.1-0.18 high and swallowed the feet of everything on them), fitted bases snap to the floor (World/Depth
+  had pushed the office desk's 0.18 under). **Proper models**: Props `Stretch = true` fills the stand-in's box exactly (each axis;
+  tops stay where lamps/plates/mugs sit, the space under a table stays for hiding): nightstands, dressers, coffee tables, the dining
+  tables, desks, console tables, TV stands, side tables; plus toilets, the plain chairs, Jamie's desk chair, the office loveseat.
+  Beds, wardrobes, kitchen appliances, lamps stay built (hidden in / used / lit). Checks: `tools/rest_audit.py` (every object on
+  its surface), settle_check (bases + Stretch tops), props_test (stretch).
 - **v145 (the owner: "Check the doors Hotel rooms. I want that level of design... objects are too low and phases through...
   Remodel the whole house")**: Doors' hotel look in the halls and the grown-ups' rooms (Finish `Palette`: walnut raised-panel
   wainscoting, walnut trim and a two-step crown, deep damask; walnut doors, casings with cornice caps, ceiling beams, brass
@@ -820,6 +834,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **6 Nov (v146 = place version 146)**, the owner (a screenshot: him a dark upright statue with an outline, no mask): "Now the map is
+  too brown. Tone it down. Also many models still floating/pushed into ground. Check each one and improve. Also the models are still
+  blocky/squares. Make them proper models. And the monster still isn't loading as in the image." Done: the client pose fix (see The
+  intruder, v146), the toned palette, thin rugs, floor-snapped bases, 15 kinds of furniture as Creator Store models stretched to their
+  stand-ins (see World, v146). Can't see the real client: check that he's posed and masked on a phone now (if not, `--since=146` Perf.Skin
+  "reset" says whether something still undoes the pose), the halls' new colours, and the new furniture. Next: `--since=146`: Perf.Skin.
 
 - **6 Nov (v145 = place version 145, reels 69-70 = PEAK Parts 7-8)**, published; the owner: "Analyze game statistics and improve the game. Also
   check out gamepasses... Check the doors Hotel rooms. I want that level of design... some objects are too low and phases through, some
@@ -1413,7 +1434,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 145; the notes' "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 146; the notes' "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

@@ -27,11 +27,14 @@ Scratch output goes wherever you point it (not in the repo).
    `ToyShelf`, not `Bookcase`), so the swap passes it by.
 5. `tools/harness/props_test.luau` tests the fitting itself (turn, scale, floor, back to the wall).
 
-Don't swap things players use or hide in (beds, wardrobes, desks you hide under, the fridge, oven,
-sink, TV) or that other things sit on at fixed heights (coffee/dining tables, nightstands,
-dressers): a different shape there breaks hiding views or leaves cups floating.
+Don't swap things players use or hide in (beds, wardrobes, the fridge, oven, sink, TV). Things other
+things sit on at fixed heights (coffee/dining tables, nightstands, dressers, desks) only with
+`Stretch = true` (v146): the model fills the stand-in's box exactly, so the cups stay on it and the
+space under a table you hide under stays.
 
 ## Placement checks (v145)
 - `node settle_check.mjs <stage.json> <cacheDir>`: every Creator Store prop placed exactly as World/Props `fit()` does; FAIL if its
   real geometry doesn't stand on its placeholder's base (and the old v85-v144 `settle()` replayed, which sank chairs into the floor).
 - `python3 ../house_audit.py <stage.json>`: every object in the house: SUNK / FLOAT / WALL / FACING / CLIP / HUNG.
+- `python3 ../rest_audit.py <stage.json> [0.04]`: every object (model or group of touching loose parts) against the surface under
+  it: + floats, - pushed in. `Stretch = true` entries (v146) fill their stand-in's box exactly: settle_check also checks their tops.

@@ -1050,7 +1050,7 @@ function Interior.build(ctx, root: Instance, refs)
 	---------------------------------------------------------------------------
 	local garage = folder("Garage")
 	-- Mom's Honda, parked nose-in (its local +Z points out through the garage door)
-	local car, _, driverDoor = Kit.sedan(garage, F(53, G - 0.05, -17, PZ), Color3.fromRGB(110, 28, 30))
+	local car, _, driverDoor = Kit.sedan(garage, F(53, G, -17, PZ), Color3.fromRGB(110, 28, 30))
 	car.Name = "Honda"
 	target("Car", driverDoor.Position)
 	ctx.Escape.setupCar(car, driverDoor, {})
@@ -1194,7 +1194,7 @@ function Interior.build(ctx, root: Instance, refs)
 	-- where most of the night's work is
 	---------------------------------------------------------------------------
 	-- (in the front hall against the office wall: not over the basement stairs)
-	wardrobe(hall, "Coat closet", 9.2, -17.1, 11.35, -11.7, G, NX, "Hallway", Color3.fromRGB(86, 56, 38))
+	wardrobe(hall, "Coat closet", 9.2, -17.1, 11.35, -11.7, G, NX, "Hallway", WHITE_WOOD)
 	wardrobe(mud, "Utility closet", 34.6, 0.6, 39.4, 3.4, G, NZ, "Mudroom", WHITE_WOOD)
 	wardrobe(garage, "Storage cabinet", 41, -21.5, 43.8, -16, G, PX, "Garage", Color3.fromRGB(96, 100, 104))
 	-- crouched under a table or a desk, peeking out at floor level
@@ -1319,7 +1319,7 @@ function Interior.build(ctx, root: Instance, refs)
 	-- UPSTAIRS HALL
 	---------------------------------------------------------------------------
 	local uhall = folder("UpperHall")
-	wardrobe(uhall, "Linen wardrobe", 9.2, -8.5, 11.35, -3.5, U, NX, "UpperHall", Color3.fromRGB(86, 56, 38))
+	wardrobe(uhall, "Linen wardrobe", 9.2, -8.5, 11.35, -3.5, U, NX, "UpperHall", WHITE_WOOD)
 	Kit.rug(uhall, F(3, U, -18, NZ), 5, 18, Color3.fromRGB(112, 50, 46), Color3.fromRGB(204, 172, 120))
 	local _, htH = Kit.consoleTable(uhall, F(10.6, U, -25, NX), 4, 1.4, WOOD_DARK)
 	Kit.plant(uhall, F(10.25, U + htH, -25.9, NX), 0.9, "leafy", Color3.fromRGB(240, 240, 236))

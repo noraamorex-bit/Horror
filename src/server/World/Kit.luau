@@ -463,6 +463,7 @@ function Kit.desk(parent, cf: CFrame, w: number, d: number, color: Color3)
 	Kit.box(m, "Panel", cf * CF(-w / 2 + 0.12, (h - 0.28) / 2, 0), V(0.2, h - 0.28, d - 0.2), color, M.Wood)
 	Kit.box(m, "Modesty", cf * CF(-0.9, h - 1.1, d / 2 - 0.2), V(w - pedW - 0.4, 1.4, 0.12), dark, M.Wood)
 	Kit.collider(m, cf * CF(0, h / 2, 0), V(w, h, d))
+	m.WorldPivot = cf -- (Props: the front is local -Z)
 	return m, h
 end
 
@@ -971,6 +972,7 @@ function Kit.toilet(parent, cf: CFrame)
 	Kit.box(m, "FlushLever", cf * CF(-0.7, 3.25, 0.74), V(0.45, 0.09, 0.09), C.Chrome, M.Metal)
 	Kit.vcyl(m, "SupplyPipe", cf * CF(0.6, 0.85, 1.45), 1.4, 0.1, C.Chrome, M.Metal)
 	Kit.collider(m, cf * CF(0, 1.0, 0.2), V(2.0, 2.0, 2.8), "ToiletBlock")
+	m.WorldPivot = cf -- (Props: the front is local -Z)
 	return m
 end
 
@@ -1244,12 +1246,12 @@ end
 function Kit.rug(parent, cf: CFrame, w: number, d: number, color: Color3, border: Color3?)
 	local m = Kit.model(parent, "Rug")
 	local b = border or lighter(color, 0.3)
-	Kit.box(m, "Rug", cf * CF(0, 0.025, 0), V(w, 0.05, d), b, M.Fabric)
-	Kit.box(m, "RugField", cf * CF(0, 0.055, 0), V(w - 1.0, 0.03, d - 1.0), color, M.Fabric)
-	Kit.box(m, "RugInner", cf * CF(0, 0.075, 0), V(w - 2.2, 0.02, d - 2.2), lighter(color, 0.12), M.Fabric)
-	Kit.box(m, "RugCore", cf * CF(0, 0.09, 0), V(math.max(0.5, w - 3.2), 0.02, math.max(0.5, d - 3.2)), color, M.Fabric)
+	-- (v146: thin, 0.05 at its thickest: the old 0.1-stud stack swallowed the feet of every chair, sofa and lamp on it. Two
+	-- layers 0.03 apart, so World/Depth doesn't push them apart, a border and its field)
+	Kit.box(m, "Rug", cf * CF(0, 0.01, 0), V(w, 0.02, d), b, M.Fabric)
+	Kit.box(m, "RugField", cf * CF(0, 0.04, 0), V(w - 1.0, 0.02, d - 1.0), color, M.Fabric)
 	for _, s in { -1, 1 } do
-		Kit.box(m, "Fringe", cf * CF(0, 0.02, s * (d / 2 + 0.12)), V(w - 0.2, 0.03, 0.24), lighter(b, 0.3), M.Fabric)
+		Kit.box(m, "Fringe", cf * CF(0, 0.01, s * (d / 2 + 0.12)), V(w - 0.2, 0.02, 0.24), lighter(b, 0.3), M.Fabric)
 	end
 	return m
 end
@@ -1871,6 +1873,7 @@ function Kit.mediaConsole(parent, cf: CFrame, w: number, d: number, h: number, c
 	Kit.box(m, "CableBox", cf * CF(0, 0.5 + (h - 0.62) / 2 + 0.2, -0.2), V(1.6, 0.35, 1.0), Color3.fromRGB(22, 22, 24), M.Plastic)
 	Kit.box(m, "CableBoxLED", cf * CF(0.55, 0.5 + (h - 0.62) / 2 + 0.2, -0.71), V(0.3, 0.08, 0.02), Color3.fromRGB(60, 200, 90), M.Neon)
 	Kit.collider(m, cf * CF(0, h / 2, 0), V(w, h, d))
+	m.WorldPivot = cf -- (Props: the front is local -Z)
 	return m, h
 end
 

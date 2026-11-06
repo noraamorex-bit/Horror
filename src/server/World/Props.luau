@@ -55,11 +55,27 @@ Props.Models = {
 	TeddyPink = 8820218869, -- "Stuffed Toy Teddy Bear" in a pink dress
 	TeddyBrown = 4919878545, -- a brown teddy bear
 	Cooler = { Id = 5221805197, Yaw = 0 }, -- "Camping Cooler": red with a white lid
+	-- (v146, the owner: "the models are still blocky/squares. Make them proper models") furniture other things stand on,
+	-- stretched to its placeholder's box (Stretch) so the lamps, plates and mugs on it and the space under it stay put
+	Nightstand = { Id = 4639962356, Yaw = 180, Stretch = true }, -- a mesh nightstand, three drawers (built facing +Z)
+	Dresser = { Id = 15306056862, Yaw = 0, Stretch = true }, -- an old carved chest of drawers (mesh; its drawer rig stripped)
+	CoffeeTable = { Id = 56449842, Yaw = 0, Stretch = true }, -- a low wooden coffee table with a shelf
+	DiningTable = { Id = 14123656458, Yaw = 90, Stretch = true }, -- "Dining Table": turned legs, plank top (mesh; long along Z)
+	Desk = { Id = 14931952518, Yaw = 0, Stretch = true }, -- a wooden desk, a pedestal of drawers, open knee space
+	ConsoleTable = { Id = 5801579726, Yaw = 90, Stretch = true }, -- "Antique Table": turned legs, a drawer (mesh; long along Z)
+	MediaConsole = { Id = 14443577919, Yaw = 0, Stretch = true }, -- "TVstand": mid-century, open shelves, tapered legs (one mesh)
+	SideTable = { Id = 12969071665, Yaw = 0, Stretch = true }, -- "End Table": round, carved legs, a shelf (mesh)
+	Toilet = { Id = 11456534986, Yaw = 0 }, -- "Meshes/toilet": a white porcelain toilet (one mesh; its spinning-gag movers stripped)
+	Chair = { Id = 17056776920, Yaw = 180 }, -- (the same wooden chair as the dining chairs)
+	OfficeChair = { Id = 17056797478, Yaw = 180 }, -- (Jamie's desk chair: the same as Dad's)
+	Loveseat = { Id = 14393549681, Yaw = 0, Fit = "width" }, -- (Dad's office loveseat: the den's leather sofa)
 }
 
 -- flat things are fitted by their width only (a scattered heap of shards is only a few
 -- hundredths of a stud tall)
 local FLAT = { BrokenPlate = true, Plate = true }
+-- the floors' tops (World/Layout.Y): Basement, Ground, Upstairs, Attic
+local FLOORS = { -13, 1, 15, 29 }
 
 local cache = {} -- assetId -> Model template | false (failed)
 local loading = {} -- assetId -> true while a load is in flight
@@ -175,11 +191,43 @@ local function localBox(model: Instance, frame: CFrame): (Vector3?, Vector3?)
 end
 Props._localBox = localBox
 
+-- (v146) fill the box pmn..pmx (in frame's axes) with the model: per-axis scale about the box centres. A part's size grows
+-- along its own axes by how much those axes point along each of the frame's (exact for parts square to the frame)
+function Props.stretch(prop: Instance, frame: CFrame, pmn: Vector3, pmx: Vector3)
+	local lmn, lmx = localBox(prop, frame)
+	if not lmn or not lmx then
+		return
+	end
+	local function ratio(a: number, b: number): number
+		return math.clamp(a / math.max(b, 0.01), 0.4, 2.5)
+	end
+	local r = Vector3.new(ratio(pmx.X - pmn.X, lmx.X - lmn.X), ratio(pmx.Y - pmn.Y, lmx.Y - lmn.Y), ratio(pmx.Z - pmn.Z, lmx.Z - lmn.Z))
+	local lc, tc = (lmn + lmx) / 2, (pmn + pmx) / 2
+	local function along(v: Vector3): number
+		return math.sqrt((v.X * r.X) ^ 2 + (v.Y * r.Y) ^ 2 + (v.Z * r.Z) ^ 2)
+	end
+	for _, d in prop:GetDescendants() do
+		if d:IsA("BasePart") then
+			local rel = frame:ToObjectSpace(d.CFrame)
+			local rot = rel.Rotation
+			local f = Vector3.new(along(rot.RightVector), along(rot.UpVector), along(-rot.LookVector))
+			local pos = tc + (rel.Position - lc) * r
+			d.Size = d.Size * f
+			local mesh = d:FindFirstChildOfClass("SpecialMesh")
+			if mesh then
+				mesh.Scale = mesh.Scale * f
+				mesh.Offset = mesh.Offset * f
+			end
+			d.CFrame = frame * CFrame.new(pos) * rot
+		end
+	end
+end
+
 -- Props.Models entries: an asset id, or { Id, Yaw = degrees (turns the model about the vertical
 -- so its front faces -Z, the way our furniture faces), Fit = "inside" (default: as big as fits
 -- inside the placeholder's box) | "width" (as wide as the placeholder, height allowed 25% over),
 -- Back = true (its back lines up with the placeholder's back: against a wall, a deeper model
--- reaches into the room instead of into the wall) }
+-- reaches into the room instead of into the wall), Stretch = true (v146: then stretched to fill the box exactly) }
 local function entryOf(v: any): any
 	if type(v) == "number" then
 		return { Id = v }
@@ -205,6 +253,15 @@ local function fit(placeholder: Model, raw: any)
 	local pmn, pmx = localBox(placeholder, frame)
 	if not pmn or not pmx then
 		return
+	end
+	-- (v146) a placeholder reaching a little under its floor (World/Depth pushes faces that sit on the floor down a few
+	-- hundredths each time they fight; the office desk's went 0.18 under) would sink its model by as much: its base is
+	-- the floor
+	local baseY = pivot.Position.Y + pmn.Y
+	for _, fy in FLOORS do
+		if baseY < fy and baseY > fy - 0.3 then
+			pmn = Vector3.new(pmn.X, fy - pivot.Position.Y, pmn.Z)
+		end
 	end
 	local psize = pmx - pmn
 	local prop = tpl:Clone()
@@ -259,6 +316,12 @@ local function fit(placeholder: Model, raw: any)
 	end
 	local at = frame:PointToWorldSpace(Vector3.new(c.X, pmn.Y + h / 2, cz))
 	prop:PivotTo(CFrame.new(at) * frame.Rotation)
+	-- 4. (v146, Stretch = true) furniture other things stand on or that players hide under: stretched to fill the
+	-- placeholder's box exactly (each axis on its own), so its top is where the lamp, the plates, the mug were set and
+	-- the space under it is the same. Every part keeps its turn; its size and its place scale along the frame's axes.
+	if entry.Stretch then
+		Props.stretch(prop, frame, pmn, pmx)
+	end
 	for _, d in placeholder:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.Transparency = 1

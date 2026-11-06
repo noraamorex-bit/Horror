@@ -17,6 +17,16 @@ local ok, err = pcall(function()
 		local junk = R.Instance.new("Script"); junk.Parent = m
 		return box
 	end
+	-- (v146) a squat store table: a top and four legs, half as tall as ours and longer, built facing -Z
+	local function storeTable()
+		local box = R.Instance.new("Model")
+		local m = R.Instance.new("Model"); m.Parent = box
+		local top = R.Instance.new("Part"); top.Name = "StoreTop"; top.Size = R.Vector3.new(8, 0.3, 3); top.CFrame = R.CFrame.new(60, 1.35, 60); top.Parent = m
+		for _, x in { -3.7, 3.7 } do
+			local leg = R.Instance.new("Part"); leg.Name = "StoreTableLeg"; leg.Size = R.Vector3.new(0.3, 1.2, 0.3); leg.CFrame = R.CFrame.new(60 + x, 0.6, 60); leg.Parent = m
+		end
+		return box
+	end
 	-- a bookcase twice as deep as ours, built facing -Z
 	local function storeShelf()
 		local box = R.Instance.new("Model")
@@ -29,6 +39,7 @@ local ok, err = pcall(function()
 		table.insert(loads, id)
 		if id == 1 then return H.wrap(storeChair()) end
 		if id == 2 then return H.wrap(storeShelf()) end
+		if id == 3 then return H.wrap(storeTable()) end
 		error("no such asset")
 	end }
 	local Props = H.load("Server/World/Props")
@@ -36,6 +47,7 @@ local ok, err = pcall(function()
 		DiningChair = { Id = 1, Yaw = 180 },
 		Bookcase = { Id = 2, Yaw = 0, Fit = "width", Back = true },
 		Broken = { Id = 99 },
+		CoffeeTable = { Id = 3, Yaw = 0, Stretch = true },
 	}
 	local Kit = H.load("Server/World/Kit")
 	local root = H.Instance.new("Folder", H.workspaceRoot)
@@ -50,6 +62,11 @@ local ok, err = pcall(function()
 	-- one that won't load: stays as it was
 	local other = Kit.chair(root, R.CFrame.new(-20, 0, 0))
 	other:SetAttribute("PropKey", "Broken")
+	-- a coffee table turned to face +X, with a mug on it at its own height (the store table must reach the mug)
+	local tableAt = R.CFrame.new(30, 0, 30) * R.CFrame.Angles(0, -math.pi / 2, 0)
+	local coffee, coffeeH = Kit.coffeeTable(root, tableAt, 5, 2.6, 1.6, R.Color3.new(0.4, 0.3, 0.2))
+	local tableFrame = R.CFrame.new(tableAt.Position) * R.CFrame.Angles(0, math.atan2(-tableAt.LookVector.X, -tableAt.LookVector.Z), 0)
+	local tmn, tmx = Props._localBox(H.unwrap(coffee), tableFrame)
 	-- (our bookcase's own box, in its frame: what the store one must match)
 	local shelfFrame = R.CFrame.new(shelfAt.Position) * R.CFrame.Angles(0, math.atan2(-shelfAt.LookVector.X, -shelfAt.LookVector.Z), 0)
 	local smn, smx = Props._localBox(H.unwrap(shelf), shelfFrame)
@@ -87,6 +104,21 @@ local ok, err = pcall(function()
 	assert(math.abs(backZ - ourBack) < 0.05, ("its back on our back, not through the wall (%.2f vs %.2f)"):format(backZ, ourBack))
 	assert(body.Size.Z > smx.Z - smn.Z + 0.5, "it's deeper than ours: it reaches into the room")
 	print("bookcase against the wall ok")
+	-- (v146) the stretched table fills our table's box exactly: its top where our top was (the mug stays on it), its
+	-- feet on the floor, as long and as deep as ours, turned the way ours faces
+	do
+		local top = find(coffee, "StoreTop")
+		assert(top, "the store table is in")
+		local smn2, smx2 = Props._localBox(H.unwrap(coffee):FindFirstChild("Prop"), tableFrame)
+		for _, ax in { "X", "Y", "Z" } do
+			assert(math.abs(smn2[ax] - tmn[ax]) < 0.03 and math.abs(smx2[ax] - tmx[ax]) < 0.03, ("fills our box on %s (%.2f..%.2f vs %.2f..%.2f)"):format(ax, smn2[ax], smx2[ax], tmn[ax], tmx[ax]))
+		end
+		local topY = top.CFrame.Position.Y + top.Size.Y / 2
+		assert(math.abs(topY - (tableAt.Position.Y + tmx.Y)) < 0.03, ("its top at our top (%.2f)"):format(topY))
+		assert(math.abs(top.Size.X - (tmx.X - tmn.X)) < 0.05 or math.abs(top.Size.Z - (tmx.X - tmn.X)) < 0.05, "as long as ours")
+		local _ = coffeeH
+	end
+	print("stretched table ok")
 	-- the one that failed to load is untouched
 	assert(H.unwrap(other):GetAttribute("PropSwapped") == nil, "a model that won't load leaves ours in place")
 	for _, d in H.unwrap(other):GetChildren() do

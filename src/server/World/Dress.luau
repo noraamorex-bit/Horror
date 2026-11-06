@@ -191,8 +191,7 @@ function Dress.build(ctx, root: Instance): { BasePart }
 		end
 		-- a side table by the reading chair: books and a mug
 		sideTable(master, F(-33.5, U, -28.0, PZ), 1.6, 2.0, Kit.C.WoodDark)
-		Kit.bookStack(master, F(-33.6, U + 2.0, -28.05, PZ), 2, 41)
-		Kit.mug(master, F(-33.0, U + 2.0, -27.55, PZ), Color3.fromRGB(226, 220, 206))
+		Kit.mug(master, F(-32.95, U + 2.0, -27.55, PZ), Color3.fromRGB(226, 220, 206))
 		-- a console under the painting on the bathroom wall: flowers, photos, a jewellery box
 		local _, conH = Kit.consoleTable(master, F(-17.9, U, -1.35, NZ), 5, 1.3, Kit.C.WoodDark)
 		Kit.vaseFlowers(master, F(-19.5, U + conH, -1.4, NZ), 1.0, Color3.fromRGB(70, 110, 140), Color3.fromRGB(240, 236, 226), 13)

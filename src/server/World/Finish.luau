@@ -14,27 +14,30 @@ local V = Vector3.new
 local WHITE = Color3.fromRGB(238, 234, 226)
 
 -- Wall: paint colour; Mat: material; Wainscot: lower panelling colour (nil = none); Curtain colour
--- (v145, the owner: "Check the doors Hotel rooms. I want that level of design"): the halls and the grown-ups' rooms
--- get Doors' hotel look: dark walnut wainscoting in raised panels (Panels), walnut trim (Trim: chair rail, skirting,
--- a two-step crown), and deeper damask papers; the children's rooms and the wet rooms keep their own light colours.
+-- (v145, the owner: "Check the doors Hotel rooms. I want that level of design"): raised-panel wainscoting (Panels), a
+-- two-step crown, deeper papers. (v146, the owner: "Now the map is too brown. Tone it down."): walnut stays only in the
+-- den and Dad's office (and on the doors); the halls get a sage-grey damask over slate-green panelling with cream trim, the
+-- living room a lighter gold over cream panels, the bedrooms cream panelling.
 local WALNUT = Color3.fromRGB(74, 48, 33)
+local CREAM = Color3.fromRGB(230, 224, 210)
+local SLATE = Color3.fromRGB(78, 90, 86)
 Finish.Walnut = WALNUT
 local PALETTE = {
-	Living = { Wall = Color3.fromRGB(150, 122, 82), Paper = "Damask", Mat = "Fabric", Wainscot = WALNUT, Panels = true, Trim = WALNUT, Curtain = Color3.fromRGB(120, 50, 45), Art = 2 },
-	Kitchen = { Wall = Color3.fromRGB(222, 200, 150), Mat = "Plaster", Curtain = Color3.fromRGB(215, 205, 170), Art = 1 },
-	Hallway = { Wall = Color3.fromRGB(150, 78, 64), Paper = "Damask", Mat = "Plaster", Wainscot = WALNUT, Panels = true, Trim = WALNUT, Curtain = Color3.fromRGB(120, 50, 45), Art = 3 },
+	Living = { Wall = Color3.fromRGB(182, 162, 124), Paper = "Damask", Mat = "Fabric", Wainscot = CREAM, Panels = true, Trim = CREAM, Curtain = Color3.fromRGB(120, 50, 45), Art = 2 },
+	Kitchen = { Wall = Color3.fromRGB(222, 206, 166), Mat = "Plaster", Curtain = Color3.fromRGB(215, 205, 170), Art = 1 },
+	Hallway = { Wall = Color3.fromRGB(150, 160, 146), Paper = "Damask", Mat = "Plaster", Wainscot = SLATE, Panels = true, Trim = CREAM, Curtain = Color3.fromRGB(70, 82, 78), Art = 3 },
 	Office = { Wall = Color3.fromRGB(52, 64, 88), Paper = "Damask", Mat = "Plaster", Wainscot = WALNUT, WainscotMat = "Wood", Panels = true, Trim = WALNUT, Curtain = Color3.fromRGB(150, 120, 80), Art = 2 },
 	Bathroom = { Wall = Color3.fromRGB(214, 196, 170), Mat = "Plaster", Wainscot = Color3.fromRGB(236, 236, 232), WainscotMat = "Tile", WainscotH = 5, Art = 0 },
-	MudHall = { Wall = Color3.fromRGB(176, 150, 118), Mat = "Plaster", Wainscot = Color3.fromRGB(238, 234, 226), Art = 1 },
-	Mudroom = { Wall = Color3.fromRGB(176, 150, 118), Mat = "Plaster", Wainscot = WHITE, Art = 0 },
+	MudHall = { Wall = Color3.fromRGB(176, 170, 150), Mat = "Plaster", Wainscot = Color3.fromRGB(238, 234, 226), Art = 1 },
+	Mudroom = { Wall = Color3.fromRGB(176, 170, 150), Mat = "Plaster", Wainscot = WHITE, Art = 0 },
 	Den = { Wall = Color3.fromRGB(68, 92, 72), Paper = "Damask", Mat = "Fabric", Wainscot = WALNUT, WainscotMat = "Wood", Panels = true, Trim = WALNUT, Curtain = Color3.fromRGB(200, 180, 140), Art = 2 },
-	Master = { Wall = Color3.fromRGB(96, 116, 124), Paper = "Damask", Mat = "Fabric", Wainscot = WALNUT, Panels = true, Trim = WALNUT, Curtain = Color3.fromRGB(230, 225, 215), Art = 2 },
+	Master = { Wall = Color3.fromRGB(110, 132, 140), Paper = "Damask", Mat = "Fabric", Wainscot = CREAM, Panels = true, Trim = CREAM, Curtain = Color3.fromRGB(230, 225, 215), Art = 2 },
 	MasterBath = { Wall = Color3.fromRGB(222, 208, 186), Mat = "Plaster", Wainscot = Color3.fromRGB(236, 236, 232), WainscotMat = "Tile", WainscotH = 6, Art = 0 },
 	Jamie = { Wall = Color3.fromRGB(70, 96, 112), Mat = "Plaster", Curtain = Color3.fromRGB(40, 50, 70), Art = 3 },
-	Guest = { Wall = Color3.fromRGB(196, 168, 140), Paper = "Roses", Mat = "Fabric", Wainscot = WALNUT, Panels = true, Trim = WALNUT, Curtain = Color3.fromRGB(160, 140, 110), Art = 1 },
+	Guest = { Wall = Color3.fromRGB(206, 182, 160), Paper = "Roses", Mat = "Fabric", Wainscot = CREAM, Panels = true, Trim = CREAM, Curtain = Color3.fromRGB(160, 140, 110), Art = 1 },
 	HallBath = { Wall = Color3.fromRGB(206, 214, 188), Mat = "Plaster", Wainscot = Color3.fromRGB(236, 236, 232), WainscotMat = "Tile", WainscotH = 6, Art = 0 },
 	Lily = { Wall = Color3.fromRGB(226, 182, 196), Paper = "Floral", Mat = "Fabric", Wainscot = WHITE, Panels = true, Curtain = Color3.fromRGB(250, 235, 240), Art = 2 },
-	UpperHall = { Wall = Color3.fromRGB(150, 78, 64), Paper = "Damask", Mat = "Plaster", Wainscot = WALNUT, Panels = true, Trim = WALNUT, Curtain = Color3.fromRGB(120, 50, 45), Art = 3 },
+	UpperHall = { Wall = Color3.fromRGB(150, 160, 146), Paper = "Damask", Mat = "Plaster", Wainscot = SLATE, Panels = true, Trim = CREAM, Curtain = Color3.fromRGB(70, 82, 78), Art = 3 },
 }
 Finish.Palette = PALETTE
 
@@ -406,12 +409,10 @@ function Finish.build(ctx, root: Instance)
 		end
 	end
 	-- (v145) walnut ceiling beams across the big rooms, clear of their lights and fans: { room, along "X"|"Z", at = {...} }
+	-- (v146: only in the two wood rooms)
 	local BEAMS = {
-		{ "Living", "X", { -24.5, -8.5 } },
 		{ "Den", "X", { 9, 24 } },
-		{ "Master", "X", { -24.5, -5 } },
 		{ "Office", "Z", { 19, 33 } },
-		{ "Guest", "Z", { 19, 33 } },
 	}
 	for _, b in BEAMS do
 		local r = ctx.Rooms.ByName[b[1]]

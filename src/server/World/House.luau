@@ -83,8 +83,8 @@ function House.build(ctx, root: Instance)
 		return out
 	end
 
-	-- (v145) interior door casings in walnut (the front and back doors' too, from the inside they frame the hall)
-	local CASING = Color3.fromRGB(74, 48, 33)
+	-- (v145) door casings with a cornice cap; (v146, "too brown") in cream, round the walnut doors
+	local CASING = Color3.fromRGB(230, 224, 210)
 	local function handleOpening(op, floorName)
 		if op.kind == "door" then
 			local door = ctx.Doors.create(doorsFolder, op)
@@ -266,7 +266,8 @@ function House.build(ctx, root: Instance)
 	---------------------------------------------------------------------------
 	local s = L.Stairs.Main
 	-- (v145) the main stair in walnut: risers, stringer and balusters (they were white), a darker handrail
-	local STAIR_WALNUT, RAIL = Color3.fromRGB(86, 56, 38), Color3.fromRGB(58, 38, 26)
+	-- (v146, "too brown": cream risers, stringer and balusters again; the handrail stays dark)
+	local STAIR_WALNUT, RAIL = Color3.fromRGB(230, 224, 210), Color3.fromRGB(58, 38, 26)
 	B.stairs(shell, "MainStairs", s.x0, s.x1, s.zStart, s.zEnd, s.yStart, s.yEnd, C.Oak, STAIR_WALNUT)
 	B.railing(shell, Vector3.new(-2, 1, -6), Vector3.new(-2, 15, 16.4), 3.4, RAIL, STAIR_WALNUT)
 	B.railing(shell, Vector3.new(-2, 15, -6), Vector3.new(-2, 15, 16.4), 3.4, RAIL, STAIR_WALNUT)

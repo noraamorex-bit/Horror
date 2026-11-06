@@ -168,6 +168,22 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### Toned down, proper furniture, his pose kept (v146)
+- **Palette**: walnut stays in the den, Dad's office and on the doors; the halls are a sage-grey damask over slate-green raised
+  panels with cream trim, the living room a lighter gold over cream panels, the bedrooms cream panelling; casings, stair risers
+  and balusters cream; ceiling beams only in the den and office.
+- **On the floor**: rugs are two layers 0.03 apart (a border and its field, 0.05 high; the old four-layer stack was pushed apart by
+  World/Depth to 0.18 and swallowed the feet of sofas, tables, chairs, nightstands and lamps). Props snaps a fitted base that's a
+  little under its floor up to it (Depth had pushed the office desk's stand-in 0.18 under). `tools/rest_audit.py <stage>`: every
+  object against whatever is under it.
+- **Proper models** (`Props.Models`, `Stretch = true`: after the uniform fit, each axis scaled on its own so the model fills the
+  stand-in's box; a part's size grows along its own axes by how much they point along the frame's): Nightstand, Dresser,
+  CoffeeTable, DiningTable (also the secret ending's long table), Desk, ConsoleTable, MediaConsole, SideTable; Toilet; Chair and
+  OfficeChair (the store chairs already used); Loveseat (the den's leather sofa). Kit.desk, toilet and mediaConsole record their
+  frame as WorldPivot now.
+- **His pose** (client `Creature`): written on Stepped and again on PreRender; the Animator on his Humanoid destroyed on clients;
+  a pose undone between frames is counted and logged ("reset").
+
 ### Doors' hotel remodel and the house audit (v145)
 The owner: "Check the doors Hotel rooms. I want that level of design... some objects are too low and phases through, some
 objects are turned wrong way... Remodel the whole house."

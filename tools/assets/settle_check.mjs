@@ -40,6 +40,7 @@ const out = await page.evaluate(async ([stage, models, meshes]) => {
   const res = [];
   for (const outer of window.PROPS || []) {
     const h = outer.userData.holder, at = outer.userData.at;
+    // (v146: the base fit() uses: a base a little under its floor is the floor)
     // the placeholder's world box (settle's `size`)
     const frame = cfm(h.frame);
     let wmn = [Infinity, Infinity, Infinity], wmx = [-Infinity, -Infinity, -Infinity];
@@ -62,7 +63,7 @@ const out = await page.evaluate(async ([stage, models, meshes]) => {
     const fl = rc.intersectObjects(qs.filter(q => q.userData.hid !== h.hid), false)[0];
     let dy = null;
     if (low < Infinity && fl) { dy = fl.point.y + 0.01 - low; if (Math.abs(dy) >= 1.5) dy = 0; }
-    res.push({ key: h.key, hid: h.hid, at: [at.x, at.y, at.z], dy, gap: bb.min.y - wmn[1], bottom: bb.min.y, base: wmn[1] });
+    res.push({ key: h.key, hid: h.hid, at: [at.x, at.y, at.z], dy, gap: bb.min.y - wmn[1], bottom: bb.min.y, base: wmn[1], topGap: h.entry.Stretch ? bb.max.y - wmx[1] : 0 });
   }
   return res;
 }, [stage, models, meshes]);
@@ -70,8 +71,8 @@ await browser.close();
 out.sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
 let fails = 0;
 for (const r of out) {
-  const bad = Math.abs(r.gap) > 0.06;
+  const bad = Math.abs(r.gap) > 0.06 || Math.abs(r.topGap) > 0.08;
   if (bad) fails++;
-  console.log(`${bad ? 'FAIL' : '  ok'} gap ${r.gap.toFixed(2).padStart(6)}  ${r.key.padEnd(16)} #${r.hid} at (${r.at.map(v => v.toFixed(1)).join(', ')})  bottom ${r.bottom.toFixed(2)} base ${r.base.toFixed(2)}  old settle ${r.dy == null ? '-' : r.dy.toFixed(2)}`);
+  console.log(`${bad ? 'FAIL' : '  ok'} gap ${r.gap.toFixed(2).padStart(6)}  ${r.key.padEnd(16)} #${r.hid} at (${r.at.map(v => v.toFixed(1)).join(', ')})  bottom ${r.bottom.toFixed(2)} base ${r.base.toFixed(2)}${r.topGap ? '  top gap ' + r.topGap.toFixed(2) : ''}  old settle ${r.dy == null ? '-' : r.dy.toFixed(2)}`);
 }
 console.log(fails ? `SETTLE FAIL: ${fails} props off their base` : 'SETTLE OK');
