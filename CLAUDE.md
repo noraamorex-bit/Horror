@@ -811,7 +811,7 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
-- **6 Nov (v145 = place version 145, reels 69-70 = PEAK Parts 7-8)**, the owner: "Analyze game statistics and improve the game. Also
+- **6 Nov (v145 = place version 145, reels 69-70 = PEAK Parts 7-8)**, published; the owner: "Analyze game statistics and improve the game. Also
   check out gamepasses... Check the doors Hotel rooms. I want that level of design... some objects are too low and phases through, some
   objects are turned wrong way... Remodel the whole house. Also make the next 2 reels." Votes 33 up / 56 down, 24.4K visits, 477
   favorites. Logs since 143 (724 lobby visits, 293 nights; v144 alone 262): first-nighters still quit mid-night 48% (quiet acts changed

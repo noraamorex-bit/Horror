@@ -37,3 +37,7 @@ api 2006721483 -F "price=19"   # Head start (25)
 api 2006193593 -F "price=10"   # Pick your role (15; 0 of 20 offers bought)
 # (Rocket (tonight) developer product 3718739690: 15 -> 10, 0 of 13: PATCH .../developer-products/v2/universes/$U/developer-products/3718739690 -F price=10)
 # v130 (31 Oct): Starter Pack developer product 3721088307: 19 -> 9 (2 of 906 windows bought): PATCH .../developer-products/v2/universes/$U/developer-products/3721088307 -F price=9
+# v145 (6 Nov): Night Vision 49 -> 25 (0 of 19 windows); the Starter Pack (still 9) now holds a free Become Him night and a
+# free Jumpscare Everyone: PATCH .../developer-products/v2/universes/$U/developer-products/3721088307 -F "description=500 coins,
+# a rocket, a revive, a free Become Him night and a free Jumpscare Everyone. Once per player."
+api 2045276660 -F "price=25"
