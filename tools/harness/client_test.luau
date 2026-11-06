@@ -35,13 +35,14 @@ local ok, err = pcall(function()
 	ctx.Story = H.load("RS/Shared/Story")
 	ctx.Util = H.load("RS/Shared/Util")
 	ctx.CreaturePose = H.load("RS/Shared/CreaturePose")
+	ctx.ActPose = H.load("RS/Shared/ActPose")
 	local sent = {}
 	ctx.Remotes = setmetatable({}, { __index = function(t, k)
 		local r = { OnClientEvent = H.signal(), FireServer = function(_, ...) table.insert(sent, k) end }
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Foley", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Foley", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Actions", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -769,6 +770,60 @@ local ok, err = pcall(function()
 		H.camera = nil
 		local neck = H.unwrap(curtis):FindFirstChild("Neck", true)
 		print("creature anim ok", ok3, e3, "animated", _G.ANIMATED, "neck", neck ~= nil, "errors so far", #H.errors)
+	end
+	-- v147 Actions: a player's R15 joints posed by what they're doing (brushing their teeth here)
+	do
+		local RB = H.roblox
+		local AP = ctx.ActPose
+		player:SetAttribute("Captured", nil)
+		player:SetAttribute("InGame", true)
+		local char = H.Instance.new("Model")
+		local parts = {}
+		for _, n in { "UpperTorso", "Head", "RightUpperArm", "RightLowerArm", "RightHand", "LeftUpperArm", "LeftLowerArm", "LeftHand" } do
+			local part = H.Instance.new("Part", char)
+			part.Name = n
+			parts[n] = part
+		end
+		local function motor(name, part0, part1, j)
+			local m = H.Instance.new("Motor6D", parts[part1])
+			m.Name = name
+			m.C0 = j.C0
+			m.C1 = j.C1
+			m.Transform = H.roblox.CFrame.identity -- (lune has no default for it)
+			return m
+		end
+		local R = AP.StandardRig
+		local rs = motor("RightShoulder", "UpperTorso", "RightUpperArm", R.RS)
+		motor("RightElbow", "RightUpperArm", "RightLowerArm", R.RE)
+		motor("RightWrist", "RightLowerArm", "RightHand", R.RW)
+		motor("LeftShoulder", "UpperTorso", "LeftUpperArm", R.LS)
+		motor("LeftElbow", "LeftUpperArm", "LeftLowerArm", R.LE)
+		motor("LeftWrist", "LeftLowerArm", "LeftHand", R.LW)
+		motor("Neck", "UpperTorso", "Head", R.Neck)
+		char.Parent = H.workspaceRoot
+		local oldChar = player.Character
+		rawset(player, "Character", char)
+		player:SetAttribute("Act", "Brush")
+		player:SetAttribute("ActHold", true)
+		player:SetAttribute("ActAt", os.clock())
+		for _ = 1, 6 do S.RunService.Stepped:Fire(0, 0.1) end
+		local tr = rs.Transform
+		local moved = tr and (tr.LookVector - RB.Vector3.new(0, 0, -1)).Magnitude > 0.2
+		assert(moved, "brushing raises the right arm: " .. tostring(tr))
+		assert(mods.Actions.cameraOffset() ~= nil, "camera offset")
+		-- let go: the arm comes back down (the Animator would write identity; we blend towards it)
+		player:SetAttribute("Act", nil)
+		player:SetAttribute("ActHold", nil)
+		for _ = 1, 12 do rs.Transform = RB.CFrame.identity; S.RunService.Stepped:Fire(0, 0.1) end
+		assert((rs.Transform.LookVector - RB.Vector3.new(0, 0, -1)).Magnitude < 0.01, "done: back to the animation")
+		-- tied up: arms behind the back
+		player:SetAttribute("Captured", true)
+		for _ = 1, 6 do rs.Transform = RB.CFrame.identity; S.RunService.Stepped:Fire(0, 0.1) end
+		local wrist = AP.wristOf(R, "R", { RightShoulder = rs.Transform, RightElbow = parts.RightLowerArm:FindFirstChild("RightElbow").Transform })
+		assert(wrist.Z > 0.2, "tied: the wrist behind the back: " .. tostring(wrist))
+		player:SetAttribute("Captured", nil)
+		rawset(player, "Character", oldChar)
+		print("actions ok")
 	end
 	print("remotes sent:", table.concat(sent, ","))
 	-- count UI objects

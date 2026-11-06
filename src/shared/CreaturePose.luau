@@ -287,7 +287,7 @@ end
 -- scale for that part's mesh, in the head's frame (nil: not part of the mouth)
 local JAW = { Maw = true, LowerTooth = true }
 local JAW_DROP = 0.21
-local MAW_H = 0.17
+local MAW_H = 0.13 -- (v147: the thinner mouth; Rig's Maw height)
 function CreaturePose.jawOffset(name: string, open: number): (Vector3?, Vector3?)
 	if not JAW[name] then
 		return nil, nil

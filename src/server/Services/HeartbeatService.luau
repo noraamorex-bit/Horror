@@ -109,6 +109,10 @@ function Heartbeat.begin(player: Player, seconds: number, onFail: () -> ())
 		OnFail = onFail,
 	}
 	sessions[player] = s
+	-- (leaning out when he stops at your door: you duck back in)
+	if ctx.Hiding and player:GetAttribute("Peeking") then
+		ctx.Hiding.peek(player, false)
+	end
 	ctx.Remotes.Heartbeat:FireClient(player, {
 		Id = s.Id,
 		Start = workspace:GetServerTimeNow(),

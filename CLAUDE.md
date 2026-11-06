@@ -87,6 +87,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - Onboarding: one notice with OK, then the character **thinks out loud** (big text, ~5 s each) to say
   what to do. Objective panel top-right ("OBJECTIVE"), multi-step tasks, "!" markers where to go.
 - Roblox's standard ProximityPrompts for interactions.
+- **Bodies move (v147**, the owner: "make animations for everything like brushing and peeking out and all things"): every
+  prompt action, the phone, the 911 call, the drink and being tied up pose the player's R15 arms on every screen (shared
+  `ActPose` + client `Actions`, IK on each avatar's own joints; server attributes Act/ActAt/ActHold, PhoneOut); in first
+  person your arms show and the camera dips. New prompt actions: add a keyword to `ActPose.Keywords` (actpose_test lists the
+  house's prompts).
 - **PC is not a big phone (v104**, a player: "unnecessary mobile UI for pc"): with mouse and keyboard
   the HUD stays ~real size (`UI.rescale`; touch/console keep the big one), the heartbeat shows Q / E key
   caps, no "tap" wording. Look at layouts with `ui_dump.luau` + `tools/assets/ui_preview.mjs`.
@@ -150,6 +155,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **v133** (the owner: "he's still so dumb sometimes just walks past me. Make him constantly run after players"): sharper senses
   (SightDark 18 / Hard 21 / NM 24, was 13/15/14; PeripheralRange 10, was 7; HearWalk 15 / Hard 17), he chases anyone he sees within
   16 studs on his way to a hiding spot (was 9), and running to a spot shows as running (it showed as a walk).
+- **v147 look (the owner: "Make the monsters model much creepier")**: the mask re-made (yellowed porcelain, small mismatched
+  sockets in flat black with one pinprick each, dark streaks running from them, a thin crooked mouth of small yellowed teeth with
+  gaps, cracks and a broken chip) and his body drawn out (`SkinPose.stretch`: long arms, fingers and neck, done on the server);
+  his head jerks over at rest. Look at him: the scratchpad's `lookstudio/run.sh <name>`. GDD "Peeking, bodies that move, a
+  creepier him (v147)".
 - **v146 (the owner's screenshot: him a dark statue in his rest pose, no mask, again)**: the client posed his bones once per frame on
   Stepped, and his Humanoid's Animator (replicated from the server's loadAnims) could put them back to rest before render. Now the pose
   is written again on PreRender, the Animator is destroyed on clients (the server never plays animations on him), and a pose found
@@ -190,6 +200,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   he either waits in an empty hiding spot near someone (a creak at 15 studs, bursts out at 7.5) or
   appears behind someone alone (turn round: he screams and chases; don't: gone in 7 s). 0.7 s
   scream before he runs, so it's a scare, not a free catch.
+- **PEEK (v147**, the owner: "Make a way to peek out of hiding spots"): hold R / Y / the PEEK button while hidden: the eye
+  leans out (`Config.Hiding.PeekOut`), a wardrobe opens a crack. He catches a peeker he's facing within 15 studs after 0.6 s
+  (red bleed + heartbeat meanwhile: duck back in) and comes for the spot as if he'd seen you get in. Not during the heartbeat.
+  Test `peek_test`.
 - **Hiding doesn't win the night (v125**, a player: "you can literally just hide and wait 2 mins and you've won, not scary
   either"): a hiding spot goes **stale** (`Intruder.HideStale` 40 s / Hard 30 / NIGHTMARE 24: a warning thought 8 s before, then he
   comes to listen at it (heartbeat); stay anyway and `HideStaleAgain` later he rips it open; moving resets it), and the police
@@ -835,6 +849,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **6 Nov (v147 = place version 147)**, published; the owner: "Make a way to peek out of hiding spots. Also make animations for
+  everything like brushing and peeking out and all things. Also make next reel. Make the monsters model much creepier". Done:
+  PEEK, the action poses, his new mask and long body (see The intruder, HUD; GDD "Peeking, bodies that move, a creepier him
+  (v147)"). Reel 71 = PEAK Part 9 (see Marketing). Can't see the real client: check on a phone that the PEEK button sits with
+  BREATH/LEAVE, the lean feels right, your arms show while brushing/searching in first person (not too close or clipped), and
+  that friends' poses look natural on other avatars (Rthro too). Next: `--since=147`: peeks/player, caught peeking, Perf.Skin.
+
 - **6 Nov (v146 = place version 146)**, published; the owner (a screenshot: him a dark upright statue with an outline, no mask): "Now the map is
   too brown. Tone it down. Also many models still floating/pushed into ground. Check each one and improve. Also the models are still
   blocky/squares. Make them proper models. And the monster still isn't loading as in the image." Done: the client pose fix (see The
@@ -1434,7 +1455,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 146; the notes' "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 147; the notes' "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

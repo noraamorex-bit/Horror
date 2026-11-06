@@ -967,6 +967,8 @@ Story.Hunt = {
 		"Those footsteps again. Getting closer.",
 	},
 	Seen = "He saw me. RUN. Get out of his sight and hide.",
+	-- (v147) caught leaning out of a hiding spot
+	PeekSeen = "He saw me looking. He's coming over.|breath",
 	-- (v125) a hiding spot going stale: the warning, then after he's listened at it and gone
 	Stale = "I've been in here too long. He can smell me. I need a new hiding place.|hide",
 	StaleAfter = "He knows I'm in here. He's coming back. MOVE.|hide",

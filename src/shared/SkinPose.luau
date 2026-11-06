@@ -114,6 +114,49 @@ function SkinPose.rig(body: Instance): Rig
 	return rig :: any
 end
 
+-- (v147, the owner: "Make the monsters model much creepier") longer than a man: the upper arms, the
+-- forearms, the fingers and the neck drawn out (each bone's offset from its parent grown, so the skinned
+-- mesh stretches between the joints). Once per body (the server, before it replicates; the reel tools).
+SkinPose.Stretch = { LFore = 1.18, RFore = 1.18, LHand = 1.3, RHand = 1.3, Neck2 = 1.35, Head = 1.2 }
+SkinPose.FingerStretch = 1.55
+SkinPose.ThumbStretch = 1.3
+function SkinPose.stretch(body: Instance)
+	if body:GetAttribute("Stretched") then
+		return
+	end
+	body:SetAttribute("Stretched", true)
+	local byName = {}
+	for _, d in body:GetDescendants() do
+		if d:IsA("Bone") then
+			byName[d.Name] = d
+		end
+	end
+	local function grow(b: any, k: number)
+		local c = b.CFrame
+		b.CFrame = (c - c.Position) + c.Position * k
+	end
+	for joint, k in SkinPose.Stretch do
+		local b = byName[JOINTS[joint]]
+		if b then
+			grow(b, k)
+		end
+	end
+	for name, b in byName do
+		local side = string.match(name, "_([LR])_%d+$")
+		local finger = string.match(name, "^(f_%a+)_0(%d)")
+		local thumb = string.match(name, "^(thumb)_0(%d)")
+		local k = tonumber(string.match(name, "_0(%d)_"))
+		-- (from the second knuckle on: the palm keeps its size, the fingers grow)
+		if side and k and k >= 2 then
+			if finger then
+				grow(b, SkinPose.FingerStretch)
+			elseif thumb then
+				grow(b, SkinPose.ThumbStretch)
+			end
+		end
+	end
+end
+
 -- pose -> { [Bone]: Transform }
 function SkinPose.transforms(rig: Rig, pose: { [string]: any }): { [Instance]: CFrame }
 	local out = {}
@@ -467,6 +510,10 @@ function SkinPose.sample(gait: string, phase: number, t: number, seed: number?, 
 			set(P, "Neck2", 0, 0.65 * turn)
 			set(P, "Head", 0, 0.85 * turn, -tilt * abs(turn))
 		end
+		-- (v147) and every few seconds the head jerks over, hard, like something pulled it
+		local jerk, js = snap(t, sd + 21, 2.6)
+		set(P, "Neck2", 0, 0.15 * jerk * js, 0)
+		set(P, "Head", 0.08 * jerk, 0.22 * jerk * js, 0.55 * jerk * js)
 		life(P, t, sd, 1)
 	end
 	if P.Plant == nil then

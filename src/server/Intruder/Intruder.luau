@@ -38,6 +38,7 @@ local grabAnyone: () -> boolean
 local patrolRoute: () -> { Vector3 }
 local unstick: (string) -> ()
 local trySurprise: () -> boolean
+local watchPeekers: (number, CFrame) -> ()
 local SURPRISE_FIRST = 22 -- (seconds into the hunt before the first surprise)
 local chaseSpeed: (Player?, boolean?) -> number
 local STATES: { [string]: (number, { Player }) -> () } = {}
@@ -3133,6 +3134,9 @@ local function think(dt: number)
 		end
 	end
 	S.Visible = visible
+	if S.Mode == "Hunt" then
+		watchPeekers(dt, head)
+	end
 	-- he prefers the dark: passing through a lit, empty room nobody can see, he sometimes
 	-- reaches for the switch (rooms go dark one by one while you're elsewhere)
 	if (state == "Lurk" or state == "Withdraw" or state == "Prowl") and #visible == 0 and ctx.Power.isOn() then
@@ -3672,6 +3676,63 @@ function Intruder.onRescueAttempt(position: Vector3, rescuer: Player)
 	end
 	setState("Search", { Pos = position, Target = rescuer, Checked = {} })
 	ctx.Audio.caption("[Heavy footsteps, coming this way]", position, 40)
+end
+
+-- v147 PEEK: someone leaning out of a hiding spot where he's looking. "PeekWatched" while his eyes
+-- are on them (the client's warning: duck back in now), and after Config.Hiding.PeekSeenTime he's
+-- seen them: he comes for that spot as if he'd watched them get in
+watchPeekers = function(dt: number, head: CFrame)
+	S.PeekSeen = S.PeekSeen or {}
+	local H = ctx.Config.Hiding
+	for _, p in ctx.Util.activePlayers() do
+		local at = p:GetAttribute("Peeking") and ctx.Hiding.peekPoint(p)
+		local spot = at and ctx.Hiding.spotOf(p)
+		local seen = false
+		if at and spot and not spared(p) then
+			local holder = spot.Part.Parent
+			local spotModel = (holder and holder:IsA("Model") and #holder:GetChildren() < 80) and holder or spot.Part
+			seen = Perception.peekSeen(head, p, S.Model, at, spotModel)
+		end
+		if seen then
+			S.PeekSeen[p] = (S.PeekSeen[p] or 0) + dt
+			if not p:GetAttribute("PeekWatched") then
+				p:SetAttribute("PeekWatched", true)
+			end
+			if S.PeekSeen[p] >= (H.PeekSeenTime or 0.6) then
+				S.PeekSeen[p] = nil
+				p:SetAttribute("PeekWatched", nil)
+				Intruder.onPeekSeen(p, spot)
+			end
+		else
+			S.PeekSeen[p] = nil
+			if p:GetAttribute("PeekWatched") then
+				p:SetAttribute("PeekWatched", nil)
+			end
+		end
+	end
+end
+
+Intruder._watchPeekers = function(dt: number, head: CFrame) watchPeekers(dt, head) end -- (tests)
+
+function Intruder.onPeekSeen(player: Player, spot)
+	if ctx.Monster and ctx.Monster.active() then
+		return
+	end
+	local st = S.State
+	if st == "Retreat" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" or st == "Inspect" or st == "CheckSpot" or st == "Puppet" then
+		return
+	end
+	S.SawHide[spot] = true
+	if ctx.Journey then
+		ctx.Journey.event(player, "PeekSeen", spot.Name)
+	end
+	ctx.Director.think(player, ctx.Story.Hunt.PeekSeen)
+	speak("Found")
+	if figure() then
+		checkSpot(spot, "Patrol", { Route = patrolRoute(), Index = 0 })
+	else
+		checkSpot(spot, "Search", { Pos = spot.Position, Target = player, Started = true, Checks = 1, Checked = { [spot] = true } })
+	end
 end
 
 -- he saw you get in (or heard it right next to him): he's coming to that exact spot

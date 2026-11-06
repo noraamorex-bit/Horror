@@ -168,6 +168,37 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### Peeking, bodies that move, a creepier him (v147)
+The owner: "Make a way to peek out of hiding spots. Also make animations for everything like brushing and peeking out and
+all things... Make the monsters model much creepier".
+- **PEEK** (hold R / gamepad Y / the PEEK button while hidden; `HidingService.peek`, client `HidingCam`): the eye eases out
+  from the spot's view to its `Peek` view (by default `Config.Hiding.PeekOut` 1.5 studs towards the way out), the head
+  tilting into the lean, a wider look-around; a wardrobe's doors ease open a crack (`Anim.ajar`, `PeekAjar` 32°) and shut
+  again. **He can catch you at it** (`Intruder` watchPeekers, `Perception.peekSeen`): facing the peek point, within
+  `PeekSeenRange` 15, nothing in between; while his eyes are on you the screen bleeds red and your heart thumps
+  ("PeekWatched"), and after `PeekSeenTime` 0.6 s he's seen you: he comes for the spot as if he'd watched you get in
+  (`SawHide`, "There you are.", the thought "He saw me looking."). Ducking back in time is safe. No peeking while he
+  listens at your door (the heartbeat pulls you back in). Getting in, the camera eases into the spot (0.4 s). Night log:
+  `Peeks` (count), `PeekSeen` events; pull_stats prints them. Test `peek_test` (every spot's peek is clear of walls).
+- **Animations for what you do** (shared `ActPose`, client `Actions`, InteractionService): every prompt's action has a body
+  pose on every screen, laid over the walk/idle animation by a two-bone arm IK that reads each avatar's own R15 joints:
+  brushing (toothbrush at the mouth, scrubbing, the other hand on the basin), searching (bent over, both hands
+  rummaging), taking (reach and bring back), doors (a shove), switches/locks/breakers (a poke), the keypad (tapping),
+  reading (a page held up), splicing/cutting/the fire (fiddly two-handed work), pulling (heaving back), knocking, the
+  phone in your hand while it's out (`PhoneOut`), the phone to your ear while calling 911, the energy drink, and zip-tied
+  (wrists behind the back, jerking with every struggle press). Props in the hand: toothbrush, phone, page. In first person
+  your arms appear (posed further out, into view) and the camera dips or rocks a little (`Actions.cameraOffset`). R6
+  avatars are skipped. Tests `actpose_test` (mapping, IK, first-person hands on screen), client_test (a posed rig).
+  Preview the poses: `tools/harness/actpose_dump.luau` + `tools/creature/actpose_view.py`.
+- **A creepier him**: the mask re-made (`Rig.build`): old yellowed porcelain, the eye sockets smaller and mismatched (the
+  left squeezed half shut, the right wide and drooping), flat black (Neon) with one pinprick each, dark dried streaks
+  running from both; a thin crooked mouth cheek to cheek, higher on one side, crowded with small yellowed teeth of
+  different lengths, some missing (`CreaturePose` MAW_H 0.13); cracks from the brow through the left eye, a chip broken
+  off the top. His body is drawn out (`SkinPose.stretch`, on the server before it replicates, and in the reel tools):
+  upper arms x1.18, forearms x1.3, fingers x1.55, neck x1.35 (the hands hang past his knees); at rest his head jerks over
+  every few seconds; the skin a touch paler (`Rig.SkinColor` 58, 55, 56) so the long limbs read in the dark. Look at him:
+  the scratchpad's `lookstudio/run.sh <name>` (6 views; re-dumps the mask).
+
 ### Toned down, proper furniture, his pose kept (v146)
 - **Palette**: walnut stays in the den, Dad's office and on the doors; the halls are a sage-grey damask over slate-green raised
   panels with cream trim, the living room a lighter gold over cream panels, the bedrooms cream panelling; casings, stair risers

@@ -47,6 +47,10 @@ end
 -- The eye of a player: their head, facing where their character faces (or their hiding peek view)
 function Perception.eyeOf(player: Player): (Vector3?, Vector3?)
 	local view = player:GetAttribute("HideView")
+	local peek = player:GetAttribute("HidePeek")
+	if player:GetAttribute("Peeking") and typeof(peek) == "CFrame" then
+		view = peek
+	end
 	if typeof(view) == "CFrame" then
 		return view.Position, view.LookVector
 	end
@@ -126,6 +130,31 @@ function Perception.intruderSees(head: CFrame, player: Player, model: Instance):
 	local ignore = otherCharacters(player)
 	table.insert(ignore, model)
 	return Perception.clear(head.Position, target.Position, ignore, char)
+end
+
+-- v147: someone leaning out of a hiding spot. He has to be facing them (no peripheral sense:
+-- they're still and quiet), close enough, with nothing in between
+function Perception.peekSeen(head: CFrame, player: Player, model: Instance, at: Vector3, spotModel: Instance?): boolean
+	if not player:GetAttribute("InGame") or player:GetAttribute("Captured") or player:GetAttribute("AdminGhost") then
+		return false
+	end
+	local to = at - head.Position
+	local d = to.Magnitude
+	if d > (ctx.Config.Hiding.PeekSeenRange or 15) then
+		return false
+	end
+	local I = ctx.Config.Intruder
+	local flat = Vector3.new(to.X, 0, to.Z)
+	local look = Vector3.new(head.LookVector.X, 0, head.LookVector.Z)
+	if d > 3 and flat.Magnitude > 0.01 and look.Magnitude > 0.01 and look.Unit:Dot(flat.Unit) < math.cos(math.rad(I.FOV / 2)) then
+		return false
+	end
+	local ignore = otherCharacters(player)
+	table.insert(ignore, model)
+	if spotModel then
+		table.insert(ignore, spotModel)
+	end
+	return Perception.clear(head.Position, at, ignore, player.Character)
 end
 
 function Perception.playerSees(player: Player, pos: Vector3, model: Instance?): boolean

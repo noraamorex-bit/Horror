@@ -62,7 +62,7 @@ local function signal()
 end
 
 local SIGNALS = {
-	Triggered = true, PromptButtonHoldBegan = true, PromptButtonHoldEnded = true, PromptShown = true, PromptHidden = true,
+	Triggered = true, PromptButtonHoldBegan = true, PromptButtonHoldEnded = true, PromptShown = true, PromptHidden = true, PromptTriggered = true,
 	Changed = true, Completed = true, Activated = true, InputBegan = true, InputEnded = true, InputChanged = true,
 	AncestryChanged = true, MouseButton1Click = true, Touched = true, OnServerEvent = true, OnClientEvent = true,
 	LastInputTypeChanged = true, AttributeChanged = true, CharacterAdded = true, DescendantAdded = true, PromptShown = true, PromptHidden = true,

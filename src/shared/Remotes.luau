@@ -49,6 +49,7 @@ local NAMES = {
 	"Ready", -- (bool)
 	"Hide", -- ("Exit")
 	"HoldBreath", -- (bool)
+	"Peek", -- (bool) leaning out of a hiding spot (v147)
 	"Struggle", -- ()
 	"Phone", -- (action)
 	"LeaveQueue", -- () lobby: step off your circle

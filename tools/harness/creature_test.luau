@@ -57,12 +57,12 @@ local ok, err = pcall(function()
 	for _, j in jaws do
 		if j.Name == "Maw" then maw = j else lowTeeth += 1 end
 	end
-	assert(maw and lowTeeth == 9, "the mouth's moving parts: " .. #jaws)
+	assert(maw and lowTeeth == 11, "the mouth's moving parts: " .. #jaws)
 	Pose.setJaw(jaws, 1)
 	local mawPart = maw.Mesh.Parent
-	local h = 0.17 * maw.Mesh.Scale.Y
+	local h = 0.13 * maw.Mesh.Scale.Y
 	local topEdge = maw.Mesh.Offset.Y + h / 2
-	assert(math.abs(topEdge - 0.085) < 1e-3 and h > 0.35, "the mouth opens downwards from its top edge")
+	assert(math.abs(topEdge - 0.065) < 1e-3 and h > 0.3, "the mouth opens downwards from its top edge")
 	for _, j in jaws do
 		if j.Name == "LowerTooth" then
 			assert(j.Mesh.Offset.Y < -0.18, "the lower teeth drop with it")

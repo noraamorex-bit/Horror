@@ -154,6 +154,69 @@ function Anim.leaves(model: Instance?, openFor: number?, degrees: number?)
 end
 
 ---------------------------------------------------------------------------
+-- Wardrobe doors held ajar while someone peeks out (v147): Anim.ajar(model, true) eases the leaves
+-- open a crack and keeps them there; Anim.ajar(model, false) eases them shut (snap = at once,
+-- e.g. before Anim.leaves swings them wide for getting out)
+---------------------------------------------------------------------------
+local ajarK = {} -- model -> current openness 0..1 (of `degrees`)
+local ajarGen = {} -- model -> generation (a newer call cancels an older tween)
+function Anim.ajar(model: Instance?, open: boolean, degrees: number?, snap: boolean?)
+	if not model then
+		return
+	end
+	local parts = {}
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d:GetAttribute("Leaf") and typeof(d:GetAttribute("Closed")) == "CFrame" and typeof(d:GetAttribute("Hinge")) == "CFrame" then
+			table.insert(parts, d)
+		end
+	end
+	if #parts == 0 then
+		return
+	end
+	if open and busy[model] and not ajarK[model] then
+		return -- (mid swing: someone getting in or out)
+	end
+	if not open and not ajarK[model] then
+		return -- (not ajar: nothing to close, and Anim.leaves may own `busy` right now)
+	end
+	local ang = math.rad(degrees or 32)
+	local from = ajarK[model] or 0
+	local to = open and 1 or 0
+	local gen = (ajarGen[model] or 0) + 1
+	ajarGen[model] = gen
+	busy[model] = true
+	local function set(k: number)
+		ajarK[model] = k
+		for _, p in parts do
+			if p.Parent then
+				local h = p:GetAttribute("Hinge") :: CFrame
+				p.CFrame = h * CFrame.Angles(0, -(p:GetAttribute("Leaf") :: number) * ang * k, 0) * h:Inverse() * (p:GetAttribute("Closed") :: CFrame)
+			end
+		end
+	end
+	local function finish()
+		if not open then
+			ajarK[model] = nil
+			busy[model] = nil
+		end
+	end
+	if snap then
+		set(to)
+		finish()
+		return
+	end
+	drive(open and 0.35 or 0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, function(k)
+		if ajarGen[model] == gen then
+			set(from + (to - from) * k)
+		end
+	end, function()
+		if ajarGen[model] == gen then
+			finish()
+		end
+	end)
+end
+
+---------------------------------------------------------------------------
 -- Hinged doors that stay where you leave them (the fridge, the oven). groups: { { Parts, Hinge = CFrame,
 -- Sign = 1 | -1, Axis = "Y" (default, a side hinge) | "X" (a bottom hinge) } }; the parts' current
 -- CFrames are the closed ones. Returns a handle:

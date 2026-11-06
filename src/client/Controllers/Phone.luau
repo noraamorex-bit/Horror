@@ -35,6 +35,9 @@ function Phone.toggle(force: boolean?)
 	if open ~= was and ctx.Foley then
 		ctx.Foley.phone(open) -- (v139: out of your pocket, and back)
 	end
+	if open ~= was then
+		ctx.Remotes.Phone:FireServer(open and "Out" or "Away") -- (v147: in your hand for everyone to see)
+	end
 	-- on touch screens the right side belongs to the action buttons
 	if ctx.UI.isTouch() then
 		panel.AnchorPoint = Vector2.new(0, 0.5)

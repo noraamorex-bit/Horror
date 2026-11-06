@@ -6,7 +6,7 @@
 	Input.keyFor(action) -> "Shift"          label for hints
 
 	Actions: Sprint (hold), Crouch, Flashlight (takes the flashlight out / puts it away), Journal,
-	         Phone, Breath (hold), Struggle, ExitHide, Close. (Items are tools in the hotbar: client Gear.)
+	         Phone, Breath (hold), Struggle, ExitHide, Peek (hold), Close. (Items are tools in the hotbar: client Gear.)
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -23,6 +23,7 @@ Input.Bindings = {
 	Breath = { Keys = { K.Space }, Pad = { K.ButtonA }, Label = "Space" },
 	Struggle = { Keys = { K.Space }, Pad = { K.ButtonA, K.ButtonX }, Label = "Space" },
 	ExitHide = { Keys = { K.E }, Pad = { K.ButtonB }, Label = "E" },
+	Peek = { Keys = { K.R }, Pad = { K.ButtonY }, Label = "R" }, -- (hold, while hiding: v147)
 	Close = { Keys = { K.Q, K.Backspace, K.Return }, Pad = { K.ButtonB }, Label = "Q" },
 }
 

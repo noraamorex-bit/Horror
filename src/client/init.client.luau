@@ -19,6 +19,7 @@ ctx.Story = require(Shared.Story)
 ctx.Util = require(Shared.Util)
 ctx.CreaturePose = require(Shared.CreaturePose)
 ctx.SkinPose = require(Shared.SkinPose)
+ctx.ActPose = require(Shared.ActPose)
 
 -- the server tells us whether this is the lobby or a night in the house
 local mode = workspace:GetAttribute("Mode")
@@ -32,7 +33,7 @@ local ORDER = if mode == "Lobby"
 	then { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub", "Admin", "Diagnostics", "ChatTags", "Creature" }
 	else {
 		"UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Foley", "Settings", "Atmosphere", "Dread", "Acoustics", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "NightVision",
-		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Diagnostics", "ChatTags",
+		"Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Ambience", "Dialogue", "Spectate", "Creature", "Actions", "Intro", "Vote", "Friends", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Diagnostics", "ChatTags",
 	}
 
 local modules = {}

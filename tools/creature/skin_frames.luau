@@ -30,6 +30,7 @@ local SCALE = SkinPose.Scale
 
 local model = roblox.deserializeModel(fs.readFile("assets/Creature.rbxm"))[1]
 local body = model:FindFirstChild("Body")
+SkinPose.stretch(body) -- (v147: as the server does)
 local rig = SkinPose.rig(body)
 local half = body.Size.Y / 2 -- (mesh units: the soles are at -half)
 

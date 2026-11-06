@@ -7,12 +7,14 @@
 ]]
 
 local Anim = require(script.Parent.Parent.World.Anim)
+local ActPose: any = nil -- (loaded in init: shared ActPose)
 
 local Interaction = {}
 local ctx
 
 function Interaction.init(c)
 	ctx = c
+	ActPose = c.ActPose or require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("ActPose"))
 end
 
 local function blocked(player: Player, opts): boolean
@@ -32,6 +34,83 @@ local function blocked(player: Player, opts): boolean
 		return true
 	end
 	return false
+end
+
+--[[
+	v147: what your body does while you use something (shared ActPose; client Actions poses it on
+	every screen). Player attributes: "Act" = kind, "ActAt" = server time it began, "ActHold" while a
+	hold prompt is held. One-shots clear themselves after their time.
+]]
+local actSeq = {}
+function Interaction.act(player: Player, kind: string?, hold: boolean?)
+	local def = kind and ActPose.Kinds[kind]
+	if not def or not player:GetAttribute("InGame") or player:GetAttribute("Hiding") then
+		return
+	end
+	actSeq[player] = (actSeq[player] or 0) + 1
+	local seq = actSeq[player]
+	player:SetAttribute("Act", kind)
+	player:SetAttribute("ActAt", workspace:GetServerTimeNow())
+	player:SetAttribute("ActHold", hold or nil)
+	if not hold then
+		task.delay(def.Time + 0.1, function()
+			if actSeq[player] == seq then
+				player:SetAttribute("Act", nil)
+				player:SetAttribute("ActHold", nil)
+			end
+		end)
+	end
+end
+
+-- let go of a hold (finished or not): the pose winds down over its Time
+function Interaction.release(player: Player, kind: string?)
+	if player:GetAttribute("Act") ~= kind or not player:GetAttribute("ActHold") then
+		return
+	end
+	local def = ActPose.Kinds[kind :: string]
+	actSeq[player] = (actSeq[player] or 0) + 1
+	local seq = actSeq[player]
+	player:SetAttribute("ActHold", nil)
+	task.delay((def and def.Time or 0.3) + 0.1, function()
+		if actSeq[player] == seq then
+			player:SetAttribute("Act", nil)
+		end
+	end)
+end
+
+function Interaction.start()
+	local PPS = game:GetService("ProximityPromptService")
+	PPS.PromptButtonHoldBegan:Connect(function(prompt, player)
+		local kind = ActPose.kindFor(prompt.ActionText)
+		local def = kind and ActPose.Kinds[kind]
+		if def and def.Hold then
+			Interaction.act(player, kind, true)
+		end
+	end)
+	PPS.PromptButtonHoldEnded:Connect(function(prompt, player)
+		Interaction.release(player, ActPose.kindFor(prompt.ActionText))
+	end)
+	PPS.PromptTriggered:Connect(function(prompt, player)
+		local kind = ActPose.kindFor(prompt.ActionText)
+		local def = kind and ActPose.Kinds[kind]
+		if not def then
+			return
+		end
+		if def.Hold then
+			if player:GetAttribute("ActHold") and player:GetAttribute("Act") == kind then
+				Interaction.release(player, kind)
+			else
+				-- (a hold kind on a quick prompt: a short burst of it)
+				Interaction.act(player, kind, true)
+				Interaction.release(player, kind)
+			end
+		else
+			Interaction.act(player, kind)
+		end
+	end)
+	game:GetService("Players").PlayerRemoving:Connect(function(p)
+		actSeq[p] = nil
+	end)
 end
 
 function Interaction.prompt(parent: Instance, opts, callback)

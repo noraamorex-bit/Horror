@@ -5,7 +5,7 @@
 	jump button sits an arc of action buttons that changes with what you're doing:
 
 		exploring : SPRINT (toggle) · CROUCH (toggle) · LIGHT · SPRAY (when you have it)
-		hiding    : BREATH (hold) · LEAVE
+		hiding    : BREATH (hold) · LEAVE · PEEK (hold)
 		captured  : STRUGGLE (mash)
 	plus JOURNAL and PHONE pills in the top-right corner.
 
@@ -40,6 +40,7 @@ local DEFS = {
 	Search = { Label = "SEARCH", Icon = "◎", Kind = "press" },
 	Breath = { Label = "BREATH", Icon = "◌", Kind = "hold", Big = true },
 	ExitHide = { Label = "LEAVE", Icon = "⇱", Kind = "press" },
+	Peek = { Label = "PEEK", Icon = "◐", Kind = "hold" },
 	Struggle = { Label = "STRUGGLE", Icon = "✊", Kind = "press", Big = true },
 }
 
@@ -70,7 +71,7 @@ local function currentSet(): { string }
 		return { "Struggle" }
 	end
 	if player:GetAttribute("Hiding") then
-		return { "Breath", "ExitHide" }
+		return { "Breath", "ExitHide", "Peek" }
 	end
 	-- (everything else you carry is a tool in the Roblox hotbar: pick it, tap to use. The owner found
 	-- eight round buttons "so crowded")
@@ -86,6 +87,8 @@ local function isActive(name: string): boolean
 		return player:GetAttribute("FlashlightOn") == true
 	elseif name == "Breath" then
 		return player:GetAttribute("HoldingBreath") == true
+	elseif name == "Peek" then
+		return player:GetAttribute("Peeking") == true
 	end
 	return false
 end
@@ -304,7 +307,7 @@ function MobileControls.start()
 	pill("JOURNAL", "Journal", 1)
 	pill("PHONE", "Phone", 2)
 
-	for _, attr in { "InGame", "Hiding", "Captured", "Escaped", "Dead", "Item_Flashlight", "Item_PepperSpray", "Item_Taser", "Item_Rocket", "Item_EnergyDrink", "Item_Firecracker", "Monster" } do
+	for _, attr in { "InGame", "Hiding", "Peeking", "Captured", "Escaped", "Dead", "Item_Flashlight", "Item_PepperSpray", "Item_Taser", "Item_Rocket", "Item_EnergyDrink", "Item_Firecracker", "Monster" } do
 		player:GetAttributeChangedSignal(attr):Connect(function()
 			if gui.Enabled then
 				layout()

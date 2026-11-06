@@ -645,7 +645,7 @@ local function hintText(): string
 		return touch and "Mash STRUGGLE" or "Mash SPACE to struggle"
 	end
 	if player:GetAttribute("Hiding") then
-		return touch and "LEAVE to get out" or "E to leave"
+		return touch and "Hold PEEK to look out · LEAVE to get out" or "Hold R to peek · E to leave"
 	end
 	return ""
 end

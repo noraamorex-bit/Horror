@@ -18,6 +18,7 @@ local SkinPose = luau.load(fs.readFile("src/shared/SkinPose.luau"), { debugName 
 
 local model = roblox.deserializeModel(fs.readFile("assets/Creature.rbxm"))[1]
 local body = model:FindFirstChild("Body")
+SkinPose.stretch(body) -- (v147: as the server does)
 local rig = SkinPose.rig(body)
 
 local function cf12(c)

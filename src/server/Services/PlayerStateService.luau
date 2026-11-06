@@ -292,6 +292,9 @@ function PlayerState.drink(player: Player): boolean
 		return false
 	end
 	local E = ctx.Config.EnergyDrink
+	if ctx.Interaction and ctx.Interaction.act then
+		ctx.Interaction.act(player, "Drink")
+	end
 	rushUntil[player] = os.clock() + E.Time
 	player:SetAttribute("Rush", true)
 	player:SetAttribute("Stamina", ctx.Config.Movement.StaminaMax)

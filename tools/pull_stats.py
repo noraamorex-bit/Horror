@@ -213,6 +213,12 @@ def report_nights(nights):
             beforeQuit = sum(1 for t, r in zip(firsts, out) if t is not None and t <= r[2]["Out"]["t"])
             print(f"      room scares/player {sum(appar.values()) / n:.2f} (act I sightings {appar.get('First', 0)})  surprises begun/player "
                   f"{sum(surp.values()) / n:.2f} {dict(surp)}  quitters who'd seen a room scare first: {beforeQuit} of {len(out)}")
+        # (v147) peeking out of hiding spots, and how often he caught someone at it
+        peeks = sum((r[2].get("Peeks") or 0) for r in group)
+        if peeks:
+            caught = sum(1 for r in group for ev in r[2].get("Ev") or [] if ev[1] == "PeekSeen")
+            peekers = sum(1 for r in group if r[2].get("Peeks"))
+            print(f"      peeks/player {peeks / n:.2f} (players who peeked {pct(peekers, n)})  caught peeking: {caught}")
         beats = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Beat" and len(ev) > 2)
         if beats:
             print(f"      heartbeat minigames: {dict(beats)}")

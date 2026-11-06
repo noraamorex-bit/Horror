@@ -354,6 +354,12 @@ Config.Heartbeat = {
 Config.Hiding = {
 	HoldBreathMax = 8,
 	HoldBreathRecover = 1.5, -- seconds of recovery per second of breath
+	-- v147 PEEK (hold R / the PEEK button): lean out of the spot to see the room. He can catch you
+	-- at it: within PeekSeenRange, facing you, nothing in between, for PeekSeenTime seconds
+	PeekOut = 1.5, -- studs the eye leans out towards the way out
+	PeekSeenRange = 15,
+	PeekSeenTime = 0.6,
+	PeekAjar = 32, -- degrees a wardrobe's doors open while you peek
 }
 
 Config.Capture = {

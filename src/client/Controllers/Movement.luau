@@ -211,7 +211,8 @@ function Movement.start()
 			bobT += dt * (speed * 0.9)
 		end
 		local bobAmp = moving and math.clamp(speed / 60, 0.05, 0.28) or 0
-		hum.CameraOffset = Vector3.new(math.cos(bobT * 0.5) * bobAmp * 0.5, offsetY + math.abs(math.sin(bobT)) * bobAmp, 0)
+		local act = ctx.Actions and ctx.Actions.cameraOffset() or Vector3.zero -- (v147: brushing, searching...)
+		hum.CameraOffset = Vector3.new(math.cos(bobT * 0.5) * bobAmp * 0.5, offsetY + math.abs(math.sin(bobT)) * bobAmp, 0) + act
 		local fov = player:GetAttribute("Sprinting") and 78 or 70
 		if cam.CameraType ~= Enum.CameraType.Scriptable then
 			cam.FieldOfView += (fov - cam.FieldOfView) * math.min(1, dt * 6)

@@ -180,6 +180,9 @@ function Phone.start()
 			Phone.startCall(player)
 		elseif action == "CallStop" then
 			player:SetAttribute("Calling", nil)
+		elseif action == "Out" or action == "Away" then
+			-- (v147: the phone in your hand, for everyone to see: client Actions)
+			player:SetAttribute("PhoneOut", action == "Out" or nil)
 		end
 	end)
 	ctx.Remotes.PhoneReply.OnServerEvent:Connect(function(player, index)
