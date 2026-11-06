@@ -30,3 +30,8 @@ Scratch output goes wherever you point it (not in the repo).
 Don't swap things players use or hide in (beds, wardrobes, desks you hide under, the fridge, oven,
 sink, TV) or that other things sit on at fixed heights (coffee/dining tables, nightstands,
 dressers): a different shape there breaks hiding views or leaves cups floating.
+
+## Placement checks (v145)
+- `node settle_check.mjs <stage.json> <cacheDir>`: every Creator Store prop placed exactly as World/Props `fit()` does; FAIL if its
+  real geometry doesn't stand on its placeholder's base (and the old v85-v144 `settle()` replayed, which sank chairs into the floor).
+- `python3 ../house_audit.py <stage.json>`: every object in the house: SUNK / FLOAT / WALL / FACING / CLIP / HUNG.

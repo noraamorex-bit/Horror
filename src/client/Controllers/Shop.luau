@@ -213,7 +213,7 @@ function Shop.start()
 		UI.corner(row, 10)
 		UI.stroke(row, GOLD, 1.5, 0.2)
 		UI.label({ Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -140, 0, 24), Text = "🎁 Starter Pack  <font size=\"13\" color=\"#78e696\">ONE TIME ONLY</font>", Font = UI.Font.Bold, TextSize = 17, TextColor3 = GOLD, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 43, Parent = row })
-		UI.label({ Position = UDim2.fromOffset(14, 32), Size = UDim2.new(1, -140, 0, 38), Text = st and string.format("%d coins, a rocket launcher for your next night and a revive for when he gets you.", st.Coins) or "", TextSize = 13, TextColor3 = UI.Color.Text, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 43, Parent = row })
+		UI.label({ Position = UDim2.fromOffset(14, 32), Size = UDim2.new(1, -140, 0, 38), Text = st and string.format("%d coins, a rocket, a revive, a free Become Him night and a free Jumpscare Everyone.", st.Coins) or "", TextSize = 13, TextColor3 = UI.Color.Text, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 43, Parent = row })
 		local buy = UI.new("TextButton", {
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -12, 0.5, 0),

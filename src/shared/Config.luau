@@ -495,7 +495,7 @@ Config.Shop = {
 		{ Key = "AdminPanel", Id = 2044988494, Price = 249, Name = "Admin panel", Desc = "Run the night: skip acts, set off scares, boss him around, god mode, teleport, pick the ending. (No coins on nights you use it.)" },
 		-- (v108, 21 Oct: about 8 of 2,714 players own a pass. More things worth wanting at a price a small
 		-- balance covers: the cheap ones down to 15-19, the taser 39, the rocket 79; three new ones)
-		{ Key = "NightVision", Id = 2045276660, Price = 49, Name = "Night Vision", Desc = "Night vision goggles every night: see in the dark for 60 seconds. Spot him before he spots you." },
+		{ Key = "NightVision", Id = 2045276660, Price = 25, Name = "Night Vision", Desc = "Night vision goggles every night: see in the dark for 60 seconds. Spot him before he spots you." },
 		{ Key = "DoubleCoins", Id = 2045798689, Price = 39, Name = "2x Coins", Desc = "Double the coins from every night you play. Stacks with VIP." },
 		{ Key = "Rocket", Id = 2039534472, Price = 79, Name = "Rocket Launcher", Desc = "Start every night with a rocket launcher: 2 rockets. A hit blows him off his feet, then he limps away." },
 		{ Key = "VIP", Id = 2036510399, Price = 99, Name = "VIP", Desc = "Everything in one: +50% coins every night, a VIP tag, pick your role, every flashlight colour, Marathon stamina and a battery that never dies." },
@@ -521,7 +521,9 @@ Config.Shop = {
 	-- (worth 25 + 25 + 10 R$+ bought apart). Offered at the top of the SHOP and on the result card.
 	-- Id 0 = the product isn't made on Roblox yet: hidden everywhere.
 	-- (v130: 19 -> 9 R$, 2 sold of 906 windows; WasPrice shows struck through in the shop)
-	Starter = { Id = 3721088307, Price = 9, WasPrice = 19, Coins = 500, Rockets = 1, Revives = 1 },
+	-- (v145: 14 bought of 1,840 windows with coins + a rocket + a revive. Now it also holds what people do buy, once:
+	-- a free Become Him night and a free Jumpscare Everyone)
+	Starter = { Id = 3721088307, Price = 9, WasPrice = 19, Coins = 500, Rockets = 1, Revives = 1, Monster = 1, Pranks = 1 },
 	-- (v115, the owner: "add something like this for 10 Robux") jumpscares everyone else in the
 	-- server, house or lobby, the moment it's bought (ShopService, client Prank)
 	JumpscareAll = { Id = 3722081951, Price = 10 },

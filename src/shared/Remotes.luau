@@ -55,6 +55,7 @@ local NAMES = {
 	"DialogueChoice", -- (index) the line you picked
 	"Jumpscare", -- (head part) he got you: the camera snaps to his face
 	"JumpscareAll", -- (buyerName, buyerUserId, count) v115: someone bought JUMPSCARE EVERYONE (client Prank)
+	"PrankFree", -- (client -> server) v145: use a free Jumpscare Everyone (the Starter Pack's PrankCredits)
 	"StarterAuto", -- (where) v120: the client opened the Starter Pack window by itself (client Starter; ShopService logs it)
 	"Notice", -- ({Title, Body, Button}) a one-button card (first-night tips)
 	"QuickPlay", -- (kind) lobby: "Solo" or "Group" walks you into a queue circle

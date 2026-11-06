@@ -206,7 +206,7 @@ function Dress.build(ctx, root: Instance): { BasePart }
 			Kit.soft(master, "Slipper", s * CF(0, 0.08, 0), V(0.95, 0.16, 0.4), 0.07, Color3.fromRGB(196, 170, 150), KM.Fabric)
 			Kit.soft(master, "SlipperToe", s * CF(-0.25, 0.2, 0), V(0.45, 0.12, 0.38), 0.05, Color3.fromRGB(210, 186, 168), KM.Fabric)
 		end
-		Kit.plant(master, F(-38.3, U, -6.3, PX), 1.4, "tree")
+		Kit.plant(master, F(-37.8, U, -6.3, PX), 1.4, "tree")
 	end
 
 	---------------------------------------------------------------------------
@@ -326,7 +326,7 @@ function Dress.build(ctx, root: Instance): { BasePart }
 		for i, c in { Color3.fromRGB(226, 220, 206), Color3.fromRGB(230, 180, 190), Color3.fromRGB(110, 140, 170) } do
 			Kit.ellipsoid(uhall, "Clothes", F(1.4, U, 28.05, NZ) * CF((i - 2) * 0.5, 0.95 + i * 0.03, ((i % 2) - 0.5) * 0.4) * ANG(0, i * 1.1, rad(i * 5)), V(1.1, 0.3, 0.8), c, KM.Fabric)
 		end
-		Kit.plant(uhall, F(-6.7, U, -28.6, PX), 1.3, "tree")
+		Kit.plant(uhall, F(-6.1, U, -28.0, PX), 1.3, "tree")
 	end
 
 	---------------------------------------------------------------------------

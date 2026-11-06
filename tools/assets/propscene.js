@@ -64,6 +64,8 @@ window.addProps = async function (scene, stage, models, meshes, textures) {
     const M = new T.Matrix4().makeTranslation(at.x, at.y, at.z).multiply(frot).multiply(new T.Matrix4().makeScale(s, s, s)).multiply(new T.Matrix4().makeTranslation(-c1.x, -c1.y, -c1.z)).multiply(rot);
     const outer = new T.Group(); outer.matrixAutoUpdate = false; outer.matrix.copy(M); outer.add(grp);
     outer.traverse(o => { if (o.isMesh) o.userData.pos = at.clone(); });
+    outer.userData.holder = h; outer.userData.at = at.clone();
+    (window.PROPS = window.PROPS || []).push(outer);
     scene.add(outer);
   }
 };

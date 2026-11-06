@@ -83,6 +83,8 @@ function House.build(ctx, root: Instance)
 		return out
 	end
 
+	-- (v145) interior door casings in walnut (the front and back doors' too, from the inside they frame the hall)
+	local CASING = Color3.fromRGB(74, 48, 33)
 	local function handleOpening(op, floorName)
 		if op.kind == "door" then
 			local door = ctx.Doors.create(doorsFolder, op)
@@ -92,10 +94,13 @@ function House.build(ctx, root: Instance)
 			for side = -1, 1, 2 do
 				local off = alongX and Vector3.new(side * (op.w / 2 + 0.2), op.h / 2, 0) or Vector3.new(0, op.h / 2, side * (op.w / 2 + 0.2))
 				local size = alongX and Vector3.new(0.4, op.h, depth) or Vector3.new(depth, op.h, 0.4)
-				B.block(shell, "Casing", op.Center + off, size, C.Trim, M.Wood, 0, { CanCollide = false })
+				B.block(shell, "Casing", op.Center + off, size, CASING, M.Wood, 0, { CanCollide = false })
 			end
 			local topSize = alongX and Vector3.new(op.w + 0.8, 0.4, depth) or Vector3.new(depth, 0.4, op.w + 0.8)
-			B.block(shell, "Casing", op.Center + Vector3.new(0, op.h + 0.2, 0), topSize, C.Trim, M.Wood, 0, { CanCollide = false })
+			B.block(shell, "Casing", op.Center + Vector3.new(0, op.h + 0.2, 0), topSize, CASING, M.Wood, 0, { CanCollide = false })
+			-- (v145) a cornice cap over the head casing, a little wider and prouder, as in old hotels
+			local capSize = alongX and Vector3.new(op.w + 1.3, 0.28, depth + 0.24) or Vector3.new(depth + 0.24, 0.28, op.w + 1.3)
+			B.block(shell, "CasingCap", op.Center + Vector3.new(0, op.h + 0.54, 0), capSize, CASING, M.Wood, 0, { CanCollide = false })
 			return door
 		elseif op.kind == "window" then
 			local model, glass = B.window(windowsFolder, op, { name = "Window_" .. op.id })
@@ -260,10 +265,12 @@ function House.build(ctx, root: Instance)
 	-- Stairs and railings
 	---------------------------------------------------------------------------
 	local s = L.Stairs.Main
-	B.stairs(shell, "MainStairs", s.x0, s.x1, s.zStart, s.zEnd, s.yStart, s.yEnd, C.Oak)
-	B.railing(shell, Vector3.new(-2, 1, -6), Vector3.new(-2, 15, 16.4), 3.4)
-	B.railing(shell, Vector3.new(-2, 15, -6), Vector3.new(-2, 15, 16.4), 3.4)
-	B.railing(shell, Vector3.new(-8, 15, -6), Vector3.new(-2, 15, -6), 3.4)
+	-- (v145) the main stair in walnut: risers, stringer and balusters (they were white), a darker handrail
+	local STAIR_WALNUT, RAIL = Color3.fromRGB(86, 56, 38), Color3.fromRGB(58, 38, 26)
+	B.stairs(shell, "MainStairs", s.x0, s.x1, s.zStart, s.zEnd, s.yStart, s.yEnd, C.Oak, STAIR_WALNUT)
+	B.railing(shell, Vector3.new(-2, 1, -6), Vector3.new(-2, 15, 16.4), 3.4, RAIL, STAIR_WALNUT)
+	B.railing(shell, Vector3.new(-2, 15, -6), Vector3.new(-2, 15, 16.4), 3.4, RAIL, STAIR_WALNUT)
+	B.railing(shell, Vector3.new(-8, 15, -6), Vector3.new(-2, 15, -6), 3.4, RAIL, STAIR_WALNUT)
 	B.block(shell, "Newel", Vector3.new(-2, 3.5, -6), Vector3.new(0.8, 5, 0.8), C.DarkWood, M.Wood)
 	local bs = L.Stairs.Basement
 	-- headers boxing in the slab edges round the basement stairwell opening
@@ -323,6 +330,7 @@ function House.build(ctx, root: Instance)
 	---------------------------------------------------------------------------
 	-- Ceiling lights and switches
 	---------------------------------------------------------------------------
+	local CHANDELIERS = { Hallway = true, UpperHall = true, Living = true, Office = true, Guest = true }
 	for room, positions in L.Lights do
 		for _, pos in positions do
 			-- (v143: dimmer and warmer, so the lamps and sconces make pools of light instead of one flat wash; the halls'
@@ -330,8 +338,13 @@ function House.build(ctx, root: Instance)
 			local hall = room == "Hallway" or room == "UpperHall"
 			local range = hall and 19 or 24
 			local shadows = not hall
-			local bulb, light = B.ceilingLight(lightsFolder, pos, { range = range, shadows = shadows, brightness = hall and 0.95 or 1.2, color = Color3.fromRGB(255, 190, 128) })
+			-- (v145) brass chandeliers in the halls and the rooms without a ceiling fan (Doors' hotel corridors)
+			local style = CHANDELIERS[room] and "chandelier" or nil
+			local bulb, light, _, candles = B.ceilingLight(lightsFolder, pos, { range = range, shadows = shadows, brightness = hall and 0.95 or 1.2, color = Color3.fromRGB(255, 190, 128), style = style })
 			ctx.Power.registerLight(room, bulb, light)
+			for _, flame in candles or {} do
+				ctx.Power.registerLight(room, flame, nil)
+			end
 		end
 	end
 	for _, sw in L.Switches do

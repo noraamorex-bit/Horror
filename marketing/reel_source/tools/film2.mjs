@@ -19,6 +19,26 @@ if (spec.props && world.holders) {
   props = await loadProps(world, spec.props.cache);
   world.swapped = world.holders.filter(h => props.models[String(h.entry.Id)]).map(h => h.key);
 }
+// (v145) the surfaces' textures (wallpaper, floors, tile: the Texture instances stage_dump lists per part as `tx`) and
+// the paintings' pictures (`art`: a decal asset whose image World/Props puts on the canvas), from the props cache
+const texImgs = {}, artImgs = {};
+if (spec.props && world.parts) {
+  const { execFileSync } = await import('child_process');
+  const cache = spec.props.cache;
+  const fetchIds = (ids) => { const miss = ids.filter(id => !fs.existsSync(`${cache}/${id}.bin`)); for (let i = 0; i < miss.length; i += 40) { try { execFileSync('python3', ['../../../tools/assets/fetch.py', cache, ...miss.slice(i, i + 40)], { stdio: 'pipe' }); } catch (e) {} } };
+  const dataUrl = (id) => { try { const b = fs.readFileSync(`${cache}/${id}.bin`); const mime = b[0] === 0x89 ? 'image/png' : (b[0] === 0xff ? 'image/jpeg' : null); return mime ? `data:${mime};base64,` + b.toString('base64') : null; } catch (e) { return null; } };
+  const tids = new Set();
+  for (const p of world.parts) for (const t of (p.tx || [])) { const m = String(t.id).match(/(\d+)/); if (m) tids.add(m[1]); }
+  fetchIds([...tids]);
+  for (const id of tids) { const u = dataUrl(id); if (u) texImgs[id] = u; }
+  const aids = [...new Set(world.parts.filter(p => p.art).map(p => String(p.art)))];
+  fetchIds(aids);
+  const imgOf = {};
+  for (const id of aids) { try { const m = fs.readFileSync(`${cache}/${id}.bin`, 'utf8').match(/<url>[^<]*?id=(\d+)/); if (m) imgOf[id] = m[1]; } catch (e) {} }
+  fetchIds(Object.values(imgOf));
+  for (const [id, img] of Object.entries(imgOf)) { const u = dataUrl(img); if (u) artImgs[id] = u; }
+  console.log('textures', Object.keys(texImgs).length, 'art', Object.keys(artImgs).length);
+}
 // (v112) the skinned creature: a creature file from tools/creature/skin_frames.luau ("skin") draws the
 // game's real mesh, posed by SkinPose, instead of the old part-built figure. Its mesh and maps are
 // fetched into spec.skinCache (default ./cache_skin)
@@ -94,6 +114,7 @@ await page.evaluate(([world, cr, W, H]) => {
     const mesh = new T.Mesh(gi.g, mat(p));
     mesh.matrixAutoUpdate = false; place(mesh, p.c, gi);
     mesh.userData.pos = new T.Vector3(p.c[0], p.c[1], p.c[2]); mesh.userData.name = p.n;
+    if ((p.tx || p.art) && gi.g === unitBox) { mesh.userData.tx = p.tx; mesh.userData.art = p.art; mesh.userData.af = p.af; mesh.userData.size = p.s; }
     scene.add(mesh);
   }
   // the creature
@@ -114,6 +135,36 @@ await page.evaluate(([world, cr, W, H]) => {
   // the photos on his wall: real pictures of the family's rooms
   window.PHOTOS = [];
 }, [world, { parts: cr.parts || [] }, W, H]);
+if (Object.keys(texImgs).length || Object.keys(artImgs).length) {
+  await page.evaluate(async ([texImgs, artImgs]) => {
+    const T = THREE, loader = new T.TextureLoader();
+    const load = async (u) => { try { const t = await loader.loadAsync(u); t.colorSpace = T.SRGBColorSpace; return t; } catch (e) { return null; } };
+    const base = {}, art = {};
+    for (const id in texImgs) { const t = await load(texImgs[id]); if (t) { t.wrapS = t.wrapT = T.RepeatWrapping; base[id] = t; } }
+    for (const id in artImgs) art[id] = await load(artImgs[id]);
+    // Roblox faces -> BoxGeometry material groups (+X, -X, +Y, -Y, +Z, -Z)
+    const FACE = { Right: 0, Left: 1, Top: 2, Bottom: 3, Back: 4, Front: 5 };
+    const cache = {};
+    window.S.traverse(o => {
+      const ud = o.userData;
+      if (!o.isMesh || !ud.size) return;
+      const m0 = o.material, s = ud.size;
+      const arr = [m0, m0, m0, m0, m0, m0];
+      for (const t of ud.tx || []) {
+        const id = (String(t.id).match(/(\d+)/) || [])[1], bt = base[id], fi = FACE[t.f];
+        if (!bt || fi === undefined) continue;
+        const dims = fi < 2 ? [s[2], s[1]] : fi < 4 ? [s[0], s[2]] : [s[0], s[1]];
+        const k = [id, (dims[0] / t.u).toFixed(2), (dims[1] / t.v).toFixed(2)].join('|');
+        let tex = cache[k];
+        if (!tex) { tex = bt.clone(); tex.needsUpdate = true; tex.repeat.set(dims[0] / t.u, dims[1] / t.v); cache[k] = tex; }
+        const col = new T.Color().setRGB(t.col[0], t.col[1], t.col[2], T.SRGBColorSpace);
+        arr[fi] = new T.MeshStandardMaterial({ map: tex, color: col, roughness: m0.roughness, metalness: m0.metalness, transparent: t.tr > 0.5, opacity: 1 - (t.tr > 0.5 ? t.tr : 0) });
+      }
+      if (ud.art && art[ud.art]) arr[FACE[ud.af] ?? 5] = new T.MeshStandardMaterial({ map: art[ud.art], roughness: 0.8, color: new T.Color('rgb(235,228,212)') });
+      o.material = arr;
+    });
+  }, [texImgs, artImgs]);
+}
 if (skinData) {
   await page.evaluate(async (sd) => {
     const T = THREE;

@@ -85,18 +85,15 @@ function Furnish.build(ctx, root: Instance): { BasePart }
 	-- THE FRONT HALL
 	---------------------------------------------------------------------------
 	local hall = room("Hallway")
-	-- the stairwell's long wall (x = 6, facing the stairs): a console and its lamp under three paintings, between two
-	-- pools of sconce light
+	-- the stairwell's long wall (x = 6, facing the stairs): the family photos hang here (World/Haunt: Grandma's portrait
+	-- among them), so a console and its lamp under them and two sconce pools in the gaps between the frames
 	do
 		local _, h = Kit.consoleTable(hall, F(4.4, G, 10, NX), 5, 1.4, WOOD_DARK)
 		lamp(hall, "Hallway", F(4.4, G + h, 8.2, NX), "table", Color3.fromRGB(180, 150, 110), Color3.fromRGB(236, 222, 196))
 		Kit.vaseFlowers(hall, F(4.4, G + h, 11.6, NX), 1.0, Color3.fromRGB(60, 70, 90), Color3.fromRGB(220, 200, 150), 17)
 		Kit.bookStack(hall, F(4.45, G + h, 10.2, NX), 2, 41)
-		painting(hall, F(5.3, G + 7.2, 3.4, NX), 3.0, 2.1)
-		painting(hall, F(5.3, G + 7.4, 10, NX), 2.2, 3.0, BRASS)
-		painting(hall, F(5.3, G + 7.2, 16.6, NX), 3.0, 2.1)
-		sconce(hall, F(5.32, G + 7.8, 6.7, NX))
-		sconce(hall, F(5.32, G + 7.8, 13.3, NX))
+		sconce(hall, F(5.58, G + 7.8, 6.65, NX))
+		sconce(hall, F(5.58, G + 7.8, 14.55, NX))
 	end
 	-- the foyer: a painting over the bench, and one by the living room arch
 	painting(hall, F(11.6, G + 7.2, -26.6, NX), 3.4, 2.2)
@@ -107,10 +104,14 @@ function Furnish.build(ctx, root: Instance): { BasePart }
 		lamp(hall, "Hallway", F(10.7, G + h, -2.5, NX), "table", Color3.fromRGB(70, 80, 70), Color3.fromRGB(230, 214, 186))
 	end
 
-	-- the back hall (to the mudroom and the garage): two pictures on its bare wall
-	local mud = room("MudHall")
-	painting(mud, F(16.8, G + 6.8, -9.35, PZ), 2.4, 1.7)
-	painting(mud, F(20.3, G + 6.8, -9.35, PZ), 1.5, 2.0, BRASS)
+	-- (the back hall's wall already has Finish's framed picture)
+
+	---------------------------------------------------------------------------
+	-- THE LIVING ROOM: a sconce either side of the chimney breast, over the firewood (v145)
+	---------------------------------------------------------------------------
+	local living = room("Living")
+	sconce(living, F(-39.38, G + 7.8, -18.7, PX))
+	sconce(living, F(-39.38, G + 7.8, -5.3, PX))
 
 	---------------------------------------------------------------------------
 	-- THE UPSTAIRS HALL
@@ -129,8 +130,8 @@ function Furnish.build(ctx, root: Instance): { BasePart }
 		sconce(uhall, F(-7.62, U + 7.8, -17, PX))
 	end
 	-- the east wall south of the guest room: a painting either side of the sconce
-	painting(uhall, F(11.6, U + 7.0, -22.6, NX), 1.6, 2.2)
-	painting(uhall, F(11.6, U + 7.0, -17.6, NX), 1.6, 2.2, BRASS)
+	painting(uhall, F(11.54, U + 7.0, -22.6, NX), 1.6, 2.2)
+	painting(uhall, F(11.54, U + 7.0, -17.6, NX), 1.6, 2.2, BRASS)
 	-- past the stairwell, by Jamie's door
 	painting(uhall, F(-7.6, U + 7.0, 19.0, PX), 2.4, 1.7)
 	-- between the bathroom and Lily's room: a low chest with a lamp, a painting, a plant
@@ -138,7 +139,7 @@ function Furnish.build(ctx, root: Instance): { BasePart }
 		local _, h = Kit.consoleTable(uhall, F(10.6, U, 7.0, NX), 4, 1.4, WOOD_MID)
 		lamp(uhall, "UpperHall", F(10.6, U + h, 5.6, NX), "table", Color3.fromRGB(150, 110, 80), Color3.fromRGB(232, 220, 196))
 		Kit.bookStack(uhall, F(10.6, U + h, 8.0, NX), 3, 43)
-		painting(uhall, F(11.6, U + 7.0, 13.6, NX), 2.2, 3.0)
+		painting(uhall, F(11.54, U + 7.0, 13.6, NX), 2.2, 3.0)
 		Kit.plant(uhall, F(10.6, U, 14.6, NX), 1.0, "snake")
 	end
 
@@ -146,15 +147,8 @@ function Furnish.build(ctx, root: Instance): { BasePart }
 	-- THE MASTER BEDROOM
 	---------------------------------------------------------------------------
 	local master = room("Master")
-	-- a dressing table on the north wall, its mirror, lamp and chair
-	do
-		local _, h = Kit.desk(master, F(-21, U, -1.85, NZ), 5, 2.2, WOOD_DARK)
-		Kit.mirror(master, F(-21, U + h + 2.2, -0.6, NZ), 3.6, 3.0, BRASS)
-		lamp(master, "Master", F(-23, U + h, -1.85, NZ), "table", Color3.fromRGB(220, 214, 200), Color3.fromRGB(240, 230, 210))
-		Kit.vaseFlowers(master, F(-19.2, U + h, -1.75, NZ), 0.8, Color3.fromRGB(240, 240, 236), Color3.fromRGB(200, 120, 160), 23)
-		Kit.chair(master, F(-21, U, -4.0, PZ), WOOD_DARK, Color3.fromRGB(196, 170, 130))
-	end
-	Kit.bookcase(master, F(-15.4, U + 0.05, -1.3, NZ), 4, 1.2, 8, 4, WOOD_DARK, 53)
+	-- (the north wall already has Dress's console under the painting: the bookcase goes past it, toward the hall)
+	Kit.bookcase(master, F(-13.4, U + 0.05, -1.3, NZ), 4, 1.2, 8, 4, WOOD_DARK, 53)
 	-- a reading corner by the window
 	do
 		local dir = V(-0.6, 0, -1).Unit
@@ -168,14 +162,14 @@ function Furnish.build(ctx, root: Instance): { BasePart }
 	local guest = room("Guest")
 	do
 		local _, h = Kit.dresser(guest, F(21, U, -7.7, NZ), 5, WOOD_LIGHT)
-		Kit.mirror(guest, F(21, U + h + 2.1, -6.6, NZ), 3.4, 2.8, WOOD_LIGHT)
+		Kit.mirror(guest, F(21, U + h + 2.1, -6.46, NZ), 3.4, 2.8, WOOD_LIGHT)
 		lamp(guest, "Guest", F(19.3, U + h, -7.7, NZ), "table", Color3.fromRGB(190, 170, 130))
 		Kit.photoFrame(guest, F(22.6, U + h, -7.6, NZ), 0.8, 1.0, WOOD_DARK, 79)
 	end
 	do
 		local dir = V(-0.5, 0, -1).Unit
-		Kit.armchair(guest, CFrame.lookAt(V(25.4, U, -9.8), V(25.4, U, -9.8) + dir), Color3.fromRGB(150, 130, 100))
-		lamp(guest, "Guest", F(27.9, U, -7.9, NZ), "floor", nil, Color3.fromRGB(232, 216, 190))
+		Kit.armchair(guest, CFrame.lookAt(V(26.9, U, -10.4), V(26.9, U, -10.4) + dir), Color3.fromRGB(150, 130, 100))
+		lamp(guest, "Guest", F(29.4, U, -7.9, NZ), "floor", nil, Color3.fromRGB(232, 216, 190))
 	end
 	-- what nobody uses, under dust sheets
 	sheeted(guest, F(28.6, U, -16.0, NZ) * ANG(0, rad(14), 0), V(2.8, 3.6, 2.6))

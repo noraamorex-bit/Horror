@@ -162,6 +162,17 @@ local ok, err = pcall(function()
 	assert(#scares == 1 and scares[1][1] == "Alex" and scares[1][2] == 1 and scares[1][3] == 1, "everyone told who did it, and how many were scared")
 	assert(today.JumpscareAll and today.JumpscareAll[1] == 1 and today.JumpscareAll[2] == 10, "logged with its price")
 	print("jumpscare everyone ok")
+	-- (v145) the Starter Pack's free one: no purchase, one credit spent, everyone scared; none left = nothing
+	do
+		local left = 1
+		local stats = ctx.Stats
+		ctx.Stats = { spendPrankCredit = function() if left > 0 then left -= 1 return true end return false end }
+		local before = #scares
+		assert(Shop._prankFree(a) == true and #scares == before + 1 and left == 0, "a free jumpscare, its credit spent")
+		assert(Shop._prankFree(a) == false and #scares == before + 1, "none left: nothing happens")
+		ctx.Stats = stats
+	end
+	print("free jumpscare ok")
 	-- the rocket launcher pass, bought: the pass is theirs
 	finished:Fire(a, PID.Rocket, true)
 	assert(a:GetAttribute("Pass_Rocket") == true, "rocket launcher granted")

@@ -94,13 +94,18 @@ local ok, err = pcall(function()
 		E._load(p)
 		assert(p:GetAttribute("StarterOffer") == true, "offered")
 		local rockets, revives = 0, credits
+		local monsters, pranks = 0, 0
 		ctx.Stats.addRocketCredit = function() rockets += 1 return true end
+		ctx.Stats.addMonsterCredit = function() monsters += 1 return true end
+		ctx.Stats.addPrankCredit = function() pranks += 1 return true end
 		local c0 = E.coins(p)
 		local g1 = E.onReceipt({ ProductId = st.Id, PlayerId = 77, PurchaseId = "starter-1" })
 		local g2 = E.onReceipt({ ProductId = st.Id, PlayerId = 77, PurchaseId = "starter-1" })
 		assert(g1 == R.Enum.ProductPurchaseDecision.PurchaseGranted and g2 == R.Enum.ProductPurchaseDecision.PurchaseGranted, "granted")
 		assert(E.coins(p) == c0 + st.Coins, "its coins, once: " .. E.coins(p))
 		assert(rockets == st.Rockets and credits == revives + st.Revives, "a rocket and a revive, once")
+		-- (v145) and a free Become Him night and a free Jumpscare Everyone
+		assert(st.Monster == 1 and st.Pranks == 1 and monsters == 1 and pranks == 1, "a Become Him night and a jumpscare, once")
 		assert(p:GetAttribute("StarterOffer") == nil and E.hasStarter(p), "off the menu")
 		assert(saved.u77.Owned.StarterPack == true, "and saved as had")
 		E._save(77)

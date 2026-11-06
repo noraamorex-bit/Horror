@@ -168,6 +168,36 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### Doors' hotel remodel and the house audit (v145)
+The owner: "Check the doors Hotel rooms. I want that level of design... some objects are too low and phases through, some
+objects are turned wrong way... Remodel the whole house."
+- **Why things sank (World/Props)**: after a Creator Store model was fitted to its placeholder, `settle()` probed its lowest
+  point with 5 rays up through the middle of its footprint and the surface under it with one ray down. The rays up hit a
+  chair's seat or a sofa's base instead of its legs; the ray down only meets CanQuery parts (colliders, the structure),
+  never the visible table top a mug stands on. In the live game the dining chairs sat 1.34 studs into the floor, the
+  armchairs, bookcases, monsteras and the rocking horse 0.3-0.8, and Lily's teddies and two mugs floated 0.5. Removed:
+  the fit already stands every model's box on its placeholder's base. `tools/assets/settle_check.mjs <stage> <cache>`
+  replays the placement for every prop (SETTLE OK = every model's real geometry on its base).
+- **The audit** (`tools/house_audit.py <stage.json>`, the stage from `tools/harness/stage_dump.luau`, which now also writes
+  model pivots, object ids, CanQuery colliders and textures): every object checked for SUNK (under its floor), FLOAT (in the
+  air, not touching a wall or anything under it), WALL (into a wall or its finishes), FACING (its front against a wall),
+  CLIP (two objects through each other) and HUNG (wall things through each other). Fixed with it: plants, the garage fridge
+  and bin, the linen cupboard and a painting pushed into walls; v143's dressing table built on top of the master bedroom's
+  console (removed); the guest armchair in the dresser; the v143 paintings and sconces hung through the family photos on the
+  front hall's stairwell wall (the photos stay, the sconces moved between them); pictures, a mirror, sconces and the shower
+  head hanging 0.1-0.4 off their walls; Finish's framed art over Lily's drawings and the back hall's pictures.
+- **The look**: the halls and the grown-ups' rooms (front and upstairs halls, living room, den, office, master and guest
+  bedrooms) get walnut wainscoting in raised panels (Finish `panels()`, one proud panel every ~3 studs between openings),
+  walnut chair rail, skirting and a two-step crown; deeper damask papers (burgundy in the halls, olive-gold, green, navy,
+  teal; roses in the guest room); the front hall's long stairwell wall gets the hall's finish (it had none). Interior doors
+  and casings in walnut, a cornice cap over every door. Walnut beams across the living room, den, master, office and guest
+  ceilings. Brass chandeliers (five candle arms, shades, a ceiling medallion; the flames switch with the room) in the halls,
+  living room, office and guest room. The main stair's risers, stringer and balusters in walnut, a dark handrail; the halls'
+  closets walnut. Sconces either side of the living room's chimney breast. The children's rooms, kitchen and wet rooms keep
+  their own colours.
+- The reel renderer (`film2.mjs`) now draws the surfaces' textures (wallpaper, floors, tile) and the paintings, so renders
+  look like the game.
+
 ### Doors-grade pass (v143)
 The owner: "Is there a way to add a feedback thing in the result card if so add it. Improve monster design make creepier, better run animation, much better sounds. Map is still bad. Heavily rework map. Make next reel. UI should have names under them. Imagine this is doors and make it as good as that."
 

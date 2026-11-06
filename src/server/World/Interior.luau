@@ -225,7 +225,7 @@ function Interior.build(ctx, root: Instance, refs)
 	lamp(living, "Living", F(-17.6, G, -15.6, NZ), "floor")
 	target("Couch", V(-24, G + 2.5, -16))
 	target("CoffeeTable", V(-24, G + 2.4, -21))
-	Kit.plant(living, F(-38.2, G, -28.4, PX), 1.6, "tree")
+	Kit.plant(living, F(-37.6, G, -27.8, PX), 1.6, "tree")
 	Kit.plant(living, F(-10.6, G, -0.6, NX), 1.3, "leafy")
 	Kit.bookcase(living, F(-9.3, G, -6.5, NX), 6, 1.2, 8.5, 4)
 	Kit.ceilingFan(living, V(-24, G + 13, -14))
@@ -960,7 +960,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.bookcase(office, F(38.5, G, -16.5, NX), 6.5, 1.2, 10, 5):SetAttribute("PropKey", "OfficeBookcase")
 	Kit.filingCabinet(office, F(14.1, G, -27.9, PZ), 3)
 	Kit.sofa(office, F(19.6, G, -27.2, PZ), 5, Color3.fromRGB(96, 52, 40), nil, { Name = "Loveseat" })
-	Kit.plant(office, F(37.9, G, -11.3, NZ), 1.4, "tree")
+	Kit.plant(office, F(37.4, G, -11.8, NZ), 1.4, "tree")
 
 	---------------------------------------------------------------------------
 	-- DOWNSTAIRS BATHROOM
@@ -1034,7 +1034,7 @@ function Interior.build(ctx, root: Instance, refs)
 	wardrobe(den, "Den closet", 36.35, 23, 39.15, 28.4, G, NX, "Den", WHITE_WOOD)
 	lamp(den, "Den", F(28.2, G, 18.8, NZ), "floor")
 	Kit.ceilingFan(den, V(24, G + 13, 15))
-	Kit.plant(den, F(37, G, 7.2, NX), 1.4, "leafy")
+	Kit.plant(den, F(37.4, G, 5.9, NX), 1.4, "leafy")
 	do
 		-- cozy: throw and cushion on the sofa, cocoa and cookies for movie night, blanket basket
 		local denSofa = F(21.5, G, 17.5, NZ)
@@ -1108,23 +1108,23 @@ function Interior.build(ctx, root: Instance, refs)
 		end
 		Kit.collider(garage, CF(42.2, G + 1.35, -27.4), V(2.5, 2.7, 2.5))
 		local mower = Kit.model(garage, "Lawnmower")
-		Kit.box(mower, "MowerDeck", CF(63.6, G + 0.9, -27.4), V(2.2, 0.9, 2.6), Color3.fromRGB(160, 40, 36), KM.Metal)
-		Kit.vcyl(mower, "MowerEngine", CF(63.6, G + 1.7, -27.4), 0.8, 1.1, Color3.fromRGB(40, 40, 44), KM.Metal)
+		Kit.box(mower, "MowerDeck", CF(59.4, G + 0.9, -27.4), V(2.2, 0.9, 2.6), Color3.fromRGB(160, 40, 36), KM.Metal)
+		Kit.vcyl(mower, "MowerEngine", CF(59.4, G + 1.7, -27.4), 0.8, 1.1, Color3.fromRGB(40, 40, 44), KM.Metal)
 		for _, s in { -1, 1 } do
 			for _, e in { -1, 1 } do
-				Kit.cyl(mower, "MowerWheel", CF(63.6 + s * 1.15, G + 0.4, -27.4 + e * 1.0), 0.25, 0.8, C.Black, KM.Rubber)
+				Kit.cyl(mower, "MowerWheel", CF(59.4 + s * 1.15, G + 0.4, -27.4 + e * 1.0), 0.25, 0.8, C.Black, KM.Rubber)
 			end
-			Kit.box(mower, "MowerHandle", CF(63.6 + s * 0.8, G + 2.3, -25.4) * ANG(rad(-40), 0, 0), V(0.12, 3.4, 0.12), Color3.fromRGB(60, 60, 64), KM.Metal)
+			Kit.box(mower, "MowerHandle", CF(59.4 + s * 0.8, G + 2.3, -25.4) * ANG(rad(-40), 0, 0), V(0.12, 3.4, 0.12), Color3.fromRGB(60, 60, 64), KM.Metal)
 		end
-		Kit.collider(mower, CF(63.6, G + 1, -27), V(2.4, 2, 3.2))
+		Kit.collider(mower, CF(59.4, G + 1, -27), V(2.4, 2, 3.2))
 		for i, tool in { { "Rake", Color3.fromRGB(150, 110, 70) }, { "Shovel", Color3.fromRGB(120, 90, 60) }, { "Broom", Color3.fromRGB(190, 160, 80) } } do
 			local z = -24 + i * 1.3
 			Kit.box(garage, tool[1] .. "Handle", CF(40.55, G + 3.4, z) * ANG(rad(4), 0, 0), V(0.16, 6, 0.16), tool[2], KM.Wood)
 			Kit.box(garage, tool[1] .. "Head", CF(40.6, G + 0.5, z), V(0.2, 0.9, 1.1), Color3.fromRGB(70, 70, 74), KM.Metal)
 		end
 		Kit.box(garage, "ToolHooks", CF(40.42, G + 6.2, -22), V(0.12, 0.3, 4.2), Color3.fromRGB(60, 60, 64), KM.Metal)
-		Kit.fridge(garage, F(56.3, G, 4.4, NZ), 3, 2.8, 6.4, Color3.fromRGB(226, 220, 200))
-		Kit.trashBin(garage, F(64.4, G, 1.6, NX), Color3.fromRGB(40, 80, 150))
+		Kit.fridge(garage, F(56.3, G, 4.0, NZ), 3, 2.8, 6.4, Color3.fromRGB(226, 220, 200))
+		Kit.trashBin(garage, F(64.0, G, 1.6, NX), Color3.fromRGB(40, 80, 150))
 		local pileSpot = spot(garage, "PileSpot", CF(62.5, G + 1.6, -10.5), V(3.4, 3.2, 3.9))
 		target("Woodpile", pileSpot.Position)
 		ctx.Interaction.prompt(pileSpot, { Action = "Take firewood", Object = "Woodpile", Hold = 0.6, Distance = 7 }, function(player)
@@ -1194,7 +1194,7 @@ function Interior.build(ctx, root: Instance, refs)
 	-- where most of the night's work is
 	---------------------------------------------------------------------------
 	-- (in the front hall against the office wall: not over the basement stairs)
-	wardrobe(hall, "Coat closet", 9.2, -17.1, 11.35, -11.7, G, NX, "Hallway", WHITE_WOOD)
+	wardrobe(hall, "Coat closet", 9.2, -17.1, 11.35, -11.7, G, NX, "Hallway", Color3.fromRGB(86, 56, 38))
 	wardrobe(mud, "Utility closet", 34.6, 0.6, 39.4, 3.4, G, NZ, "Mudroom", WHITE_WOOD)
 	wardrobe(garage, "Storage cabinet", 41, -21.5, 43.8, -16, G, PX, "Garage", Color3.fromRGB(96, 100, 104))
 	-- crouched under a table or a desk, peeking out at floor level
@@ -1319,10 +1319,10 @@ function Interior.build(ctx, root: Instance, refs)
 	-- UPSTAIRS HALL
 	---------------------------------------------------------------------------
 	local uhall = folder("UpperHall")
-	wardrobe(uhall, "Linen wardrobe", 9.2, -8.5, 11.35, -3.5, U, NX, "UpperHall", WHITE_WOOD)
+	wardrobe(uhall, "Linen wardrobe", 9.2, -8.5, 11.35, -3.5, U, NX, "UpperHall", Color3.fromRGB(86, 56, 38))
 	Kit.rug(uhall, F(3, U, -18, NZ), 5, 18, Color3.fromRGB(112, 50, 46), Color3.fromRGB(204, 172, 120))
 	local _, htH = Kit.consoleTable(uhall, F(10.6, U, -25, NX), 4, 1.4, WOOD_DARK)
-	Kit.plant(uhall, F(10.6, U + htH, -25.9, NX), 0.9, "leafy", Color3.fromRGB(240, 240, 236))
+	Kit.plant(uhall, F(10.25, U + htH, -25.9, NX), 0.9, "leafy", Color3.fromRGB(240, 240, 236))
 	Kit.photoFrame(uhall, F(10.8, U + htH, -24.1, NX), 0.8, 0.6, WOOD_DARK, 41)
 	target("SignalSpot", V(37, U + 3, 1))
 	if ctx.Phone and ctx.Phone.setupSignalSpot then
@@ -1360,7 +1360,7 @@ function Interior.build(ctx, root: Instance, refs)
 	Kit.box(guest, "SewingMachine", CF(31.5, U + sewH + 0.55, -24.8), V(0.8, 1.1, 2), C.White, KM.Metal)
 	Kit.box(guest, "SewingArm", CF(31.5, U + sewH + 1.2, -24.3), V(0.7, 0.35, 1.2), C.White, KM.Metal)
 	Kit.chair(guest, F(33.2, U, -24.8, NX), WOOD_LIGHT)
-	Kit.plant(guest, F(38.3, U, -12, NX), 1.4, "tree")
+	Kit.plant(guest, F(37.8, U, -12, NX), 1.4, "tree")
 
 	---------------------------------------------------------------------------
 	-- UPSTAIRS BATHROOM (shower, signal at the window)
@@ -1423,8 +1423,8 @@ function Interior.build(ctx, root: Instance, refs)
 	drips.Speed = NumberRange.new(0)
 	drips.Acceleration = V(0, -40, 0)
 	drips.Transparency = NumberSequence.new(0.3)
-	Kit.box(hbath, "ShowerPipe", CF(38.95, U + 8.3, 5.3), V(0.12, 1.6, 0.12), Kit.C.Chrome, KM.Metal)
-	local head = Kit.cyl(hbath, "ShowerHead", CF(38.75, U + 9.05, 5.3) * ANG(0, 0, rad(-60)), 0.25, 0.7, Kit.C.Chrome, KM.Metal)
+	Kit.box(hbath, "ShowerPipe", CF(39.37, U + 8.3, 5.3), V(0.12, 1.6, 0.12), Kit.C.Chrome, KM.Metal)
+	local head = Kit.cyl(hbath, "ShowerHead", CF(39.17, U + 9.05, 5.3) * ANG(0, 0, rad(-60)), 0.25, 0.7, Kit.C.Chrome, KM.Metal)
 	drips.Parent = head
 	local base = hbath:FindFirstChild("ShowerBase") :: BasePart
 	base.Reflectance = 0.35
@@ -1434,7 +1434,7 @@ function Interior.build(ctx, root: Instance, refs)
 	-- (v105: a second place to hide by the window. The v104 logs: 23 of 45 captures were in this
 	-- bathroom, 5-35 s after the 911 call: friends at the window with nowhere to go but the one shower)
 	do
-		wardrobe(hbath, "Bathroom linen cupboard", 18, 5.5, 22.6, 7.9, U, NZ, "HallBath", WHITE_WOOD)
+		wardrobe(hbath, "Bathroom linen cupboard", 18, 5.3, 22.6, 7.7, U, NZ, "HallBath", WHITE_WOOD)
 	end
 	Kit.towel(hbath, F(27.8, U + 5.6, -5.55, PZ), 2.6, Color3.fromRGB(230, 200, 120))
 	Kit.rug(hbath, F(31.2, U, 5.2, PX), 3.2, 2.4, Color3.fromRGB(110, 130, 150))

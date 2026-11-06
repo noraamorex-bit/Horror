@@ -120,7 +120,8 @@ function Doors.create(parent: Instance, op)
 	model.Parent = parent
 
 	local exterior = op.exterior == true
-	local color = exterior and Color3.fromRGB(70, 40, 35) or ctx.Builder.C.Trim
+	-- (v145: interior doors in dark walnut, like Doors' hotel; the front and back doors stay painted)
+	local color = exterior and Color3.fromRGB(70, 40, 35) or Color3.fromRGB(88, 58, 40)
 	local panel = ctx.Builder.part(model, {
 		Name = "Panel",
 		Size = alongX and Vector3.new(w, h, t) or Vector3.new(t, h, w),

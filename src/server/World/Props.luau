@@ -147,42 +147,12 @@ local function worldBox(model: Instance): (Vector3?, Vector3?)
 	return mn, mx
 end
 
--- the lowest point of the prop's actual geometry around the middle of its footprint, and the top of
--- whatever it stands on; then move it so the one rests on the other
-local function settle(prop: Model, placeholder: Model, centre: Vector3, size: Vector3)
-	local parts = {}
-	for _, d in prop:GetDescendants() do
-		if d:IsA("BasePart") then
-			table.insert(parts, d)
-			d.CanQuery = true -- (just while measuring)
-		end
-	end
-	local up = RaycastParams.new()
-	up.FilterType = Enum.RaycastFilterType.Include
-	up.FilterDescendantsInstances = { prop }
-	local low = math.huge
-	local rx, rz = size.X * 0.25, size.Z * 0.25
-	for _, o in { Vector3.zero, Vector3.new(rx, 0, 0), Vector3.new(-rx, 0, 0), Vector3.new(0, 0, rz), Vector3.new(0, 0, -rz) } do
-		local from = Vector3.new(centre.X + o.X, centre.Y - size.Y - 2, centre.Z + o.Z)
-		local hit = workspace:Raycast(from, Vector3.new(0, size.Y * 3 + 4, 0), up)
-		if hit then
-			low = math.min(low, hit.Position.Y)
-		end
-	end
-	local down = RaycastParams.new()
-	down.FilterType = Enum.RaycastFilterType.Exclude
-	down.FilterDescendantsInstances = { prop, placeholder }
-	local floor = workspace:Raycast(Vector3.new(centre.X, centre.Y + size.Y, centre.Z), Vector3.new(0, -(size.Y * 2 + 3), 0), down)
-	for _, d in parts do
-		d.CanQuery = false
-	end
-	if low < math.huge and floor then
-		local dy = floor.Position.Y + 0.01 - low
-		if math.abs(dy) < 1.5 then
-			prop:PivotTo(prop:GetPivot() + Vector3.new(0, dy, 0))
-		end
-	end
-end
+-- (v145: no settle() any more. It probed the model's lowest point with 5 rays up through the middle of its
+-- footprint and the surface under it with one ray down; but the rays up hit a chair's seat or a sofa's base instead
+-- of its legs, and the ray down only meets CanQuery parts (colliders, the structure), never the visible table top a
+-- mug stands on. So dining chairs sank 1.3 studs into the floor, armchairs, bookcases, the monsteras and the rocking
+-- horse half a stud, the teddies and two mugs floated. Step 3 already stands every model's box on its placeholder's
+-- base, which is where the placeholder was built to rest: tools/assets/settle_check.mjs replays this for every prop.)
 
 -- the box around a model's visible parts in a frame's own axes (min, max)
 local function localBox(model: Instance, frame: CFrame): (Vector3?, Vector3?)
@@ -289,9 +259,6 @@ local function fit(placeholder: Model, raw: any)
 	end
 	local at = frame:PointToWorldSpace(Vector3.new(c.X, pmn.Y + h / 2, cz))
 	prop:PivotTo(CFrame.new(at) * frame.Rotation)
-	-- 4. then sit it exactly on the surface under it: a model's box isn't always where its mesh is
-	local wmn, wmx = worldBox(placeholder)
-	settle(prop, placeholder, at, (wmn and wmx) and (wmx - wmn) or psize)
 	for _, d in placeholder:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.Transparency = 1

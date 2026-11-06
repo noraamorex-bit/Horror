@@ -248,7 +248,7 @@ end
 	sitting on a sloped stringer, so the flight reads as one solid piece from the side. Players and
 	pathfinding walk an invisible ramp through the middle of the treads that meets both floors flush.
 ]]
-function Builder.stairs(parent: Instance, name: string, x0: number, x1: number, zStart: number, zEnd: number, yStart: number, yEnd: number, color: Color3?)
+function Builder.stairs(parent: Instance, name: string, x0: number, x1: number, zStart: number, zEnd: number, yStart: number, yEnd: number, color: Color3?, trim: Color3?)
 	local model = Instance.new("Model")
 	model.Name = name
 	model.Parent = parent
@@ -266,7 +266,7 @@ function Builder.stairs(parent: Instance, name: string, x0: number, x1: number, 
 		local zB = zStart + run * i
 		local yTop = yStart + rise * i
 		local yLow = yStart + rise * (i - 1) - 0.2
-		Builder.box(model, "StepBody", Vector3.new(x0, yLow, math.min(zA, zB)), Vector3.new(x1, yTop - 0.3, math.max(zA, zB)), Builder.C.Trim, Builder.M.Wood, { CanCollide = false })
+		Builder.box(model, "StepBody", Vector3.new(x0, yLow, math.min(zA, zB)), Vector3.new(x1, yTop - 0.3, math.max(zA, zB)), trim or Builder.C.Trim, Builder.M.Wood, { CanCollide = false })
 		local nose = zA - dir * 0.15
 		-- the top tread is flush with the upper floor and collides, bridging the ramp's end to the landing
 		Builder.box(model, "Tread", Vector3.new(x0, yTop - 0.3, math.min(nose, zB)), Vector3.new(x1, yTop, math.max(nose, zB)), color or Builder.C.Oak, Builder.M.Wood, { CanCollide = i == steps })
@@ -291,14 +291,14 @@ function Builder.stairs(parent: Instance, name: string, x0: number, x1: number, 
 		Name = "Stringer",
 		Size = Vector3.new(x1 - x0, 1.6, len - 2.4),
 		CFrame = cf * CFrame.new(0, -0.8, 0),
-		Color = Builder.C.Trim,
+		Color = trim or Builder.C.Trim,
 		Material = Builder.M.Wood,
 		CanCollide = false,
 	})
 	return model, ramp
 end
 
-function Builder.railing(parent: Instance, a: Vector3, b: Vector3, height: number?, color: Color3?)
+function Builder.railing(parent: Instance, a: Vector3, b: Vector3, height: number?, color: Color3?, baluster: Color3?)
 	height = height or 3.4
 	local dir = b - a
 	local len = dir.Magnitude
@@ -323,7 +323,7 @@ function Builder.railing(parent: Instance, a: Vector3, b: Vector3, height: numbe
 	local count = math.floor(len / 1.4)
 	for i = 0, count do
 		local p = a + dir * (i / math.max(count, 1))
-		Builder.block(model, "Baluster", p + Vector3.new(0, height / 2, 0), Vector3.new(0.25, height, 0.25), Builder.C.Trim, Builder.M.Wood)
+		Builder.block(model, "Baluster", p + Vector3.new(0, height / 2, 0), Vector3.new(0.25, height, 0.25), baluster or Builder.C.Trim, Builder.M.Wood)
 	end
 	return model, top
 end
@@ -369,8 +369,56 @@ function Builder.window(parent: Instance, op, opts)
 end
 
 -- A ceiling fixture with a light. Returns bulb part and light object.
+-- (v145) a brass chandelier for the halls and the grown-ups' rooms (Doors' hotel corridors): a canopy, a chain, a
+-- brass body with five curved arms, each a candle cup, a flame bulb and a little cream shade. The main bulb (the
+-- PointLight's part) hangs in a frosted bowl at the middle; the flames come back in `candles` so Power switches them too.
+local function chandelier(parent: Instance, pos: Vector3, opts)
+	local model = Instance.new("Model")
+	model.Name = "Chandelier"
+	model.Parent = parent
+	local BRASS = Color3.fromRGB(176, 140, 76)
+	local function piece(name: string, cf: CFrame, size: Vector3, color: Color3, material: Enum.Material, shape: Enum.PartType?)
+		return Builder.part(model, { Name = name, Size = size, CFrame = cf, Color = color, Material = material, Shape = shape, CastShadow = false, CanCollide = false, CanQuery = false })
+	end
+	local drop = 1.2
+	-- a plaster ceiling medallion round the canopy, its ring a shade darker
+	piece("Medallion", CFrame.new(pos + Vector3.new(0, -0.05, 0)) * CFrame.Angles(0, 0, math.rad(90)), Vector3.new(0.1, 2.6, 2.6), Color3.fromRGB(226, 216, 196), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+	piece("MedallionRing", CFrame.new(pos + Vector3.new(0, -0.08, 0)) * CFrame.Angles(0, 0, math.rad(90)), Vector3.new(0.06, 3.1, 3.1), Color3.fromRGB(196, 184, 160), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+	piece("Canopy", CFrame.new(pos + Vector3.new(0, -0.1, 0)) * CFrame.Angles(0, 0, math.rad(90)), Vector3.new(0.2, 1.3, 1.3), BRASS, Enum.Material.Metal, Enum.PartType.Cylinder)
+	piece("Chain", CFrame.new(pos + Vector3.new(0, -drop / 2 - 0.2, 0)), Vector3.new(0.12, drop, 0.12), Color3.fromRGB(120, 96, 56), Enum.Material.Metal)
+	local c = pos + Vector3.new(0, -drop - 0.55, 0)
+	piece("Body", CFrame.new(c), Vector3.new(0.7, 0.9, 0.7), BRASS, Enum.Material.Metal, Enum.PartType.Ball)
+	piece("Finial", CFrame.new(c + Vector3.new(0, -0.75, 0)), Vector3.new(0.3, 0.3, 0.3), BRASS, Enum.Material.Metal, Enum.PartType.Ball)
+	local bulb = piece("Bulb", CFrame.new(c + Vector3.new(0, -0.15, 0)), Vector3.new(0.45, 0.45, 0.45), Color3.fromRGB(255, 204, 146), Enum.Material.Neon, Enum.PartType.Ball)
+	piece("Bowl", CFrame.new(c + Vector3.new(0, -0.2, 0)), Vector3.new(1.0, 0.6, 1.0), Color3.fromRGB(236, 222, 196), Enum.Material.Glass, Enum.PartType.Ball).Transparency = 0.35
+	local candles = {}
+	for i = 0, 4 do
+		local a = i * math.pi * 2 / 5
+		local dir = Vector3.new(math.cos(a), 0, math.sin(a))
+		local tip = c + dir * 1.25 + Vector3.new(0, 0.15, 0)
+		-- the arm: out and up to the cup
+		local from = c + Vector3.new(0, -0.1, 0)
+		local mid = (from + tip) / 2
+		piece("Arm", CFrame.lookAt(mid, tip), Vector3.new(0.1, 0.1, (tip - from).Magnitude), BRASS, Enum.Material.Metal)
+		piece("Cup", CFrame.new(tip), Vector3.new(0.3, 0.12, 0.3), BRASS, Enum.Material.Metal)
+		piece("CandleStick", CFrame.new(tip + Vector3.new(0, 0.25, 0)), Vector3.new(0.14, 0.4, 0.14), Color3.fromRGB(240, 232, 214), Enum.Material.SmoothPlastic)
+		table.insert(candles, piece("Candle", CFrame.new(tip + Vector3.new(0, 0.52, 0)), Vector3.new(0.13, 0.2, 0.13), Color3.fromRGB(255, 196, 120), Enum.Material.Neon, Enum.PartType.Ball))
+		piece("Shade", CFrame.new(tip + Vector3.new(0, 0.62, 0)), Vector3.new(0.5, 0.42, 0.5), Color3.fromRGB(232, 214, 184), Enum.Material.Fabric).Transparency = 0.15
+	end
+	local light = Instance.new("PointLight")
+	light.Range = opts.range or 26
+	light.Brightness = opts.brightness or 1.45
+	light.Color = opts.color or Color3.fromRGB(255, 198, 138)
+	light.Shadows = opts.shadows ~= false
+	light.Parent = bulb
+	return bulb, light, model, candles
+end
+
 function Builder.ceilingLight(parent: Instance, pos: Vector3, opts)
 	opts = opts or {}
+	if opts.style == "chandelier" then
+		return chandelier(parent, pos, opts)
+	end
 	local model = Instance.new("Model")
 	model.Name = "CeilingLight"
 	model.Parent = parent

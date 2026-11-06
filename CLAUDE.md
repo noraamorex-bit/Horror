@@ -265,6 +265,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   (`Surp` Behind / Closet).
 
 **World**
+- **v145 (the owner: "Check the doors Hotel rooms. I want that level of design... objects are too low and phases through...
+  Remodel the whole house")**: Doors' hotel look in the halls and the grown-ups' rooms (Finish `Palette`: walnut raised-panel
+  wainscoting, walnut trim and a two-step crown, deep damask; walnut doors, casings with cornice caps, ceiling beams, brass
+  chandeliers with medallions, the walnut stair). **Props no longer `settle()`** (it sank the dining chairs 1.3 studs and floated the
+  teddies in the live game). Before any house change: `stage_dump.luau` → `python3 tools/house_audit.py <stage>` (SUNK / FLOAT / WALL /
+  FACING / CLIP / HUNG) and `node tools/assets/settle_check.mjs <stage> <cache>` (SETTLE OK), plus dress_test. Renders (film2) now show
+  the textures and paintings. GDD "Doors' hotel remodel and the house audit (v145)".
 - **v143 (the owner: "Map is still bad. Heavily rework map... Imagine this is Doors")**: `World/Furnish` (checked by dress_test):
   the front hall's stairwell wall (console, lamp, three paintings, two sconce pools), the foyer and back-hall walls; the upstairs
   hall's west wall (console, lamp, photos, three paintings, one crooked, two sconces), a lamp chest by Lily's room, more paintings;
@@ -413,6 +420,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   revive's window opens by itself once a night on the death card (idle-guarded; `Ask:ReviveAuto`), dead players with a friend still
   in the hunt get 😈 HUNT THEM · BECOME HIM (`Monster.revengeOK`), 😱 JUMPSCARE EVERYONE on out-early cards, the Starter Pack's
   night-start window removed (it replaced v120/v126's auto windows; the Starter stays in the dock/shop/card).
+
+- **6 Nov (v145)**, the owner: "check out gamepasses and analyze and make necessary changes". Since 15 Oct 3,063 R$: BecomeHim 1,166
+  (43/319 windows), JumpscareAll 918 (93/538, the best rate), Revive 15/300, ReviveAuto 3/263, RocketNight 9/54, **Starter 14/1,840**
+  (opened by a third of lobby visitors, bought by 0.8%), passes almost never (lobby shop only). Done: the Starter Pack (still 9 R$, the
+  owner's price) now also holds **a free Become Him night (MonsterCredits) and a free Jumpscare Everyone** (new `PrankCredits`, used
+  from the same 😱 button, `Remotes.PrankFree`); Night Vision pass 49 → 25 (0/19). Next: Starter bought/asked (want several %), whether
+  BecomeHim sales hold.
 
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
@@ -796,6 +810,19 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **6 Nov (v145 = place version 145, reels 69-70 = PEAK Parts 7-8)**, the owner: "Analyze game statistics and improve the game. Also
+  check out gamepasses... Check the doors Hotel rooms. I want that level of design... some objects are too low and phases through, some
+  objects are turned wrong way... Remodel the whole house. Also make the next 2 reels." Votes 33 up / 56 down, 24.4K visits, 477
+  favorites. Logs since 143 (724 lobby visits, 293 nights; v144 alone 262): first-nighters still quit mid-night 48% (quiet acts changed
+  nothing either way); **69 of 112 act I quits are in the first 30 s having done nothing** (45 alone: the countdown sends them, they go
+  back for players); solo nights 84% no ending; room scares 0.88-1.1 / player, surprises begun 0.11; his nav: FailGrid_UpperHall_UpperHall
+  1.5 and FailPF_Outside_Out 2.4 a night on 144 (both swing a lot between versions; not looked into). Done: the sinking/floating props
+  (Props `settle()` removed), the house audit and its fixes, the Doors-hotel remodel (see World), the Starter Pack's new contents and
+  Night Vision 25 (see Economy). "Turned the wrong way": no prop or Kit piece faces wrong in the renders or the audit's FACING check;
+  the sunk chairs and floating teddies were most likely it. Can't see the real client: check on a phone that the walnut halls aren't too
+  dark, the chandeliers read, and that the dining chairs, sofas and armchairs now stand on the floor. Next: `--since=145`: act I quits,
+  rating, Starter bought/asked.
 
 - **5 Nov (v144 = place version 144)**, the owner: "Way too many scares there is like one every single room. Also they aren't even
   scary. Check doors that is your only reference. Make it 1-2 scares the whole run before blackout." Done: the quiet acts (see
@@ -1376,7 +1403,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 144; the notes' "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 145; the notes' "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

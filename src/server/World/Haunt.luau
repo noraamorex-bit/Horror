@@ -455,14 +455,14 @@ function Haunt.build(ctx, root: Instance): { BasePart }
 		end
 		local frames = { { 4.5, 2.2, 1.7, 71 }, { 8.6, 1.7, 2.2, 72 }, { 12.4, 2.4, 1.8, 73 }, { 16.4, 1.7, 2.2, 74 } }
 		for i, f in frames do
-			Kit.picture(hall, F(5.6, G + 6.4 + ((i % 2 == 0) and 0.3 or 0), f[1], NX), f[2], f[3], i % 2 == 0 and KC.WoodDark or KC.Brass, f[4])
+			Kit.picture(hall, F(5.54, G + 6.4 + ((i % 2 == 0) and 0.3 or 0), f[1], NX), f[2], f[3], i % 2 == 0 and KC.WoodDark or KC.Brass, f[4])
 		end
 		-- Grandma's portrait: her face gouged out, four nails at a time
-		local s = F(5.6, G + 6.7, 16.4, NX)
+		local s = F(5.54, G + 6.7, 16.4, NX)
 		for k = -1.5, 1.5 do
 			Kit.box(hall, "Scratch", s * CF(k * 0.1, 0.32 + k * 0.03, -0.11) * ANG(0, 0, rad(62)), V(0.8, 0.045, 0.02), Color3.fromRGB(236, 230, 220), KM.Plastic)
 		end
-		local _, bulb, light = Kit.sconce(hall, F(5.62, G + 7.8, 20.4, NX))
+		local _, bulb, light = Kit.sconce(hall, F(5.58, G + 7.8, 20.4, NX))
 		ctx.Power.registerLight("Decor", bulb, light)
 	end
 

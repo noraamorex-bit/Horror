@@ -305,6 +305,20 @@ local function jumpscareReceipt(info)
 end
 Shop._jumpscareReceipt = jumpscareReceipt -- (tests)
 
+-- (v145) a free one (the Starter Pack's credit): the same scare, no purchase window, only while someone else is here
+local function prankFree(player: Player): boolean
+	local count = #Players:GetPlayers() - 1
+	if count < 1 or not (ctx.Stats and ctx.Stats.spendPrankCredit and ctx.Stats.spendPrankCredit(player)) then
+		return false
+	end
+	ctx.Remotes.JumpscareAll:FireAllClients(player.DisplayName, player.UserId, count)
+	if ctx.Journey then
+		ctx.Journey.event(player, "Prank", "free " .. count)
+	end
+	return true
+end
+Shop._prankFree = prankFree -- (tests)
+
 function onReceipt(info)
 	local scare = ctx.Config.Shop.JumpscareAll
 	if scare and scare.Id > 0 and info.ProductId == scare.Id then
@@ -479,6 +493,9 @@ function Shop.start()
 		Shop._autoFinished(p, key, purchased == true)
 	end)
 	-- (v120) the Starter Pack's window opened by itself (client Starter): its own funnel line
+	ctx.Remotes.PrankFree.OnServerEvent:Connect(function(player)
+		prankFree(player)
+	end)
 	ctx.Remotes.StarterAuto.OnServerEvent:Connect(function(player, where)
 		local key = where == "Revive" and "Revive" or "Starter"
 		autoAsk[player] = { T = os.clock(), Key = key }

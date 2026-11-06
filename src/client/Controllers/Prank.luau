@@ -29,6 +29,11 @@ local function product()
 end
 
 local function buy()
+	-- (v145) a free one first (the Starter Pack's), straight away, no purchase window
+	if (tonumber(player:GetAttribute("PrankCredits")) or 0) > 0 then
+		ctx.Remotes.PrankFree:FireServer()
+		return
+	end
 	local p = product()
 	if p then
 		pcall(function()
@@ -50,6 +55,11 @@ local function refresh()
 		show = show and player:GetAttribute("InGame") == true and not workspace:GetAttribute("EndingActive")
 	end
 	button.Visible = show
+	-- (v145) the Starter Pack's free one shows as FREE
+	if button:IsA("TextButton") and button.Name == "PrankOffer" then
+		local free = (tonumber(player:GetAttribute("PrankCredits")) or 0) > 0
+		button.Text = "😱 JUMPSCARE EVERYONE  " .. (free and "FREE" or ("R$ " .. tostring(product() and product().Price or 10)))
+	end
 end
 Prank._refresh = refresh -- (tests)
 Prank.buy = buy -- (v137: also offered on the result card while you watch the others)
@@ -231,6 +241,7 @@ function Prank.start()
 		task.defer(refresh)
 	end)
 	player:GetAttributeChangedSignal("InGame"):Connect(refresh)
+	player:GetAttributeChangedSignal("PrankCredits"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("EndingActive"):Connect(refresh)
 	ctx.Remotes.JumpscareAll.OnClientEvent:Connect(function(fromName: string, fromId: number, count: number?)
 		if fromId == player.UserId then

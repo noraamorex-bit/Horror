@@ -333,6 +333,7 @@ Layout.NoArt = {
 	{ "Ground", -32, -22, 29, 30.6 }, -- fridge
 	{ "Ground", 16, 23, 3, 4.4 }, -- bathroom mirror
 	{ "Ground", 34, 40.6, -10.6, -7 }, -- mudroom shelf and key board
+	{ "Upstairs", 12, 40, 7.4, 8.6 }, -- Lily's crayon drawings taped up on her wall (v145)
 	{ "Ground", 23, 33, -10.6, -8.5 }, -- mudroom coat hooks
 	{ "Ground", -8.4, -5, -29, -23 }, -- hall mirror
 	{ "Ground", -8.4, -5, -12, 12 }, -- stair photo gallery and sconce

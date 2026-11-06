@@ -986,13 +986,24 @@ function Economy.onReceipt(info): Enum.ProductPurchaseDecision
 					ctx.Stats.addReviveCredit(player)
 				end
 			end
+			-- (v145) a free Become Him night and a free Jumpscare Everyone
+			for _ = 1, pack.Starter.Monster or 0 do
+				if ctx.Stats and ctx.Stats.addMonsterCredit then
+					ctx.Stats.addMonsterCredit(player)
+				end
+			end
+			for _ = 1, pack.Starter.Pranks or 0 do
+				if ctx.Stats and ctx.Stats.addPrankCredit then
+					ctx.Stats.addPrankCredit(player)
+				end
+			end
 		end
 		if player then
 			result(player, { Kind = "Pack", Coins = pack.Coins })
 			if ctx.Telemetry and docs[userId] then
 				ctx.Telemetry.coins(player, pack.Coins, docs[userId].Coins, "IAP", pack.Starter and "Starter" or ("Pack" .. pack.Coins))
 			end
-			ctx.Remotes.Notify:FireClient(player, pack.Starter and ("Starter Pack: +" .. pack.Coins .. " coins, a rocket for your next night and a revive. Thank you!")
+			ctx.Remotes.Notify:FireClient(player, pack.Starter and ("Starter Pack: +" .. pack.Coins .. " coins, a rocket, a revive, a free Become Him night and a free Jumpscare Everyone. Thank you!")
 				or ("+" .. pack.Coins .. " coins. Thank you!"), "done")
 		end
 	end

@@ -61,15 +61,59 @@ local ok, err = pcall(function()
 				end
 			end
 			if mn then
+				d:SetAttribute("HolderId", #holders + 1)
 				local e = Props.Models[keyOf(d)]
-				table.insert(holders, { key = keyOf(d), name = d.Name, entry = type(e) == "number" and { Id = e } or e, frame = { frame:GetComponents() }, min = { mn.X, mn.Y, mn.Z }, max = { mx.X, mx.Y, mx.Z } })
+				table.insert(holders, { hid = #holders + 1, key = keyOf(d), name = d.Name, entry = type(e) == "number" and { Id = e } or e, frame = { frame:GetComponents() }, min = { mn.X, mn.Y, mn.Z }, max = { mx.X, mx.Y, mx.Z } })
 			end
 		end
 	end
 	-- parts (the reel renderer's format)
 	local parts, lights = {}, {}
+	local oids, nOid = {}, 0
+	local function oidOf(inst)
+		local top = nil
+		local a = inst.Parent
+		while a and a ~= root do
+			if a:IsA("Model") then top = a end
+			a = a.Parent
+		end
+		if not top then return nil end
+		-- (wrappers aren't stable table keys in the harness: tag the model itself)
+		local id = top:GetAttribute("AuditOid")
+		if not id then
+			nOid += 1
+			id = nOid
+			top:SetAttribute("AuditOid", id)
+		end
+		return id
+	end
+	local function hidOf(inst)
+		local a = inst.Parent
+		while a and a ~= root do
+			local h = a:GetAttribute("HolderId")
+			if h then return h end
+			a = a.Parent
+		end
+		return nil
+	end
+	local qparts = {}
 	for _, d in root:GetDescendants() do
-		if d:IsA("BasePart") and d.Transparency < 0.98 then
+		if d:IsA("BasePart") and d.Transparency >= 0.98 and d.CanQuery then
+			table.insert(qparts, { n = d.Name, s = { d.Size.X, d.Size.Y, d.Size.Z }, c = { d.CFrame:GetComponents() }, hid = hidOf(d) })
+		end
+	end
+	local function inGui(inst)
+		local a = inst.Parent
+		while a and a ~= root do
+			if a:IsA("SurfaceGui") or a:IsA("ViewportFrame") or a:IsA("ScreenGui") or a:IsA("BillboardGui") then
+				return true
+			end
+			a = a.Parent
+		end
+		return false
+	end
+	for _, d in root:GetDescendants() do
+		if d:IsA("BasePart") and d.Transparency < 0.98 and not inGui(d) then
 			local shape = "Block"
 			if d.ClassName == "WedgePart" then shape = "Wedge" elseif d.ClassName == "Part" then shape = d.Shape.Name end
 			local mesh = d:FindFirstChildOfClass("SpecialMesh")
@@ -78,7 +122,29 @@ local ok, err = pcall(function()
 				col = { math.floor(d.Color.R * 255), math.floor(d.Color.G * 255), math.floor(d.Color.B * 255) },
 				mat = d.Material.Name, tr = d.Transparency,
 				art = d:GetAttribute("ArtDecal"), -- (a painting or poster: the decal World/Props puts on its front)
+				af = d:GetAttribute("ArtFace"), -- (the face it's on, if not Front)
 				m = mesh and { t = mesh.MeshType.Name, s = { mesh.Scale.X, mesh.Scale.Y, mesh.Scale.Z }, o = { mesh.Offset.X, mesh.Offset.Y, mesh.Offset.Z } } or nil,
+				oid = oidOf(d),
+				q = d.CanQuery or nil,
+				tx = (function()
+					local list = nil
+					for _, t in d:GetChildren() do
+						if t:IsA("Texture") then
+							list = list or {}
+							table.insert(list, { id = t.Texture, f = t.Face.Name, u = t.StudsPerTileU, v = t.StudsPerTileV, col = { t.Color3.R, t.Color3.G, t.Color3.B }, tr = t.Transparency })
+						end
+					end
+					return list
+				end)(),
+				hid = hidOf(d),
+				path = (function()
+					local names, a = {}, d.Parent
+					while a and a ~= root do
+						table.insert(names, 1, a.Name)
+						a = a.Parent
+					end
+					return table.concat(names, "/")
+				end)(),
 				ph = (function()
 					local a = d.Parent
 					while a and a ~= root do
@@ -95,7 +161,22 @@ local ok, err = pcall(function()
 			table.insert(lights, { p = { p.X, p.Y, p.Z }, col = { d.Color.R, d.Color.G, d.Color.B }, r = d.Range, b = d.Brightness })
 		end
 	end
-	fs.writeFile(out, serde.encode("json", { parts = parts, lights = lights, holders = holders }))
+	-- every model's pivot (Kit/Dress models: the front is local -Z), for tools/house_audit.py
+	local objs = {}
+	for _, d in root:GetDescendants() do
+		if d:IsA("Model") then
+			local okP, piv = pcall(function() return d.WorldPivot end)
+			if okP and piv then
+				local names, a = {}, d
+				while a and a ~= root do
+					table.insert(names, 1, a.Name)
+					a = a.Parent
+				end
+				table.insert(objs, { path = table.concat(names, "/"), c = { piv:GetComponents() }, key = keyOf(d), oid = d:GetAttribute("AuditOid") })
+			end
+		end
+	end
+	fs.writeFile(out, serde.encode("json", { parts = parts, lights = lights, holders = holders, objs = objs, qparts = qparts }))
 	print("stage:", #parts, "parts,", #holders, "placeholders ->", out)
 	for _, h in holders do print("  ", h.key, h.entry.Id, ("%.1f x %.1f x %.1f"):format(h.max[1] - h.min[1], h.max[2] - h.min[2], h.max[3] - h.min[3])) end
 end)
