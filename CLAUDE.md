@@ -756,6 +756,16 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   lights stutter out; him crouched low at the far end, head cocked; he scuttles at you and after you down the hall; down in the
   master bedroom's corner, the door creaks open (him low in the doorway), he crawls in; turn: his mask right beside you → RUN out
   of the door; glitch "he crawls now". Caption: `he crawls now game in comments`.
+  **Part 7** (`reel69`, `peak_horror_game_friends_v2_part7.mp4`, 6 Nov): the first reel of the v145 house (walnut panels, burgundy
+  damask, chandeliers; stage `$S/map145/stage_reel.json`, film2 now draws the wallpaper and the paintings): the lit front hall, along the
+  family photos to Grandma's gouged portrait, the lights stutter out, him crouched on the top step, he comes down the stairs head first,
+  after you down the hall; down by the foyer bench he crawls into the moonlight at the stair foot, looks round, goes off into the living
+  room; look up: he's bent over you → RUN; glitch "he came down the stairs". (Bent over, his Duck leans him ~3 studs forward: keep him ~6
+  studs from a crouched camera or his head ends up behind it.) Caption: `he came down the stairs game in comments`.
+  **Part 8** (`reel70`, `peak_horror_game_friends_v2_part8.mp4`, 6 Nov): Dad's office (navy damask, walnut): from the lit hall the office
+  door creaks open on the dark room and his desk lamp, his mask rises behind the desk, he comes over it, after you into the hall; in the
+  coat closet watching through the crack (the north leaf open 0.5: film2 rig, positive opens it outward), he comes into the hall, his mask
+  at the crack, he backs off... the door torn open on 22.15 s → RUN; glitch "he was in dad's office". Caption: `he was in dad's office game in comments`.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
