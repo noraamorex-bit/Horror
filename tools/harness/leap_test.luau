@@ -217,6 +217,8 @@ local ok3, err3 = pcall(function()
 	S.NextSurprise = 0
 	S.NextPursue = 0
 	S.NextSense = math.huge
+	-- (v149: the first loud run comes 6 s in, so the He Knows cutscene played earlier in this test: its hold is over here)
+	S.HoldUntil = 0
 	tick(0.3)
 	print("brain with a surprise due:", S.State)
 	assert(S.State == "Stalk" or S.State == "Closet", "the surprise, not the pursuit: " .. tostring(S.State))
