@@ -37,12 +37,13 @@ local ok, err = pcall(function()
 	ctx.CreaturePose = H.load("RS/Shared/CreaturePose")
 	ctx.ActPose = H.load("RS/Shared/ActPose")
 	local sent = {}
+	local sentArgs = {}
 	ctx.Remotes = setmetatable({}, { __index = function(t, k)
-		local r = { OnClientEvent = H.signal(), FireServer = function(_, ...) table.insert(sent, k) end }
+		local r = { OnClientEvent = H.signal(), FireServer = function(_, ...) table.insert(sent, k); table.insert(sentArgs, { k, ... }) end }
 		rawset(t, k, r)
 		return r
 	end })
-	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Foley", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Actions", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Foley", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Troll", "Starter", "Gear", "NightVision", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Actions", "Intro", "Vote", "Friends", "Settings", "Admin", "TVVoice", "Voices", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 	local mods = {}
 	for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 	for _, n in ORDER do if mods[n].init then mods[n].init(ctx) end end
@@ -719,6 +720,36 @@ local ok, err = pcall(function()
 			assert(string.find(all, want, 1, true), "the SHOP tab lists " .. want)
 		end
 		print("admin shop tab ok")
+		-- (v149) the TROLL tab: pick a player, then what happens to them; it asks the server
+		local other = H.wrap(roblox.Instance.new("Player"))
+		rawset(other, "UserId", 777)
+		rawset(other, "DisplayName", "Pal")
+		S.Players.GetPlayers = function() return { player, other } end
+		local trollTab = nil
+		for _, d in panel:GetDescendants() do
+			if d:IsA("TextButton") and d.Text == "TROLL" then trollTab = d end
+		end
+		assert(trollTab, "a TROLL tab")
+		click(trollTab)
+		local byText = {}
+		for _, d in panel:GetDescendants() do
+			if d:IsA("TextButton") then byText[d.Text] = d end
+		end
+		for _, want in { "Pal", "😱 Jumpscare", "🌀 Fling", "🧊 Freeze (4 s)", "🗿 Giant (15 s)", "😈 Sic him on them", "💡 Flicker their lights", "🧲 Bring to me" } do
+			assert(byText[want], "the TROLL tab has " .. want)
+		end
+		click(byText["😱 Jumpscare"])
+		local last = sentArgs[#sentArgs]
+		assert(last[1] == "Admin" and last[2] == "troll" and last[3] == "scare|777", "jumpscare Pal: " .. tostring(last[2]) .. " " .. tostring(last[3]))
+		click(byText["🌀 Fling"])
+		last = sentArgs[#sentArgs]
+		assert(last[3] == "fling|777", "fling Pal")
+		S.Players.GetPlayers = function() return { player } end
+		-- and on the one trolled: each one plays without an error
+		for kind in ctx.Troll._kinds do
+			ctx.Remotes.Troll.OnClientEvent:Fire(kind, "Pal")
+		end
+		print("admin troll tab ok")
 	end
 	-- a prompt appears
 	local part = H.Instance.new("Part")

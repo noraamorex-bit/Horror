@@ -2926,7 +2926,9 @@ Intruder._chaseSpeed = chaseSpeed -- (tests)
 local SENSE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true }
 -- (v135, the owner's screenshot: him standing at the top of the stairs, "he isn't chasing") the quiet runs also
 -- break off a walk to check a hiding spot nobody's in
-local PURSUE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true, CheckSpot = true }
+-- (v149, the owner: "make the monster always chasing you") and an ambush (him standing by a spot he searched, waiting) no longer
+-- holds him: someone's free, he goes after them
+local PURSUE_FREE = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true, CheckSpot = true, Ambush = true }
 
 -- who his runs go for (sense and pursuit): not anyone spared or just freed (LeftAlone); on Normal, anyone
 -- not caught yet before anyone on their last life (LastLifeLast); then whoever he went for longest ago,

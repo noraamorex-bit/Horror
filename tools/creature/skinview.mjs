@@ -33,7 +33,7 @@ const page = await browser.newPage({ viewport: { width: W * views.length, height
 page.on('console', msg => { if (msg.type() === 'error') console.log('PAGE', msg.text()); });
 await page.setContent(`<html><body style="margin:0;background:#000"><canvas id="c" width="${W * views.length}" height="${H}"></canvas></body></html>`);
 await page.addScriptTag({ path: path.join(here, '../assets/node_modules/three/build/three.min.js') });
-await page.evaluate(async ([mesh, poses, tex, views, W, H]) => {
+await page.evaluate(async ([mesh, poses, tex, views, W, H, tint]) => {
   const T = THREE;
   const r = new T.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true, preserveDrawingBuffer: true });
   r.setSize(W * views.length, H, false); r.outputColorSpace = T.SRGBColorSpace; r.setScissorTest(true);
@@ -57,7 +57,8 @@ await page.evaluate(async ([mesh, poses, tex, views, W, H]) => {
   g.setAttribute('skinIndex', new T.Uint16BufferAttribute(mesh.skin.skinIndex, 4));
   g.setAttribute('skinWeight', new T.Float32BufferAttribute(mesh.skin.skinWeight, 4));
   g.setIndex(mesh.idx);
-  const mat = new T.MeshStandardMaterial({ map: cmap, normalMap: nmap, roughnessMap: rmap, roughness: 1, metalness: 0 });
+  // (TINT=r,g,b 0..255: the SurfaceAppearance's Color tint multiplied over the colour map, as Roblox does)
+  const mat = new T.MeshStandardMaterial({ map: cmap, normalMap: nmap, roughnessMap: rmap, roughness: 1, metalness: 0, color: tint ? new T.Color(tint[0] / 255, tint[1] / 255, tint[2] / 255) : 0xffffff });
   const cf = (a) => new T.Matrix4().set(a[3], a[4], a[5], a[0], a[6], a[7], a[8], a[1], a[9], a[10], a[11], a[2], 0, 0, 0, 1);
   // bones from the instances (their rest CFrames, hierarchy), in the mesh file's bone order
   const inst = {}; for (const b of poses.bones) inst[b.name] = b;
@@ -94,7 +95,7 @@ await page.evaluate(async ([mesh, poses, tex, views, W, H]) => {
     return r.domElement.toDataURL('image/png');
   };
 }, [{ pos: Array.from(m.pos), nrm: Array.from(m.nrm), uv: Array.from(m.uv), idx: Array.from(m.idx), skin: { bones: m.skin.bones, skinIndex: Array.from(m.skin.skinIndex), skinWeight: Array.from(m.skin.skinWeight) } },
-    poses, { color: img(COLOR), normal: img(NORMAL), rough: img(ROUGH) }, views, W, H]);
+    poses, { color: img(COLOR), normal: img(NORMAL), rough: img(ROUGH) }, views, W, H, process.env.TINT ? process.env.TINT.split(',').map(Number) : null]);
 for (let f = 0; f < poses.frames.length; f++) {
   const url = await page.evaluate((f) => window.renderFrame(f), f);
   fs.writeFileSync(path.join(outDir, String(f).padStart(4, '0') + '.png'), Buffer.from(url.split(',')[1], 'base64'));

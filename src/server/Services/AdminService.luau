@@ -44,7 +44,7 @@ end
 -- what a pass holder can't use (the owner's "coins part and some other unfair stuff")
 local OWNER_ONLY = { coins = true, candy = true, pass = true, give = true, becomehim = true, rocketcredit = true, revivecredit = true }
 -- what changes the night for everyone in it
-local NIGHT_WIDE = { start = true, act = true, nextact = true, restartact = true, restart = true, event = true, ending = true, help = true, finale = true, police = true, ai = true, cut = true }
+local NIGHT_WIDE = { troll = true, start = true, act = true, nextact = true, restartact = true, restart = true, event = true, ending = true, help = true, finale = true, police = true, ai = true, cut = true }
 
 function Admin.hasPass(player: Player): boolean
 	return player:GetAttribute("Pass_AdminPanel") == true
@@ -402,6 +402,219 @@ COMMANDS.revivecredit = function(player)
 		return "A saved revive: offered the next time you die."
 	end
 	return "Couldn't (stats not loaded?)."
+end
+
+-- trolls (v149, the owner: "Make admin panel have 'troll' abilities") ---------------------------
+-- arg = "<kind>|<userId or all>". The client ones play on the target's own screen (client Troll),
+-- the rest move him, the lights or the player. A pass holder can't troll the owner, and (like
+-- anything that changes the night) only with friends in the server; the night then pays nothing.
+local TROLL_CLIENT = { scare = true, fling = true, launch = true, spin = true, freeze = true, trip = true, blind = true, whisper = true, steps = true, shake = true }
+local TROLL_NIGHT = { sic = true, behind = true, show = true, flicker = true }
+local TROLL_SCALE = { tiny = 0.45, giant = 2.2 }
+local TROLL_GAP = 1.5 -- (one troll per target per 1.5 s: no spamming a screen to death)
+local trollAt: { [Player]: number } = {}
+local trollScale: { [Player]: {} } = {}
+Players.PlayerRemoving:Connect(function(p)
+	trollAt[p] = nil
+	trollScale[p] = nil
+end)
+
+-- tiny / giant for a while, back at once if they hide, get caught or the night ends
+local function trollSize(t: Player, factor: number, seconds: number): boolean
+	local char = t.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local okSit, sitting = pcall(function()
+		return (hum :: Humanoid).Sit
+	end)
+	if not char or not hum or not root or t:GetAttribute("Hiding") or t:GetAttribute("Captured") or (okSit and sitting) then
+		return false
+	end
+	local okScale, scale = pcall(function()
+		return char:GetScale()
+	end)
+	local base = tonumber(char:GetAttribute("TrollBase")) or (okScale and scale) or 1
+	char:SetAttribute("TrollBase", base)
+	local function setScale(s: number)
+		local cur = char:GetScale()
+		if math.abs(cur - s) < 0.01 then
+			return
+		end
+		-- (scaling is about the root: lift first when growing, or the feet go through the floor)
+		if s > cur then
+			local rootToFeet = root.Size.Y / 2 + hum.HipHeight
+			char:PivotTo(char:GetPivot() + Vector3.new(0, rootToFeet * (s / cur - 1) + 0.05, 0))
+		end
+		char:ScaleTo(s)
+	end
+	pcall(setScale, base * factor)
+	local token = {}
+	trollScale[t] = token
+	local conns: { RBXScriptConnection } = {}
+	local function back()
+		for _, c in conns do
+			c:Disconnect()
+		end
+		if trollScale[t] ~= token then
+			return
+		end
+		trollScale[t] = nil
+		-- (a new body after a respawn is its own size already)
+		if t.Character == char then
+			pcall(setScale, base)
+			char:SetAttribute("TrollBase", nil)
+		end
+	end
+	for _, a in { "Hiding", "Captured", "Dead" } do
+		table.insert(conns, t:GetAttributeChangedSignal(a):Connect(back))
+	end
+	table.insert(conns, workspace:GetAttributeChangedSignal("EndingActive"):Connect(back))
+	task.delay(seconds, back)
+	return true
+end
+
+local function trollOne(player: Player, kind: string, t: Player): (boolean, string?)
+	if t == player and kind ~= "tiny" and kind ~= "giant" then
+		return false, "not yourself"
+	end
+	if not t.Parent or not t.Character then
+		return false, "not here"
+	end
+	if not Admin.isAdmin(player) and Admin.isAdmin(t) then
+		return false, "the owner can't be trolled"
+	end
+	if inNight() and not t:GetAttribute("InGame") then
+		return false, "not in the night"
+	end
+	if t:GetAttribute("Dead") then
+		return false, "dead"
+	end
+	-- (someone playing him: their body is parked out of the way)
+	if t:GetAttribute("Monster") and kind ~= "scare" and kind ~= "blind" and kind ~= "whisper" and kind ~= "shake" then
+		return false, "they're him tonight"
+	end
+	if os.clock() - (trollAt[t] or -1e9) < TROLL_GAP then
+		return false, "too soon"
+	end
+	local root = ctx.Util.getRoot(t)
+	if TROLL_CLIENT[kind] then
+		-- (the body's own moves can't touch a tied-up or hidden player: the server holds them there)
+		if (kind == "fling" or kind == "launch" or kind == "spin" or kind == "trip" or kind == "freeze") and (t:GetAttribute("Captured") or t:GetAttribute("Hiding")) then
+			return false, "hidden or tied up"
+		end
+		if kind == "freeze" then
+			-- (held by the server, like hiding: a body anchored on its own screen could stay stuck)
+			local char = t.Character
+			if root and char then
+				root.AssemblyLinearVelocity = Vector3.zero
+				root.Anchored = true
+				task.delay(4, function()
+					if root.Parent and t.Character == char and not t:GetAttribute("Hiding") and not t:GetAttribute("Captured") then
+						root.Anchored = false
+					end
+				end)
+			end
+		end
+		ctx.Remotes.Troll:FireClient(t, kind, player.DisplayName)
+	elseif TROLL_SCALE[kind] then
+		if not trollSize(t, TROLL_SCALE[kind], 15) then
+			return false, "hidden, tied up or sitting"
+		end
+	elseif kind == "bring" or kind == "goto" then
+		local mover, to = t, player
+		if kind == "goto" then
+			mover, to = player, t
+		end
+		local toRoot = ctx.Util.getRoot(to)
+		if not toRoot or mover:GetAttribute("Captured") or mover:GetAttribute("Hiding") or to:GetAttribute("Hiding") then
+			return false, "hidden or tied up"
+		end
+		ctx.Util.unseat(mover)
+		local at = toRoot.CFrame * CFrame.new(0, 0, kind == "bring" and -4 or 4)
+		if ctx.PlayerState then
+			ctx.PlayerState.placeStanding(mover, CFrame.lookAt(at.Position + Vector3.new(0, 0.5, 0), toRoot.Position * Vector3.new(1, 0, 1) + Vector3.new(0, at.Position.Y + 0.5, 0)))
+		else
+			mover.Character:PivotTo(at + Vector3.new(0, 0.5, 0))
+		end
+	elseif TROLL_NIGHT[kind] then
+		if not inNight() or not ctx.Intruder then
+			return false, "only in a night"
+		end
+		if kind == "sic" then
+			if t:GetAttribute("Captured") then
+				return false, "tied up"
+			end
+			ctx.Intruder.adminHunt(t)
+		elseif kind == "behind" then
+			if t:GetAttribute("Captured") or t:GetAttribute("Hiding") then
+				return false, "hidden or tied up"
+			end
+			if not ctx.Intruder.adminBring(t) then
+				return false, "he can't get there"
+			end
+		elseif kind == "show" then
+			if not (ctx.Director and ctx.Director.adminApparition and ctx.Director.adminApparition(t)) then
+				return false, "no room he fits in"
+			end
+		elseif kind == "flicker" then
+			local room = root and ctx.Rooms.find(root.Position)
+			if not room or not ctx.Power or not ctx.Power.flickerRoom then
+				return false, "not in a room"
+			end
+			local steps = {}
+			for i = 1, 9 do
+				table.insert(steps, { i % 2 == 0, 0.06 + math.random() * 0.22 })
+			end
+			table.insert(steps, { false, 1.4 })
+			task.spawn(ctx.Power.flickerRoom, room.Name, steps)
+			ctx.Remotes.Troll:FireClient(t, "creak", player.DisplayName)
+		end
+	else
+		return false, "unknown troll"
+	end
+	trollAt[t] = os.clock()
+	if ctx.Journey and ctx.Journey.event then
+		ctx.Journey.event(t, "Trolled", kind)
+	end
+	return true
+end
+
+COMMANDS.troll = function(player, arg)
+	local kind, who = string.match(arg or "", "^(%a+)|(%w+)$")
+	if not kind then
+		return "Pick a player."
+	end
+	local targets = {}
+	if who == "all" then
+		for _, p in Players:GetPlayers() do
+			if p ~= player then
+				table.insert(targets, p)
+			end
+		end
+	else
+		for _, p in Players:GetPlayers() do
+			if tostring(p.UserId) == who then
+				table.insert(targets, p)
+			end
+		end
+	end
+	if #targets == 0 then
+		return who == "all" and "Nobody else here." or "They left."
+	end
+	local done, why = 0, nil
+	for _, t in targets do
+		local ok, reason = trollOne(player, kind, t)
+		if ok then
+			done += 1
+		else
+			why = why or reason
+		end
+	end
+	if done == 0 then
+		return "Couldn't: " .. tostring(why or "?") .. "."
+	end
+	local name = #targets == 1 and targets[1].DisplayName or (done .. " players")
+	return "😈 " .. kind .. " → " .. name
 end
 
 COMMANDS.events = function()

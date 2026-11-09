@@ -208,6 +208,8 @@ if (skinData) {
     const mat = new T.MeshStandardMaterial({ map: cmap, normalMap: nmap, roughnessMap: rmap, roughness: 1, metalness: 0 });
     // (v114: the body without its colour map, tools/creature/plain_skin.luau: the part's colour + the normal map)
     if (sd.info.color) { mat.map = null; mat.roughnessMap = null; mat.roughness = 0.62; mat.color = new T.Color(`rgb(${sd.info.color[0]},${sd.info.color[1]},${sd.info.color[2]})`); }
+    // (v149: his textured body: the SurfaceAppearance's Color tint over the colour map, as the game sets it)
+    else if (sd.info.tint) mat.color = new T.Color(sd.info.tint[0] / 255, sd.info.tint[1] / 255, sd.info.tint[2] / 255);
     const cf = (a) => new T.Matrix4().set(a[3], a[4], a[5], a[0], a[6], a[7], a[8], a[1], a[9], a[10], a[11], a[2], 0, 0, 0, 1);
     const outer = new T.Group(); window.S.add(outer);
     const inner = new T.Group(); inner.position.set(0, sd.info.half, 0); outer.add(inner);

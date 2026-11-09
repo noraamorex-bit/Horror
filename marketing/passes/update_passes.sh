@@ -41,3 +41,5 @@ api 2006193593 -F "price=10"   # Pick your role (15; 0 of 20 offers bought)
 # free Jumpscare Everyone: PATCH .../developer-products/v2/universes/$U/developer-products/3721088307 -F "description=500 coins,
 # a rocket, a revive, a free Become Him night and a free Jumpscare Everyone. Once per player."
 api 2045276660 -F "price=25"
+# v149 (9 Nov): the panel got trolls
+api 2044988494 -F "description=Run the night and troll your friends: jumpscare them, fling, freeze, shrink them, set him on them. Skip acts, set off scares, god mode, teleport. Trolls only with friends in the server; no coins on nights you use it."

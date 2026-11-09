@@ -362,26 +362,32 @@ function SkinPose.sample(gait: string, phase: number, t: number, seed: number?, 
 	elseif gait == "Walk" or gait == "Search" then
 		local search = gait == "Search"
 		stance(P, 1)
-		local function leg(side: string, ph: number)
+		-- (v149, the owner: "animations... actually scary") a lurching, dragging walk: the left leg strides, the right
+		-- swings short and late with its toe scraping (a hitch in every step), the body dropping onto it; the long arms
+		-- hang and swing a beat behind like dead weight; one shoulder rides higher; the head stays cocked over
+		local function leg(side: string, ph: number, stride: number, drag: number)
 			local ss, cc = sin(ph), cos(ph)
-			local thigh = 0.45 * ss
-			local knee = -0.85 * max(0, cc) ^ 1.3 - 0.08
+			local thigh = stride * ss
+			local knee = -0.85 * (1 - drag * 0.6) * max(0, cc) ^ 1.3 - 0.08
 			set(P, side .. "Thigh", thigh)
 			set(P, side .. "Shin", knee)
-			set(P, side .. "Foot", -(thigh + knee) * 0.8 + 0.18 * max(0, -ss))
-			set(P, side .. "Toe", 0.25 * max(0, -ss))
+			set(P, side .. "Foot", -(thigh + knee) * 0.8 + 0.18 * max(0, -ss) + 0.35 * drag * max(0, cc))
+			set(P, side .. "Toe", 0.25 * max(0, -ss) + 0.3 * drag)
 		end
-		leg("L", phase)
-		leg("R", phase + PI)
-		-- the pelvis rolls and turns with each step, the shoulders against it; he sinks on each stride
-		set(P, "Hips", 0, 0.12 * s, 0.07 * c)
-		set(P, "Chest", 0, -0.14 * s, -0.04 * c)
-		P.Root[2] += -0.16 * abs(s)
-		P.Root[1] += 0.12 * c
-		set(P, "LArm", -0.22 * s)
-		set(P, "RArm", 0.22 * s)
-		set(P, "LFore", 0.1 * max(0, -s))
-		set(P, "RFore", 0.1 * max(0, s))
+		local hitch = phase + PI + 0.45 * sin(phase) -- (the right leg comes through late, then catches up)
+		leg("L", phase, 0.5, 0)
+		leg("R", hitch, 0.28, 1)
+		-- the pelvis rolls and turns with each step, the shoulders against it; he drops hard onto the short leg
+		set(P, "Hips", 0, 0.12 * s, 0.07 * c + 0.06)
+		set(P, "Chest", 0, -0.14 * s, -0.06 * c - 0.05)
+		P.Root[2] += -0.12 * abs(s) - 0.12 * max(0, -s)
+		P.Root[1] += 0.18 * c
+		set(P, "LClav", 0.1, 0, 0.08)
+		local swing = sin(phase - 0.7) -- (a beat behind the stride)
+		set(P, "LArm", -0.14 * swing, 0, 0.05 * abs(swing))
+		set(P, "RArm", 0.18 * swing, 0, -0.04 * abs(swing))
+		set(P, "LFore", 0.12 * max(0, -swing) + 0.06)
+		set(P, "RFore", 0.16 * max(0, swing) + 0.06)
 		if search then
 			-- the head sweeps the room, the body following; now and then a hand comes up, feeling ahead
 			local scan = sin(t * 0.55 + sd) * 0.9 + 0.2 * drift(t, sd)
@@ -394,7 +400,9 @@ function SkinPose.sample(gait: string, phase: number, t: number, seed: number?, 
 			set(P, "LFore", -0.2 * reach)
 			P.CurlL = 0.55 - 0.45 * reach
 		else
-			set(P, "Head", 0.06 * c, 0.15 * drift(t, sd), 0.18 * drift(t * 0.6, sd + 5))
+			-- cocked well over to one side, bobbing with the lurch
+			set(P, "Head", 0.06 * c + 0.05 * max(0, -s), 0.15 * drift(t, sd), 0.34 + 0.12 * drift(t * 0.6, sd + 5))
+			set(P, "Neck2", 0, 0, 0.1)
 		end
 		life(P, t, sd, 0.8)
 	elseif gait == "Reach" then

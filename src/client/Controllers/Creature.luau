@@ -313,12 +313,16 @@ function Creature.focusFor(part: Instance?): (() -> CFrame)?
 end
 
 -- (v112) pose a copy of him (a figure only you see): true if it has the skinned body
-function Creature.poseCopy(copy: Instance, gait: string, t: number, seed: number): boolean
+function Creature.poseCopy(copy: Instance, gait: string, t: number, seed: number, opts: any?): boolean
 	local rig = skinOf(copy)
 	if not rig then
 		return false
 	end
-	applySkin(rig, Skin.get(gait, 0, t, seed, { Scale = Skin.Scale }))
+	local o = { Scale = Skin.Scale }
+	for k, v in opts or {} do
+		o[k] = v
+	end
+	applySkin(rig, Skin.get(gait, 0, t, seed, o))
 	return true
 end
 

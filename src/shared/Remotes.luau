@@ -72,6 +72,7 @@ local NAMES = {
 	"Admin", -- (cmd, arg) owner test panel (AdminService checks the UserId)
 	"HeartbeatInput", -- (sessionId, beatIndex, hit) one beat of the heartbeat minigame
 	"AdminReply", -- (text) result of an admin command
+	"Troll", -- (kind, fromName) v149: the admin panel trolled you (client Troll: fling, spin, freeze, blind, scare...)
 	"PuzzleInput", -- (puzzleId, action, payload) "Slip" | "Click" | "Submit" | "Cancel"
 	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily" | "Code" text
 	"PlayAgain", -- () from a result card: stay with this group for another night

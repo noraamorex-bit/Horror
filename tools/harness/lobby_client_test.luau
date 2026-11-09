@@ -39,7 +39,7 @@ local ok, err = pcall(function()
 		return r
 	end })
 	-- (the client's lobby list, init.client.luau; the owner's panel too)
-	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub", "Admin" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "Troll", "LobbyHub", "Admin" }
 	player:SetAttribute("IsAdmin", true)
 	player:SetAttribute("Coins", 1234)
 	player:SetAttribute("Candy", 7)
@@ -64,11 +64,17 @@ local ok, err = pcall(function()
 	ctx.Remotes.Queue.OnClientEvent:Fire({ Size = 2, Count = 2, Status = "Starting", Countdown = 4 })
 	ctx.Remotes.Queue.OnClientEvent:Fire(nil)
 	print("remotes sent:", table.concat(sent, ","))
-	-- the owner's panel in the lobby: a COINS tab only, and its buttons ask the server
+	-- the owner's panel in the lobby: COINS (and v149 TROLL), and its buttons ask the server
 	local panel = H.unwrap(pg):FindFirstChild("AdminPanel", true)
 	assert(panel, "admin panel built in the lobby")
 	local pill = H.unwrap(pg):FindFirstChild("AdminPill", true)
 	assert(pill, "admin pill")
+	-- (v149) and TROLL for the owner: the ones without him
+	local tabs = {}
+	for _, d in panel:GetDescendants() do
+		if d:IsA("TextButton") and (d.Text == "COINS" or d.Text == "TROLL" or d.Text == "NIGHT" or d.Text == "SHOP") then tabs[d.Text] = true end
+	end
+	assert(tabs.COINS and tabs.TROLL and not tabs.NIGHT and not tabs.SHOP, "the lobby panel: COINS and TROLL")
 	-- (v140) Halloween ended on 2 Nov: its line under PLAY is gone
 	assert(not H.unwrap(pg):FindFirstChild("HalloweenLine", true), "no Halloween line")
 	local row = H.unwrap(pg):FindFirstChild("StarterRow", true)

@@ -159,8 +159,9 @@ Config.Intruder = {
 		RIGHT NOW: out in the open, he charges, re-aiming as they move (SenseHoming s); hiding, he runs
 		to their hiding spot and listens at it (the heartbeat). The one he's after is told.
 	]]
-	SenseFirst = 15,
-	SenseEvery = { 24, 34 },
+	-- (v149, the owner: "make the monster always chasing you": 15 / 24-34)
+	SenseFirst = 6,
+	SenseEvery = { 18, 26 },
 	SenseSpeed = 14,
 	SenseHoming = 10,
 	-- (v148) seen by the one he's about to run at: he stops dead and stares at them this long first (10-70 studs)
@@ -169,7 +170,7 @@ Config.Intruder = {
 	-- nothing else to do he's running after one of you again within PursueGap s, keeping on the same one for
 	-- up to PursueFor s (re-aiming as they move), then the one he went for longest ago. Hiding: he runs to
 	-- the spot and listens. (Not while he's carrying someone off, stunned, or listening at a door.)
-	PursueGap = 1.2, -- (v135, the owner: "I want him to constantly chase": 2.5)
+	PursueGap = 0.4, -- (v149, "make the monster always chasing you": 1.2; v135: 2.5)
 	-- (v136, a player's downvote: "how is it scary but fair when the ghost can literally find you when you're standing
 	-- completely still") someone who has kept still StillAfter s (and has no flashlight on) isn't run at exactly: his runs
 	-- go to a guess StillMiss studs off and don't re-aim at them while they keep still; moving again gives them away
@@ -177,11 +178,11 @@ Config.Intruder = {
 	StillMiss = 11,
 	-- standing still in the dark, he has to be nearer to make you out (crouched and still is better still)
 	StillSightMultiplier = 0.75,
-	PursueFor = 18,
+	PursueFor = 40, -- (v149: 18: he stays on one of you)
 	-- (v128) those quiet runs go at PursueSpeed, under the loud SenseSpeed: still faster than your walk, so
 	-- walking away doesn't lose him, but a sprint does (v126-127 logs: first-nighters' captures doubled and
 	-- groups of two lost one in three to a second capture)
-	PursueSpeed = 11.5,
+	PursueSpeed = 12.5, -- (v149: 11.5 barely outpaced a walk; still well under your sprint 17)
 	-- (v128) just freed: after FreedGrace, neither run picks you for this much longer, and while anyone else
 	-- hasn't been caught yet they come first (v126-127: half the deaths came within 60 s of getting free)
 	FreedLeaveAlone = 45,
@@ -280,13 +281,13 @@ Config.Difficulty = {
 			InspectNearChance = 0.55,
 			HideStale = 22,
 			HideStaleAgain = 12,
-			SenseFirst = 10,
-			SenseEvery = { 16, 24 },
+			SenseFirst = 5,
+			SenseEvery = { 13, 19 },
 			SenseSpeed = 15,
 			GlareFor = 1.0,
-			PursueGap = 0.8, -- (v135: 1.5)
+			PursueGap = 0.3, -- (v135: 1.5; v148: 0.8)
 			StillMiss = 8,
-			PursueSpeed = 13,
+			PursueSpeed = 13.5,
 			FreedLeaveAlone = 15,
 			LastLifeLast = false,
 		},
@@ -323,13 +324,13 @@ Config.Difficulty = {
 			GrabRange = 5.2,
 			HideStale = 18,
 			HideStaleAgain = 10,
-			SenseFirst = 8,
-			SenseEvery = { 11, 17 },
+			SenseFirst = 4,
+			SenseEvery = { 9, 14 },
 			SenseSpeed = 16,
 			GlareFor = 0.8,
-			PursueGap = 0.6, -- (v135: 1)
+			PursueGap = 0.25, -- (v135: 1; v148: 0.6)
 			StillMiss = 6,
-			PursueSpeed = 14.5,
+			PursueSpeed = 15,
 			FreedLeaveAlone = 0,
 		},
 	},
@@ -502,7 +503,7 @@ Config.Shop = {
 		-- pass is a taser, and VIP bundles the perks)
 		-- v106 (21 Oct, the owner): the admin panel, most of what the owner's has (not coins, passes,
 		-- paid items or revives); a night it's used on pays no coins and counts for no board
-		{ Key = "AdminPanel", Id = 2044988494, Price = 249, Name = "Admin panel", Desc = "Run the night: skip acts, set off scares, boss him around, god mode, teleport, pick the ending. (No coins on nights you use it.)" },
+		{ Key = "AdminPanel", Id = 2044988494, Price = 249, Name = "Admin panel", Desc = "Troll friends: jumpscare, fling, freeze, set him on them. Run the night: skip acts, god mode. (No coins on nights you use it.)" },
 		-- (v108, 21 Oct: about 8 of 2,714 players own a pass. More things worth wanting at a price a small
 		-- balance covers: the cheap ones down to 15-19, the taser 39, the rocket 79; three new ones)
 		{ Key = "NightVision", Id = 2045276660, Price = 25, Name = "Night Vision", Desc = "Night vision goggles every night: see in the dark for 60 seconds. Spot him before he spots you." },

@@ -168,6 +168,37 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### His own face, always after you, trolls (v149)
+The owner: "Work properly on the monster model it is too plain the face looks dumb. Make it proper and actually scary and
+texture and animations and make the monster always chasing you. Make admin panel have 'troll' abilities".
+- **No mask** (`Rig.Masked` false; `Rig.maskLayout`, `Rig.MaskOffset` and `Intruder/Face` stay for when it's wanted again): the
+  sculpted body's own face, the long skull and the open features of the Creator Store sculpt (17737124382), now **textured**:
+  its colour map back on the SurfaceAppearance (v114 took it off for being "too much"), multiplied by a dark tint
+  (`Rig.SkinTint` 135,126,128: grey-pink, wet, not the bloody v112 red), its normal and roughness maps, no metalness map (it
+  read as plastic): `assets/Creature.rbxm` is made by `tools/creature/make_asset.luau` then `tex_skin.luau`.
+- **Eyeshine**: two Bones on the head bone (`EyeShineL` / `EyeShineR` at `Rig.EyeAt`, mirrored) carry a tiny round
+  BillboardGui each (`Rig.EyeSize` 0.075, unlit, cold white, hidden behind walls): two pinpricks that catch your light and
+  follow his head wherever it turns. The face and chest lights stay.
+- **The walk** (SkinPose Walk): a limp: one leg takes a long stride, the other drags short behind it with the toes trailing,
+  the step hitching, the body dropping onto the short side; one arm swinging late, the other hanging; the head rolled over
+  and drifting. The run (v143's scuttle) and the rest stay.
+- **The jumpscare** (client `Prank`) poses a copy of his body in a ViewportFrame (the `Stare` pose screaming open) instead of
+  the mask; `Creature.poseCopy` takes extra pose options. film2 draws a tinted colour map (`skin.tint`) for reels.
+- **Always after you** (the hunt only; acts I-II stay quiet, v144): `PursueGap` 1.2 -> 0.4 (Hard 0.3, NIGHTMARE 0.25),
+  `PursueFor` 18 -> 40 (he stays on one of you), `PursueSpeed` 11.5 -> 12.5 (13.5, 15: still under your sprint 17),
+  `SenseFirst` 15 -> 6 and `SenseEvery` 24-34 -> 18-26 (Hard 13-19, NIGHTMARE 9-14), and his pursuit can start from any free
+  state (`PURSUE_FREE` adds Ambush). Stillness still works (v136).
+- **Trolls** (the admin panel's TROLL tab; `AdminService` COMMANDS.troll -> `Remotes.Troll` -> client `Troll`): pick a player
+  (or everyone), then: on their screen a jumpscare (Prank's), 4 s of black with a heartbeat and a whisper, his breath and
+  "I can see you." at their ear, his footsteps coming up behind them, a shake; their body flung, launched, spun, tripped,
+  frozen 4 s (held by the server, an icy screen), tiny or giant for 15 s (`Model:ScaleTo`, back at once if they hide, are
+  caught or the night ends), brought to you or you to them; in a night, him set on them (`Intruder.adminHunt`), him right
+  behind them (`adminBring`), the room scare where they stand (`Director.adminApparition`), their room's lights stuttering
+  out (`Power.flickerRoom`). The victim always sees "😈 trolled by <name>" (never a bug). Not on someone hidden or tied up
+  (the server holds them), not on someone playing him; one per target per 1.5 s. The owner anywhere, the lobby included;
+  pass holders in a night only with friends (it's NIGHT_WIDE: the night pays nothing) and never on the owner. Logged
+  `Trolled` in the night log. admin_test, client_test and lobby_client_test check it.
+
 ### His face, the stare, less waiting (v148)
 The owner: "Analyze all the game statistics past few days and improve everything in the game. Make the monsters face better.
 Make the whole experience much scarier." Logs since place version 145 (9,761 lobby visits, 3,627 nights, ~6,900 players in a

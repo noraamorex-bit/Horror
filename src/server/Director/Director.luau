@@ -1720,6 +1720,22 @@ function Director.firstScare()
 	end
 end
 
+-- (v149, the admin panel's trolls) the room scare, now, for this player wherever they stand (a room he fits in)
+function Director.adminApparition(player: Player): boolean
+	local e = eventById("Apparition")
+	local root = ctx.Util.getRoot(player)
+	local room = root and ctx.Rooms.find(root.Position)
+	if not e or not room or state.Act == "Lobby" or player:GetAttribute("Hiding") or player:GetAttribute("Captured") then
+		return false
+	end
+	local spot = Director.apparitionSpot(player, room)
+	if not spot then
+		return false
+	end
+	fire(e, { Player = player, Room = room.Name, Spot = spot, Window = false })
+	return true
+end
+
 -- fire a scripted event now (Events.List id), even if its usual conditions aren't met
 function Director.adminEvent(id: string): boolean
 	local e = eventById(id)

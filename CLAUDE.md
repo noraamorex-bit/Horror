@@ -44,6 +44,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   server is a friend or has the pass; a night it's used on pays nothing and counts for nothing
   (`Admin.uncredited`: coins, quests, titles, badges, candy, nights, boards) and strangers can't
   match into it. Lobby: no panel for buyers.
+  **Trolls (v149**, the owner: "Make admin panel have 'troll' abilities"): a TROLL tab (pick a player or EVERYONE): jumpscare, blind,
+  whisper, footsteps behind them, shake, fling, launch, spin, freeze, trip, tiny / giant (15 s), bring to me / go to them, and in a night
+  sic him on them, him right behind them, the room scare, flicker their lights (server `AdminService` COMMANDS.troll, client `Troll`;
+  the victim sees "😈 trolled by <name>"). The owner anywhere (the lobby too, without the ones that need him); pass holders only in a
+  night with friends (it counts as NIGHT_WIDE: that night pays nothing) and never on the owner. One troll per target per 1.5 s.
 - **The owner is left off all leaderboards.**
 - **Revives are Robux only** (10 R$ product since 11 Oct; 25 R$ sold 0 of 35 deaths). No coin revive — it would kill Robux revive sales.
 - Git: develop on the designated branch, `git push -u origin <branch>`. **No PRs unless asked.** No model
@@ -155,7 +160,16 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **v133** (the owner: "he's still so dumb sometimes just walks past me. Make him constantly run after players"): sharper senses
   (SightDark 18 / Hard 21 / NM 24, was 13/15/14; PeripheralRange 10, was 7; HearWalk 15 / Hard 17), he chases anyone he sees within
   16 studs on his way to a hiding spot (was 9), and running to a spot shows as running (it showed as a walk).
-- **v148 face (the owner: "Make the monsters face better")**: his mask is a sculpted porcelain human face now (Creator Store mesh
+- **v149 look and chase (the owner: "Work properly on the monster model it is too plain the face looks dumb. Make it proper and actually
+  scary and texture and animations and make the monster always chasing you")**: **no mask any more** (`Rig.Masked` false): his own sculpted
+  face and body with the store asset's colour map back, darkened by a tint (`Rig.SkinTint` 135,126,128 on the SurfaceAppearance; no
+  metalness map: `tools/creature/tex_skin.luau` after make_asset), two pinprick eyeshine points riding the head bone (`Rig.EyeAt`, BillboardGuis
+  EyeShineL/R), a lurching limp for a walk (SkinPose Walk: one long stride, one dragged), the jumpscare (Prank) on his own face. Between
+  v112's "too much" (gore colours, the open maw) and v114-148's "too plain" (charcoal + a mask). The hunt: `PursueGap` 0.4 / Hard 0.3 /
+  NM 0.25, `PursueFor` 40, `PursueSpeed` 12.5 / 13.5 / 15 (still under your sprint 17), `SenseFirst` 6 / 5 / 4, `SenseEvery` 18-26 /
+  13-19 / 9-14. Acts I-II stay quiet (v144). Check deaths/player after this (v128's warning about Normal's runs). Look at him:
+  the scratchpad's `lookstudio/runv.sh <name> no <tint|none>`, `GAIT=Walk runstudio/rung.sh <name>`.
+- **v148 face (the owner: "Make the monsters face better"; not worn since v149, `Intruder/Face` kept)**: his mask is a sculpted porcelain human face now (Creator Store mesh
   6671078520 in `Intruder/Face`, generated feature layout: hollow flat-black mismatched eyes, streaks, a too-wide slit mouth with gappy
   teeth, cracks), not an egg of parts. Re-make the layout with `tools/creature/facegen.py` (after facemesh.mjs + facegrid.py), never
   by hand. **The stare (v148)**: before a loud run at someone who can see him he stops dead and stares (`GlareFor` 1.3 s), then charges.
@@ -246,7 +260,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **Rojo 7.5.1+**. Previews: `tools/creature/pose_dump.luau` + `skinview.mjs`; test `skin_test`.
   GDD "The creature, v112". Reels: film2 draws it from `tools/creature/skin_frames.luau` (reel 43 on).
 - **v114 (the owner: the v112 monster was "a bit too much. Make it simpler but not that simple"):** the
-  sculpted body and its animation stay, the gore goes: no colour map (`tools/creature/plain_skin.luau`:
+  sculpted body and its animation stay, the gore goes: no colour map (`tools/creature/plain_skin.luau`; v149 has it back, `tex_skin.luau`:
   charcoal `Rig.SkinColor` + the normal map's sculpted detail), and he wears the **porcelain mask and wet
   hair** again (`Rig.MaskParts` / `Rig.maskLayout`: the part-built Head and what's welded to it, 1.2x,
   moved onto the new face by `Rig.MaskOffset`; the client turns the Neck joint so they ride the head
@@ -870,6 +884,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **9 Nov (v149 = place version 149)**, published; the owner: "Work properly on the monster model it is too plain the face looks dumb.
+  Make it proper and actually scary and texture and animations and make the monster always chasing you. Make admin panel have 'troll'
+  abilities". Done: the unmasked textured creature with eyeshine and a limp, the relentless hunt, the trolls (see The intruder, Hard
+  rules; GDD "His own face, always after you, trolls (v149)"); the Admin panel pass's description on Roblox says it has trolls. Can't see
+  the real client: check on a phone that his skin reads dark and wet, not pale/shiny (the SurfaceAppearance tint), the two eye points
+  show and sit in his sockets as he moves, the jumpscare shows his face, and that each troll feels right (fling distance, giant indoors).
+  Next: `--since=149`: deaths/player and hunt quits (the faster pursuit), Trolled events, AdminPanel pass sales.
+
 - **9 Nov (v148 = place version 148, reels 72-73 = PEAK Parts 10-11)**, published; the owner: "Analyze all the game statistics past few
   days and improve everything in the game. Make the monsters face better. Make the whole experience much scarier. Make next 2 reels."
   Visits 42,017 (24.4K on 6 Nov), 14 playing, 748 favorites, votes 41 up / 75 down. Logs since 145 (9,761 lobby visits, 3,627 nights):
@@ -1488,7 +1510,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 148; the notes' "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 149; the notes' "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

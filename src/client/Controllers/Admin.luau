@@ -10,13 +10,17 @@
 		ME        invisible to him, all items, battery, nerve, free, revive, teleport to a room
 		SHOP      every pass on/off for you (this server, not saved), the paid gear (rocket, taser,
 		          spray, energy drinks, firecrackers), become him, saved rocket / revive
+		TROLL     (v149) pick a player or everyone: jumpscare, blind, whisper, footsteps, shake, fling,
+		          launch, spin, freeze, trip, tiny, giant, bring / go to, sic him on them, him behind
+		          them, the room scare, flicker their lights (the lobby: the ones without him)
 		EVENTS    fire any scripted event
 		ENDINGS   trigger any ending
 		COINS     give yourself coins (saved like any others); the only tab in the lobby
 	A line of live debug (act, his state, difficulty, police timer) sits under the pill.
 
 	The Admin panel pass (v106, Pass_AdminPanel): the same panel in a night, without SHOP, COINS
-	and the free revive (the server refuses those too); nothing in the lobby.
+	and the free revive (the server refuses those too); nothing in the lobby. Trolls only with
+	friends in the server, never on the owner.
 ]]
 
 local Players = game:GetService("Players")
@@ -111,6 +115,7 @@ local function setXray(on: boolean)
 end
 
 local RENDER = {}
+local show: (string) -> () -- (below: the TROLL tab redraws itself)
 RENDER.NIGHT = function()
 	section("START (from the waiting room)", 1)
 	local r1 = row(2)
@@ -250,6 +255,102 @@ RENDER.SHOP = function()
 	btn(r3, "Saved revive", function() send("revivecredit") end)
 	btn(r3, "Revive me now", function() send("me", "revive") end)
 end
+-- trolls (v149): pick a player (or everyone), then what happens to them
+local trollTarget: string? = nil -- a UserId as a string, or "all"
+local trollConns: { RBXScriptConnection } = {}
+RENDER.TROLL = function()
+	for _, c in trollConns do
+		c:Disconnect()
+	end
+	table.clear(trollConns)
+	local others = {}
+	for _, p in Players:GetPlayers() do
+		if p ~= player then
+			table.insert(others, p)
+		end
+	end
+	table.sort(others, function(a, b)
+		return a.DisplayName:lower() < b.DisplayName:lower()
+	end)
+	-- (the one picked left: nobody picked)
+	if trollTarget and trollTarget ~= "all" and not Players:GetPlayerByUserId(tonumber(trollTarget) or 0) then
+		trollTarget = nil
+	end
+	if #others == 1 and not trollTarget then
+		trollTarget = tostring(others[1].UserId)
+	end
+	section("WHO", 1)
+	local r1 = row(2)
+	local picks: { [string]: TextButton } = {}
+	local function mark()
+		for id, b in picks do
+			local on = id == trollTarget
+			b.BackgroundColor3 = on and Color3.fromRGB(255, 200, 120) or Color3.fromRGB(30, 30, 36)
+			b.TextColor3 = on and Color3.fromRGB(15, 15, 15) or ctx.UI.Color.Text
+		end
+	end
+	if #others == 0 then
+		section("Nobody else is here yet.", 3)
+	else
+		for _, p in others do
+			local id = tostring(p.UserId)
+			picks[id] = btn(r1, p.DisplayName, function()
+				trollTarget = id
+				mark()
+			end)
+		end
+		if #others > 1 then
+			picks.all = btn(r1, "👥 EVERYONE", function()
+				trollTarget = "all"
+				mark()
+			end, true)
+		end
+	end
+	mark()
+	local function troll(kind: string)
+		if not trollTarget then
+			status.Text = "Pick a player first."
+			return
+		end
+		send("troll", kind .. "|" .. trollTarget)
+	end
+	section("SCREEN", 4)
+	local r2 = row(5)
+	btn(r2, "😱 Jumpscare", function() troll("scare") end, true)
+	btn(r2, "🌑 Blind (4 s)", function() troll("blind") end)
+	btn(r2, "👂 Whisper in their ear", function() troll("whisper") end)
+	btn(r2, "👣 Footsteps behind them", function() troll("steps") end)
+	btn(r2, "📳 Shake", function() troll("shake") end)
+	section("BODY", 6)
+	local r3 = row(7)
+	btn(r3, "🌀 Fling", function() troll("fling") end)
+	btn(r3, "🚀 Launch", function() troll("launch") end)
+	btn(r3, "💫 Spin", function() troll("spin") end)
+	btn(r3, "🧊 Freeze (4 s)", function() troll("freeze") end)
+	btn(r3, "🍌 Trip", function() troll("trip") end)
+	btn(r3, "🐜 Tiny (15 s)", function() troll("tiny") end)
+	btn(r3, "🗿 Giant (15 s)", function() troll("giant") end)
+	btn(r3, "🧲 Bring to me", function() troll("bring") end)
+	btn(r3, "➡️ Go to them", function() troll("goto") end)
+	if ctx.Mode ~= "Lobby" then
+		section("HIM", 8)
+		local r4 = row(9)
+		btn(r4, "😈 Sic him on them", function() troll("sic") end, true)
+		btn(r4, "👤 Him right behind them", function() troll("behind") end, true)
+		btn(r4, "👁 Show him (room scare)", function() troll("show") end)
+		btn(r4, "💡 Flicker their lights", function() troll("flicker") end)
+	end
+	-- (players coming and going: the list follows)
+	local function again()
+		task.defer(function()
+			if panel.Visible and current == "TROLL" then
+				show("TROLL")
+			end
+		end)
+	end
+	table.insert(trollConns, Players.PlayerAdded:Connect(again))
+	table.insert(trollConns, Players.PlayerRemoving:Connect(again))
+end
 RENDER.ENDINGS = function()
 	local r = row(1)
 	for _, k in info.Endings do
@@ -257,7 +358,7 @@ RENDER.ENDINGS = function()
 	end
 end
 
-local function show(tab: string)
+function show(tab: string)
 	current = tab
 	for name, b in tabs do
 		b.BackgroundColor3 = name == tab and Color3.fromRGB(240, 236, 228) or Color3.fromRGB(30, 30, 36)
@@ -332,9 +433,9 @@ local function build()
 		current = "COINS"
 		debugLine.Visible = false
 	end
-	local names = lobby and { "COINS" } or (limited() and { "NIGHT", "HIM", "ME", "EVENTS", "ENDINGS" } or { "NIGHT", "HIM", "ME", "SHOP", "EVENTS", "ENDINGS", "COINS" })
+	local names = lobby and { "COINS", "TROLL" } or (limited() and { "NIGHT", "HIM", "TROLL", "ME", "EVENTS", "ENDINGS" } or { "NIGHT", "HIM", "TROLL", "ME", "SHOP", "EVENTS", "ENDINGS", "COINS" })
 	for i, name in names do
-		local b = UI.new("TextButton", { Size = UDim2.new(1 / #names, -6, 0, 32), Text = name, Font = UI.Font.Bold, TextSize = 12, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
+		local b = UI.new("TextButton", { Size = UDim2.new(1 / #names, -6, 0, 32), Text = name, Font = UI.Font.Bold, TextSize = #names > 7 and 11 or 12, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
 		UI.corner(b, 8)
 		b.Activated:Connect(function()
 			show(name)

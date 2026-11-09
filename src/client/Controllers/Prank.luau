@@ -107,6 +107,27 @@ end
 -- within reach of it), placed relative to the head
 local function maskCopy(): (Model?, CFrame?)
 	local him = ctx.Util.creature and ctx.Util.creature()
+	-- (v149: no mask any more: his own face, the skinned body copied in at rest with its eyes at the middle; the
+	-- scare poses it, the maw tearing open)
+	local body = him and not him:GetAttribute("Masked") and him:FindFirstChild("Body") :: MeshPart?
+	if body and body:IsA("MeshPart") then
+		local eyeL = body:FindFirstChild("EyeShineL", true) :: Bone?
+		local eyeR = body:FindFirstChild("EyeShineR", true) :: Bone?
+		local mid = (eyeL and eyeR) and body.CFrame:PointToObjectSpace((eyeL.WorldPosition + eyeR.WorldPosition) / 2) or Vector3.new(0, body.Size.Y * 0.4, -0.4)
+		local m = Instance.new("Model")
+		m:SetAttribute("Skinned", true)
+		local c = body:Clone()
+		for _, x in c:GetDescendants() do
+			if not (x:IsA("Bone") or x:IsA("SurfaceAppearance") or x:IsA("BillboardGui") or x:IsA("Frame") or x:IsA("UICorner")) then
+				x:Destroy()
+			end
+		end
+		c.Anchored = true
+		-- (the eyes a little above the middle of the picture, the maw below them)
+		c.CFrame = CFrame.new(-mid + Vector3.new(0, 0.35, 0))
+		c.Parent = m
+		return m, c.CFrame
+	end
 	local head = him and him:FindFirstChild("Head") :: BasePart?
 	if not head then
 		return nil, nil
@@ -132,7 +153,7 @@ local function maskCopy(): (Model?, CFrame?)
 end
 
 -- the scare itself
-function Prank.scare(from: string)
+function Prank.scare(from: string, text: string?)
 	if scaring then
 		return
 	end
@@ -189,6 +210,9 @@ function Prank.scare(from: string)
 		local jerk = CFrame.Angles((math.random() - 0.5) * j, (math.random() - 0.5) * j, (math.random() - 0.5) * 0.25 * math.min(k * 4, 1))
 		cam.CFrame = CFrame.lookAt(Vector3.new(0, -0.05, -d), Vector3.new(0, -0.05, 0)) * jerk
 		ctx.CreaturePose.setJaw(jaws, math.clamp(k / 0.25, 0, 1))
+		if mask and mask:FindFirstChild("Body") and ctx.Creature and ctx.Creature.poseCopy then
+			ctx.Creature.poseCopy(mask, "Stare", k, 4, { Scream = math.clamp(k / 0.22, 0, 1) })
+		end
 		red.BackgroundTransparency = 1 - 0.45 * math.max(0, 1 - math.abs(k - 0.3) / 0.25)
 	end)
 	task.wait(1.25)
@@ -196,7 +220,7 @@ function Prank.scare(from: string)
 	UI.tween(black, 0.35, { BackgroundTransparency = 1 })
 	UI.tween(vp, 0.25, { ImageTransparency = 1 })
 	red.BackgroundTransparency = 1
-	banner(gui, "😱 " .. from .. " jumpscared everyone!", 4)
+	banner(gui, text or ("😱 " .. from .. " jumpscared everyone!"), 4)
 	task.delay(5, function()
 		gui:Destroy()
 	end)
