@@ -32,7 +32,13 @@ local ok, err = pcall(function()
 			n = d.Name, sh = shape, s = { d.Size.X, d.Size.Y, d.Size.Z },
 			col = { math.floor(d.Color.R * 255), math.floor(d.Color.G * 255), math.floor(d.Color.B * 255) },
 			mat = d.Material.Name, tr = 0,
-			m = mesh and { t = mesh.MeshType.Name, s = { 1, 1, 1 }, o = { 0, 0, 0 } } or nil,
+			m = mesh and {
+				t = mesh.MeshType.Name,
+				-- (v148: a file mesh draws at its native size x Scale; the others fill the part)
+				s = mesh.MeshType.Name == "FileMesh" and { mesh.Scale.X, mesh.Scale.Y, mesh.Scale.Z } or { 1, 1, 1 },
+				o = mesh.MeshType.Name == "FileMesh" and { mesh.Offset.X, mesh.Offset.Y, mesh.Offset.Z } or { 0, 0, 0 },
+				id = mesh.MeshType.Name == "FileMesh" and string.match(mesh.MeshId, "%d+") or nil,
+			} or nil,
 		})
 		table.insert(rel, c12(head.CFrame:Inverse() * d.CFrame))
 	end

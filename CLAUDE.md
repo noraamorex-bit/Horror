@@ -116,7 +116,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   they aren't even scary. Check doors that is your only reference. Make it 1-2 scares the whole run before blackout.")**: acts I-II
   are quiet, Doors-style (`Config.Director.QuietActs`): the scheduler only picks the house's own sounds there (`Director.Ambient`:
   thunder, the dog), the story beats stay (footsteps upstairs → "Check upstairs", the TV's alert), and the only scares are the
-  act I room scare (`Apparition.FirstAt` 90 s) and act II's **HallStare** (rebuilt: the lights stutter, he's at the end of the hall,
+  act I room scare (`Apparition.FirstAt` 90 s; v148: 55 s) and act II's **HallStare** (rebuilt: the lights stutter, he's at the end of the hall,
   dark, he's halfway to you with a loud hit, dark, gone). No room-by-room scares, no window glance, no knocks/slams/flickers/
   figures/haunt events before the blackout; after it, everything as before. Test `quiet_test`. Don't add scares to acts I-II.
 - It's a horror game, not a chore simulator: few tasks, multi-step, no dead time. No "stay together"
@@ -155,6 +155,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **v133** (the owner: "he's still so dumb sometimes just walks past me. Make him constantly run after players"): sharper senses
   (SightDark 18 / Hard 21 / NM 24, was 13/15/14; PeripheralRange 10, was 7; HearWalk 15 / Hard 17), he chases anyone he sees within
   16 studs on his way to a hiding spot (was 9), and running to a spot shows as running (it showed as a walk).
+- **v148 face (the owner: "Make the monsters face better")**: his mask is a sculpted porcelain human face now (Creator Store mesh
+  6671078520 in `Intruder/Face`, generated feature layout: hollow flat-black mismatched eyes, streaks, a too-wide slit mouth with gappy
+  teeth, cracks), not an egg of parts. Re-make the layout with `tools/creature/facegen.py` (after facemesh.mjs + facegrid.py), never
+  by hand. **The stare (v148)**: before a loud run at someone who can see him he stops dead and stares (`GlareFor` 1.3 s), then charges.
 - **v147 look (the owner: "Make the monsters model much creepier")**: the mask re-made (yellowed porcelain, small mismatched
   sockets in flat black with one pinprick each, dark streaks running from them, a thin crooked mouth of small yellowed teeth with
   gaps, cracks and a broken chip) and his body drawn out (`SkinPose.stretch`: long arms, fingers and neck, done on the server);
@@ -801,6 +805,16 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   his mask right there (22.15 s) → RUN. (From the left leaf's gap the bed side is hidden behind the open leaf: keep him right of the
   wardrobe's middle; the rig opens that leaf with a negative angle, scene.py flips every `door` value.) Glitch "he saw me peeking".
   Caption: `he saw me peeking game in comments`.
+  **Part 10** (`reel72`, `peak_horror_game_friends_v2_part10.mp4`, 9 Nov): the first with the v148 face. The basement: down the stairs
+  with the torch; in the far corner by the child's chair that faces the wall, him standing facing the wall too; closer, his long back;
+  his head turns right round (the sculpted face in the torchlight); down behind the dust-sheeted furniture, his legs go past; peek over:
+  the corner empty, the stairs empty; down again; turn... he's beside you (22.15 s) → RUN up the stairs. Glitch "he was facing the
+  wall". (Bent over, Duck hid his head from behind: stand him straight for the back shots.) Caption: `he was facing the wall game in comments`.
+  **Part 11** (`reel73`, `peak_horror_game_friends_v2_part11.mp4`, 9 Nov): the living room in the storm: lightning, his face pressed to
+  the front window (him outside at z -31.3, lit by `bolt()` from high over the lawn); the next flash, gone; he crawls in from the hall;
+  behind the long curtain (x -37.4) through the gap, he crawls across the rug; peek round it: him by the coffee table, back turned; his
+  head turns to the curtain; back behind it; one more peek... his face right there (22.15 s; shoot the scare from the leaned-out
+  position or the curtain blocks it) → RUN. Glitch "he was at the window". Caption: `he was at the window game in comments`.
 - **Third format: the "story" reel** (`reel33`, `someone_lives_story_1.mp4`, 19 Oct; the owner: "different
   style now (same sound but better writing)", not Part 11): a first-person story in short typed lines
   over found footage, on **#2's track and slot lengths**. Lowercase serif captions (Libre Baskerville)
@@ -855,6 +869,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **9 Nov (v148 = place version 148, reels 72-73 = PEAK Parts 10-11)**, published; the owner: "Analyze all the game statistics past few
+  days and improve everything in the game. Make the monsters face better. Make the whole experience much scarier. Make next 2 reels."
+  Visits 42,017 (24.4K on 6 Nov), 14 playing, 748 favorites, votes 41 up / 75 down. Logs since 145 (9,761 lobby visits, 3,627 nights):
+  first-nighters quit mid-night 48%, but the 1,000 who leave in act I's first 30 s are group-shoppers (1,066 of 1,249 back in the lobby
+  within 10 min, 1,043 queue again; next night mostly bigger and 440 of 783 stay to the end); real quits bunch at act I minute 1-3, the
+  139 s wait after brushing teeth (BedtimeMinAct), and the hunt's first 2 min (a third tied up). Peeks 1.41 / first-nighter (34% peeked),
+  caught 17. Surprises begun 0.09 / player. Sales since 15 Oct 5,869 R$, ~1,000 R$/day lately (JumpscareAll 208/1,312, BecomeHim 80/641,
+  Revive 33/938, Starter 33/2,887). Done: his face, the stare, FirstAt 55, BedtimeMinAct 150, struggle 2.2% (see The intruder; GDD "His
+  face, the stare, less waiting (v148)"). Can't see the real client: check on a phone that the face mesh loads (not a grey box: the mesh
+  must be public), sits on his head as he runs, and the jumpscare frames it. Next: `--since=148`: act I quits at 1-3 min, act II quits at
+  Bedtime, Glared/player, votes.
 
 - **6 Nov (v147 = place version 147)**, published; the owner: "Make a way to peek out of hiding spots. Also make animations for
   everything like brushing and peeking out and all things. Also make next reel. Make the monsters model much creepier". Done:
@@ -1462,7 +1488,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 147; the notes' "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 148; the notes' "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;

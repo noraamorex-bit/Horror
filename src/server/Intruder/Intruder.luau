@@ -2697,7 +2697,7 @@ local function gaitFor(speed: number): string
 	elseif st == "Patrol" or st == "Investigate" or st == "Inspect" or st == "Charge" then
 		-- stopped mid-sweep, or at your hiding spot: head turning, swaying, listening
 		return "Search"
-	elseif st == "Lurk" or st == "Withdraw" or st == "Ambush" then
+	elseif st == "Lurk" or st == "Withdraw" or st == "Ambush" or st == "Glare" then
 		return "Stare"
 	end
 	return "Idle"
@@ -3003,6 +3003,19 @@ local function senseTick(): boolean
 		if not r then
 			return false
 		end
+		-- (v148, the owner: "Make the whole experience much scarier") if they can see him, he stops dead first,
+		-- turns his face to them and stares (Config.Intruder.GlareFor), a low growl... then he comes
+		local dist = (r.Position - pos()).Magnitude
+		if S.Head and I.GlareFor and dist > (I.GlareMin or 10) and dist < (I.GlareMax or 70) and Perception.playerSees(best, S.Head.Position, S.Model) then
+			setState("Glare", { Target = best, Until = now() + I.GlareFor })
+			S.Nav:stop()
+			faceToward(r.Position)
+			ctx.Audio.playAt("DeepGrowl", S.Head.Position, { Caption = false })
+			if ctx.Journey then
+				ctx.Journey.count(best, "Glared")
+			end
+			return true
+		end
 		charge(runAim(best, r.Position), best)
 		if S.State == "Charge" then
 			S.Data.Speed = I.SenseSpeed
@@ -3013,6 +3026,31 @@ local function senseTick(): boolean
 	return true
 end
 Intruder._senseTick = senseTick -- (tests)
+
+-- (v148) the stare before a loud run: dead still, his face on them; at the end he charges, homing in. Up close
+-- (they walked into him) he grabs; if they hide or vanish, he goes back to what he was doing
+STATES.Glare = function(_, visible)
+	local d = S.Data
+	local I = tune()
+	local who = d.Target
+	local r = who and valid(who) and not who:GetAttribute("Hiding") and rootOf(who)
+	if not r then
+		resume()
+		return
+	end
+	faceToward(r.Position)
+	if (r.Position - pos()).Magnitude < 7 and engage(visible) then
+		return
+	end
+	if now() >= d.Until then
+		charge(runAim(who, r.Position), who)
+		if S.State == "Charge" then
+			S.Data.Speed = I.SenseSpeed
+			S.Data.Homing = who
+			S.Data.HomingUntil = now() + (I.SenseHoming or 10)
+		end
+	end
+end
 
 --[[
 	Always after someone (v127, the owner: "Make him constantly run after someone"). Whenever he has

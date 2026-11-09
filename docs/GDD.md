@@ -168,6 +168,29 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### His face, the stare, less waiting (v148)
+The owner: "Analyze all the game statistics past few days and improve everything in the game. Make the monsters face better.
+Make the whole experience much scarier." Logs since place version 145 (9,761 lobby visits, 3,627 nights, ~6,900 players in a
+night; visits 24.4K -> 42K in three days, 41 up / 75 down): first-nighters quit mid-night 48%, but 987 of the 1,000 who left in
+the first 30 s of act I had done nothing and **1,066 of 1,249 such players were back in the lobby within 10 minutes (1,043
+queued again)**: they're shopping for a group (their next night is mostly bigger, and 440 of 783 then stay to the end), not
+leaving the game. The real quits (30% of first nights, after 30 s) bunch at act I minute 1-3 (around the first sighting, then
+at 98 s), the end of act II (**a median 139 s of nothing between brushing your teeth and the blackout**: act II waited for
+`BedtimeMinAct` 260), and the first two minutes of the hunt (a third of those tied up).
+- **His face** (`Intruder/Face`, `Rig.build`): a sculpted porcelain human face (Creator Store mesh 6671078520: one MeshPart,
+  no scripts), drawn long (`Face.Scale` 0.74 x 1.12 x 1.15), 0.14 in front of a slightly shallower skull, with what's been done
+  to it laid on its surface (generated from the mesh: `tools/creature/facemesh.mjs` -> `facegrid.py` -> `facegen.py`):
+  hollowed-out flat-black eyes (the left squeezed half shut, the right wide and drooping) with a pinprick each, dried streaks
+  running down from them, a slit of a mouth wider than the lips with the corners dragged up, small yellowed teeth with gaps
+  (`CreaturePose` MAW_H 0.05), cracks from the brow through the left eye. film2 draws file meshes now (mask_dump writes their
+  id / Scale / Offset), so the reels show the same face. Look at him: the scratchpad's `lookstudio/run.sh <name>`.
+- **The stare** (`Intruder` STATES.Glare, `Config.Intruder.GlareFor` 1.3 / Hard 1.0 / NIGHTMARE 0.8): a loud run (senseTick) at
+  someone who can see him, 10-70 studs away, starts with him stopped dead, his face turned to them, a low growl; then he charges,
+  homing in. Up close he grabs; hidden, he goes back to what he was doing. Night log `Glared`; peek_test checks it.
+- **Sooner, and no dead wait**: the night's first sighting `Apparition.FirstAt` 90 -> 55 s; `Director.BedtimeMinAct` 260 -> 150 s
+  (the blackout comes `AfterBedtime` after you've brushed). Still only the two scares before the blackout.
+- **Tied up**: `Capture.StrugglePerPress` 1.6 -> 2.2% (~45 presses).
+
 ### Peeking, bodies that move, a creepier him (v147)
 The owner: "Make a way to peek out of hiding spots. Also make animations for everything like brushing and peeking out and
 all things... Make the monsters model much creepier".

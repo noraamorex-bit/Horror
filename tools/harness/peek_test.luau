@@ -170,6 +170,44 @@ local ok, err = pcall(function()
 	assert(S.SawHide[closet], "...as if he'd watched you get in")
 	assert(not a:GetAttribute("PeekWatched"), "the warning's over")
 
+	-- 3b) (v148) the stare: a loud run at someone who can see him starts with him stopped dead, staring; then he charges
+	do
+		ctx.Hiding.exit(a)
+		tick(0.3)
+		local stand = closet.Exit.Position
+		local himAt = stand + outDir * 16
+		S.Model:PivotTo(R.CFrame.lookAt(himAt + V(0, 4.95 - 3, 0), stand))
+		local root = ctx.Util.getRoot(a)
+		root.CFrame = R.CFrame.lookAt(stand, himAt * V(1, 0, 1) + V(0, stand.Y, 0))
+		local headP = a.Character:FindFirstChild("Head")
+		headP.CFrame = root.CFrame + V(0, 1.6, 0)
+		if not Sim.raycast(headP.Position, S.Head.Position - headP.Position, { FilterDescendantsInstances = { S.Model, a.Character } }) then
+			patrol()
+			S.HoldUntil = 0 -- (an earlier section left him held still for a moment)
+			S.NextSense = 0
+			S.SensedAt = {}
+			S.SenseCut = true
+			I._senseTick()
+			assert(S.State == "Glare" and S.Data.Target == a, "seen: he stops and stares first, got " .. tostring(S.State))
+			local glare = I._tune().GlareFor
+			assert(glare and glare > 0.5, "a stare of " .. tostring(glare) .. " s")
+			for _ = 1, math.ceil((glare + 0.4) * 10) do tick(0.1); if S.State ~= "Glare" then break end end
+			assert(S.State == "Charge" or S.State == "Chase", "then he comes, got " .. tostring(S.State))
+			-- hidden or behind him: no stare, straight into the run
+			patrol()
+			root.CFrame = R.CFrame.lookAt(stand, stand - outDir * 10)
+			headP.CFrame = root.CFrame + V(0, 1.6, 0)
+			S.NextSense = 0
+			S.SensedAt = {}
+			I._senseTick()
+			assert(S.State ~= "Glare", "not seen: no stare, got " .. tostring(S.State))
+		else
+			print("(stare check skipped: no clear line from this spot)")
+		end
+		ctx.Hiding.enter(a, closet)
+		tick(0.3)
+	end
+
 	-- 4) the heartbeat pulls you back in
 	patrol()
 	tick(0.3)

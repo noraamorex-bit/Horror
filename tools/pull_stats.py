@@ -213,6 +213,10 @@ def report_nights(nights):
             beforeQuit = sum(1 for t, r in zip(firsts, out) if t is not None and t <= r[2]["Out"]["t"])
             print(f"      room scares/player {sum(appar.values()) / n:.2f} (act I sightings {appar.get('First', 0)})  surprises begun/player "
                   f"{sum(surp.values()) / n:.2f} {dict(surp)}  quitters who'd seen a room scare first: {beforeQuit} of {len(out)}")
+        # (v148) his stare before a loud run, at someone who could see him
+        glared = sum((r[2].get("Glared") or 0) for r in group)
+        if glared:
+            print(f"      stared down before a run (v148): {glared / n:.2f}/player")
         # (v147) peeking out of hiding spots, and how often he caught someone at it
         peeks = sum((r[2].get("Peeks") or 0) for r in group)
         if peeks:

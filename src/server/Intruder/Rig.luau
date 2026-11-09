@@ -17,6 +17,8 @@
 		local model = Rig.build(Builder)  -- standing on y = 0, facing -Z; HumanoidRootPart is primary
 ]]
 
+local Face = require(script.Parent.Face)
+
 local Rig = {}
 
 local V = Vector3.new
@@ -140,7 +142,8 @@ function Rig.build(Builder): Model
 	local root = part("HumanoidRootPart", V(2, 2, 1), CF(P.Root), BODY, nil, { Transparency = 1, CanCollide = true, Massless = false, CastShadow = false })
 	local lowerTorso = ellipsoid(part("LowerTorso", V(0.95, 0.5, 0.5), CF(P.Pelvis), BODY))
 	local upperTorso = ellipsoid(part("UpperTorso", V(1.0, 1.55, 0.58), CF(P.Chest), BODY))
-	local head = ellipsoid(part("Head", V(0.8, 1.25, 0.8), CF(P.Head), HAIR))
+	-- (v148: a little shallower in front, so the sculpted face's hollow eyes sit clear of it)
+	local head = ellipsoid(part("Head", V(0.8, 1.25, 0.7), CF(P.Head + V(0, 0, 0.05)), HAIR))
 
 	local limbs = {}
 	for _, s in { "Left", "Right" } do
@@ -262,72 +265,37 @@ function Rig.build(Builder): Model
 	bone(head, "NeckBone", P.Neck, P.Neck + V(0, 0.62, -0.03), 0.17)
 	ball(head, "Knuckle", 0.16, P.Neck + V(0, 0.32, -0.02), JOINT)
 
-	-- the mask: a long, grimy porcelain face over the front of the head
-	local maskC = CF(P.Mask)
-	ellipsoid(stick(head, "Mask", V(0.78, 1.32, 0.5), maskC, MASK, Enum.Material.SmoothPlastic))
-	local ma, mb, mc = 0.39, 0.66, 0.25
-	-- a point on the mask's face (x, y from its centre), pushed `out` studs off the surface
-	local function onMask(x: number, y: number, out: number): CFrame
-		local k = 1 - (x / ma) ^ 2 - (y / mb) ^ 2
-		local z = mc * math.sqrt(math.max(k, 0.02))
-		local nx = x / (ma * ma)
-		return maskC * CF(x, y, -z - out) * CFrame.Angles(0, -nx * 0.05, 0)
-	end
-	-- (v147, the owner: "Make the monsters model much creepier": the round cartoon eyes and the
-	-- clean grin read as a toy) the sockets are smaller and don't match: the left one narrow and
-	-- high, the right one bigger, lower and tilted, both sunk in grey bruising, each with one
-	-- pinprick of light far inside, not quite looking the same way
-	local EYES = {
-		-- (the left one squeezed half shut, the right one wide open and drooping)
-		{ sx = -1, x = -0.155, y = 0.215, w = 0.2, h = 0.13, tilt = 0.22, gx = -0.16, gy = 0.21 },
-		{ sx = 1, x = 0.16, y = 0.165, w = 0.24, h = 0.3, tilt = -0.22, gx = 0.175, gy = 0.15 },
+	-- the mask (v148): a sculpted porcelain human face, blank and too long, with what's been done to it
+	-- laid on its surface (Face: generated from the mesh by tools/creature/facegen.py)
+	local maskC = CF(P.Mask + V(0, 0, -0.14)) -- (the face is a shell: forward of the skull)
+	local mask = stick(head, "Mask", V(0.78, 1.22, 0.44), maskC, MASK, Enum.Material.SmoothPlastic)
+	local faceMesh = Instance.new("SpecialMesh")
+	faceMesh.MeshType = Enum.MeshType.FileMesh
+	faceMesh.MeshId = Face.MeshId
+	faceMesh.Scale = Face.Scale
+	faceMesh.Parent = mask
+	local FACE_COLOURS = {
+		DIRT = MASK_DIRT, HOLE = HOLE, GLINT = GLINT, TOOTH = TOOTH,
+		STREAK = Color3.fromRGB(46, 22, 19), CRACK = Color3.fromRGB(34, 30, 28),
 	}
-	for _, e in EYES do
-		ellipsoid(stick(head, "EyeRim", V(e.w + 0.13, e.h + 0.15, 0.1), onMask(e.x, e.y - 0.025, -0.05) * CFrame.Angles(0, 0, e.tilt), MASK_DIRT))
-		ellipsoid(stick(head, "EyeHole", V(e.w, e.h, 0.1), onMask(e.x, e.y, -0.03) * CFrame.Angles(0, 0, e.tilt), HOLE, Enum.Material.Neon))
-		ellipsoid(stick(head, "Glint", V(0.024, 0.024, 0.03), onMask(e.gx, e.gy, 0.03), GLINT, Enum.Material.Neon))
-		-- what's run down from them: dark and dried, thick under the eye and thinning out
-		local top = e.y - e.h * 0.45
-		local long = e.sx > 0 and 0.5 or 0.32
-		for _, d in { { 0.0, long, 0.026 }, { 0.0, long * 0.45, 0.04 }, { 0.05 * e.sx, long * 0.4, 0.016 } } do
-			stick(head, "Streak", V(d[3], d[2], 0.025), onMask(e.x + d[1], top - d[2] / 2, -0.008), Color3.fromRGB(46, 22, 19))
-		end
-	end
-	-- the mouth: a thin crooked slit right across the face, cheek to cheek, a little open and
-	-- higher on one side, crowded with small yellowed teeth of different lengths (some gone). It
-	-- opens: the client stretches the black down the face and drops the lower teeth with it,
-	-- through their meshes' scale and offset (CreaturePose.setJaw), pulled open like a scream.
-	ellipsoid(stick(head, "Maw", V(0.6, 0.13, 0.1), onMask(0, -0.29, -0.03) * CFrame.Angles(0, 0, -0.05), HOLE, Enum.Material.Neon))
-	for _, sx in { -1, 1 } do
-		-- (the corners drag up into the cheeks, the right one further)
-		ellipsoid(stick(head, "Mouth", V(0.2, 0.05, 0.1), onMask(sx * 0.3, -0.25 + (sx > 0 and 0.03 or 0), -0.035) * CFrame.Angles(0, 0, sx * 0.55), HOLE, Enum.Material.Neon))
-	end
-	for i = -7, 7 do
-		local x = i * 0.034
-		local line = -0.29 - x * 0.05 + (x / 0.26) ^ 2 * 0.035 -- (the mouth's middle, following its tilt)
-		local missing = i == -4 or i == 2 or i == 6
-		if not missing then
-			local h = 0.035 + ((i * 7) % 4) * 0.009
-			stick(head, "Tooth", V(0.022, h, 0.03), onMask(x, line + 0.06 - h / 2, -0.012) * CFrame.Angles(0, 0, ((i * 3) % 5 - 2) * 0.05), TOOTH)
-		end
-		if math.abs(i) <= 6 and i ~= 3 and i ~= -1 then
-			local h = 0.03 + ((i * 5) % 3) * 0.009
-			local low = stick(head, "LowerTooth", V(0.022, h, 0.03), onMask(x, line - 0.06 + h / 2, -0.012), TOOTH)
+	for _, f in Face.Features do
+		local at = V(f[3], f[4], f[5])
+		local n = V(f[6], f[7], f[8])
+		local cf = maskC * CFrame.lookAt(at, at + n) * CFrame.Angles(0, 0, f[9])
+		local p = stick(head, f[1], V(f[10], f[11], f[12]), cf, FACE_COLOURS[f[13]] or HOLE, (Enum.Material :: any)[f[14]])
+		if f[2] == "ball" then
+			ellipsoid(p)
+		elseif f[1] == "LowerTooth" then
+			-- (the jaw drops these through their meshes' offset: CreaturePose.setJaw)
 			local m = Instance.new("SpecialMesh")
 			m.MeshType = Enum.MeshType.Brick
-			m.Parent = low
+			m.Parent = p
 		end
 	end
-	-- cracks: a split from the brow down through the left eye to the jaw, its branches, the chin,
-	-- and a chip broken off the top right edge (the black under the porcelain shows)
-	local CRACK = Color3.fromRGB(34, 30, 28)
-	for _, c in {
-		{ -0.07, 0.5, 0.2, 0.42 }, { -0.11, 0.38, 0.12, -0.4 }, { -0.24, 0.02, 0.18, 0.2 },
-		{ -0.27, 0.34, 0.1, 1.1 }, { 0.1, -0.5, 0.16, -0.9 }, { 0.24, 0.42, 0.14, -0.7 },
-	} do
-		stick(head, "Crack", V(0.016, c[3], 0.02), onMask(c[1], c[2], -0.004) * CFrame.Angles(0, 0, c[4]), CRACK)
+	-- a point off the front of the mask (x, y from its centre, `out` studs in front of it)
+	local function onMask(x: number, y: number, out: number): CFrame
+		return maskC * CF(x, y, -0.25 - out)
 	end
-	ellipsoid(stick(head, "Crack", V(0.16, 0.12, 0.08), onMask(0.27, 0.48, -0.035) * CFrame.Angles(0, 0, 0.6), HOLE, Enum.Material.Neon))
 	-- a cold, faint light in front of the mask: in a pitch-black room you only just make it out
 	local glowAt = stick(head, "FaceGlow", V(0.1, 0.1, 0.1), onMask(0, 0.05, 0.8), GLINT, nil, { Transparency = 1, CastShadow = false })
 	local glow = Instance.new("PointLight")
@@ -440,6 +408,11 @@ function Rig.maskLayout(model: Model): { [BasePart]: boolean }
 			-- (the hair keeps its own strip size, only spread to the bigger skull: grown, it read as boards)
 			if p.Name ~= "Hair" and p.Name ~= "Fringe" then
 				p.Size *= k
+				-- (a file mesh draws at its own size x Scale, not the part's: grow that too)
+				local fm = p:FindFirstChildOfClass("SpecialMesh")
+				if fm and fm.MeshType == Enum.MeshType.FileMesh then
+					fm.Scale *= k
+				end
 			end
 			p.CFrame = hcf * CFrame.new(rel.Position * k) * rel.Rotation
 			d.Enabled = true

@@ -54,6 +54,20 @@ if (cr.skin) {
   skinData = { mesh: { pos: Array.from(m.pos), nrm: Array.from(m.nrm), uv: Array.from(m.uv), idx: Array.from(m.idx), skin: { bones: m.skin.bones, skinIndex: Array.from(m.skin.skinIndex), skinWeight: Array.from(m.skin.skinWeight) } },
     tex: { color: img(ids.color), normal: img(ids.normal), rough: img(ids.rough) }, info: cr.skin };
 }
+// (v148) mask parts that are file meshes (his sculpted face): decoded here, built in the page at their native size x Scale
+if (cr.parts) {
+  const { execFileSync } = await import('child_process');
+  const mcache = spec.skinCache || 'cache_skin';
+  fs.mkdirSync(mcache, { recursive: true });
+  cr.meshes = {};
+  for (const p of cr.parts) {
+    if (p.m && p.m.t === 'FileMesh' && p.m.id && !cr.meshes[p.m.id]) {
+      if (!fs.existsSync(`${mcache}/${p.m.id}.bin`)) execFileSync('python3', ['../../../tools/assets/fetch.py', mcache, String(p.m.id)], { stdio: 'pipe' });
+      const fm = await decodeMesh(new Uint8Array(fs.readFileSync(`${mcache}/${p.m.id}.bin`)));
+      cr.meshes[p.m.id] = { pos: Array.from(fm.pos), nrm: Array.from(fm.nrm), idx: Array.from(fm.idx) };
+    }
+  }
+}
 const photos = (spec.photos || []).map(p => 'data:image/png;base64,' + fs.readFileSync(p).toString('base64'));
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
@@ -89,8 +103,19 @@ await page.evaluate(([world, cr, W, H]) => {
     if (p.mat === 'Fabric') o.roughness = 0.95;
     return (mats[key] = new T.MeshStandardMaterial(o));
   }
+  const fileGeos = {};
   function geo(p) {
     let g, sx = p.s[0], sy = p.s[1], sz = p.s[2], off = null;
+    if (p.m && p.m.t === 'FileMesh' && cr.meshes && cr.meshes[p.m.id]) {
+      if (!fileGeos[p.m.id]) {
+        const d = cr.meshes[p.m.id], fg = new T.BufferGeometry();
+        fg.setAttribute('position', new T.Float32BufferAttribute(d.pos, 3));
+        if (d.nrm && d.nrm.length === d.pos.length) fg.setAttribute('normal', new T.Float32BufferAttribute(d.nrm, 3)); else fg.computeVertexNormals();
+        fg.setIndex(d.idx);
+        fileGeos[p.m.id] = fg;
+      }
+      return { g: fileGeos[p.m.id], sx: p.m.s[0], sy: p.m.s[1], sz: p.m.s[2], off: p.m.o };
+    }
     if (p.m && (p.m.t === 'Sphere' || p.m.t === 'Brick' || p.m.t === 'Wedge' || p.m.t === 'Cylinder')) {
       g = p.m.t === 'Sphere' ? unitSphere : p.m.t === 'Wedge' ? wedge : p.m.t === 'Cylinder' ? unitCyl : unitBox;
       sx *= p.m.s[0]; sy *= p.m.s[1]; sz *= p.m.s[2]; off = p.m.o;
@@ -134,7 +159,7 @@ await page.evaluate(([world, cr, W, H]) => {
   window.SHOT = null;
   // the photos on his wall: real pictures of the family's rooms
   window.PHOTOS = [];
-}, [world, { parts: cr.parts || [] }, W, H]);
+}, [world, { parts: cr.parts || [], meshes: cr.meshes || {} }, W, H]);
 if (Object.keys(texImgs).length || Object.keys(artImgs).length) {
   await page.evaluate(async ([texImgs, artImgs]) => {
     const T = THREE, loader = new T.TextureLoader();

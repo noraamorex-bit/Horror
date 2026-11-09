@@ -163,6 +163,8 @@ Config.Intruder = {
 	SenseEvery = { 24, 34 },
 	SenseSpeed = 14,
 	SenseHoming = 10,
+	-- (v148) seen by the one he's about to run at: he stops dead and stares at them this long first (10-70 studs)
+	GlareFor = 1.3,
 	-- (v127, the owner: "Make him constantly run after someone") between those, he never just patrols: with
 	-- nothing else to do he's running after one of you again within PursueGap s, keeping on the same one for
 	-- up to PursueFor s (re-aiming as they move), then the one he went for longest ago. Hiding: he runs to
@@ -281,6 +283,7 @@ Config.Difficulty = {
 			SenseFirst = 10,
 			SenseEvery = { 16, 24 },
 			SenseSpeed = 15,
+			GlareFor = 1.0,
 			PursueGap = 0.8, -- (v135: 1.5)
 			StillMiss = 8,
 			PursueSpeed = 13,
@@ -323,6 +326,7 @@ Config.Difficulty = {
 			SenseFirst = 8,
 			SenseEvery = { 11, 17 },
 			SenseSpeed = 16,
+			GlareFor = 0.8,
 			PursueGap = 0.6, -- (v135: 1)
 			StillMiss = 6,
 			PursueSpeed = 14.5,
@@ -365,7 +369,7 @@ Config.Hiding = {
 Config.Capture = {
 	RescueHold = 5,
 	RescueHoldTool = 2.5,
-	StrugglePerPress = 1.6, -- percent (about 63 presses: doable in the 45 s last chance on a phone)
+	StrugglePerPress = 2.2, -- percent (v148: ~45 presses, was 1.6 = 63: a third of hunt quits were players still tied up)
 	StruggleNoiseEvery = 12, -- presses
 	LastChance = 45, -- seconds everyone-captured players get to struggle free before the bad ending
 }
@@ -417,7 +421,7 @@ Config.Director = {
 	AfterNews = 22, -- (v117: 28) -- act II ends this long after the news was watched at the soonest...
 	BedtimeAfterNews = 4, -- (then "Get ready for bed" comes; brushed, the lights go AfterBedtime later)
 	AfterBedtime = 5, -- (v94: 12; the owner wanted less waiting before the blackout)
-	BedtimeMinAct = 260, -- (v126: 120) -- (but act II still runs at least this long: its scares need room)
+	BedtimeMinAct = 150, -- (v148: 260 held a median 139 s of nothing after brushing your teeth; v126: 120) -- (but act II still runs at least this long: its scares need room)
 	AfterScare = 22, -- (v117: 30) -- ...and this long after the last scare
 	-- (v132, the owner: "When a person enters the upstairs room to close the window make the light flicker and let
 	-- him show for a sec and then disappear suddenly with a loud sound effect too. These are the types of scares I want
@@ -431,7 +435,7 @@ Config.Director = {
 	-- flickers, figures); their scares are the act I room scare (Apparition.FirstAt) and act II's HallStare (Director BEATS)
 	QuietActs = { Evening = true, SmallThings = true },
 	Ambient = { Thunderclap = true, DogBark = true },
-	Apparition = { Chance = 0.45, Cooldown = 55, Spacing = 10, NotBefore = 25, HuntChance = 0.25, HuntCooldown = 100, HuntFar = 45, FirstAt = 90 },
+	Apparition = { Chance = 0.45, Cooldown = 55, Spacing = 10, NotBefore = 25, HuntChance = 0.25, HuntCooldown = 100, HuntFar = 45, FirstAt = 55 }, -- (v148 FirstAt 90 -> 55: act I quits peak 1-3 min in)
 	CeilingSteps = 20, -- (v113) seconds into the Evening: footsteps cross the ceiling over someone
 }
 
