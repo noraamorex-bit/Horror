@@ -381,6 +381,15 @@ Config.Capture = {
 	LastChance = 45, -- seconds everyone-captured players get to struggle free before the bad ending
 }
 
+-- (v154) the attic part (Director/AtticRun): the first call from the window drops; plug the booster back in up in the attic
+Config.Attic = {
+	Enabled = true,
+	PlugHold = 1.2,
+	HeHearsAfter = 2.5, -- s after the booster's plugged in: the ladder creaks
+	ClimbDelay = 4, -- then he's up through the hatch
+	LeaveAfter = 6, -- s with nobody left up there: he goes back down
+}
+
 Config.Help = {
 	-- (v88-90 logs: once help was called only 7 of 200 players left before the police came, while the
 	-- hunt is the game; nights ran ~11 min against the ~13 the owner wants: a longer hold-out)

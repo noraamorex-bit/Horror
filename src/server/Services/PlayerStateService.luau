@@ -426,6 +426,14 @@ local function computeSignal(pos: Vector3): number
 	-- The Route 9 tower is down. One flickering bar at the upstairs bathroom window,
 	-- two bars far out at the end of the driveway.
 	local room = ctx.Rooms.find(pos)
+	-- (v154, AtticRun) the booster in the attic was the bathroom window's bar: unplugged, nothing anywhere; plugged
+	-- back in, full bars up in the attic
+	if workspace:GetAttribute("SignalDead") then
+		return 0
+	end
+	if workspace:GetAttribute("BoosterOn") and ctx.Rooms.floorOf(pos) == "Attic" then
+		return 3
+	end
 	if room and room.Name == "HallBath" and pos.X > 33 then
 		return 1
 	end
@@ -434,6 +442,8 @@ local function computeSignal(pos: Vector3): number
 	end
 	return 0
 end
+
+PlayerState._signal = computeSignal -- (tests)
 
 local accumulator = 0
 local slowAccumulator = 0

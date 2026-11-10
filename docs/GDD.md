@@ -168,6 +168,24 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### Into the attic, and he's never caught (v154)
+The owner: "The whole experience is still very short and just gets it over with for the sake of ending it. Get creative and add
+new parts to make it longer. For this story bit consult me first." Asked; the owner picked **Into the attic** and **Never caught**.
+- **The call drops** (`Director/AtticRun`): the first 911 call from the upstairs bathroom window gets through ("Nine-one-one,
+  what's your emerg-") and drops: zero bars everywhere (workspace `SignalDead`). The thought says why: that one bar came from
+  Dad's signal booster in the attic, and it's been unplugged. Call 911 leaves the list; **Get the signal back: the attic**
+  takes its place (Hatch → Plug the booster in → Call from the attic). Not from the attic itself; once a night.
+- **His nest**: the booster sits on a crate by his photo wall, red light, its plug on the boards. "Plug in" (hold 1.2 s): green,
+  full bars up in the attic (`BoosterOn`, PlayerState computeSignal), the window's bar back. 2.5 s later the ladder creaks
+  ("He heard that. Someone's on the ladder... hide"), 4 s after that his head comes up through the hatch and he hunts whoever is
+  up there (`Intruder.climbInto`; he can't walk the ladder, so it's a scene). Two places to hide up there: under the dust sheet,
+  in the old trunk (World/Haunt). The booster has its own Call 911 ("Full bars"). Nobody left up there for 6 s: he goes back down.
+- The landline, next door, the car and Mrs. Okafor's call work as before. `Config.Attic` (Enabled, PlugHold, HeHearsAfter,
+  ClimbDelay, LeaveAfter). Night log: team `AtticDrop`, `BoosterOn`, event `AtticHunt`. Test `attic_test`.
+- **Never caught**: every ending's text says he got away (CaseClosed: the attic empty when they open it; Sirens: a nest still
+  warm, something scratching at the nailed hatch; LockedIn: the basement empty, a window scratched raw; GoneQuiet, GotAway,
+  NotYourFamily, Dawn: never found). Nobody arrests Curtis Vane.
+
 ### Bugged models, the pizza guy, a lighter him, a calmer card (v153)
 The owner's playthrough screenshots.
 - **World/Surfaces**: Roblox's Fabric material is a chunky knit; 2,951 house parts used it (sofas, beds, curtains, wallpaper,

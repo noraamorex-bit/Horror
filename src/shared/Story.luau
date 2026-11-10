@@ -161,6 +161,13 @@ Story.Tasks = {
 		{ Key = "Hatch", Text = "Pull down the attic hatch in the upstairs hall", Target = "Hatch" },
 		{ Key = "Search", Text = "Climb up and search the attic", Target = "Nest" },
 	} },
+	-- (v154, the owner picked "Into the attic": the first call from the window drops; the signal came from Dad's booster
+	-- in the attic, and someone unplugged it. Up into his nest to plug it back in, and call from there)
+	Booster = { Title = "Get the signal back: the attic", Steps = {
+		{ Key = "Hatch", Text = "Pull down the attic hatch in the upstairs hall", Target = "Hatch" },
+		{ Key = "Plug", Text = "Plug Dad's signal booster back in (up in the attic)", Target = "Booster" },
+		{ Key = "Call", Text = "Call 911 from the attic. Full bars up there now", Target = "Booster" },
+	} },
 	-- Act IV
 	Call911 = { Title = "Call 911: he's in the house", Steps = {
 		{ Key = "Call", Text = "Call from the upstairs bathroom window (one bar of signal), or fix the phone line outside", Target = { "SignalSpot", "JunctionBox" } },
@@ -819,6 +826,10 @@ Story.Thoughts = {
 	-- act III, for whoever is at the bathroom window when the lights go (they usually are: bedtime)
 	-- (v139: act IV opens on one line: it was four)
 	GuestStart = "He's been living in our attic. And he knows we found out.",
+	-- (v154) the attic: the call from the window drops, the booster, him on the ladder
+	BoosterDead = "No... the call dropped. Zero bars. Dad's signal booster is up in the attic. Somebody unplugged it.|phone",
+	BoosterBack = "Green light. Full bars. Call. NOW.|phone",
+	OnTheLadder = "The ladder. Someone's climbing up. HIDE.|hide",
 	CallHere = "Those footsteps... the man from the news is IN the house. One bar, right here: call 911. NOW.|phone",
 	Acts = {
 		-- (v139: one line where there were two, and none that only fill the air)
@@ -889,14 +900,16 @@ Story.Thoughts = {
 ---------------------------------------------------------------------------
 -- Endings
 ---------------------------------------------------------------------------
+-- (v153, the owner: "Never caught": he's never arrested, caught or found in any ending; a nest, photos, a way out
+-- nobody could fit through)
 Story.Endings = {
 	CaseClosed = {
 		Short = "The police arrived, and you'd already worked out who he was.",
 		Title = "CASE CLOSED",
-		Body = "The police find four soaked, shaking teenagers who have already solved it.\n\nThe coffee in the sink. The invoice from VANE HOME SERVICES. The lanyard with the eyes scratched out. The photos from the top of the stairs. Nineteen days of it, laid out on the kitchen table.\n\nCurtis Vane is picked up at the van before he can start the engine. Detective Ruiz reads your notes twice.\n\n'You kids did half my job,' she says. 'Go home. Well. Stay home.'",
+		Body = "The police find four soaked, shaking teenagers who have already solved it.\n\nThe coffee in the sink. The invoice from VANE HOME SERVICES. The lanyard with the eyes scratched out. The photos from the top of the stairs. Nineteen days of it, laid out on the kitchen table.\n\nDetective Ruiz reads your notes twice, then sends two officers up the attic ladder. They come down pale and empty-handed.\n\n'Whatever was living up there,' she says, 'it isn't now.' She doesn't sound sure.",
 	},
 	Sirens = {
-		-- (v153, the owner: "it doesn't make much sense for him to get arrested")
+		-- (v154, the owner: "it doesn't make much sense for him to get arrested")
 		Short = "The police got you out. They searched every room. They never found him.",
 		Title = "SIRENS",
 		Body = "Blue and red light floods the rain. Two cruisers, then a third.\n\nThey go room by room with flashlights: the basement, the garage, the attic. Nothing. Only a nest of blankets up under the roof, still warm.\n\nOn Monday, Jamie's dad nails the attic hatch shut. That night, something scratches at it from the other side.",
@@ -904,7 +917,7 @@ Story.Endings = {
 	LockedIn = {
 		Short = "You locked him in the basement until the police came.",
 		Title = "LOCKED IN",
-		Body = "When the officers open the basement door, Curtis Vane is sitting on the bottom step with his hands already raised.\n\n'It's my house too,' he tells them. 'I take care of it.'\n\nNineteen days. Nobody ever changed the code.",
+		Body = "The officers open the basement door with their guns drawn.\n\nThe basement is empty. The window over the boiler is open a crack, nine inches at most, and the frame is scratched raw.\n\nNothing that size could fit through it. Something did.",
 	},
 	Taillights = {
 		Short = "You drove away in Mom's car and brought the police back.",
@@ -919,19 +932,19 @@ Story.Endings = {
 	GoneQuiet = {
 		Short = "Nobody came. He took everyone.",
 		Title = "GONE QUIET",
-		Body = "Nobody calls. Nobody comes.\n\nJamie's parents come home on Sunday night to a dark house and a basement door locked from the outside. Everyone inside is alive: cold, terrified, zip-tied to the pipes.\n\nCurtis Vane's van is found abandoned at a rest stop in Indiana. He is still out there. Somewhere with an attic.",
+		Body = "Nobody calls. Nobody comes.\n\nJamie's parents come home on Sunday night to a dark house and a basement door locked from the outside. Everyone inside is alive: cold, terrified, zip-tied to the pipes.\n\nNobody ever finds him. The police say whoever it was is long gone.\n\nJamie's little sister says he isn't. She says he's just upstairs.",
 		Bad = true,
 	},
 	GotAway = {
 		Short = "Help came too late. He got away.",
 		Title = "HE GOT AWAY",
-		Body = "By the time the police kick in the front door, the house is silent.\n\nThe back door is open. Rain on the kitchen floor. Muddy prints going out, none coming back.\n\nThey search the house room by room. The attic is empty, except for the photographs. Hundreds of them. Every one of you.\n\nCurtis Vane was never found.",
+		Body = "By the time the police kick in the front door, the house is silent.\n\nThe back door is open. Rain on the kitchen floor. Muddy prints going out, none coming back.\n\nThey search the house room by room. The attic is empty, except for the photographs. Hundreds of them. Every one of you.\n\nHe was never found.",
 		Bad = true,
 	},
 	NotYourFamily = {
 		Short = "You found the old storm cellar and climbed out of what he dug under the house.",
 		Title = "NOT YOUR FAMILY",
-		Body = "You come up through the grate into the wet grass of the back yard, gasping, filthy, alive.\n\nThe police find the tunnels by noon: a dining room under the boiler, a nursery, a pantry of food stolen a meal at a time, nineteen tally marks on a wall of dirt.\n\nThey find Curtis Vane at the head of the table, in Jamie's dad's sweater, waiting for everyone to come back for dessert.",
+		Body = "You come up through the grate into the wet grass of the back yard, gasping, filthy, alive.\n\nThe police find the tunnels by noon: a dining room under the boiler, a nursery, a pantry of food stolen a meal at a time, nineteen tally marks on a wall of dirt.\n\nAt the head of the table they find Jamie's dad's sweater, folded on the chair, and a place set for everyone. Of him, nothing. Only the dirt, freshly turned, going deeper.",
 		Secret = true,
 	},
 	ForeverFamily = {
@@ -944,7 +957,7 @@ Story.Endings = {
 	Dawn = {
 		Short = "You lasted the whole night.",
 		Title = "DAWN",
-		Body = "The rain stops a little after five. Gray light, a dripping gutter, and then - finally - sirens.\n\nA neighbor on Birch Street had called about a gray van that hadn't moved in three weeks. The officer who ran the plate made the connection to the break-ins.\n\nYou lasted the whole night.",
+		Body = "The rain stops a little after five. Gray light, a dripping gutter, and then - finally - sirens.\n\nThe officers search until noon. Nothing in the house, nothing in the attic but his nest.\n\nYou lasted the whole night. He didn't leave. He just stopped moving.",
 	},
 }
 

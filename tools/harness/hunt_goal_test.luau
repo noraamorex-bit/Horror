@@ -58,6 +58,8 @@ local function has(list, id)
 end
 local ok, err = pcall(function()
 	local ctx = setup()
+	-- (v154: this test is about the call itself; the attic part, where the first call drops, has attic_test)
+	ctx.Config.Attic.Enabled = false
 	local p, root = mkPlayer("Caller")
 	H.services.Players.GetPlayers = function() return { p } end
 	local sent = nil
@@ -97,7 +99,7 @@ local ok, err = pcall(function()
 	local world = H.unwrap(ctx.World.folder())
 	local prompt = nil
 	for _, d in world:GetDescendants() do
-		if d:IsA("ProximityPrompt") and d.Name == "Call911" then prompt = H.wrap(d) end
+		if d:IsA("ProximityPrompt") and d.Name == "Call911" and d.Parent.Name ~= "SignalBooster" then prompt = H.wrap(d) end
 	end
 	assert(prompt, "a Call 911 prompt exists")
 	H.flush(0.5)

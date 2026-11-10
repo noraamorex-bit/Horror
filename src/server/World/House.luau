@@ -444,6 +444,9 @@ function House.build(ctx, root: Instance)
 		if act == "SomeoneElse" or act == "Guest" then
 			hatch.open()
 			ctx.Objectives.step("Attic", "Hatch")
+			if ctx.AtticRun then
+				ctx.AtticRun.hatchOpened()
+			end
 		else
 			ctx.Audio.caption("It won't budge. Like something's holding it shut from above.", nil, nil, { player })
 			ctx.Audio.playAt("HatchCreak", Vector3.new(hx, 28, hz), { Caption = false })

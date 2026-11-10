@@ -238,7 +238,10 @@ function Phone.start()
 					lineShown[player] = nil
 					player:SetAttribute("Calling", nil)
 					player:SetAttribute("CallProgress", nil)
-					ctx.Escape.callForHelp("Cell", player)
+					-- (v154: the first call from the window drops: AtticRun)
+					if not (ctx.AtticRun and ctx.AtticRun.onCallThrough(player)) then
+						ctx.Escape.callForHelp("Cell", player)
+					end
 				end
 			end
 		end

@@ -330,6 +330,33 @@ function Haunt.build(ctx, root: Instance): { BasePart }
 			Kit.box(attic, "TrunkLid", tcf * CF(0, 1.98, 0.08) * ANG(rad(-8), 0, 0), V(3.25, 0.2, 1.85), Color3.fromRGB(84, 58, 38), KM.Wood)
 			Kit.box(attic, "TrunkLatch", tcf * CF(0, 1.45, -0.93), V(0.3, 0.35, 0.06), KC.Brass, KM.Metal)
 		end
+		-- (v154, AtticRun) somewhere to hide when he comes up the ladder: under the sheet over the armchair, and in the trunk
+		if ctx.Hiding then
+			local chair = attic:FindFirstChild("SheetedChair")
+			if chair and chair:IsA("BasePart") then
+				ctx.Hiding.register(chair, {
+					Name = "Under the dust sheet",
+					Room = "Attic",
+					Inside = CFrame.lookAt(V(17, AY + 1.2, -3), V(6, AY + 1.2, 10)),
+					-- (from under the sheet's hem on the hatch side)
+					View = CFrame.lookAt(V(15.0, AY + 1.0, -3), V(6, AY + 2, 6)),
+					Exit = CFrame.lookAt(V(15.5, AY + 3, 0.6), V(6, AY + 3, 8)),
+					PromptOffset = chair.CFrame:PointToObjectSpace(V(15.4, AY + 1.6, -2)),
+				})
+			end
+			local trunk = attic:FindFirstChild("Trunk")
+			if trunk and trunk:IsA("BasePart") then
+				ctx.Hiding.register(trunk, {
+					Name = "In the old trunk",
+					Room = "Attic",
+					Inside = CFrame.lookAt(V(-6, AY + 0.8, 4.2), V(-6, AY + 0.8, 12)),
+					-- (through the crack of the lid, along the walkway)
+					View = CFrame.lookAt(V(-6, AY + 1.85, 5.45), V(-6, AY + 1.6, 16)),
+					Exit = CFrame.lookAt(V(-6, AY + 3, 6.8), V(-6, AY + 3, 12)),
+					PromptOffset = trunk.CFrame:PointToObjectSpace(V(-6, AY + 1.4, 5.3)),
+				})
+			end
+		end
 		-- the baby's crib, with one of Lily's old dolls in it, face down
 		do
 			local ccf = F(26, AY, -4.5, NX)

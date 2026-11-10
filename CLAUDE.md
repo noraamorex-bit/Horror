@@ -136,6 +136,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   act I room scare (`Apparition.FirstAt` 90 s; v148: 55 s) and act II's **HallStare** (rebuilt: the lights stutter, he's at the end of the hall,
   dark, he's halfway to you with a loud hit, dark, gone). No room-by-room scares, no window glance, no knocks/slams/flickers/
   figures/haunt events before the blackout; after it, everything as before. Test `quiet_test`. Don't add scares to acts I-II.
+- **Into the attic (v154**, the owner: "very short... add new parts to make it longer. For this story bit consult me first"; picked
+  "Into the attic" + "Never caught"): the first 911 call from the bathroom window drops (Dad's signal booster in the attic was
+  unplugged: zero bars everywhere); the goal becomes the attic: up the hatch, plug the booster in by his photo wall (full bars up
+  there), the ladder creaks and he comes up through the hatch after whoever's there (hide under the dust sheet / in the trunk),
+  call from the attic. `Director/AtticRun`, `Config.Attic`, test `attic_test`. **He's never caught**: every ending says he got
+  away / was never found (no arrest). New story parts: ask the owner first.
 - It's a horror game, not a chore simulator: few tasks, multi-step, no dead time. No "stay together"
   task that solo can't do.
 - Friends speak in dialogue boxes (not texts), **out loud (v106: Roblox text-to-speech, client
@@ -898,6 +904,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **10 Nov (v154 = place version 154)**, published; the owner's picks from the v153 consult: "Into the attic" and "Never caught". Done:
+  the call drops → the attic chapter, and every ending says he was never found (see Pacing; GDD "Into the attic, and he's never
+  caught (v154)"). Can't see the real client: check on a phone that the drop captions read, the booster's red/green light shows in
+  the nest, his climb up through the hatch looks right (he's placed at the hatch top, no climbing animation), and the two attic
+  hiding views (under the sheet's hem, the trunk's crack). Next: `--since=154 --from=2026-11-10`: night length (want longer),
+  `AtticDrop` / `BoosterOn` / `AtticHunt` counts, quits between the drop and the plug (if many, signpost the attic harder),
+  deaths in the attic.
+
 - **10 Nov (v153 = place version 153)**, published; the owner played and sent screenshots: "so many models that are bugged... Fix all of them.
   Search for others like this too... Pizza guy looks dumb make him an actual character. The monster is too dark colored... The results card
   is so overcrowded also it doesn't make much sense for him to get arrested. The whole experience is still very short... add new parts to
@@ -1564,7 +1578,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 153; the notes' "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 154; the notes' "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

@@ -352,6 +352,7 @@ Layout.NoArt = {
 Layout.Attic = {
 	Nest = Vector3.new(-24, 29, 0),
 	HatchTop = Vector3.new(2, 32, 11),
+	HatchBelow = Vector3.new(6, 18.2, 4), -- (v154: where he comes down when the attic's empty)
 	GarageHatchBelow = Vector3.new(52, 4, 3),
 	IntruderOffstage = Vector3.new(-26, 32, 3),
 }

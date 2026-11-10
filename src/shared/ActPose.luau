@@ -33,6 +33,7 @@ ActPose.Keywords = {
 	{ "pull", "Pull" },
 	{ "push", "Push" },
 	{ "smash", "Push" },
+	{ "plug in", "Push" },
 	{ "bar the door", "Push" },
 	{ "answer", "Push" },
 	{ "open", "Push" },

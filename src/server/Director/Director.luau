@@ -14,6 +14,7 @@ local Players = game:GetService("Players")
 local Events = require(script.Parent.Events)
 local Delivery = require(script.Parent.Delivery)
 local NightPlan = require(script.Parent.NightPlan)
+local AtticRun = require(script.Parent.AtticRun)
 local lastChores: { string }? = nil -- this server's last night's chores (the next night draws others)
 local Perception = require(script.Parent.Parent.Intruder.Perception)
 
@@ -69,10 +70,12 @@ function Director.init(c)
 	ctx = c
 	Perception.init(c)
 	state = fresh()
+	AtticRun.init(c)
 end
 
 function Director.reset()
 	state = fresh()
+	AtticRun.reset()
 	workspace:SetAttribute("Act", "Lobby")
 	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)
 end
@@ -1044,7 +1047,7 @@ function Director.startAct(name: string, cause: Player?)
 			end
 		end)
 	elseif name == "Guest" then
-		ctx.Objectives.set({ "Call911", "Neighbor", "Car", "Trap" }, { Neighbor = true, Car = true, Trap = true })
+		ctx.Objectives.set({ AtticRun.callObjective(), "Neighbor", "Car", "Trap" }, { Neighbor = true, Car = true, Trap = true })
 		checkHeldItems()
 		if ctx.Capture.captiveCount() > 0 then
 			ctx.Objectives.add("Rescue", true)
@@ -2127,6 +2130,7 @@ end
 
 ---------------------------------------------------------------------------
 function Director.start()
+	AtticRun.start()
 	ctx.PlayerState.setSpawnResolver(spawnFor)
 	workspace:SetAttribute("Act", "Lobby")
 	workspace:SetAttribute("ClockMinutes", ctx.Config.ClockStartMinutes)

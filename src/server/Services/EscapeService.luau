@@ -92,11 +92,11 @@ function Escape.callForHelp(method: string, player: Player?)
 	workspace:SetAttribute("HelpMethod", method)
 
 	-- the way out that worked is done; the other routes (and the search) simply stop mattering
-	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone" }, Neighbor = { "Neighbor" }, Car = { "Car" }, Okafor = {} }
+	local used = { Landline = { "Call911", "Phone" }, Cell = { "Call911", "Phone", "Booster" }, Neighbor = { "Neighbor" }, Car = { "Car" }, Okafor = {} }
 	for _, id in used[method] or { "Call911" } do
 		ctx.Objectives.complete(id)
 	end
-	for _, id in { "Call911", "Phone", "Neighbor", "Car", "Attic", "Investigate" } do
+	for _, id in { "Call911", "Phone", "Neighbor", "Car", "Attic", "Investigate", "Booster" } do
 		ctx.Objectives.dismiss(id)
 	end
 	-- (the objective change and the police countdown on screen say it; no third message)

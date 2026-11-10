@@ -3432,6 +3432,28 @@ function Intruder.adminIsFrozen(): boolean
 	return S.AdminFrozen == true
 end
 
+-- (v154, AtticRun) he comes up through the attic hatch (or goes back down it): there's no route up the ladder, so the
+-- climb is a scene and he's placed at the top; then he hunts, after `target` if given
+function Intruder.climbInto(at: Vector3, look: Vector3?, target: Player?): boolean
+	if not S.Root then
+		return false
+	end
+	if not Intruder.isHunting() then
+		Intruder.setMode("Hunt")
+	end
+	if S.Nav then
+		S.Nav:stop()
+	end
+	placeAt(at, look)
+	S.Progress = { Pos = pos(), T = now() }
+	if target and valid(target) then
+		S.HuntTarget = target
+		S.UnhidAt[target] = nil
+		S.Ignore[target] = nil
+	end
+	return true
+end
+
 -- put him a few steps behind this player (in the house, hunting)
 function Intruder.adminBring(player: Player): boolean
 	local root = ctx.Util.getRoot(player)

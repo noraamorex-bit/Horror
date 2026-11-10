@@ -1674,6 +1674,26 @@ function Interior.build(ctx, root: Instance, refs)
 		end)
 	end
 	ctx.Escape.setNest(nest, V(n0.X - 3.5, A + 0.3, n0.Z - 3))
+	-- (v154, AtticRun) Dad's cell signal booster, on a crate by his photo wall: the reason the bathroom window got its one
+	-- bar. Its plug lies pulled out on the boards beside it; a red light. Plugged back in: green, and full bars up here
+	do
+		local bcf = CF(-27.2, A, n0.Z - 6.2) * ANG(0, rad(-90), 0)
+		Kit.solid(nest, "BoosterCrate", bcf * CF(0, 0.6, 0), V(2.2, 1.2, 1.6), Color3.fromRGB(150, 120, 85), KM.Wood)
+		local box = Kit.solid(nest, "SignalBooster", bcf * CF(0, 1.62, 0), V(1.5, 0.85, 1.0), Color3.fromRGB(52, 54, 58), KM.Plastic)
+		box.CanQuery = true
+		Kit.box(nest, "BoosterFace", bcf * CF(0, 1.62, -0.51), V(1.3, 0.65, 0.02), Color3.fromRGB(30, 31, 34), KM.Plastic)
+		local light = Kit.box(nest, "BoosterLight", bcf * CF(0.45, 1.85, -0.53), V(0.12, 0.12, 0.03), Color3.fromRGB(220, 40, 30), KM.Neon)
+		for _, dx in { -0.5, 0.5 } do
+			Kit.box(nest, "BoosterAntenna", bcf * CF(dx, 2.55, 0.2) * ANG(0, 0, rad(dx * 24)), V(0.07, 1.1, 0.07), Color3.fromRGB(30, 30, 32), KM.Plastic)
+		end
+		-- the cord, run off the back and dropped on the boards, the plug pulled from the extension lead
+		Kit.box(nest, "BoosterCord", bcf * CF(-0.9, 0.04, 0.9) * ANG(0, rad(30), 0), V(0.06, 0.06, 2.0), Color3.fromRGB(20, 20, 22), KM.Plastic)
+		Kit.box(nest, "BoosterPlug", bcf * CF(-1.4, 0.08, 1.75), V(0.25, 0.16, 0.35), Color3.fromRGB(230, 230, 225), KM.Plastic)
+		Kit.box(nest, "ExtensionLead", bcf * CF(-1.9, 0.07, 2.4), V(0.9, 0.14, 0.35), Color3.fromRGB(236, 236, 232), KM.Plastic)
+		if ctx.AtticRun then
+			ctx.AtticRun.setup(box, light)
+		end
+	end
 
 	---------------------------------------------------------------------------
 	-- Lobby spawn (living room, behind the sofa)

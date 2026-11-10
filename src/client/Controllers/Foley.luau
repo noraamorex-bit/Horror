@@ -26,6 +26,7 @@ Foley.Prompt = {
 	{ "read", "Paper", 0.4 },
 	{ "enter code", "CountBeep", 0.25 },
 	{ "press", "SwitchClick", 0.35 },
+	{ "plug in", "SwitchClick", 0.35 },
 	{ "flip", "BreakerClick", 0.4 },
 	{ "light switch", "SwitchClick", 0.35 },
 	{ "turn on", "SwitchClick", 0.35 },
