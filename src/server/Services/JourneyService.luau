@@ -364,7 +364,6 @@ local function lobbyLeave(p: Player)
 		MatchSlow = s.MatchSlow,
 		Leave = s.Leave,
 		Feedback = s.Feedback,
-		FeedbackSent = s.FeedbackSent, -- (v150: our own feedback box, FeedbackService)
 		FriendSeen = s.FriendSeen,
 		FriendJoin = s.FriendJoin,
 		Perf = perfOf(p),

@@ -168,17 +168,12 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
-### Feedback we can read, no strangers in your night (v150)
+### No strangers in your night (v150), Roblox's feedback window (v151)
 The owner: "Is there a way to get you to be able to see the feedback comments there is a lot... Also many people saying
 that the people joining your game randomly or joining others game randomly is really annoying."
-- **Our own feedback box** (client `Social.feedbackBox`, server `FeedbackService`): the lobby's mailbox and every result
-  card's 📝 button open a small box in the upper half of the screen (a phone's keyboard comes up under it): one text box
-  (500 characters), SEND, and "⭐ Rate on Roblox" for Roblox's own window. The server runs the text through Roblox's filter
-  (`TextService`, the broadcast version: personal details come out as ###; if the filter fails nothing is kept) and appends
-  it to `Feedback_v1` under the day's key ("d:YYYY-MM-DD", UTC) with who, where (Lobby / Card), nights played, the place
-  version, the act and whether they were dead. One every 20 s, 8 a day per player. `tools/pull_feedback.py` prints them;
-  `FeedbackSent` in the night and lobby logs. Roblox's own feedback (Creator Hub → Audience → Feedback) has no API: its CSV
-  export goes in `marketing/feedback/`.
+- **Feedback** (v151: back to Roblox's own window, the owner: "I don't want our own feedback system Roblox's is enough"):
+  v150's own box is gone; the mailbox and every result card's 📝 button open Roblox's window. Its CSV export goes in
+  `marketing/feedback/` to be read.
 - **No strangers** (`Config.Lobby.MatchStrangers` false; MatchService and LobbyServer keep the old matching behind it): a
   circle at 0 goes to a house of its own with whoever's on it; no night is listed for strangers (`Match.isOpen`, `find`,
   `listNew`), so no one lands in yours and you never land in someone else's; the "X just went into a house with room for

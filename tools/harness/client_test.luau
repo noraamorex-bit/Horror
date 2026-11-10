@@ -750,14 +750,10 @@ local ok, err = pcall(function()
 			ctx.Remotes.Troll.OnClientEvent:Fire(kind, "Pal")
 		end
 		print("admin troll tab ok")
-		-- (v150) the result card's 📝 Feedback opens our own box (it reaches the server, which we can read)
+		-- the result card's 📝 Feedback: Roblox's own window, and the press is logged
 		local fb = ctx.Social.button(ctx.UI.Root, "feedback")
 		H.wrap(fb).Activated:Fire()
-		local fbox = H.unwrap(pg):FindFirstChild("FeedbackBox", true)
-		assert(fbox and fbox.Visible and sent[#sent] == "CardFeedback", "the card's Feedback: our box, and the press is logged")
-		fbox:FindFirstChild("FeedbackText").Text = "too many people join"
-		H.wrap(fbox:FindFirstChild("Send")).Activated:Fire()
-		assert(sentArgs[#sentArgs][1] == "SendFeedback" and sentArgs[#sentArgs][3] == "Card", "sent, marked as from a card")
+		assert(sent[#sent] == "CardFeedback" and not H.unwrap(pg):FindFirstChild("FeedbackBox", true), "the card's Feedback: Roblox's window, logged")
 		print("card feedback ok")
 	end
 	-- a prompt appears
