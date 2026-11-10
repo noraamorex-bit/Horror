@@ -114,6 +114,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   hotbar since v109** (the owner: "only 3 items got in hotbar"; Roblox's shows 3 on a phone): client
   `Gear` draws a slot for every item, sized to fit; Roblox's backpack stays off.
   Touch buttons are only SPRINT and CROUCH (plus BREATH/LEAVE/STRUGGLE in context).
+- **v152 (players' feedback, a PC downvote: "Way too many UIs overlapping, not enough time to read anything")**: nothing of the HUD
+  shows under a result card (out early, the card sat on the objective, notes and act label: `HUD` root hides while
+  `EndingUI.isShowing()`); notes 4 s apart, up 7 s, two on screen at most; the card's Starter offer is one short line.
+  **LEAVE TO LOBBY** in the house's settings (from the journal; two taps; a player: "how do i leave it"). Look at the card:
+  `ui_dump.luau card|card_dead pc|touch` + `ui_preview.mjs`.
 - Secret-ending HUD is one slim bar at the top (it was "way too big" before).
 - **Less talk (v139**, a PC downvote: "bro too many voicelines, crappy jumpscares"; the owner: "reduce the amount of
   information constantly coming and make it more relevant"): thoughts are read, not spoken (`Config.Thoughts.Spoken`); his
@@ -368,8 +373,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   version from v74). Read them before every big change.
 - The hunt's main goal from the blackout is **Call 911** from the one bar of signal at the upstairs
   bathroom window (a prompt sits there); every other way out is listed as optional.
-- The result card's countdown starts the next night with everyone still there (LOBBY to leave):
-  half the players never touched the card and most left from the lobby. The welcome card's button
+- ~~The result card's countdown starts the next night with everyone still there~~ **v152 (players' feedback: "have it so when you
+  click play it doesnt make me automatically join the house"; returning players quit 48% of their nights, a median 0.9 min in):
+  at 0 only whoever pressed ANOTHER NIGHT stays, everyone else goes back to the lobby** ("Back to the lobby in Ns · ANOTHER NIGHT
+  to stay"). The welcome card's button
   is ▶ PLAY (into a group circle): abandonment falls with group size (solo 88%, 2: 31%, 3: 7%, 4: 0%).
 - Night streak: another night within 15 min of the last pays +25% / +50%. Groups where everyone has
   finished a night can vote ⏩ SKIP TO THE BLACKOUT. 🔔 Remind me (notification opt-in) on the result
@@ -890,6 +897,20 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **10 Nov (v152 = place version 152)**, published; the owner sent Roblox's feedback CSV (46 comments; kept only in the scratchpad /
+  `marketing/feedback/*.csv`, git-ignored: player text stays out of the repo): "Use it properly and improve the game. Analyze all game
+  statistics too." The feedback: strangers joining (3 comments; done in v150), being carried into the next night (2), "how do i leave
+  it", PC downvotes on overlapping UI / no time to read / ~10 min / "AI slop" (and the store cover looks AI-made), "more jumpscares"
+  (phone; left as is: v144's two before the blackout). Stats on place versions 148-151 (12,452 lobby visits, 4,080 nights, 7,893
+  players-in-a-night): first-nighters quit mid-night 54% (2,285 of them in act I, median minute 1.5), solo nights 79% no ending,
+  **37% of teleports went into a stranger's night under way** (now off), card: neither 3,030 / again 896 / lobby 466, deaths 0.11 /
+  player, the v148 stare 0.01 / player (it hardly fires), surprises begun 0.07, his wedges 17 a night (UpperHall). One device logged
+  `SkinPose:187` 16,104 times (fixed). **Sales: 9,227 R$ since 15 Oct, ~1,400-1,600 R$/day on 8-10 Nov** (JumpscareAll 321/2,080,
+  BecomeHim 125/1,022, Starter 57/4,079, Revive 56/1,580). Done: no auto next night, the HUD under cards, slower notes, LEAVE TO LOBBY,
+  the SkinPose guard (see HUD, Retention). `pull_stats.py --from=YYYY-MM-DD` fetches only recent logs (the whole history took >1 h).
+  Next: `--since=152 --from=2026-11-10`: veterans' quick quits (want far under 48%), solo share now that strangers aren't merged, the
+  card's lobby rate; ask the owner whether to make a new store icon/thumbnail (the "AI cover" comment).
 
 - **10 Nov (v151 = place version 151)**, published; the owner: "I don't want our own feedback system Roblox's is enough bring that
   back." Done: the 📝 mailbox and the result card's Feedback open Roblox's window again; FeedbackService, the box and
@@ -1529,7 +1550,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 151; the notes' "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 152; the notes' "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

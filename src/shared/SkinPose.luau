@@ -176,7 +176,7 @@ function SkinPose.transforms(rig: Rig, pose: { [string]: any }): { [Instance]: C
 	-- feet on the floor: the whole body lifted or lowered so the lower ankle (or toe) is where it
 	-- is standing at rest, whatever the legs are doing (pose.Plant: 0..1, how much)
 	local plant = pose.Plant or 0
-	if plant > 0 and rig.Plant then
+	if plant > 0 and rig.Plant and rig.Joints.Hips and out[rig.Joints.Hips.Bone] then
 		local pl = rig.Plant
 		local hips = rig.Joints.Hips
 		local base = pl.Base * hips.Local
@@ -184,13 +184,19 @@ function SkinPose.transforms(rig: Rig, pose: { [string]: any }): { [Instance]: C
 		local err = math.huge
 		for _, sd in { "L", "R" } do
 			local th, sh, ft, to = rig.Joints[sd .. "Thigh"], rig.Joints[sd .. "Shin"], rig.Joints[sd .. "Foot"], rig.Joints[sd .. "Toe"]
+			-- (v152: a body whose leg bones haven't all arrived: one device logged this 16,104 times. Skip that leg)
+			if not (th and sh and ft and out[th.Bone] and out[sh.Bone]) then
+				continue
+			end
 			local a = hw * th.Local * out[th.Bone] * sh.Local * out[sh.Bone] * ft.Local
 			err = min(err, a.Position.Y - pl.Foot)
 			if to then
 				err = min(err, (a * out[ft.Bone] * to.Local).Position.Y - pl.Toe)
 			end
 		end
-		out[hips.Bone] = base:Inverse() * CFrame.new(0, -err * plant, 0) * hw
+		if err < math.huge then
+			out[hips.Bone] = base:Inverse() * CFrame.new(0, -err * plant, 0) * hw
+		end
 	end
 	-- fingers: each knuckle bends about its own X (the curl), spreading a little with the base ones
 	local curl = pose.Curl or { L = 0.35, R = 0.35 }

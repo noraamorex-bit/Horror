@@ -112,15 +112,19 @@ local ok, err = pcall(function()
 		local again = {}
 		for _, f in e do again[f[2].Name] = f[3].Again end
 		assert(again.Out == true and again.In == nil, "the ending card knows who already said yes")
-		-- the card's countdown runs out: everyone still here plays on together, except whoever
-		-- tapped LOBBY (half the players never touch the card)
+		-- (v152) the card's countdown runs out: only whoever pressed ANOTHER NIGHT stays; whoever did nothing
+		-- goes back to the lobby (players: "dont make me automatically join the house")
 		local stayArg = nil
 		ctx.restart = function(_, stay) stayArg = stay end
 		ctx.Reserved = true
 		ctx.Mode = { lobbyPlaceId = function() return 1 end }
+		H.flush(62)
+		assert(stayArg and stayArg[a] == true and stayArg[b] == nil, "the one who said yes stays, the one who did nothing goes to the lobby")
+		-- and LOBBY wins over an earlier yes
+		stayArg = nil
 		ctx.Remotes.LeaveGame.OnServerEvent:Fire(a)
-		ctx.Ending._finishNight()
-		assert(stayArg and stayArg[b] == true and stayArg[a] == nil, "the one who did nothing stays, the LOBBY tapper goes")
+		ctx.Ending._finishNight(true)
+		assert(stayArg and stayArg[a] == nil, "the LOBBY tapper goes")
 		ctx.Reserved = nil
 	end
 end)

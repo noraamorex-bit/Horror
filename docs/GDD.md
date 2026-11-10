@@ -168,6 +168,16 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### What the players said (v152)
+Roblox's feedback (46 comments, the owner's CSV) and the logs of place versions 148-151.
+- **No night you didn't choose**: the result card's countdown used to start the next night with everyone who hadn't tapped
+  LOBBY; now only those who pressed ANOTHER NIGHT stay (`EndingService`: `finishNight(true)` in a reserved server), the rest go
+  back to the lobby. The card says "Back to the lobby in Ns · ANOTHER NIGHT to stay".
+- **Less on screen at once**: the HUD hides under any result card (it showed through the out-early cards); notes come 4 s
+  apart, stay 7 s, two at most; the card's Starter Pack offer is one short line.
+- **LEAVE TO LOBBY** in the house's settings (two taps; `LeaveGame` "Quit", logged `Quit`).
+- **A crash on one device** (`SkinPose` foot planting on a body whose leg bones hadn't arrived) is skipped instead.
+
 ### No strangers in your night (v150), Roblox's feedback window (v151)
 The owner: "Is there a way to get you to be able to see the feedback comments there is a lot... Also many people saying
 that the people joining your game randomly or joining others game randomly is really annoying."

@@ -596,7 +596,8 @@ local function showCard(opts)
 		task.spawn(function()
 			local left = opts.RestartIn
 			while left > 0 and screen.Parent do
-				countdown.Text = (opts.ReturnToLobby and "Next night in " or "The house resets in ") .. left .. "s" .. (opts.ReturnToLobby and "   ·   LOBBY to leave" or "")
+				-- (v152: nobody is carried into another night they didn't ask for)
+				countdown.Text = opts.ReturnToLobby and (saidAgain and ("Next night in " .. left .. "s") or ("Back to the lobby in " .. left .. "s   ·   ANOTHER NIGHT to stay")) or ("The house resets in " .. left .. "s")
 				task.wait(1)
 				left -= 1
 			end

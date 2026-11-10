@@ -409,10 +409,14 @@ function Ending.trigger(kind: string)
 		})
 	end
 
+	-- (v152, players' feedback: "have it so when you click play it doesnt make me automatically join the house",
+	-- and returning players quit 48% of their nights, a median 0.9 min in: carried into a night they hadn't
+	-- chosen. At 0 only whoever pressed ANOTHER NIGHT stays; everyone else goes back to the lobby. In a public
+	-- (non-reserved) server the house just resets, as before.)
 	local mySeq = restartSeq
 	task.delay(restartIn, function()
 		if restartSeq == mySeq then
-			finishNight()
+			finishNight(ctx.Reserved == true)
 		end
 	end)
 end
