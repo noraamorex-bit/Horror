@@ -68,8 +68,13 @@ local function isDynamic(real)
 	return false
 end
 
+local filterSet: (list: any) -> any -- (below)
 function Sim.index()
 	recs, dyn, buckets = {}, {}, {}
+	-- (every part gets a new id below: filter sets cached with the old ids would exclude the wrong parts.
+	-- finale_test re-indexes after the dining door swings open, and his sight ray then hit the very player
+	-- it was meant to skip, so he only caught them when the stale ids happened to line up)
+	Sim.filterCache = {}
 	local root = H.unwrap(H.workspaceRoot)
 	for _, d in root:GetDescendants() do
 		if d:IsA("BasePart") then
@@ -99,6 +104,10 @@ function Sim.index()
 				end
 			end
 		end
+	end
+	-- (and the walkers' own skip sets, for the same reason)
+	for _, w in Sim.walkers or {} do
+		w.Skip = filterSet({ w.Model })
 	end
 	return #recs, #dyn
 end
@@ -146,7 +155,7 @@ local function descSet(real)
 	if k then Sim.filterCache[k] = set end
 	return set
 end
-local function filterSet(list)
+function filterSet(list)
 	if not list or #list == 0 then return nil end
 	local set = {}
 	for _, inst in list do
