@@ -76,6 +76,10 @@ Telemetry.start()
 local Journey = require(Services.JourneyService)
 Journey.init(ctx)
 Journey.start()
+-- (v150) the 📝 feedback box: filtered and kept in Feedback_v1 for tools/pull_feedback.py (both places)
+local Feedback = require(Services.FeedbackService)
+Feedback.init(ctx)
+Feedback.start()
 
 -- Lobby servers: queue circles that teleport groups into their own game server
 local mode = ctx.Mode.get()

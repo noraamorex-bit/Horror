@@ -118,8 +118,28 @@ local ok, err = pcall(function()
 	print("not full at 0 ok")
 	rawset(d, "Parent", nil)
 	table.remove(players, table.find(players, d))
-	-- not full at 0, and a group night elsewhere started short with room: they join it (MatchService)
+	-- (v150) strangers aren't matched any more: not full at 0, nobody looks for a night under way, a house of their own
+	assert(L.MatchStrangers == false, "strangers aren't matched by default (v150)")
 	local asked = nil
+	ctx.Match = { find = function(n) asked = n; return "night-7" end, listNew = function() asked = "listed" end }
+	do
+		local nf, rnf = makePlayer("NoMatch")
+		rnf.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad4").CFrame.Position + roblox.Vector3.new(0, 3, 0))
+		hb:Fire(0.3)
+		waitFor(1.2)
+		hb:Fire(0.3)
+		assert(asked == nil, "nobody looked for a stranger's night, and it wasn't listed for strangers: " .. tostring(asked))
+		assert(#teleports == 4 and teleports[4][2] == 1 and lastOptions.ReservedServerAccessCode == "code-123", "a house of its own")
+		assert(lastOptions.Data.Behind == nil, "and nobody left in the lobby is told to follow")
+		rawset(nf, "Parent", nil)
+		table.remove(players, table.find(players, nf))
+		hb:Fire(0.3)
+	end
+	print("no strangers ok")
+	-- (the v78-149 matching, still there behind Config.Lobby.MatchStrangers)
+	L.MatchStrangers = true
+	-- not full at 0, and a group night elsewhere started short with room: they join it (MatchService)
+	asked = nil
 	ctx.Match = { find = function(n) asked = n; return "night-7" end }
 	local f, rf = makePlayer("F")
 	rf.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad4").CFrame.Position + roblox.Vector3.new(0, 3, 0))
@@ -127,7 +147,7 @@ local ok, err = pcall(function()
 	waitFor(1.2)
 	hb:Fire(0.3)
 	assert(asked == 1, "looked for a night with room for 1")
-	assert(#teleports == 4 and teleports[4][2] == 1, "joined it")
+	assert(#teleports == 5 and teleports[5][2] == 1, "joined it")
 	assert(lastOptions.ReservedServerAccessCode == "night-7", "into that night's server")
 	assert(lastOptions.Data and lastOptions.Data.Cap == 4 and lastOptions.Data.Code == "night-7", "teleport data carries the code and the circle size")
 	print("join a night in progress ok")
@@ -143,7 +163,7 @@ local ok, err = pcall(function()
 	waitFor(L.FullCountdown + 0.3)
 	hb:Fire(0.3)
 	assert(asked == 3, "a full circle of 3 looked for room for 3, got " .. tostring(asked))
-	assert(#teleports == 5 and teleports[5][2] == 3, "then off to a fresh house")
+	assert(#teleports == 6 and teleports[6][2] == 3, "then off to a fresh house")
 	assert(lastOptions.ReservedServerAccessCode == "code-123" and lastOptions.Data.Cap == 3, "a fresh night")
 	-- PLAY SOLO never joins anyone
 	asked = nil
@@ -155,7 +175,7 @@ local ok, err = pcall(function()
 	hb:Fire(0.3)
 	waitFor(L.FullCountdown + 0.3)
 	hb:Fire(0.3)
-	assert(asked == nil and #teleports == 6, "solo: straight to its own house")
+	assert(asked == nil and #teleports == 7, "solo: straight to its own house")
 	print("full circles look too, solo never ok")
 	-- invited from inside a friend's night: straight into that house (Social.invite carries its code)
 	local inv = makePlayer("Invited")
@@ -203,6 +223,7 @@ local ok, err = pcall(function()
 	end
 	ctx.Match = savedMatch
 	print("friends ok")
+	L.MatchStrangers = false
 	-- (v118) once queued you stay queued until LEAVE: the walls hold you in, anyone pushed out is put back
 	L.Countdown = 10
 	ctx.Match = { find = function() return nil end }
@@ -268,6 +289,8 @@ local ok, err = pcall(function()
 		rawset(g, "IsFriendsWith", function(_, id) return id == 503 end)
 		local list = Lobby._leftBehind({ g })
 		assert(#list == 2 and list[1] == pal and list[2] == st, "the friend first")
+		-- (part of the matching of strangers: only with Config.Lobby.MatchStrangers)
+		L.MatchStrangers = true
 		local nBefore = #fired
 		rg.CFrame = roblox.CFrame.new(lobby:FindFirstChild("Pad2").CFrame.Position + roblox.Vector3.new(0, 3, 0))
 		hb:Fire(0.3)
@@ -280,6 +303,7 @@ local ok, err = pcall(function()
 			if string.find(fired[i], "Gina just went into a house", 1, true) then told += 1 end
 		end
 		assert(told == 2, "both told they can follow: " .. told)
+		L.MatchStrangers = false
 		print("left behind ok")
 	end
 end)

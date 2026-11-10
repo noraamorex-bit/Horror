@@ -814,6 +814,7 @@ local function teleportGroup(pad, group: { Player }, joinCode: string?)
 				-- (Code and Cap let the game server offer its empty places to the next lobby: MatchService)
 				local td: any = { PartySize = #here, Mode = "Game", Code = code, Cap = pad.Size }
 				local short = not joinCode and pad.Size > 1 and #here < pad.Size and ctx.Match ~= nil and ctx.Match.listNew ~= nil
+					and ctx.Config.Lobby.MatchStrangers == true
 				local behind = short and leftBehind(here) or {}
 				if #behind > 0 then
 					local names = {}
@@ -975,9 +976,10 @@ local function tick()
 				for i = 1, counted do
 					table.insert(group, members[i])
 				end
-				if pad.Size > 1 and ctx.Match then
+				if pad.Size > 1 and ctx.Match and L.MatchStrangers then
 					-- a group night that started short and has room for them all first (MatchService): a
-					-- lone player there gets company, and a bigger group abandons far less often
+					-- lone player there gets company, and a bigger group abandons far less often (v150: off,
+					-- players found strangers joining at random annoying)
 					pad.Matching = true
 					task.spawn(function()
 						local code = findWithin(#group, MATCH_WAIT, group)

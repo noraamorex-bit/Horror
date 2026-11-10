@@ -1,6 +1,10 @@
 --[[
 	MatchService — no lonely nights when someone else's has just started.
 
+	(v150) The matching of strangers below is OFF (Config.Lobby.MatchStrangers): players said that
+	people joining their night at random, or being put into someone else's, was really annoying. What
+	stays on: friends find each other (the JOIN card, below) and invites (InviteOpen).
+
 	The logs: a night alone was abandoned 12 times out of 13 (v78: 14 of 15), a night of three or four
 	almost never, and with few people online a group circle often goes with one player.
 
@@ -143,7 +147,8 @@ function Match.isOpen(): (boolean, number)
 	local n = #ctx.Util.sessionPlayers()
 	local L = ctx.Config.Lobby
 	local D = ctx.Director
-	if not (code and cap and cap > 1 and D) then
+	-- (v150: strangers aren't put into each other's nights: friends and invites only, through InviteOpen)
+	if not (code and cap and cap > 1 and D and L.MatchStrangers) then
 		return false, n
 	end
 	-- (a night that started full is a group that wanted to be together: never offered)
@@ -280,7 +285,7 @@ end
 -- The game server keeps the entry fresh once its players are in.
 function Match.listNew(accessCode: string, count: number)
 	local m = getMap()
-	if not m or count >= ctx.Config.MaxPlayers then
+	if not m or count >= ctx.Config.MaxPlayers or not ctx.Config.Lobby.MatchStrangers then
 		return
 	end
 	pcall(function()
@@ -316,7 +321,7 @@ end
 -- twice) and returns its access code, or nil
 function Match.find(count: number): string?
 	local m = getMap()
-	if not m then
+	if not m or not ctx.Config.Lobby.MatchStrangers then
 		return nil
 	end
 	local ok, items = pcall(function()

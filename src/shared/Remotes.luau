@@ -77,6 +77,8 @@ local NAMES = {
 	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily" | "Code" text
 	"PlayAgain", -- () from a result card: stay with this group for another night
 	"CardFeedback", -- () (v143) the result card's 📝 Feedback button was pressed (logged in the night log)
+	"SendFeedback", -- (text, where) v150: our own feedback box (FeedbackService keeps it, filtered, in Feedback_v1)
+	"FeedbackResult", -- (ok, message) v150: the answer to SendFeedback
 	"ClientInfo", -- ({Dev, Mem, Fps, Q}) the device and how well it's running (JourneyService)
 	"MonsterAction", -- (action, arg) as him: "Grab" | "Search" | "Lunge"
 }

@@ -35,6 +35,21 @@ local ok, err = pcall(function()
 	assert(ctx.Match == Match, "on ctx")
 	local MAX = ctx.Config.MaxPlayers
 
+	-- (v150) strangers aren't matched by default: nothing is listed for them, find finds nothing, but a friend
+	-- can still be invited in
+	assert(ctx.Config.Lobby.MatchStrangers == false, "off by default")
+	players = { "A" }
+	Match._set("night-A", 2, 1)
+	Match._publish()
+	assert(store["night-A"] == nil and H.unwrap(H.workspaceRoot):GetAttribute("OpenNight") == nil, "not listed for strangers")
+	assert(H.unwrap(H.workspaceRoot):GetAttribute("InviteOpen") == true, "friends can still be invited in")
+	store["night-Z"] = { n = 1, cap = MAX, at = os.time() }
+	assert(Match.find(1) == nil, "a lobby never sends strangers into it")
+	store["night-Z"] = nil
+	Match.listNew("night-Y", 1)
+	assert(store["night-Y"] == nil, "nor lists a short group for them")
+	print("no strangers ok")
+	ctx.Config.Lobby.MatchStrangers = true
 	-- a circle of 2 that started with one player: open up to the server's limit
 	players = { "A" }
 	Match._set("night-A", 2, 1)

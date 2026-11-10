@@ -85,6 +85,15 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **Feedback mailbox (v123, the owner):** across the walk from the donation board, "📝 LEAVE FEEDBACK!"; its prompt opens
   Roblox's own feedback window (`Social.feedback`). Read what players send in Creator Hub → Audience → Feedback.
   **v143**: a 📝 Feedback button on every result card too (`Social.button "feedback"`, logged as `Feedback` in the night log).
+  **v150 (the owner: "Is there a way to get you to be able to see the feedback comments")**: both open **our own box** now
+  (`Social.feedbackBox`: one text box, SEND, "⭐ Rate on Roblox" opens Roblox's window); the server filters it (Roblox's
+  broadcast filter, nothing unfiltered kept) and keeps it in `Feedback_v1` ("d:YYYY-MM-DD" keys, `FeedbackService`). **Read it
+  every session: `python3 tools/pull_feedback.py [--days=7]`.** Roblox's own feedback has no API: the owner exports its CSV
+  (Creator Hub → Audience → Feedback → export, top right) into `marketing/feedback/` for it to be read.
+- **No random strangers (v150**, the owner: "many people saying that the people joining your game randomly or joining others game
+  randomly is really annoying"): `Config.Lobby.MatchStrangers` false: no circle joins a night under way, no night lists itself for
+  strangers, nobody's told to follow a short group. You go in with who's on your circle; Roblox friends (the JOIN card) and invites
+  still come in. Don't turn it back on without the owner.
 
 **HUD / text**
 - Monochrome, bold but smaller text on dark boxes. One message at a time — never several in a couple of
@@ -350,8 +359,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **Invites pay (v121)**: a brand-new friend you bring = +200 coins for you (kept until you're back), +100 for them;
   the 👥 INVITE dock icon and "+200" on every invite button. Referral = LaunchData `ref:<id>`, Roblox's
   `ReferredByPlayerId`, or a Roblox friend in the same lobby on their first visit (StatsService).
-- Every group circle at 0 first tries to join a group night that started short (MatchService; open through
-  acts I-II until bedtime, up to 4 players). An arrow at the screen edge points to the current task when its "!" is off screen.
+- ~~Every group circle at 0 first tries to join a group night that started short~~ (off since v150: players found strangers
+  joining annoying; see Lobby). An arrow at the screen edge points to the current task when its "!" is off screen.
 - Levels (XP = coins earned playing) with rewards at milestones; LV on the lobby tag, XP bar on the
   result card; tomorrow's daily reward shown at the end of every night.
 - Analytics funnels (TelemetryService): check Creator Hub → Analytics → Funnels to find where new
@@ -883,6 +892,14 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **10 Nov (v150 = place version 150)**, published; the owner: "Is there a way to get you to be able to see the feedback comments
+  there is a lot. Tell me how to. Also many people saying that the people joining your game randomly or joining others game randomly
+  is really annoying." Done: our own feedback box that I can read (`tools/pull_feedback.py`), strangers no longer matched into
+  each other's nights (see Lobby; GDD "Feedback we can read, no strangers in your night (v150)"). Told the owner how to export
+  Roblox's own feedback CSV into `marketing/feedback/` (no API reads it). Next: read `pull_feedback.py` and any CSV in
+  `marketing/feedback/` first thing; `--since=150`: solo nights' share and abandonment (matching used to fill lone nights: watch
+  that first-night quits don't climb), votes.
 
 - **9 Nov (v149 = place version 149)**, published; the owner: "Work properly on the monster model it is too plain the face looks dumb.
   Make it proper and actually scary and texture and animations and make the monster always chasing you. Make admin panel have 'troll'
@@ -1510,7 +1527,9 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 149; the notes' "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 150; the notes' "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+- **Player feedback (v150)**: `python3 tools/pull_feedback.py [--days=N] [--json=out.json]` prints what players wrote in the
+  📝 box (Feedback_v1). Roblox's own feedback (before v150): a CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
   records): 56% never finished a night; of those who reached the hunt, ~half quit before the night ended;
