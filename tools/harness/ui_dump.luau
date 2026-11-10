@@ -157,6 +157,16 @@ elseif SCENE == "captured" then
 	player:SetAttribute("Captured", true)
 	R.Notify.OnClientEvent:Fire("He's got you. STRUGGLE to get free, or wait for a friend.", "danger")
 end
+if SCENE == "card" or SCENE == "card_dead" then
+	-- the result card after a night, as the server sends it (a win; or dead, with the revive offer)
+	local dead = SCENE == "card_dead"
+	mods.Ending._showCard({
+		Headline = dead and "HE GOT YOU" or "YOU SURVIVED", Good = not dead, Line = dead and "Second time he caught you." or "The police got here in time.",
+		EndingTitle = dead and nil or "Sirens", Duration = "14:21", WinTime = not dead and "14:21" or nil,
+		RestartIn = 35, ReturnToLobby = true, Revive = dead or nil, ReviveIn = dead and 20 or nil,
+		Coins = { Total = 140, Lines = { { "Night survived", 100 }, { "Streak +25%", 25 }, { "Quest", 15 } }, Balance = 1240, LevelBefore = 4, Level = 5, XP = 30, XPNext = 400 },
+	})
+end
 frames(12)
 end
 

@@ -449,16 +449,18 @@ function Ending.start()
 		end
 	end)
 	-- "Back to the lobby" from a result card
-	ctx.Remotes.LeaveGame.OnServerEvent:Connect(function(player)
+	ctx.Remotes.LeaveGame.OnServerEvent:Connect(function(player, how)
 		if not ctx.Reserved then
 			return
 		end
-		-- (Leaving: a teleport to the lobby that didn't go through; they can try again)
-		if not (over or player:GetAttribute("Escaped") or player:GetAttribute("Dead") or player:GetAttribute("Leaving")) then
+		-- (Leaving: a teleport to the lobby that didn't go through; they can try again. v152: "Quit" is the
+		-- settings panel's LEAVE TO LOBBY, any time: a player asked "how do i leave it")
+		local quit = how == "Quit"
+		if not (quit or over or player:GetAttribute("Escaped") or player:GetAttribute("Dead") or player:GetAttribute("Leaving")) then
 			return
 		end
 		if ctx.Journey then
-			ctx.Journey.event(player, "Lobby")
+			ctx.Journey.event(player, quit and not over and "Quit" or "Lobby")
 		end
 		goingToLobby[player] = true
 		pcall(function()

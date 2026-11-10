@@ -518,7 +518,7 @@ local function showCard(opts)
 				return b
 			end
 			if starter then
-				offer("🎁 STARTER PACK  ·  BE HIM + JUMPSCARE + revive + 500 coins  ·  R$ " .. tostring(st.Price) .. (if st.WasPrice then " (was " .. st.WasPrice .. ")" else ""), Color3.fromRGB(255, 205, 90), Color3.fromRGB(16, 14, 10), 1, function()
+				offer("🎁 STARTER PACK  ·  R$ " .. tostring(st.Price) .. (if st.WasPrice then " (was " .. st.WasPrice .. ")" else ""), Color3.fromRGB(255, 205, 90), Color3.fromRGB(16, 14, 10), 1, function()
 					pcall(function()
 						MarketplaceService:PromptProductPurchase(player, st.Id)
 					end)
@@ -608,6 +608,8 @@ end
 ---------------------------------------------------------------------------
 -- The cutscene
 ---------------------------------------------------------------------------
+Ending._showCard = function(opts) return showCard(opts) end -- (tests, ui_dump)
+
 local function letterbox(): (Frame, Frame, TextLabel)
 	local UI = ctx.UI
 	local top = UI.new("Frame", { Name = "BarTop", Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, Parent = UI.Top })

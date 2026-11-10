@@ -148,7 +148,8 @@ local function pumpNotes()
 	pumping = true
 	while #pendingNotes > 0 do
 		if ctx.Pace then
-			ctx.Pace.take(3.2)
+			-- (v152: "not enough time to read anything": 4 s apart, each up 7 s, two at most on screen)
+			ctx.Pace.take(4)
 		else
 			local clearFor = 0
 			while clearFor < 1.2 do
@@ -223,13 +224,13 @@ showNote = function(text: string, kind: string?)
 			table.insert(kids, c)
 		end
 	end
-	if #kids > 3 then
+	if #kids > 2 then
 		table.sort(kids, function(a, b)
 			return a.LayoutOrder < b.LayoutOrder
 		end)
 		kids[1]:Destroy()
 	end
-	task.delay(6, function()
+	task.delay(7, function()
 		if frame.Parent then
 			UI.tween(frame, 0.5, { BackgroundTransparency = 1 })
 			for _, d in frame:GetDescendants() do
@@ -766,7 +767,9 @@ local function update()
 	hintLabel.Text = hintText()
 	hintBox.Visible = hintLabel.Text ~= ""
 	crosshair.Visible = player:GetAttribute("InGame") == true and not player:GetAttribute("Hiding")
-	root.Visible = not workspace:GetAttribute("EndingActive")
+	-- (v152, a PC downvote: "Way too many UIs overlapping": out early, your result card sat on top of the
+	-- objective, the notes and the act label; nothing of the HUD shows under a result card now)
+	root.Visible = not workspace:GetAttribute("EndingActive") and not (ctx.EndingUI and ctx.EndingUI.isShowing())
 end
 HUD._update = update -- (tests)
 function HUD._eta(): string -- (tests)

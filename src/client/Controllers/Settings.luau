@@ -192,6 +192,31 @@ local function build()
 		save()
 	end)
 
+	-- (v152, a player: "how do i leave it": in the house there was no way back to the lobby but quitting Roblox.
+	-- Tap once to arm, again to go; the night goes on for anyone else in it)
+	if ctx.Mode ~= "Lobby" then
+		local leave = pill(panel, "LEAVE TO LOBBY", 9, 220)
+		leave.Name = "LeaveToLobby"
+		leave.Size = UDim2.fromOffset(220, 40)
+		leave.TextColor3 = Color3.fromRGB(255, 150, 140)
+		local armed = 0
+		leave.Activated:Connect(function()
+			if os.clock() - armed > 4 then
+				armed = os.clock()
+				leave.Text = "TAP AGAIN TO LEAVE"
+				task.delay(4, function()
+					if os.clock() - armed >= 4 and leave.Parent then
+						leave.Text = "LEAVE TO LOBBY"
+					end
+				end)
+				return
+			end
+			leave.Text = "GOING TO THE LOBBY..."
+			leave.AutoButtonColor = false
+			ctx.Remotes.LeaveGame:FireServer("Quit")
+		end)
+	end
+
 	local done = pill(panel, "DONE", 10, 180)
 	done.Size = UDim2.fromOffset(180, 48)
 	done.TextSize = 20

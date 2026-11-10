@@ -7,6 +7,7 @@ Usage: python3 tools/pull_stats.py [out.json] [--fresh] [--logs-only] [--since=V
   --fresh       re-fetch player records (night/lobby logs never change, so they stay cached)
   --logs-only   only the night and lobby logs (JourneyService), not the player records
   --since=N     only logs written by place version N or later (logs carry Ver from v74 on)
+  --from=DATE   only fetch logs written on DATE (YYYY-MM-DD, UTC) or later: much faster than the whole history
 
 Sections: player records (PlayerStats_v1, Economy_v1), then our own logs: every night
 (NightLog_v1: acts, objectives, who left when and in what state, devices, frame rates) and every
@@ -75,9 +76,14 @@ def entry(store, key):
 CACHE = {}
 
 
+FROM_DAY = None  # (--from=YYYY-MM-DD: only log keys written that day or later; they start with YYYYMMDD)
+
+
 def dump(store):
     # (resumable: entries already fetched are kept in the cache file)
     ks = keys(store)
+    if FROM_DAY and store in ("NightLog_v1", "LobbyLog_v1"):
+        ks = [k for k in ks if k[:8] >= FROM_DAY]
     have = CACHE.setdefault(store, {})
     todo = [k for k in ks if k not in have]
     with ThreadPoolExecutor(3) as ex:
@@ -409,6 +415,10 @@ def main():
     flags = {a for a in sys.argv[1:] if a.startswith("--")}
     out = args[0] if args else "stats_dump.json"
     cache = out + ".cache"
+    global FROM_DAY
+    fr = next((a.split("=", 1)[1] for a in flags if a.startswith("--from=")), None)
+    if fr:
+        FROM_DAY = fr.replace("-", "")
     if os.path.exists(cache):
         CACHE.update(json.load(open(cache)))
     if "--fresh" in flags:

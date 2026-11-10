@@ -184,7 +184,7 @@ for (const s of screens) {
 }
 </script></body></html>`;
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const browser = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('PAGE', m.text()); });

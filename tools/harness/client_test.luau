@@ -755,6 +755,20 @@ local ok, err = pcall(function()
 		H.wrap(fb).Activated:Fire()
 		assert(sent[#sent] == "CardFeedback" and not H.unwrap(pg):FindFirstChild("FeedbackBox", true), "the card's Feedback: Roblox's window, logged")
 		print("card feedback ok")
+		-- (v152) LEAVE TO LOBBY in the house's settings: one tap arms it, the second asks the server
+		local leave = H.unwrap(pg):FindFirstChild("LeaveToLobby", true)
+		assert(leave, "a LEAVE TO LOBBY button in the house's settings")
+		local nl = #sent
+		H.wrap(leave).Activated:Fire()
+		assert(#sent == nl and leave.Text == "TAP AGAIN TO LEAVE", "the first tap only arms it")
+		H.wrap(leave).Activated:Fire()
+		assert(sentArgs[#sentArgs][1] == "LeaveGame" and sentArgs[#sentArgs][2] == "Quit", "the second goes to the lobby")
+		-- (v152) under a result card nothing of the HUD shows
+		local root = H.unwrap(pg):FindFirstChild("HomeAloneHUD", true) or H.unwrap(pg):FindFirstChild("HUD", true)
+		mods.Ending._showCard({ Headline = "YOU GOT OUT", Good = true, Line = "x", Spectate = true, ReturnToLobby = true })
+		ctx.HUD._update()
+		assert(root and root.Visible == false, "the HUD hides under a result card")
+		print("leave + card ok")
 	end
 	-- a prompt appears
 	local part = H.Instance.new("Part")
