@@ -326,8 +326,16 @@ local ok, err = pcall(function()
 		S.Players.GetPlayers = function() return { player, other } end
 		R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 30, ReturnToLobby = true })
 		local so, bh = find("StarterOffer"), find("BeHimOffer")
-		assert(so and string.find(so.Text, "R$ " .. st.Price, 1, true), "the Starter Pack on the card")
+		-- (v153: one offer at most: in a group staying on, being him; alone, the Starter Pack)
+		assert(not so, "one offer at most: not the Starter Pack as well")
 		assert(bh and string.find(bh.Text, "R$", 1, true), "BE HIM NEXT NIGHT with its price: " .. tostring(bh and bh.Text))
+		S.Players.GetPlayers = function() return { player } end
+		R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 30, ReturnToLobby = true })
+		so = find("StarterOffer")
+		assert(so and string.find(so.Text, "R$ " .. st.Price, 1, true), "alone: the Starter Pack on the card")
+		S.Players.GetPlayers = function() return { player, other } end
+		R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 30, ReturnToLobby = true })
+		bh = find("BeHimOffer")
 		-- pressed (and bought: a saved one): next night it's used as soon as it opens
 		local sent = {}
 		local realFire = R.MonsterAction.FireServer

@@ -898,6 +898,20 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **10 Nov (v153 = place version 153)**, published; the owner played and sent screenshots: "so many models that are bugged... Fix all of them.
+  Search for others like this too... Pizza guy looks dumb make him an actual character. The monster is too dark colored... The results card
+  is so overcrowded also it doesn't make much sense for him to get arrested. The whole experience is still very short... add new parts to
+  make it longer. For this story bit consult me first." Done: **World/Surfaces** (every part, ours or a store model's: Roblox's Fabric
+  renders as knitted wool, 2,951 parts in the house: rugs → Carpet, the rest SmoothPlastic; lamp shades cast no shadow), the pendant bulbs
+  hang under their shades (the stripes), the three bathroom mirrors above the tiles (the steamed writing was half behind them), the stair
+  photos under the crown, the guitar turned round (Props Yaw 180), `UI.fitLabel` wraps (thoughts were cut to one line), his tint
+  212,202,200 + brighter face/chest lights, the pizza guy a real avatar (Roblox "Man" body, a red pizza polo 7166679138, black jeans
+  8964106097, falls back one item at a time: every live build had failed to the blocky stand-in), the result card cut down (ending and
+  time on one line, no coin breakdown / tomorrow / streak lines, one offer at most, smaller pills), the Sirens ending says they never
+  found him. **Waiting on the owner**: which new story parts to build for a longer night, and what the other endings that "arrest Curtis
+  Vane" (Case Closed, Locked In...) should say. Can't see the real client: check the pizza guy loads as the avatar (the server log warns
+  "[Delivery] avatar level N failed" if not), his colour, the sofas/beds without the knit, the card.
+
 - **10 Nov (v152 = place version 152)**, published; the owner sent Roblox's feedback CSV (46 comments; kept only in the scratchpad /
   `marketing/feedback/*.csv`, git-ignored: player text stays out of the repo): "Use it properly and improve the game. Analyze all game
   statistics too." The feedback: strangers joining (3 comments; done in v150), being carried into the next night (2), "how do i leave
@@ -1550,7 +1564,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 152; the notes' "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 153; the notes' "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

@@ -168,6 +168,21 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### Bugged models, the pizza guy, a lighter him, a calmer card (v153)
+The owner's playthrough screenshots.
+- **World/Surfaces**: Roblox's Fabric material is a chunky knit; 2,951 house parts used it (sofas, beds, curtains, wallpaper,
+  the pizza guy's stand-in sweater) and some store models too. Every part that appears gets SmoothPlastic, rugs Carpet. Lamp
+  shades cast no shadows; the pendant bulbs hang just under their shades (their light streaked across the inside).
+- Placement: the bathroom mirrors were half behind the tile wainscot and chair rail (the steamed "I SAW YOU" was cut); the
+  stair photos ran into the crown; the guitar showed its back. `UI.fitLabel` measures its text (TextService) so long lines wrap
+  onto a second line instead of being cut.
+- **Him**: `Rig.SkinTint` 212,202,200, face glow 2.2/10, chest aura 1.6/14.
+- **The pizza guy**: a real avatar (Roblox "Man" body, a red pizza polo, black jeans, hair, visor); each extra is dropped in turn
+  until one builds (live, every build had failed to the part-built stand-in).
+- **The result card**: the ending and your time on one line, one coin total (no breakdown), no "tomorrow" line, the streak bonus
+  on the countdown line, one offer at most (BE HIM in a group > Jumpscare Everyone out early > Starter Pack > 2x Coins), smaller
+  like pill and buttons. The Sirens ending: they search every room and never find him.
+
 ### What the players said (v152)
 Roblox's feedback (46 comments, the owner's CSV) and the logs of place versions 148-151.
 - **No night you didn't choose**: the result card's countdown used to start the next night with everyone who hadn't tapped

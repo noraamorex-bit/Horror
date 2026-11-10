@@ -59,6 +59,8 @@ local function setupLighting()
 end
 
 setupLighting()
+-- (v153) no knitted-wool Fabric anywhere, no shadow streaks inside lamp shades: World/Surfaces
+require(script.World.Surfaces).watch()
 
 -- saved stats (nights, survivals, endings found), in the lobby and in the house
 local Stats = require(Services.StatsService)

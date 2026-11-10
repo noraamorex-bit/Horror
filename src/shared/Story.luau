@@ -896,9 +896,10 @@ Story.Endings = {
 		Body = "The police find four soaked, shaking teenagers who have already solved it.\n\nThe coffee in the sink. The invoice from VANE HOME SERVICES. The lanyard with the eyes scratched out. The photos from the top of the stairs. Nineteen days of it, laid out on the kitchen table.\n\nCurtis Vane is picked up at the van before he can start the engine. Detective Ruiz reads your notes twice.\n\n'You kids did half my job,' she says. 'Go home. Well. Stay home.'",
 	},
 	Sirens = {
-		Short = "The police arrived in time. Curtis Vane was arrested.",
+		-- (v153, the owner: "it doesn't make much sense for him to get arrested")
+		Short = "The police got you out. They searched every room. They never found him.",
 		Title = "SIRENS",
-		Body = "Blue and red light floods the rain. Two cruisers, then a third.\n\nCurtis Vane is arrested forty minutes later, sitting in a gray van two streets away, soaked through, with nowhere left to go.\n\nOn Monday, Jamie's dad resets the garage code. It had been 4-1-9-7 since April.",
+		Body = "Blue and red light floods the rain. Two cruisers, then a third.\n\nThey go room by room with flashlights: the basement, the garage, the attic. Nothing. Only a nest of blankets up under the roof, still warm.\n\nOn Monday, Jamie's dad nails the attic hatch shut. That night, something scratches at it from the other side.",
 	},
 	LockedIn = {
 		Short = "You locked him in the basement until the police came.",

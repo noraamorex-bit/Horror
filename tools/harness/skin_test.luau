@@ -21,7 +21,8 @@ local ok, err = pcall(function()
 	assert(tostring(sa.ColorMapContent):find("17737123793"), "the colour map: " .. tostring(sa.ColorMapContent))
 	assert(tostring(sa.NormalMapContent):find("17737124050"), "the normal map kept")
 	assert(tostring(sa.MetalnessMapContent) == "Content(None)", "no metalness map")
-	assert(sa.Color.R < 0.7 and sa.Color.G < 0.7, "tinted darker: " .. tostring(sa.Color))
+	-- (v153: the owner couldn't see him: lighter again, still not the raw store colours)
+	assert(sa.Color.R > 0.75 and sa.Color.R < 0.95, "tinted, but light enough to see: " .. tostring(sa.Color))
 	assert(not Rig.Masked, "v149: no mask, his own face")
 	-- (v114) the porcelain mask and hair go on the new head: everything on the old Head but its neck and
 	-- the light's anchor, grown to fit the bigger skull

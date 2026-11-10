@@ -64,6 +64,16 @@ local AVATAR = {
 	Head = 10725826963, -- Roblox: Man Face - Head
 	Hair = 9243976603, -- Roblox: Short Fringe - Brown
 	Hat = 129796479999584, -- UGC (Russ UGC): Classic Pizza Place Visor
+	-- (v153, the owner: "Pizza guy looks dumb make him an actual character". In the live game every build of the
+	-- avatar failed and the blocky stand-in stood at the door: one bad item sank the whole description. A real
+	-- body (Roblox's "Man"), a real uniform, and each extra dropped in turn until one builds)
+	Torso = 86500008, -- Roblox: Man Torso
+	RightArm = 86500036,
+	LeftArm = 86500054,
+	LeftLeg = 86500064,
+	RightLeg = 86500078,
+	Shirt = 7166679138, -- "Pizza Delivery Shirt" (Block Evolution Studios, verified): a red polo
+	Pants = 8964106097, -- "Black jeans pants"
 }
 local SKIN = Color3.fromRGB(234, 190, 152)
 local SHIRT_RED = Color3.fromRGB(196, 32, 28)
@@ -93,13 +103,27 @@ local function logo(torso: BasePart)
 	corner.Parent = label
 end
 
-local function describe(withHead: boolean)
+-- what goes into him, from everything (level 1) down to a plain body in uniform colours (level 5)
+local function describe(level: number)
 	local desc = Instance.new("HumanoidDescription")
-	if withHead then
+	if level <= 3 then
+		desc.Torso = AVATAR.Torso
+		desc.RightArm = AVATAR.RightArm
+		desc.LeftArm = AVATAR.LeftArm
+		desc.LeftLeg = AVATAR.LeftLeg
+		desc.RightLeg = AVATAR.RightLeg
+	end
+	if level <= 2 then
 		desc.Head = AVATAR.Head
 	end
-	desc.HairAccessory = tostring(AVATAR.Hair)
-	desc.HatAccessory = tostring(AVATAR.Hat)
+	if level <= 1 then
+		desc.HatAccessory = tostring(AVATAR.Hat)
+	end
+	if level <= 4 then
+		desc.Shirt = AVATAR.Shirt
+		desc.Pants = AVATAR.Pants
+		desc.HairAccessory = tostring(AVATAR.Hair)
+	end
 	desc.HeadColor = SKIN
 	desc.LeftArmColor = SKIN
 	desc.RightArmColor = SKIN
@@ -109,17 +133,27 @@ local function describe(withHead: boolean)
 	desc.HeightScale = 1.05
 	desc.WidthScale = 0.95
 	desc.DepthScale = 0.95
-	desc.BodyTypeScale = 0
+	desc.BodyTypeScale = 0.3
 	desc.ProportionScale = 0
 	return desc
 end
+Delivery._describe = describe -- (tests)
 
 local function avatarActor(folder: Instance, start: CFrame)
 	local Players = game:GetService("Players")
-	local okHead, built = pcall(function()
-		return Players:CreateHumanoidModelFromDescription(describe(true), Enum.HumanoidRigType.R15)
-	end)
-	local model = okHead and built or Players:CreateHumanoidModelFromDescription(describe(false), Enum.HumanoidRigType.R15)
+	local model
+	for level = 1, 5 do
+		local ok, built = pcall(function()
+			return Players:CreateHumanoidModelFromDescription(describe(level), Enum.HumanoidRigType.R15)
+		end)
+		if ok and built then
+			model = built
+			model:SetAttribute("AvatarLevel", level)
+			break
+		end
+		warn("[Delivery] avatar level " .. level .. " failed: " .. tostring(built))
+	end
+	assert(model, "no avatar could be built")
 	-- grown-up height next to the (scaled-up) players
 	pcall(function()
 		model:ScaleTo(1.15)

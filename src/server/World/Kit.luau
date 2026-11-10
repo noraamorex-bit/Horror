@@ -666,7 +666,9 @@ function Kit.pendant(parent, top: Vector3, drop: number, color: Color3?)
 	local base = CF(top - V(0, drop + 1.0, 0))
 	Kit.lathe(m, "PendantShade", base, { { 0, 1.6 }, { 0.12, 1.55 }, { 0.45, 1.2 }, { 0.75, 0.7 }, { 0.95, 0.35 }, { 1.0, 0.2 } }, c, M.Metal)
 	Kit.vcyl(m, "ShadeRim", base * CF(0, 0.02, 0), 0.05, 1.64, C.Brass, M.Metal)
-	local bulb = Kit.ball(m, "PendantBulb", (base * CF(0, 0.15, 0)).Position, 0.5, Color3.fromRGB(255, 214, 160), M.Plastic)
+	-- (v153: the bulb hangs just under the rim, not inside the solid shade: its light threw streaks across the shade)
+	local bulb = Kit.ball(m, "PendantBulb", (base * CF(0, -0.12, 0)).Position, 0.45, Color3.fromRGB(255, 214, 160), M.Plastic)
+	bulb.CastShadow = false
 	local light = Instance.new("PointLight")
 	light.Range = 18
 	light.Brightness = 1.15

@@ -109,11 +109,34 @@ function UI.box(props: { [string]: any }, pad: { number }?): Frame
 end
 
 -- a label that grows to fit its text, wrapping at `maxWidth`
+-- a label as wide as its text, up to maxWidth, then wrapping onto more lines.
+-- (v153, the owner's screenshot: "Heavy. Okay, to the" and nothing more. AutomaticSize XY under a max-width
+-- constraint wraps the text but keeps one line's height, so the rest was cut off. The width is measured and
+-- set instead; only the height is automatic.)
+local TextService = game:GetService("TextService")
 function UI.fitLabel(props: { [string]: any }, maxWidth: number): TextLabel
 	props.Size = props.Size or UDim2.new()
 	props.AutomaticSize = Enum.AutomaticSize.XY
+	props.TextWrapped = true
 	local l = UI.label(props)
+	local function fit()
+		local ok, size = pcall(function()
+			local plain = l.RichText and (string.gsub(l.Text, "<[^>]+>", "")) or l.Text
+			return TextService:GetTextSize(plain, l.TextSize, l.Font, Vector2.new(maxWidth, math.huge))
+		end)
+		if ok and typeof(size) == "Vector2" and size.X > 0 then
+			l.AutomaticSize = Enum.AutomaticSize.Y
+			l.Size = UDim2.new(0, math.min(maxWidth, math.ceil(size.X) + 4), 0, 0)
+		else
+			l.AutomaticSize = Enum.AutomaticSize.XY
+		end
+	end
 	UI.new("UISizeConstraint", { MaxSize = Vector2.new(maxWidth, math.huge), Parent = l })
+	pcall(function()
+		l:GetPropertyChangedSignal("Text"):Connect(fit)
+		l:GetPropertyChangedSignal("TextSize"):Connect(fit)
+	end)
+	fit()
 	return l
 end
 

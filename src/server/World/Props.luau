@@ -42,7 +42,7 @@ Props.Models = {
 	FloorLamp = { Id = 4128475322, Yaw = 0 }, -- "Old Floor Lamp (Mesh)": brass stand, pleated shade
 	Stool = { Id = 13001590550, Yaw = 0 }, -- "Bar Chair Stool": black seat on a chrome stem
 	WaterHeater = { Id = 1037614531, Yaw = 0 }, -- "Electric Water Heater": white tank, copper pipes
-	Guitar = { Id = 1491240459, Yaw = 0 }, -- "Acoustic Guitar Mesh"
+	Guitar = { Id = 1491240459, Yaw = 180 }, -- "Acoustic Guitar Mesh" (v153: Yaw 0 showed its back to the room: the owner's screenshot)
 	-- (the dressing pass, World/Dress: inspected for scripts, one mesh or a few plain parts each)
 	Toaster = 12981691084, -- a brushed-steel two-slot toaster (one mesh)
 	KnifeBlock = 15764570325, -- "Knife block thing": a wooden block, three handles

@@ -300,8 +300,8 @@ function Rig.build(Builder): Model
 	local glowAt = stick(head, "FaceGlow", V(0.1, 0.1, 0.1), onMask(0, 0.05, 0.8), GLINT, nil, { Transparency = 1, CastShadow = false })
 	local glow = Instance.new("PointLight")
 	glow.Color = Color3.fromRGB(196, 206, 232)
-	glow.Brightness = 1.3
-	glow.Range = 7
+	glow.Brightness = 2.2 -- (v153: 1.3 / 7: he read as a dark shape)
+	glow.Range = 10
 	glow.Shadows = false
 	glow.Parent = glowAt
 	-- and a faint cold light off his chest onto the walls and floor around him, so his shape shows
@@ -309,8 +309,8 @@ function Rig.build(Builder): Model
 	local aura = Instance.new("PointLight")
 	aura.Name = "Aura"
 	aura.Color = Color3.fromRGB(150, 166, 205)
-	aura.Brightness = 0.8
-	aura.Range = 11
+	aura.Brightness = 1.6 -- (v153: 0.8 / 11)
+	aura.Range = 14
 	aura.Shadows = false
 	aura.Parent = upperTorso
 
@@ -391,7 +391,8 @@ Rig.SkinColor = Color3.fromRGB(58, 55, 56)
 -- painted skin and his own face again (the v112 creature: eyeless sockets, the maw of teeth splitting the face down the chest), no
 -- porcelain mask or hair; the skin tinted darker and colder than its paint (SurfaceAppearance.Color) so it's grimy, not bright
 Rig.Masked = false
-Rig.SkinTint = Color3.fromRGB(135, 126, 128)
+-- (v153, the owner: "The monster is too dark colored I can barely see him apart from the outline": 135, 126, 128)
+Rig.SkinTint = Color3.fromRGB(212, 202, 200)
 -- the eyeshine: where each socket is in the body mesh's own units (x mirrored), its size in studs, its colour
 Rig.EyeAt = Vector3.new(0.48, 5.52, -0.56)
 Rig.EyeSize = 0.075

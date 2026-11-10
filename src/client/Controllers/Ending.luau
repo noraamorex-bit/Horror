@@ -181,7 +181,8 @@ local function showCard(opts)
 		BackgroundTransparency = 1,
 		Parent = screen,
 	})
-	UI.new("UIListLayout", { Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = col })
+	-- (v153, the owner: "The results card is so overcrowded": one line per thing, nothing twice, one offer at most)
+	UI.new("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = col })
 	local order = 0
 	local function line(props)
 		order += 1
@@ -199,14 +200,21 @@ local function showCard(opts)
 			UI.tween(pill, 0.5, { TextTransparency = 0 })
 		end)
 	end
-	local head = line({ Text = opts.Headline, Font = Enum.Font.GothamBlack, TextSize = 76, TextColor3 = opts.Good and Color3.fromRGB(245, 245, 240) or BAD, TextTransparency = 1 })
+	local head = line({ Text = opts.Headline, Font = Enum.Font.GothamBlack, TextSize = 64, TextColor3 = opts.Good and Color3.fromRGB(245, 245, 240) or BAD, TextTransparency = 1 })
 	UI.new("UIStroke", { Color = accent, Thickness = 2, Transparency = 0.6, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual, Parent = head })
 	-- the headline drops in
 	local scale = UI.new("UIScale", { Scale = 1.35, Parent = head })
 	UI.tween(head, 0.45, { TextTransparency = 0 })
 	UI.tween(scale, 0.55, { Scale = 1 }, Enum.EasingStyle.Back)
-	if opts.EndingTitle then
-		line({ Text = "ENDING  ·  " .. opts.EndingTitle, Font = UI.Font.Bold, TextSize = 18, TextColor3 = accent })
+	if opts.EndingTitle or opts.WinTime then
+		local bits = {}
+		if opts.EndingTitle then
+			table.insert(bits, "ENDING  ·  " .. opts.EndingTitle)
+		end
+		if opts.WinTime then
+			table.insert(bits, tostring(opts.WinTime) .. (opts.NewBest and "  ★ BEST" or ""))
+		end
+		line({ Text = table.concat(bits, "      "), Font = UI.Font.Bold, TextSize = 18, TextColor3 = accent })
 	end
 	local body = line({ Text = opts.Line or "", Font = UI.Font.Body, TextSize = 21, TextColor3 = UI.Color.Text, TextTransparency = 1 })
 	task.delay(0.4, function()
@@ -221,20 +229,20 @@ local function showCard(opts)
 		local pill = UI.new("Frame", {
 			Name = "LikeAsk",
 			LayoutOrder = order,
-			Size = UDim2.fromOffset(0, 44),
+			Size = UDim2.fromOffset(0, 36),
 			AutomaticSize = Enum.AutomaticSize.X,
 			BackgroundColor3 = GOLD,
 			Parent = col,
 		})
-		UI.corner(pill, 22)
+		UI.corner(pill, 18)
 		UI.new("UIPadding", { PaddingLeft = UDim.new(0, 18), PaddingRight = UDim.new(0, 18), Parent = pill })
 		UI.label({
-			Size = UDim2.fromOffset(0, 44),
+			Size = UDim2.fromOffset(0, 36),
 			AutomaticSize = Enum.AutomaticSize.X,
 			Text = "👍  Did he scare you? <b>LIKE</b> the game!",
 			RichText = true,
 			Font = UI.Font.Bold,
-			TextSize = 18,
+			TextSize = 16,
 			TextWrapped = false,
 			TextColor3 = Color3.fromRGB(24, 18, 6),
 			Parent = pill,
@@ -321,14 +329,7 @@ local function showCard(opts)
 		hb.TextSize = 18
 	end
 	if opts.WinTime then
-		-- a win: your time, for the fastest-wins board in the lobby
-		line({ Text = "YOUR TIME  " .. tostring(opts.WinTime), Font = UI.Font.Bold, TextSize = 20, TextColor3 = UI.Color.Text })
-		if opts.NewBest then
-			local best = line({ Text = "★ NEW PERSONAL BEST", Font = UI.Font.Bold, TextSize = 15, TextColor3 = GOLD, TextTransparency = 1 })
-			task.delay(1.1, function()
-				UI.tween(best, 0.5, { TextTransparency = 0 })
-			end)
-		end
+		-- (v153: the time is on the ending's line)
 	elseif opts.Duration then
 		line({ Text = "Night lasted " .. tostring(opts.Duration), TextSize = 14, TextColor3 = UI.Color.Dim })
 	end
@@ -338,12 +339,14 @@ local function showCard(opts)
 		line({ Text = "Admin panel night: no coins or records", TextSize = 14, TextColor3 = UI.Color.Dim })
 	end
 	if type(coins) == "table" and (tonumber(coins.Total) or 0) > 0 then
-		local total = line({ Text = "", Font = UI.Font.Bold, TextSize = 30, TextColor3 = GOLD })
+		local total = line({ Text = "", Font = UI.Font.Bold, TextSize = 26, TextColor3 = GOLD })
 		local parts = {}
 		for _, l in (type(coins.Lines) == "table" and coins.Lines or {}) do
 			table.insert(parts, string.format("%s +%d", tostring(l.Text), tonumber(l.Amount) or 0))
 		end
-		local why = line({ Text = table.concat(parts, "   ·   "), TextSize = 13, TextColor3 = UI.Color.Dim, TextTransparency = 1 })
+		-- (v153: the breakdown line went: one number is enough on the card)
+		local why = { TextTransparency = 1 }
+		local _ = parts
 		task.spawn(function()
 			task.wait(1.2)
 			local n = tonumber(coins.Total) or 0
@@ -354,7 +357,6 @@ local function showCard(opts)
 			end
 			if total.Parent then
 				total.Text = "+" .. n .. " COINS" .. (coins.Balance and ("   <font size=\"15\" color=\"#9a968e\">you have " .. tostring(coins.Balance) .. "</font>") or "")
-				UI.tween(why, 0.5, { TextTransparency = 0 })
 				if ctx.Effects then
 					ctx.Effects.playSound("UISelect", nil, { Caption = false })
 				end
@@ -393,20 +395,7 @@ local function showCard(opts)
 			xpText.TextColor3 = up and GOLD or UI.Color.Dim
 		end)
 	end
-	-- come back tomorrow: the next daily reward
-	do
-		local ok, eco = pcall(function()
-			return game:GetService("HttpService"):JSONDecode(player:GetAttribute("Eco") or "{}")
-		end)
-		local daily = ok and type(eco) == "table" and eco.Daily or nil
-		if type(daily) == "table" and daily.Next then
-			local Cat = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Economy"))
-			-- (Next is today's day while it's unclaimed; once claimed, tomorrow is the one after it)
-			local tomorrow = daily.CanClaim and daily.Next or ((tonumber(daily.Next) or 0) % #Cat.Daily + 1)
-			local coinsNext = Cat.Daily[tomorrow] or Cat.Daily[1]
-			line({ Text = daily.CanClaim and ("Your daily reward is waiting in the lobby: " .. coinsNext .. " coins") or ("Tomorrow: day " .. tomorrow .. " reward, " .. coinsNext .. " coins" .. (tomorrow == Cat.DailyCrateDay and " + a crate" or "") .. ". Don't break your streak!"), TextSize = 13, TextColor3 = UI.Color.Dim })
-		end
-	end
+	-- (v153: tomorrow's daily reward is shown in the lobby; off the card)
 
 	-- the buttons
 	order += 1
@@ -493,6 +482,14 @@ local function showCard(opts)
 		-- (v137) out of the night with others still in the server: scare them all (it sells 1 in 8 windows)
 		local prank = ctx.Prank and ctx.Prank.buy and ctx.Prank.others and ctx.Prank.others() > 0
 			and ctx.Config.Shop.JumpscareAll and ctx.Config.Shop.JumpscareAll.Id > 0 and not opts.ReturnToLobby
+		-- (v153: one offer at most, the one most likely wanted right now)
+		if beHim then
+			starter, dbl, prank = false, nil, false
+		elseif prank then
+			starter, dbl = false, nil
+		elseif starter then
+			dbl = nil
+		end
 		if starter or beHim or dbl or prank then
 			order += 1
 			local offers = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, Parent = col })
@@ -558,17 +555,9 @@ local function showCard(opts)
 			end
 		end
 	end
-	-- the night streak: another night soon pays more (EconomyService.nightRewards)
-	if type(coins) == "table" and (tonumber(coins.NextBonus) or 0) > 0 and opts.ReturnToLobby then
-		local streak = tonumber(coins.Chain) or 0
-		line({
-			Text = (streak >= 2 and ("NIGHT STREAK ×" .. streak .. "  ·  ") or "")
-				.. "Play another night in the next " .. tostring(coins.ChainMinutes or 15) .. " min: +" .. tostring(coins.NextBonus) .. "% coins",
-			Font = UI.Font.Bold,
-			TextSize = 14,
-			TextColor3 = GOLD,
-		})
-	end
+	-- the night streak: another night soon pays more (EconomyService.nightRewards). (v153: said on the ANOTHER NIGHT
+	-- countdown line, not a line of its own)
+	local streakBonus = (type(coins) == "table" and opts.ReturnToLobby and tonumber(coins.NextBonus) or 0) or 0
 	-- Halloween: the candy you found tonight, and what's next (EconomyService.nightRewards)
 	if type(coins) == "table" and type(coins.Candy) == "table" then
 		local c = coins.Candy
@@ -585,10 +574,11 @@ local function showCard(opts)
 	local social = UI.new("Frame", { LayoutOrder = order, Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, Parent = col })
 	UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = social })
 	if ctx.Social then
-		ctx.Social.button(social, "invite")
-		ctx.Social.button(social, "favorite")
-		ctx.Social.button(social, "remind")
-		ctx.Social.button(social, "feedback")
+		for _, kind in { "invite", "favorite", "feedback", "remind" } do
+			local b = ctx.Social.button(social, kind)
+			b.TextSize = 13
+			b.Size = UDim2.fromOffset(0, 28)
+		end
 	end
 	-- (v141: the second, dim like line went: one clear ask above)
 	if opts.RestartIn then
@@ -597,7 +587,7 @@ local function showCard(opts)
 			local left = opts.RestartIn
 			while left > 0 and screen.Parent do
 				-- (v152: nobody is carried into another night they didn't ask for)
-				countdown.Text = opts.ReturnToLobby and (saidAgain and ("Next night in " .. left .. "s") or ("Back to the lobby in " .. left .. "s   ·   ANOTHER NIGHT to stay")) or ("The house resets in " .. left .. "s")
+				countdown.Text = opts.ReturnToLobby and (saidAgain and ("Next night in " .. left .. "s") or ("Back to the lobby in " .. left .. "s   ·   ANOTHER NIGHT to stay" .. (streakBonus > 0 and (" (+" .. streakBonus .. "% coins)") or ""))) or ("The house resets in " .. left .. "s")
 				task.wait(1)
 				left -= 1
 			end

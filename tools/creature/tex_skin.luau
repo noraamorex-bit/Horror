@@ -11,7 +11,7 @@ local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
 local process = require("@lune/process")
 
-local TINT = roblox.Color3.fromRGB(135, 126, 128) -- (keep in step with Rig.SkinTint)
+local TINT = roblox.Color3.fromRGB(212, 202, 200) -- (keep in step with Rig.SkinTint)
 local model = roblox.deserializeModel(fs.readFile(process.args[1]))[1]
 local body = model:FindFirstChild("Body")
 local sa = body:FindFirstChildOfClass("SurfaceAppearance")

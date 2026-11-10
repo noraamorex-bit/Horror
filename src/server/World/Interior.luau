@@ -935,7 +935,8 @@ function Interior.build(ctx, root: Instance, refs)
 	sconce(hall, F(-7.62, G + 7.8, -9.4, PX))
 	-- family photos climbing the stairs with the treads
 	for i, z in { -3, 1.5, 6, 10.5 } do
-		local y = G + (z + 6) / 22.4 * 14 + 5.4
+		-- (v153: kept under the ground floor's crown: the higher ones ran into it)
+		local y = G + 5.8 + (z + 3) / 13.5 * 4.2
 		local w, h = (i % 2 == 0) and 1.7 or 2.2, (i % 2 == 0) and 2.2 or 1.7
 		Kit.picture(hall, F(-7.6, y, z, PX), w, h, i % 2 == 0 and WOOD_DARK or BRASS, 60 + i)
 	end
@@ -968,7 +969,7 @@ function Interior.build(ctx, root: Instance, refs)
 	local bath = folder("Bathroom")
 	-- door on the south wall (from the back hall); vanity north, toilet east, towel west
 	Kit.vanity(bath, F(19.3, G, 2.3, NZ), 4.2, 2, Color3.fromRGB(70, 90, 110), Color3.fromRGB(235, 235, 232), 1)
-	Kit.mirror(bath, F(19.3, G + 6.6, 3.62, NZ), 3.2, 3.4, WOOD_DARK)
+	Kit.mirror(bath, F(19.3, G + 8.4, 3.62, NZ), 3.2, 3.4, WOOD_DARK) -- (v153: above the tiles and the rail; at 6.6 its lower third was behind them)
 	Items.dress(item(bath, "Scissors", V(17.7, G + 3.45, 2.1), V(0.8, 0.1, 0.35), Color3.fromRGB(210, 60, 60), "Scissors", "Scissors"), "Scissors")
 	Kit.toilet(bath, F(19.8, G, -1.6, NX))
 	Kit.towel(bath, F(12.55, G + 5.6, 1.2, PX), 2.4, Color3.fromRGB(120, 160, 190))
@@ -1276,7 +1277,7 @@ function Interior.build(ctx, root: Instance, refs)
 	local mbath = folder("MasterBath")
 	Kit.bathtub(mbath, F(-35.15, U, 9.3, NZ), 8, 3.6)
 	Kit.vanity(mbath, F(-16, U, 10.2, NZ), 8, 2, WOOD_DARK, Color3.fromRGB(235, 235, 232), 2)
-	Kit.mirror(mbath, F(-16, U + 6.6, 11.6, NZ), 7, 3.4, WOOD_DARK)
+	Kit.mirror(mbath, F(-16, U + 8.4, 11.6, NZ), 7, 3.4, WOOD_DARK)
 	Kit.toilet(mbath, F(-10.3, U, 2.3, PZ))
 	Kit.towel(mbath, F(-24, U + 5.6, 11.55, NZ), 2.6, Color3.fromRGB(230, 226, 214))
 	Kit.rug(mbath, F(-21, U, 6, PX), 4, 6, Color3.fromRGB(200, 200, 196))
@@ -1397,7 +1398,7 @@ function Interior.build(ctx, root: Instance, refs)
 		end
 	end)
 	end
-	Kit.mirror(hbath, F(17.5, U + 6.6, -5.62, PZ), 4, 3.4, Color3.fromRGB(200, 200, 196))
+	Kit.mirror(hbath, F(17.5, U + 8.4, -5.62, PZ), 4, 3.4, Color3.fromRGB(200, 200, 196)) -- (v153: the owner's screenshot: the steamed writing half behind the tiles)
 	Kit.toilet(hbath, F(24, U, -3.75, PZ))
 	Kit.box(hbath, "ShowerBase", CF(36.3, U + 0.2, 5.35), V(5.7, 0.4, 4.7), Color3.fromRGB(230, 230, 228), KM.Tile, { CanCollide = true, CanQuery = true })
 	Kit.box(hbath, "ShowerWall", CF(36.3, U + 5.5, 7.6), V(5.8, 11, 0.2), Color3.fromRGB(230, 230, 228), KM.Tile, { CanCollide = true })
