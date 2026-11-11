@@ -168,6 +168,19 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### A man, not a creature (v156)
+The owner: "I already said i don't like this model for monster why did you bring it back. Not so gory and regular humanoid looking but
+also really scary." Curtis is a gaunt, starved man now: bald, sunken eyes that catch the light, veins under grey skin, ragged trousers,
+barefoot, a little too long in the arm and the neck, ~9.8 studs tall. Everything he does stays (the lurching walk, the all-fours scuttle,
+the stare, the head turning right round, the scream with his jaw dropping open, the duck under doorways).
+- Asset: Creator Store 9324817907 through `tools/creature/make_curtis.luau`: Model "Creature" > invisible MeshPart "Body" (the 55 bones)
+  + 14 skinned pieces welded to it, each with a SurfaceAppearance (colour map, `Rig.SkinTint`).
+- SkinPose: the biped's bone names; MERGE (Neck2 → Neck); REST_DIR + K (each limb's rest correction, so gaits written for the old body
+  pose this one the same); `Units` (gait offsets in the old mesh's units); finger curl about Z; the jaw for the scream.
+- Server `Rig.skin`: the pieces move and stay visible with the body; the face and chest lights and the eyeshine from his own bones.
+  Client `Creature`: names from `SkinPose.Joints`, the fallback hides the pieces; `Prank` copies the pieces into its viewport.
+- Tests: skin_test (pieces, tint, bones, fingers, rest arms ~28 degrees, feet planted, head down on all fours, the jaw), creature_skin_test.
+
 ### What the logs and players said (v155)
 - **The attic part, made to happen**: after the dropped call, everyone at the window is spared `Config.Attic.DropGrace` (20 s, Hard 8)
   to get to the hatch; Mrs. Okafor's fallback call waits `OkaforWait` (60 s) longer while the booster is still out; anyone who stays

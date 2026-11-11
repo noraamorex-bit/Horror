@@ -5,7 +5,7 @@ const [,, worldPath, viewsPath, outDir] = process.argv;
 const world = JSON.parse(fs.readFileSync(worldPath, 'utf8'));
 const views = JSON.parse(fs.readFileSync(viewsPath, 'utf8'));
 fs.mkdirSync(outDir, { recursive: true });
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const W = +(process.env.W || 1920), H = +(process.env.H || 1080);
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 page.on('console', m => { if (m.type() === 'error') console.log('PAGE', m.text()); });

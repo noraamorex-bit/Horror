@@ -47,12 +47,25 @@ if (cr.skin) {
   const { execFileSync } = await import('child_process');
   const cache = spec.skinCache || 'cache_skin';
   fs.mkdirSync(cache, { recursive: true });
-  const ids = { mesh: '17737123792', color: '17737123793', normal: '17737124050', rough: '17737123673' };
-  for (const id of Object.values(ids)) if (!fs.existsSync(`${cache}/${id}.bin`)) execFileSync('python3', ['../../../tools/assets/fetch.py', cache, id], { stdio: 'pipe' });
-  const m = await decodeMesh(new Uint8Array(fs.readFileSync(`${cache}/${ids.mesh}.bin`)));
   const img = (id) => 'data:image/png;base64,' + fs.readFileSync(`${cache}/${id}.bin`).toString('base64');
-  skinData = { mesh: { pos: Array.from(m.pos), nrm: Array.from(m.nrm), uv: Array.from(m.uv), idx: Array.from(m.idx), skin: { bones: m.skin.bones, skinIndex: Array.from(m.skin.skinIndex), skinWeight: Array.from(m.skin.skinWeight) } },
-    tex: { color: img(ids.color), normal: img(ids.normal), rough: img(ids.rough) }, info: cr.skin };
+  const fetchId = (id) => { if (!fs.existsSync(`${cache}/${id}.bin`)) execFileSync('python3', ['../../../tools/assets/fetch.py', cache, String(id)], { stdio: 'pipe' }); };
+  const meshData = (m) => ({ pos: Array.from(m.pos), nrm: Array.from(m.nrm), uv: Array.from(m.uv), idx: Array.from(m.idx), skin: { bones: m.skin.bones, skinIndex: Array.from(m.skin.skinIndex), skinWeight: Array.from(m.skin.skinWeight) } });
+  if (cr.skin.pieces && cr.skin.pieces.length) {
+    // (v156) his body is 14 skinned pieces (tools/creature/make_curtis.luau), each with its own mesh space: rel puts it on the body
+    const pieces = [];
+    const texs = {};
+    for (const pc of cr.skin.pieces) {
+      fetchId(pc.mesh); if (pc.tex) { fetchId(pc.tex); texs[pc.tex] = texs[pc.tex] || img(pc.tex); }
+      const m = await decodeMesh(new Uint8Array(fs.readFileSync(`${cache}/${pc.mesh}.bin`)));
+      pieces.push({ mesh: meshData(m), tex: pc.tex, rel: pc.rel });
+    }
+    skinData = { pieces, texs, info: cr.skin };
+  } else {
+    const ids = { mesh: '17737123792', color: '17737123793', normal: '17737124050', rough: '17737123673' };
+    for (const id of Object.values(ids)) fetchId(id);
+    const m = await decodeMesh(new Uint8Array(fs.readFileSync(`${cache}/${ids.mesh}.bin`)));
+    skinData = { mesh: meshData(m), tex: { color: img(ids.color), normal: img(ids.normal), rough: img(ids.rough) }, info: cr.skin };
+  }
 }
 // (v148) mask parts that are file meshes (his sculpted face): decoded here, built in the page at their native size x Scale
 if (cr.parts) {
@@ -195,6 +208,45 @@ if (skinData) {
     const T = THREE;
     const loader = new T.TextureLoader();
     const load = async (u, srgb) => { const t = await loader.loadAsync(u); if (srgb) t.colorSpace = T.SRGBColorSpace; t.flipY = false; return t; };
+    const cf = (a) => new T.Matrix4().set(a[3], a[4], a[5], a[0], a[6], a[7], a[8], a[1], a[9], a[10], a[11], a[2], 0, 0, 0, 1);
+    if (sd.pieces) {
+      // (v156) one skeleton, 14 skinned pieces: each piece's vertices moved into the body's space (rel), its bind inverses with them
+      const maps = {};
+      for (const [id, u] of Object.entries(sd.texs)) maps[id] = await load(u, true);
+      const outer = new T.Group(); window.S.add(outer);
+      const inner = new T.Group(); inner.position.set(0, sd.info.half, 0); outer.add(inner);
+      const tb = {};
+      for (const b of sd.info.bones) { const o = new T.Bone(); o.name = b.name; o.matrixAutoUpdate = false; o.userData.rest = cf(b.rest); o.matrix.copy(o.userData.rest); tb[b.name] = o; }
+      for (const b of sd.info.bones) (b.parent ? tb[b.parent] : inner).add(tb[b.name]);
+      const tint = sd.info.tint ? new T.Color(sd.info.tint[0] / 255, sd.info.tint[1] / 255, sd.info.tint[2] / 255) : new T.Color(1, 1, 1);
+      const skins = [];
+      for (const pc of sd.pieces) {
+        const mesh = pc.mesh, M = cf(pc.rel), N = new T.Matrix3().getNormalMatrix(M);
+        const pos = new Float32Array(mesh.pos), nrm = new Float32Array(mesh.nrm), v = new T.Vector3();
+        for (let i = 0; i < pos.length; i += 3) { v.set(pos[i], pos[i + 1], pos[i + 2]).applyMatrix4(M); pos[i] = v.x; pos[i + 1] = v.y; pos[i + 2] = v.z;
+          v.set(nrm[i], nrm[i + 1], nrm[i + 2]).applyMatrix3(N).normalize(); nrm[i] = v.x; nrm[i + 1] = v.y; nrm[i + 2] = v.z; }
+        const uv = new Float32Array(mesh.uv); for (let i = 1; i < uv.length; i += 2) uv[i] = 1 - uv[i];
+        const g = new T.BufferGeometry();
+        g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+        g.setAttribute('normal', new T.Float32BufferAttribute(nrm, 3));
+        g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+        g.setAttribute('skinIndex', new T.Uint16BufferAttribute(mesh.skin.skinIndex, 4));
+        g.setAttribute('skinWeight', new T.Float32BufferAttribute(mesh.skin.skinWeight, 4));
+        g.setIndex(mesh.idx);
+        const mat = new T.MeshStandardMaterial({ map: pc.tex ? maps[pc.tex] : null, roughness: 0.78, metalness: 0, color: tint });
+        const ordered = mesh.skin.bones.map(b => tb[b.name] || new T.Bone());
+        const inverses = mesh.skin.bones.map(b => { const r = b.rot; return M.clone().multiply(new T.Matrix4().set(r[0], r[1], r[2], b.pos[0], r[3], r[4], r[5], b.pos[1], r[6], r[7], r[8], b.pos[2], 0, 0, 0, 1)).invert(); });
+        const sk = new T.SkinnedMesh(g, mat);
+        sk.frustumCulled = false; sk.castShadow = true;
+        inner.add(sk);
+        skins.push({ sk, ordered, inverses });
+      }
+      outer.updateMatrixWorld(true);
+      for (const x of skins) x.sk.bind(new T.Skeleton(x.ordered, x.inverses), new T.Matrix4());
+      outer.visible = false;
+      window.SKIN = { outer, inner, sk: skins[0].sk, tb, cf, scale: sd.info.scale };
+      return;
+    }
     const [cmap, nmap, rmap] = await Promise.all([load(sd.tex.color, true), load(sd.tex.normal), load(sd.tex.rough)]);
     const mesh = sd.mesh;
     const uv = new Float32Array(mesh.uv); for (let i = 1; i < uv.length; i += 2) uv[i] = 1 - uv[i];
@@ -210,7 +262,6 @@ if (skinData) {
     if (sd.info.color) { mat.map = null; mat.roughnessMap = null; mat.roughness = 0.62; mat.color = new T.Color(`rgb(${sd.info.color[0]},${sd.info.color[1]},${sd.info.color[2]})`); }
     // (v149: his textured body: the SurfaceAppearance's Color tint over the colour map, as the game sets it)
     else if (sd.info.tint) mat.color = new T.Color(sd.info.tint[0] / 255, sd.info.tint[1] / 255, sd.info.tint[2] / 255);
-    const cf = (a) => new T.Matrix4().set(a[3], a[4], a[5], a[0], a[6], a[7], a[8], a[1], a[9], a[10], a[11], a[2], 0, 0, 0, 1);
     const outer = new T.Group(); window.S.add(outer);
     const inner = new T.Group(); inner.position.set(0, sd.info.half, 0); outer.add(inner);
     const tb = {};

@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const font = (f) => 'data:font/ttf;base64,' + fs.readFileSync(f).toString('base64');
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const browser = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
 for (const s of spec.items) {
   const page = await browser.newPage({ viewport: { width: s.w, height: s.h } });
   const img = 'data:image/png;base64,' + fs.readFileSync(s.src).toString('base64');

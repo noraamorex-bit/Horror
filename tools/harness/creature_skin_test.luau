@@ -26,6 +26,9 @@ local ok, err = pcall(function()
 	local neck = new("Motor6D", "Neck", head)
 	neck.Part0 = torso
 	neck.Part1 = head
+	-- (v156) his body is skinned pieces around the bones' holder: they hide with it
+	local piece = new("MeshPart", "Z_Head", m)
+	piece:SetAttribute("SkinPiece", true)
 	local root = new("Part", "HumanoidRootPart", m)
 	root.Transparency = 1
 	root:SetAttribute("T0", 1)
@@ -55,6 +58,7 @@ local ok, err = pcall(function()
 	end)
 	if okL then
 		assert(lt == 1, "the static body hidden: " .. tostring(lt))
+		assert(piece.LocalTransparencyModifier == 1, "and its skinned pieces")
 	end
 	C._setFallback(W(m), false)
 	assert(torso.Transparency == 1, "and hidden again when the body can be driven")

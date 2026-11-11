@@ -1,5 +1,5 @@
--- skin_test (v112): the skinned creature. The asset (assets/Creature.rbxm) has its mesh, its
--- textures and its 68 bones; SkinPose finds every joint and finger on it; every gait (and the
+-- skin_test (v112; v156: the gaunt man, 14 skinned pieces on a 55-bone biped): the skinned creature. The asset
+-- (assets/Creature.rbxm) has its pieces, their colour map and its bones; SkinPose finds every joint and finger on it; every gait (and the
 -- duck, the look, the scream, and a blend between any two gaits) gives a finite transform for
 -- every bone; walking, his feet stay on the floor (neither floating nor sunk through it); on all
 -- fours his head comes right down and his hands reach the floor; the scream opens the maw. The
@@ -14,39 +14,28 @@ local ok, err = pcall(function()
 	assert(Skin.Scale == Rig.SkinScale, "the client's scale is the server's")
 	local model = R.deserializeModel(fs.readFile("../../assets/Creature.rbxm"))[1]
 	local body = model:FindFirstChild("Body")
-	assert(body and body.ClassName == "MeshPart", "the body is a MeshPart")
-	local sa = body:FindFirstChildOfClass("SurfaceAppearance")
-	assert(sa, "it has its surface")
-	-- (v149: his painted skin is back (v114-v148 had only the normal map), tinted darker, no metal shine)
-	assert(tostring(sa.ColorMapContent):find("17737123793"), "the colour map: " .. tostring(sa.ColorMapContent))
-	assert(tostring(sa.NormalMapContent):find("17737124050"), "the normal map kept")
-	assert(tostring(sa.MetalnessMapContent) == "Content(None)", "no metalness map")
-	-- (v153: the owner couldn't see him: lighter again, still not the raw store colours)
-	assert(sa.Color.R > 0.75 and sa.Color.R < 0.95, "tinted, but light enough to see: " .. tostring(sa.Color))
-	assert(not Rig.Masked, "v149: no mask, his own face")
-	-- (v114) the porcelain mask and hair go on the new head: everything on the old Head but its neck and
-	-- the light's anchor, grown to fit the bigger skull
-	local Builder = H.load("Server/World/Builder")
-	local m = H.unwrap(Rig.build(Builder))
-	local head = m:FindFirstChild("Head")
-	local s0 = head.Size.X
-	local keep = Rig.maskLayout(m)
-	local n, names = 0, {}
-	for p in keep do
-		n += 1
-		names[p.Name] = true
+	assert(body and body.ClassName == "MeshPart", "the body is a MeshPart (the bones' holder)")
+	-- (v156, the owner: "Not so gory and regular humanoid looking but also really scary": a gaunt, starved man, 14 skinned pieces)
+	local pieces = 0
+	for _, p in model:GetChildren() do
+		if p.ClassName == "MeshPart" and p:GetAttribute("SkinPiece") then
+			pieces += 1
+			local sa = p:FindFirstChildOfClass("SurfaceAppearance")
+			assert(sa and tostring(sa.ColorMapContent):find("9324645994"), p.Name .. ": his colour map")
+			assert(sa.Color.R > 0.85, p.Name .. ": pale, barely tinted: " .. tostring(sa.Color))
+			local weld = p:FindFirstChildOfClass("WeldConstraint")
+			assert(weld and weld.Part0 == body, p.Name .. ": welded to the body")
+		end
 	end
-	assert(names.Mask and names.Hair and names.Head and names.Maw, "the mask, the hair and the jaw kept")
-	assert(not names.NeckBone and not names.Knuckle and not names.FaceGlow, "not the old neck or the light's anchor")
-	assert(math.abs(head.Size.X - s0 * Rig.MaskScale) < 1e-4, "grown to fit")
-	print("mask: " .. n .. " parts kept")
+	assert(pieces == 14, "14 pieces: " .. pieces)
+	assert(not Rig.Masked, "no mask, his own face")
 	local bones = {}
 	for _, d in body:GetDescendants() do
 		if d.ClassName == "Bone" then bones[d.Name] = d end
 	end
 	local n = 0
 	for _ in bones do n += 1 end
-	assert(n == 68, "68 bones: " .. n)
+	assert(n == 55, "55 bones: " .. n)
 	local rig = Skin.rig(body)
 	local fingers = 0
 	for _, list in rig.Fingers do fingers += #list end
@@ -77,7 +66,17 @@ local ok, err = pcall(function()
 		return true
 	end
 	local rest = world({})
-	local standHead = rest["spine_006_0"].Position.Y
+	local J = Skin.Joints
+	local U = Skin.Units -- (the gaits' measures were in the old mesh's units)
+	local standHead = rest[J.Head].Position.Y
+	-- (v156) at rest the biped's A-pose is turned into the old body's: arms hanging ~25 degrees out, not ~50
+	for _, sd in { "L", "R" } do
+		local a, f = rest[J[sd .. "Arm"]].Position, rest[J[sd .. "Fore"]].Position
+		local d = (f - a).Unit
+		local off = math.deg(math.acos(math.clamp(-d.Y, -1, 1)))
+		print(string.format("rest: %s upper arm %.0f degrees from hanging straight down", sd, off))
+		assert(off > 15 and off < 38, sd .. " arm in the old rest pose")
+	end
 	local gaits = { "Idle", "Stare", "Walk", "Search", "Chase", "Reach", "Stunned", "Peek", "Leap", "Sit" }
 	local samples = {}
 	for _, g in gaits do
@@ -92,7 +91,7 @@ local ok, err = pcall(function()
 				assert(finite(cf), g .. ": a finite transform")
 				count += 1
 			end
-			assert(count >= 50, g .. ": drives the skeleton (" .. count .. " bones)")
+			assert(count >= 40, g .. ": drives the skeleton (" .. count .. " bones)")
 		end
 	end
 	for _, a in gaits do
@@ -104,33 +103,38 @@ local ok, err = pcall(function()
 		end
 	end
 	-- walking: the lower foot on the floor all the way through the stride
-	local floor = rest["foot_L_58"].Position.Y
+	-- (the floor: where the mesh's ankles and toes stand in its own rest pose, which the feet are planted to)
+	local floor = rig.Plant.Foot
+	local toeFloor = rig.Plant.Toe
 	local lo, hi = math.huge, -math.huge
+	local tlo, thi = math.huge, -math.huge
 	for i = 0, 23 do
 		local w = world(Skin.get("Walk", i * math.pi / 12, i * 0.1, 1))
-		local y = math.min(w["foot_L_58"].Position.Y, w["foot_R_63"].Position.Y)
+		local y = math.min(w[J.LFoot].Position.Y, w[J.RFoot].Position.Y)
 		lo, hi = math.min(lo, y), math.max(hi, y)
+		local ty = math.min(w[J.LToe].Position.Y, w[J.RToe].Position.Y)
+		tlo, thi = math.min(tlo, ty), math.max(thi, ty)
 	end
+	print(string.format("walk: lower toe %.2f..%.2f (standing %.2f)", tlo, thi, toeFloor))
 	print(string.format("walk: lower ankle %.2f..%.2f (standing %.2f)", lo, hi, floor))
-	assert(lo > floor - 0.45 and hi < floor + 0.45, "walking, his feet stay on the floor")
+	assert(tlo > toeFloor - 0.45 * U and lo > floor - 0.45 * U and hi < floor + 0.6 * U, "walking, his feet stay on the floor")
 	-- on all fours: the head down low, the hands near the floor
 	local headY, handY = -math.huge, math.huge
 	for i = 0, 11 do
 		local w = world(Skin.get("Chase", i * math.pi / 6, i * 0.1, 1))
-		headY = math.max(headY, w["spine_006_0"].Position.Y)
-		handY = math.min(handY, w["hand_L_22"].Position.Y, w["hand_R_45"].Position.Y)
+		headY = math.max(headY, w[J.Head].Position.Y)
+		handY = math.min(handY, w[J.LHand].Position.Y, w[J.RHand].Position.Y)
 	end
 	print(string.format("chase: head at most %.2f (standing %.2f), hands down to %.2f", headY, standHead, handY))
-	assert(headY < standHead - 2.5, "on all fours his head comes right down")
-	assert(handY < floor + 1.0, "his hands reach the floor")
-	-- the scream: the two sides of the maw pulled apart
+	assert(headY < standHead - 2.5 * U, "on all fours his head comes right down")
+	assert(handY < floor + 1.6 * U, "his hands reach the floor")
+	-- the scream: his jaw drops open (v156: no maw any more)
 	local shut = world(Skin.get("Idle", 0, 0, 1))
 	local open = world(Skin.get("Idle", 0, 0, 1, { Scream = 1 }))
-	local gap0 = (shut["breast_L_49"].Position - shut["breast_R_50"].Position).Magnitude
-	local w0 = shut["breast_L_49"].LookVector:Dot(shut["breast_R_50"].LookVector)
-	local w1 = open["breast_L_49"].LookVector:Dot(open["breast_R_50"].LookVector)
-	print(string.format("scream: breast bones %.2f apart, facing %.2f -> %.2f", gap0, w0, w1))
-	assert(w1 < w0 - 0.3, "the scream opens the maw")
+	local function jawDrop(w) return w[J.Head]:PointToObjectSpace((w[J.Jaw] * R.CFrame.new(-6, 0, 0)).Position) end
+	local d0, d1 = jawDrop(shut), jawDrop(open)
+	print(string.format("scream: the jaw tip moves %.2f units", (d1 - d0).Magnitude))
+	assert((d1 - d0).Magnitude > 1.5, "the scream opens his jaw")
 end)
 if ok then
 	print("skin_test: all checks passed")

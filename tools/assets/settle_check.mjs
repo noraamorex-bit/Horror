@@ -14,7 +14,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const [,, stagePath, cache] = process.argv;
 const stage = JSON.parse(fs.readFileSync(stagePath, 'utf8'));
 const { models, meshes, textures } = await loadProps(stage, cache);
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage();
 await page.setContent('<html><body></body></html>');
 await page.addScriptTag({ path: path.join(here, 'node_modules/three/build/three.min.js') });

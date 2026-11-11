@@ -59,7 +59,7 @@ local function skinOf(m: Instance): any
 		for _ in rig and rig.Joints or {} do
 			n += 1
 		end
-		if not rig or n < 23 or not rig.Joints.Head or not rig.Joints.Hips then
+		if not rig or n < (Skin.MinJoints or 23) or not rig.Joints.Head or not rig.Joints.Hips then
 			return nil
 		end
 	elseif m:GetAttribute("Skinned") then
@@ -69,7 +69,7 @@ local function skinOf(m: Instance): any
 	-- bone: where the Head part sits relative to the bone at rest, both worked out from rest frames
 	local head = m:FindFirstChild("Head")
 	local neck = head and head:FindFirstChild("Neck")
-	local bone = body and body:FindFirstChild("spine_006_0", true)
+	local bone = body and body:FindFirstChild(Skin.Joints.Head, true)
 	if rig and m:GetAttribute("Masked") then
 		if not (neck and neck:IsA("Motor6D") and neck.Part0 and bone and bone:IsA("Bone")) then
 			return nil -- (the mask and its neck joint aren't all here yet)
@@ -110,7 +110,7 @@ local function setFallback(m: Instance, on: boolean)
 	for _, d in m:GetDescendants() do
 		if d:IsA("BasePart") then
 			local t0 = d:GetAttribute("T0")
-			if d.Name == "Body" and d:IsA("MeshPart") then
+			if (d.Name == "Body" and d:IsA("MeshPart")) or d:GetAttribute("SkinPiece") then
 				d.LocalTransparencyModifier = on and 1 or 0
 			elseif type(t0) == "number" then
 				d.Transparency = on and t0 or 1
@@ -298,8 +298,8 @@ function Creature.focusFor(part: Instance?): (() -> CFrame)?
 		return nil
 	end
 	local body = (m :: Model):FindFirstChild("Body") :: BasePart
-	local neck = body:FindFirstChild("spine_004_2", true) :: Bone?
-	local head = body:FindFirstChild("spine_006_0", true) :: Bone?
+	local neck = body:FindFirstChild(Skin.Joints.Neck, true) :: Bone?
+	local head = body:FindFirstChild(Skin.Joints.Head, true) :: Bone?
 	if not neck or not head then
 		return nil
 	end

@@ -126,6 +126,20 @@ local function maskCopy(): (Model?, CFrame?)
 		-- (the eyes a little above the middle of the picture, the maw below them)
 		c.CFrame = CFrame.new(-mid + Vector3.new(0, 0.35, 0))
 		c.Parent = m
+		-- (v156: his body is 14 skinned pieces around an invisible holder for the bones: each copied in where it sits)
+		for _, piece in him:GetChildren() do
+			if piece:IsA("MeshPart") and piece:GetAttribute("SkinPiece") then
+				local pc = piece:Clone()
+				for _, x in pc:GetChildren() do
+					if not x:IsA("SurfaceAppearance") then
+						x:Destroy()
+					end
+				end
+				pc.Anchored = true
+				pc.CFrame = c.CFrame * body.CFrame:ToObjectSpace(piece.CFrame)
+				pc.Parent = m
+			end
+		end
 		return m, c.CFrame
 	end
 	local head = him and him:FindFirstChild("Head") :: BasePart?

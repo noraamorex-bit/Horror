@@ -38,6 +38,7 @@ local function cf12(c)
 	local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = c:GetComponents()
 	return { x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 }
 end
+local HEAD = SkinPose.Joints.Head
 local bones, byName = {}, {}
 for _, d in body:GetDescendants() do
 	if d:IsA("Bone") then
@@ -62,7 +63,9 @@ end
 local function restOf(name)
 	return posed(name, {})
 end
-local faceRest = restOf("spine_006_0"):Inverse() * CFrame.new(0, 5.75, -2.0)
+-- (v156) the face light: in front of his eyes, as Rig places it (1.6 studs out, 0.1 up)
+local eyeMid = (restOf("Base HumanLEye").Position + restOf("Base HumanHeadREye").Position) / 2
+local faceRest = restOf(HEAD):Inverse() * CFrame.new(eyeMid + Vector3.new(0, 0.1 / SCALE, -1.6 / SCALE))
 
 local function scaled(c)
 	return CFrame.new(c.Position * SCALE) * (c - c.Position)
@@ -75,7 +78,7 @@ local bodyOffset = CFrame.new(0, half * SCALE, 0) -- (the body's centre above hi
 local relHead
 if mask then
 	-- the Head part relative to the head bone, at rest (in studs, model space)
-	relHead = (bodyOffset * scaled(restOf("spine_006_0"))):Inverse() * cfOf(mask.head)
+	relHead = (bodyOffset * scaled(restOf(HEAD))):Inverse() * cfOf(mask.head)
 end
 
 local frames = serde.decode("json", fs.readFile(process.args[1]))
@@ -92,11 +95,11 @@ for _, f in frames do
 	local yaw = f.yaw or 0
 	local feet = Vector3.new(f.pos.x, f.pos.y, f.pos.z)
 	local place = CFrame.new(feet) * CFrame.Angles(0, yaw, 0)
-	local face = (posed("spine_006_0", byBone) * faceRest).Position
+	local face = (posed(HEAD, byBone) * faceRest).Position
 	local g = place:PointToWorldSpace((face + Vector3.new(0, half, 0)) * SCALE)
 	local fr = { root = { feet.X, feet.Y, feet.Z, yaw }, tr = tr, glow = { g.X, g.Y, g.Z }, noSkin = f.noSkin }
 	if mask then
-		local headCF = place * bodyOffset * scaled(posed("spine_006_0", byBone)) * relHead
+		local headCF = place * bodyOffset * scaled(posed(HEAD, byBone)) * relHead
 		-- (reels) "head": { pos, look, roll? } puts the mask and hair exactly there, whatever the body does
 		-- (with "noSkin" film2 draws only them: his face in the dark at the back of a closet)
 		if f.head then
@@ -138,6 +141,15 @@ if not mask then
 		tint = { tonumber(r), tonumber(g), tonumber(b) }
 	end
 end
-fs.writeFile(process.args[2], serde.encode("json", { skin = { scale = SCALE, half = half, bones = bones, color = mask and mask.color or nil, tint = tint },
+-- (v156) his 14 skinned pieces: mesh, colour map, and where each sits on the body (its mesh space -> the body's)
+local pieces = {}
+for _, p in model:GetChildren() do
+	if p:IsA("MeshPart") and p ~= body then
+		local sa = p:FindFirstChildOfClass("SurfaceAppearance")
+		table.insert(pieces, { name = p.Name, mesh = string.match(tostring(p.MeshContent.Uri), "%d+"),
+			tex = sa and string.match(tostring(sa.ColorMapContent.Uri), "%d+") or nil, rel = cf12(body.CFrame:ToObjectSpace(p.CFrame)) })
+	end
+end
+fs.writeFile(process.args[2], serde.encode("json", { skin = { scale = SCALE, half = half, bones = bones, color = mask and mask.color or nil, tint = tint, pieces = pieces },
 	parts = mask and mask.parts or nil, frames = out }))
 print("skin_frames:", #frames, "frames")

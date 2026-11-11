@@ -48,7 +48,7 @@ for (const id of texIds) {
 }
 
 const W = 1024, H = 1024;
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 page.on('console', m => { if (m.type() === 'error') console.log('PAGE', m.text()); });
 await page.setContent(`<html><body style="margin:0;background:#777"><canvas id="c" width="${W}" height="${H}"></canvas></body></html>`);

@@ -28,7 +28,7 @@ const views = viewsPath ? JSON.parse(fs.readFileSync(viewsPath, 'utf8')) : [
   { pos: [1.2, 4.6, -5.2], look: [0, 4.2, 0], fov: 38 },
 ];
 const W = 540, H = 960;
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W * views.length, height: H } });
 page.on('console', msg => { if (msg.type() === 'error') console.log('PAGE', msg.text()); });
 await page.setContent(`<html><body style="margin:0;background:#000"><canvas id="c" width="${W * views.length}" height="${H}"></canvas></body></html>`);

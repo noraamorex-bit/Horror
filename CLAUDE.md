@@ -187,6 +187,16 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **v133** (the owner: "he's still so dumb sometimes just walks past me. Make him constantly run after players"): sharper senses
   (SightDark 18 / Hard 21 / NM 24, was 13/15/14; PeripheralRange 10, was 7; HearWalk 15 / Hard 17), he chases anyone he sees within
   16 studs on his way to a hiding spot (was 9), and running to a spot shows as running (it showed as a walk).
+- **v156 — HIS BODY IS A MAN NOW (the owner: "I already said i don't like this model for monster why did you bring it back. Not so gory
+  and regular humanoid looking but also really scary")**: the v112 store creature (the skinless body, the maw splitting his face and
+  chest, its bloody colour map that v149 brought back) is gone. He's a gaunt, starved man: Creator Store 9324817907 (14 skinned mesh
+  pieces on a 55-bone biped with a jaw and eyelids), rebuilt by `tools/creature/make_curtis.luau` into assets/Creature.rbxm (an
+  invisible "Body" MeshPart holding the bones, the pieces welded to it, each with a SurfaceAppearance: the source's colour map under
+  `Rig.SkinTint` 232,228,226). `Rig.SkinScale` 0.05485 (~9.8 studs). SkinPose keeps every gait: the joints map onto the biped's bones
+  (Neck2 merges into Neck), each limb has a rest correction K (the biped's A-pose turned into the old body's rest), the gaits' body
+  offsets grow by `SkinPose.Units`; the scream drops his jaw (`JawSign`), a little slack when he's agitated; a man's proportions (stretch
+  1.08 / 1.12 / neck 1.18); eyeshine on his eye bones. film2 draws the 14 pieces (skin_frames writes `skin.pieces`). **Don't bring the
+  v112 creature, its maw or any gore back.** Previews: `skin_frames.luau` + film2 with a small spec (the scratchpad's `cur/`).
 - **v149 look and chase (the owner: "Work properly on the monster model it is too plain the face looks dumb. Make it proper and actually
   scary and texture and animations and make the monster always chasing you")**: **no mask any more** (`Rig.Masked` false): his own sculpted
   face and body with the store asset's colour map back, darkened by a tint (`Rig.SkinTint` 135,126,128 on the SurfaceAppearance; no
@@ -931,6 +941,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **11 Nov (v156 = place version 156)**, published; the owner: "I already said i don't like this model for monster why did you bring it
+  back. Not so gory and regular humanoid looking but also really scary." Done: the new body (see The intruder, v156; GDD "A man, not a
+  creature (v156)"); reels 74-75 re-rendered with him. Can't see the real client: check on a phone that all 14 pieces load and move
+  together (no piece left standing in the rest pose), his skin reads pale grey in the torchlight, the eyeshine sits in his eyes, the jaw
+  drops in the jumpscare, and Jumpscare Everyone shows his face. If a piece doesn't follow the bones in the live game, the skinning
+  across separate MeshParts is the suspect (each piece is skinned to the bones under Body).
+
 - **11 Nov (v155 = place version 155, reels 74-75 = #1-#2 of a new run)**, published; the owner sent Roblox's feedback CSV again:
   "Analyze all game statistics deeply and the feedback and improve the game, prices and gamepasses. Also prepare the next two reels.
   Start from part 1 again with the original reel style. Make it high paced tension." Feedback since v152 (15 comments): mostly
@@ -1621,7 +1638,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 155; the notes' "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 156; the notes' "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

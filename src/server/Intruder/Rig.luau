@@ -372,7 +372,7 @@ end
 -- (the joints, Head for the jumpscare, Eyes, the lights), and the clients drive its bones
 -- (client/Controllers/Creature, shared/SkinPose). Without the asset (the test harness) the
 -- part-built figure is what you see.
-Rig.SkinScale = 0.72 -- (the mesh is 13.66 tall: about 9.8 studs standing, the old figure's 9.9)
+Rig.SkinScale = 0.05485 -- (v156: the new body is 179.4 units tall: about 9.8 studs standing, the old figure's 9.9; v112-155: 0.72)
 
 -- (v114, the owner: the skinned body was "a bit too much. Make it simpler but not that simple") it
 -- wears the porcelain mask and the wet black hair again (the Head part and what's welded to it; the
@@ -392,7 +392,9 @@ Rig.SkinColor = Color3.fromRGB(58, 55, 56)
 -- porcelain mask or hair; the skin tinted darker and colder than its paint (SurfaceAppearance.Color) so it's grimy, not bright
 Rig.Masked = false
 -- (v153, the owner: "The monster is too dark colored I can barely see him apart from the outline": 135, 126, 128)
-Rig.SkinTint = Color3.fromRGB(212, 202, 200)
+-- (v156, the owner: "Not so gory and regular humanoid looking but also really scary": a gaunt, starved man, tools/creature/make_curtis.luau;
+-- his skin barely tinted, so the grey-green paint reads pale and dead in the torchlight)
+Rig.SkinTint = Color3.fromRGB(232, 228, 226)
 -- the eyeshine: where each socket is in the body mesh's own units (x mirrored), its size in studs, its colour
 Rig.EyeAt = Vector3.new(0.48, 5.52, -0.56)
 Rig.EyeSize = 0.075
@@ -465,21 +467,33 @@ function Rig.skin(model: Model, root: BasePart, upperTorso: BasePart): boolean
 	body.CanQuery = false
 	body.CanTouch = false
 	body.Massless = true
-	body.CastShadow = true
-	-- feet on the floor (the mesh is centred on its own middle; its bottom is the soles)
-	body.CFrame = root.CFrame * CFrame.new(0, -Rig.RootY + body.Size.Y / 2, 0)
+	body.CastShadow = false -- (v156: the body is an invisible holder for the bones; its 14 skinned pieces are what you see)
+	-- feet on the floor (the mesh is centred on its own middle; its bottom is the soles); the pieces move with it
+	local target = root.CFrame * CFrame.new(0, -Rig.RootY + body.Size.Y / 2, 0)
+	local delta = target * body.CFrame:Inverse()
+	local pieces = {}
+	for _, d in wrap:GetChildren() do
+		if d:IsA("BasePart") and d ~= body then
+			d.CFrame = delta * d.CFrame
+			table.insert(pieces, d)
+		end
+	end
+	body.CFrame = target
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = root
 	weld.Part1 = body
 	weld.Parent = body
 	body.Parent = model
+	for _, d in pieces do
+		d.Parent = model
+	end
 	wrap:Destroy()
 	-- the part-built figure goes invisible (v114-v148: but for the mask and the hair on its head; v149: all of it,
 	-- his own face shows)
 	local head = model:FindFirstChild("Head") :: BasePart?
 	local keep = Rig.Masked and Rig.maskLayout(model) or {}
 	for _, d in model:GetDescendants() do
-		if d:IsA("BasePart") and d ~= body and not keep[d] then
+		if d:IsA("BasePart") and d ~= body and not keep[d] and not d:GetAttribute("SkinPiece") then
 			-- (v135: kept, so a client that can't drive the skinned body can show the part-built figure instead)
 			d:SetAttribute("T0", d.Transparency)
 			d.Transparency = 1
@@ -491,23 +505,38 @@ function Rig.skin(model: Model, root: BasePart, upperTorso: BasePart): boolean
 		neck.C0 += Rig.MaskOffset
 	end
 	body.Color = Rig.SkinColor
-	-- (v149) his painted skin, darker and colder (the asset carries the tint too: tools/creature/tex_skin.luau)
+	-- (v156) the skinned pieces: welded to the body in the asset; the tint on each (the asset carries it too: make_curtis.luau)
+	local SkinPose = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("SkinPose")) :: any
+	for _, piece in model:GetChildren() do
+		if piece:IsA("MeshPart") and piece:GetAttribute("SkinPiece") then
+			local sa = piece:FindFirstChildOfClass("SurfaceAppearance")
+			if sa then
+				pcall(function()
+					(sa :: any).Color = Rig.SkinTint
+				end)
+			end
+		end
+	end
 	local sa = body:FindFirstChildOfClass("SurfaceAppearance")
 	if sa then
 		pcall(function()
 			(sa :: any).Color = Rig.SkinTint
 		end)
 	end
-	-- its lights move onto the bones: the cold glow in front of the face, the faint one off the chest
-	local k = Rig.SkinScale
-	local head = body:FindFirstChild("spine_006_0", true)
-	local chest = body:FindFirstChild("spine_003_51", true)
+	-- its lights move onto the bones: the cold glow in front of the face, the faint one off the chest (v156: placed from his own
+	-- eye and chest bones, in studs)
+	local J = SkinPose.Joints
+	local head = body:FindFirstChild(J.Head, true)
+	local chest = body:FindFirstChild(J.Chest, true)
+	local eyeL = body:FindFirstChild("Base HumanLEye", true)
+	local eyeR = body:FindFirstChild("Base HumanHeadREye", true)
 	local glowPart = model:FindFirstChild("FaceGlow", true)
 	local glow = glowPart and glowPart:FindFirstChildOfClass("PointLight")
-	if head and glow then
+	local eyesAt = (eyeL and eyeR) and (restOf(eyeL).Position + restOf(eyeR).Position) / 2 or (head and restOf(head).Position + Vector3.new(0, 0.6, -0.5))
+	if head and glow and eyesAt then
 		local at = Instance.new("Bone")
 		at.Name = "FaceLight"
-		at.CFrame = restOf(head):Inverse() * CFrame.new(0, 5.75 * k, -2.0 * k)
+		at.CFrame = restOf(head):Inverse() * CFrame.new(eyesAt + Vector3.new(0, 0.1, -1.6))
 		at.Parent = head
 		glow.Parent = at
 	end
@@ -515,20 +544,21 @@ function Rig.skin(model: Model, root: BasePart, upperTorso: BasePart): boolean
 	if chest and aura then
 		local at = Instance.new("Bone")
 		at.Name = "ChestLight"
-		at.CFrame = restOf(chest):Inverse() * CFrame.new(0, 3.0 * k, -2.4 * k)
+		at.CFrame = restOf(chest):Inverse() * CFrame.new(restOf(chest).Position + Vector3.new(0, 0.6, -2.2))
 		at.Parent = chest
 		aura.Parent = at
 	end
-	-- (v149) eyeshine: a faint cold pinprick deep in each socket, so in a dark hall you see his eyes before him
-	if head then
-		for _, sx in { -1, 1 } do
+	-- (v149) eyeshine: a faint cold pinprick in each eye, so in a dark hall you see his eyes before him (v156: on his eye bones)
+	for _, eb in { eyeL, eyeR } do
+		if eb then
 			local eye = Instance.new("Bone")
-			eye.Name = sx < 0 and "EyeShineL" or "EyeShineR"
-			eye.CFrame = restOf(head):Inverse() * CFrame.new(Rig.EyeAt.X * sx * k, Rig.EyeAt.Y * k, Rig.EyeAt.Z * k)
-			eye.Parent = head
+			eye.Name = eb == eyeL and "EyeShineL" or "EyeShineR"
+			eye.CFrame = CFrame.new(0, 0, 0)
+			eye.Parent = eb
 			local bb = Instance.new("BillboardGui")
 			bb.Name = "Shine"
 			bb.Size = UDim2.fromScale(Rig.EyeSize, Rig.EyeSize) -- (studs)
+			bb.StudsOffsetWorldSpace = Vector3.new(0, 0, -0.06)
 			bb.LightInfluence = 0
 			bb.AlwaysOnTop = false
 			bb.MaxDistance = 140
@@ -546,7 +576,6 @@ function Rig.skin(model: Model, root: BasePart, upperTorso: BasePart): boolean
 	end
 	-- (v147: the long arms, fingers and neck; v149: after the lights and eyes are placed from the true rest pose, which the
 	-- stretch then carries along with the bones they hang on)
-	local SkinPose = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("SkinPose")) :: any
 	SkinPose.stretch(body)
 	model:SetAttribute("Skinned", true)
 	model:SetAttribute("Masked", Rig.Masked and head ~= nil)

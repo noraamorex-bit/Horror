@@ -13,51 +13,72 @@
 	forward with -X; a positive Y turn looks to his left; a positive Z roll tips to his left. Each
 	rotation turns the bone (and everything below it) about its own pivot, on top of its parent's.
 	Fingers curl about their own bend axes instead (opts / pose.Curl).
+
+	(v156, the owner: "I already said i don't like this model for monster why did you bring it back. Not so gory and regular humanoid
+	looking but also really scary") the body is a gaunt, starved man now (assets/Creature.rbxm from tools/creature/make_curtis.luau: a
+	biped skeleton, 14 skinned pieces). The gaits were written for the old body, so: the joints map onto the biped's bones (its one
+	neck bone takes both of the old neck joints), each limb gets a rest correction (K) that turns the biped's A-pose into the old
+	body's rest pose before a gait's rotation is applied, and the gaits' body offsets (in the old mesh's units) grow by Units.
 ]]
 
 local SkinPose = {}
 
-SkinPose.Scale = 0.72 -- (the body's scale in the game: Rig.SkinScale)
+SkinPose.Scale = 0.05485 -- (the body's scale in the game: Rig.SkinScale; v156: the new mesh is 179.4 units tall, ~9.8 studs)
+-- (v156) the gaits' body offsets were written in the old mesh's units (13.66 tall): the new mesh's units per old unit
+SkinPose.Units = 179.4 / 13.66
 
 local A = CFrame.fromEulerAnglesYXZ
 local sin, cos, abs, max, min, floor = math.sin, math.cos, math.abs, math.max, math.min, math.floor
 local PI = math.pi
 
--- the skeleton's bones (names as the asset has them)
+-- the skeleton's bones (names as the asset has them; v156: the biped's)
 local JOINTS = {
-	Hips = "spine_66",
-	Spine = "spine_001_53",
-	Spine2 = "spine_002_52",
-	Chest = "spine_003_51",
-	Neck = "spine_004_2",
-	Neck2 = "spine_005_1",
-	Head = "spine_006_0",
-	LClav = "shoulder_L_25",
-	RClav = "shoulder_R_48",
-	LArm = "upper_arm_L_24",
-	RArm = "upper_arm_R_47",
-	LFore = "forearm_L_23",
-	RFore = "forearm_R_46",
-	LHand = "hand_L_22",
-	RHand = "hand_R_45",
-	LThigh = "thigh_L_60",
-	RThigh = "thigh_R_65",
-	LShin = "shin_L_59",
-	RShin = "shin_R_64",
-	LFoot = "foot_L_58",
-	RFoot = "foot_R_63",
-	LToe = "toe_L_56",
-	RToe = "toe_R_61",
-	LBreast = "breast_L_49",
-	RBreast = "breast_R_50",
+	Hips = "Base HumanPelvis",
+	Spine = "Base HumanSpine1",
+	Spine2 = "Base HumanSpine2",
+	Chest = "Base HumanRibcage",
+	Neck = "Base HumanNeck",
+	Head = "Base HumanHead",
+	Jaw = "Base HumanHeadJaw",
+	LClav = "Base HumanLArmCollarbone",
+	RClav = "Base HumanRArmCollarbone",
+	LArm = "Base HumanLArmUpperarm",
+	RArm = "Base HumanRArmUpperarm",
+	LFore = "Base HumanLArmForearm",
+	RFore = "Base HumanRArmForearm",
+	LHand = "Base HumanLArmPalm",
+	RHand = "Base HumanRArmPalm",
+	LThigh = "Base HumanLLegThigh",
+	RThigh = "Base HumanRThigh",
+	LShin = "Base HumanLLegCalf",
+	RShin = "Base HumanRCalf",
+	LFoot = "Base HumanLLegFoot",
+	RFoot = "Base HumanRFoot",
+	LToe = "Base HumanLLegDigit11",
+	RToe = "Base HumanRDigit11",
 }
+-- (v156) joints the old body had and this one doesn't: their rotation goes onto the joint above (Neck2 sat on Neck)
+local MERGE = { Neck2 = "Neck" }
+-- (v156) the old body's rest pose: each limb's direction to the next joint, in the creature's axes (X right, Y up, -Z forward).
+-- The biped stands in an A-pose (arms ~50 degrees out, the old body's hung ~25): K turns it into this before a gait applies
+local REST_DIR = {
+	LClav = Vector3.new(-0.88, -0.16, 0.44),
+	LArm = Vector3.new(-0.43, -0.88, 0.19),
+	LFore = Vector3.new(-0.33, -0.90, -0.28),
+	LThigh = Vector3.new(-0.00, -0.99, 0.11),
+	LShin = Vector3.new(-0.09, -0.99, 0.05),
+	-- (no foot: the two skeletons put the toe bone in different places; the biped's feet stay flat as they stand)
+}
+local CHILD = { Clav = "Arm", Arm = "Fore", Fore = "Hand", Thigh = "Shin", Shin = "Foot", Foot = "Toe" }
+local PARENT = { Clav = "Chest", Arm = "Clav", Fore = "Arm", Hand = "Fore", Thigh = "Hips", Shin = "Thigh", Foot = "Shin", Toe = "Foot" }
+SkinPose.MinJoints = 20
+SkinPose.CurlSign = -1
+SkinPose.JawSign = -1 -- (the client waits for a whole skeleton: v133)
 SkinPose.Joints = JOINTS
 
--- finger segments by side: { bone, which knuckle (1 = base) }
-local FINGERS = { "f_index", "f_middle", "f_ring", "f_pinky" }
 
 export type Rig = {
-	Joints: { [string]: { Bone: Instance, Rot: CFrame, Inv: CFrame, Local: CFrame } },
+	Joints: { [string]: { Bone: Instance, Rot: CFrame, Inv: CFrame, Local: CFrame, K: CFrame?, KpInv: CFrame? } },
 	Plant: { Base: CFrame, Foot: number, Toe: number }?,
 	Fingers: { L: { { Bone: Instance, K: number, Thumb: boolean } }, R: { { Bone: Instance, K: number, Thumb: boolean } } },
 }
@@ -103,12 +124,45 @@ function SkinPose.rig(body: Instance): Rig
 			Toe = rest(toe).Position.Y,
 		}
 	end
+	-- (v156) the rest corrections, shoulder to fingertip and hip to toe: K at each joint turns its rest direction (after the joints
+	-- above have been corrected) into the old body's
+	local function align(a: Vector3, b: Vector3): CFrame
+		local axis = a:Cross(b)
+		local d = math.clamp(a:Dot(b), -1, 1)
+		if axis.Magnitude < 1e-5 then
+			return CFrame.identity
+		end
+		return CFrame.fromAxisAngle(axis.Unit, math.acos(d))
+	end
+	for _, side in { "L", "R" } do
+		local K: { [string]: CFrame } = {}
+		for _, part in { "Clav", "Arm", "Fore", "Hand", "Thigh", "Shin", "Foot", "Toe" } do
+			local j = rig.Joints[side .. part]
+			local pName = PARENT[part]
+			local Kp = (pName == "Chest" or pName == "Hips") and CFrame.identity or (K[pName] or CFrame.identity)
+			local Kj = Kp
+			local want = REST_DIR["L" .. part]
+			local child = CHILD[part] and rig.Joints[side .. CHILD[part]]
+			if j and want and child then
+				local here = rest(j.Bone).Position
+				local dNew = (rest(child.Bone).Position - here).Unit
+				if side == "R" then
+					want = Vector3.new(-want.X, want.Y, want.Z)
+				end
+				Kj = align(Kp:VectorToWorldSpace(dNew), want.Unit) * Kp
+			end
+			K[part] = Kj
+			if j then
+				j.K = Kj
+				j.KpInv = Kp:Inverse()
+			end
+		end
+	end
+	-- fingers (v156: the biped's Digit<finger><knuckle>, finger 1 the thumb)
 	for name, b in byName do
-		local side = string.match(name, "_([LR])_%d+$")
-		local finger = string.match(name, "^(f_%a+)_0(%d)") or string.match(name, "^(thumb)_0(%d)")
-		local k = tonumber(string.match(name, "_0(%d)_"))
-		if side and finger and k then
-			table.insert(rig.Fingers[side], { Bone = b, K = k, Thumb = string.sub(name, 1, 5) == "thumb" })
+		local side, f, k = string.match(name, "Human([LR])ArmDigit(%d)(%d)$")
+		if side and f and k then
+			table.insert(rig.Fingers[side], { Bone = b, K = tonumber(k), Thumb = f == "1" })
 		end
 	end
 	return rig :: any
@@ -117,9 +171,10 @@ end
 -- (v147, the owner: "Make the monsters model much creepier") longer than a man: the upper arms, the
 -- forearms, the fingers and the neck drawn out (each bone's offset from its parent grown, so the skinned
 -- mesh stretches between the joints). Once per body (the server, before it replicates; the reel tools).
-SkinPose.Stretch = { LFore = 1.18, RFore = 1.18, LHand = 1.3, RHand = 1.3, Neck2 = 1.35, Head = 1.2 }
-SkinPose.FingerStretch = 1.55
-SkinPose.ThumbStretch = 1.3
+-- (v156, the owner: "regular humanoid looking": a man, a little too long in the arm and the neck, no more; one neck bone: Head's offset is the neck)
+SkinPose.Stretch = { LFore = 1.08, RFore = 1.08, LHand = 1.12, RHand = 1.12, Head = 1.18 }
+SkinPose.FingerStretch = 1.3
+SkinPose.ThumbStretch = 1.15
 function SkinPose.stretch(body: Instance)
 	if body:GetAttribute("Stretched") then
 		return
@@ -142,17 +197,10 @@ function SkinPose.stretch(body: Instance)
 		end
 	end
 	for name, b in byName do
-		local side = string.match(name, "_([LR])_%d+$")
-		local finger = string.match(name, "^(f_%a+)_0(%d)")
-		local thumb = string.match(name, "^(thumb)_0(%d)")
-		local k = tonumber(string.match(name, "_0(%d)_"))
+		local side, f, k = string.match(name, "Human([LR])ArmDigit(%d)(%d)$")
 		-- (from the second knuckle on: the palm keeps its size, the fingers grow)
-		if side and k and k >= 2 then
-			if finger then
-				grow(b, SkinPose.FingerStretch)
-			elseif thumb then
-				grow(b, SkinPose.ThumbStretch)
-			end
+		if side and k and tonumber(k) >= 2 then
+			grow(b, f == "1" and SkinPose.ThumbStretch or SkinPose.FingerStretch)
 		end
 	end
 end
@@ -160,8 +208,19 @@ end
 -- pose -> { [Bone]: Transform }
 function SkinPose.transforms(rig: Rig, pose: { [string]: any }): { [Instance]: CFrame }
 	local out = {}
+	-- (v156) joints this body doesn't have: onto the joint above
+	for from, to in MERGE do
+		if pose[from] and not rig.Joints[from] then
+			pose[to] = (pose[to] or CFrame.identity) * pose[from]
+			pose[from] = nil
+		end
+	end
 	for joint, j in rig.Joints do
 		local r = pose[joint]
+		-- (v156) the rest corrections: K_parent^-1 * gait * K_joint
+		if j.K then
+			r = j.KpInv * (r or CFrame.identity) * j.K
+		end
 		local move = joint == "Hips" and pose.Root or nil
 		if r or move then
 			local t = j.Inv * (r or CFrame.identity) * j.Rot
@@ -207,7 +266,8 @@ function SkinPose.transforms(rig: Rig, pose: { [string]: any }): { [Instance]: C
 			-- (each finger a little on its own, twitching when he's agitated)
 			local own = tw * 0.22 * sin(t * 6.3 + i * 1.7) * sin(t * 2.1 + i * 0.9)
 			local amt = (f.Thumb and c * 0.5 or c) + own
-			out[f.Bone] = CFrame.Angles(amt * (f.K == 1 and 0.7 or 1.0), 0, 0)
+			-- (v156: the biped's knuckles bend about their own Z)
+			out[f.Bone] = CFrame.Angles(0, 0, SkinPose.CurlSign * amt * (f.K == 1 and 0.7 or 1.0))
 		end
 	end
 	return out
@@ -609,16 +669,14 @@ function SkinPose.toPose(P: { [string]: any }, scale: number?): { [string]: any 
 			pose[j] = A(v[1], v[2], v[3])
 		end
 	end
-	-- (the breast bones pull the vertical maw in his chest open: v114, only when he screams; the rest
-	-- of the time his mouth is the mask's, pose.Mouth)
-	local maw = P.Scream or 0
-	if maw > 0 then
-		pose.LBreast = A(0, 0.66 * maw, 0)
-		pose.RBreast = A(0, -0.66 * maw, 0)
+		-- (v156: his jaw drops open as he screams; a little slack when he's agitated)
+	local open = math.max(P.Scream or 0, (P.Twitch or 0) * 0.15)
+	if open > 0 then
+		pose.Jaw = A(SkinPose.JawSign * 0.6 * open, 0, 0)
 	end
 	local r = P.Root
 	if r then
-		local k = scale or 1
+		local k = SkinPose.Units * (scale or 1)
 		pose.Root = Vector3.new(r[1] * k, r[2] * k, r[3] * k)
 	end
 	pose.Curl = { L = P.CurlL or 0.5, R = P.CurlR or 0.5 }
