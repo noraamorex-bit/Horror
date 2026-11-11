@@ -260,9 +260,9 @@ def s_turn(i, k):
         return (dict(DARK, shot="hall", cam={"pos": cam, "look": look, "fov": 58, "roll": 0.06 * math.sin(w * math.pi)}, exposure=2.4, door=OPEN,
                      hideIdx=only(LADDER, FLOOR, NAILS), flash=fl(cam, [BEHIND[0], U + 8.2, BEHIND[2]], 10.0, 0.34), glow=2.4), cr)
     v = ease((i - 44) / 5)
-    p = lerp(BEHIND, [5.2, U, 17.9], v)
+    p = lerp(BEHIND, [5.2, U, 18.5], v)
     cr = him(p, facing(p, cam), "Reach", t=4.0 + i / FPS, Scream=1.0, Duck=0.6)
-    return (dict(DARK, shot="hall", cam={"pos": cam, "look": lerp(look, [p[0], U + 9.3, p[2]], v), "fov": 58 + 12 * v}, exposure=2.4, door=OPEN,
+    return (dict(DARK, shot="hall", cam={"pos": cam, "look": lerp(look, [p[0], U + 10.3, p[2]], v), "fov": 58 + 12 * v}, exposure=2.4, door=OPEN,
                  hideIdx=only(LADDER, FLOOR, NAILS), flash=fl(cam, [p[0], U + 7.8, p[2]], 13.0, 0.45), glow=5.0), cr)
 shot("turn", 55, s_turn)
 

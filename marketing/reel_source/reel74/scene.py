@@ -240,10 +240,10 @@ def s_rise(i, k):
         cr = him(p, facing(p, cam), "Stare", t=3.0 + stop(i), Look=[0.0, 0.1], Scream=0.15 * ease((i - 30) / 8))
         return (dict(DARK, shot="attic", cam={"pos": cam, "look": lerp([6.0, 30.0, 11.2], [6.0, 33.0, 11.4], r), "fov": 52}, exposure=2.3, door=OPEN,
                      hideIdx=only(LADDER), flash=fl(cam, [6.0, 31.5 + 2.0 * r, 11.4], 9.0, 0.3), glow=1.0 + 1.5 * r), cr)
-    w = ease((i - 39) / 6)
+    w = ease((i - 39) / 6) * 0.5           # (stops short: on all fours his face fills the frame, not his legs)
     p = lerp([HOLE[0], A, HOLE[2] - 0.6], [-1.3, A, 9.9], w)
     cr = him(p, facing(p, cam), "Chase", phase=1.3 + 2.0 * w, t=3.0 + i / FPS, Scream=1.0)
-    return (dict(DARK, shot="attic", cam={"pos": cam, "look": lerp([6.0, 33.0, 11.4], [p[0], A + 2.6, p[2]], w), "fov": 52 + 14 * w}, exposure=2.4, door=OPEN,
+    return (dict(DARK, shot="attic", cam={"pos": cam, "look": lerp([6.0, 33.0, 11.4], [p[0], A + 4.0, p[2]], w), "fov": 52 + 14 * w}, exposure=2.4, door=OPEN,
                  hideIdx=only(LADDER), flash=fl(cam, [p[0], A + 2.8, p[2]], 13.0, 0.45), glow=5.0), cr)
 shot("rise", 50, s_rise)
 
