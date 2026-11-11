@@ -397,6 +397,7 @@ Config.Attic = {
 	-- (v155) the attic is no safe room: stay up there this long and he comes up the ladder after you (Hard x0.6)
 	CampAfter = 18,
 	CampPending = 30, -- (while the booster still needs plugging in: time to find it)
+	HideMarkers = 22, -- (v157) s the "!" stays on the attic's hiding spots after he's up the ladder
 }
 
 Config.Help = {
@@ -424,8 +425,10 @@ Config.Help = {
 	-- (v125) the police pulling up doesn't end the night by itself: they're at the front, he knows
 	-- it's over and comes for whoever is still inside, wherever they are. Get out the front door.
 	-- After this long the police come in anyway (whoever's still alive in there is found).
-	FinalRun = 30, -- (v134: 45)
-	FinalRunHard = 25, -- (v134: 35)
+	-- (v157, the owner: "At the end we must escape through the front door": out the front door is the only way out now; anyone free and
+	-- still inside when it runs out, he takes. So the time to get there is back: v134-156 30 / 25)
+	FinalRun = 45,
+	FinalRunHard = 35,
 	FinalRunGrace = 3, -- seconds after the door opens before he starts going for you
 }
 
@@ -549,7 +552,7 @@ Config.Shop = {
 	-- 40 R$ with a far bigger brand. 10 R$ = the cheapest pass, an impulse buy for a leftover balance)
 	Revive = { Id = 3716706476, Price = 10, Window = 15, Grace = 10 },
 	-- co-op only, bought again every night: you become him for the rest of the night (MonsterService)
-	BecomeHim = { Id = 3718593338, Price = 35 }, -- (v108: 50 → 25: opened 49 times, bought 0 at 50; v155: 25 → 35, 169 of 1,441 bought at 25 (11.7%): back to 25 if it falls under ~8%)
+	BecomeHim = { Id = 3718593338, Price = 25 }, -- (v108: 50 → 25: opened 49 times, bought 0 at 50; v155: 25 → 35 for a day; v157: back to 25, the owner's call)
 	-- one rocket for this night only (the hunt): for anyone without the pass, bought on the spot
 	RocketNight = { Id = 3718739690, Price = 10 }, -- (v110: 25 -> 15, 0 of 10 bought at 25; v118: 15 -> 10, 0 of 13 at 15)
 	-- one time only, for everyone who hasn't had it: coins, a rocket for the next night and a revive

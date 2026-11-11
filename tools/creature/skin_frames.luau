@@ -147,7 +147,8 @@ for _, p in model:GetChildren() do
 	if p:IsA("MeshPart") and p ~= body then
 		local sa = p:FindFirstChildOfClass("SurfaceAppearance")
 		table.insert(pieces, { name = p.Name, mesh = string.match(tostring(p.MeshContent.Uri), "%d+"),
-			tex = sa and string.match(tostring(sa.ColorMapContent.Uri), "%d+") or nil, rel = cf12(body.CFrame:ToObjectSpace(p.CFrame)) })
+			tex = sa and string.match(tostring(sa.ColorMapContent.Uri), "%d+") or string.match(tostring(p.TextureContent.Uri), "%d+"),
+			rel = cf12(body.CFrame:ToObjectSpace(p.CFrame)) })
 	end
 end
 fs.writeFile(process.args[2], serde.encode("json", { skin = { scale = SCALE, half = half, bones = bones, color = mask and mask.color or nil, tint = tint, pieces = pieces },

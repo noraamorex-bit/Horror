@@ -88,8 +88,13 @@ local ok, err = pcall(function()
 	local spared = nil
 	local realSpare = ctx.Intruder.spare
 	ctx.Intruder.spare = function(who, secs, ...) if who == p then spared = secs end; return realSpare(who, secs, ...) end
+	local caps = {}
+	local realCaption = ctx.Audio.caption
+	ctx.Audio.caption = function(text, ...) table.insert(caps, text); return realCaption(text, ...) end
 	rawget(window, "__signals").Triggered:Fire(p)
-	for _ = 1, ctx.Config.Help.CellCallDurationNormal + 2 do
+	local droppedAt = nil
+	for i = 1, ctx.Config.Help.CellCallDurationNormal + 2 do
+		if not droppedAt and workspace_dead() then droppedAt = i end
 		if not workspace_dead() then p:SetAttribute("Signal", 1) end
 		H.flush(1)
 	end
@@ -98,6 +103,16 @@ local ok, err = pcall(function()
 	assert(ws:GetAttribute("SignalDead") == true, "zero bars now")
 	-- (v155) a head start to the hatch for whoever was at the window
 	assert(spared and spared >= ctx.Config.Attic.DropGrace, "a head start after the drop: " .. tostring(spared))
+	-- (v157, the owner: "you're having a conversation with 911 and then they start again from 911 what's your emergency just to cut
+	-- off") the dispatcher's first line, then cut off partway through the second, then the drop: never the whole call first
+	local D = ctx.Story.Calls.Dispatch
+	local function idx(t) for i, c in caps do if c == t then return i end end return nil end
+	assert(idx(D[1]) and idx(ctx.Story.Calls.DropCut) and idx(D[1]) < idx(ctx.Story.Calls.DropCut), "her first line, then the cut: " .. table.concat(caps, " / "))
+	assert(not idx(D[2]) and not idx(D[3]), "the rest of the call never plays: " .. table.concat(caps, " / "))
+	assert(droppedAt and droppedAt <= ctx.Config.Help.CellCallDurationNormal, "it drops partway, not at the end: " .. tostring(droppedAt))
+	for _, c in caps do
+		assert(not c:find("emerg%-"), "no second 'what's your emerg-': " .. c)
+	end
 	ctx.Intruder.spare = realSpare
 	assert(ctx.AtticRun.pending(), "the booster's still out: Mrs. Okafor waits longer (Director)")
 	-- (PlayerState's tick isn't driven here: ask its signal function directly)
@@ -142,23 +157,53 @@ local ok, err = pcall(function()
 	local warned = false
 	for _, t in thoughts do if t == onLadder then warned = true end end
 	assert(warned, "the ladder creaks: HIDE")
+	-- (v157) and the "!" on every hiding spot up here
+	local hideObj = has(sent, "AtticHide")
+	assert(hideObj and #hideObj.Targets >= 4, "the hide markers on the attic's hiding spots: " .. tostring(hideObj and #hideObj.Targets))
+	local inspected = {}
+	local realInspect = ctx.Intruder.inspectSpot
+	ctx.Intruder.inspectSpot = function(spot) table.insert(inspected, spot); return realInspect(spot) end
 	H.flush(ctx.Config.Attic.ClimbDelay + 0.5)
 	assert(climbed and climbed[2] == p and (climbed[1] - ctx.Layout.Attic.HatchTop).Magnitude < 1, "he comes up through the hatch, after me")
 	assert(ctx.Rooms.floorOf(ctx.Intruder.position()) == "Attic", "he's in the attic")
-	-- two places to hide up there
+	-- four places to hide up there (v157: two old wardrobes too)
 	local n = 0
-	for _, d in world:GetDescendants() do
-		if d:IsA("ProximityPrompt") and d.Name == "Hide" and (d.ObjectText == "Under the dust sheet" or d.ObjectText == "In the old trunk") then n += 1 end
+	for _, sp in ctx.Hiding.all() do
+		if sp.Room == "Attic" then n += 1 end
 	end
-	assert(n == 2, "two hiding spots in the attic, got " .. n)
+	assert(n == 4, "four hiding spots in the attic, got " .. n)
+	-- (v157, the owner: "he should come and really check") up there, he goes to the hiding spots and listens (hide in the old wardrobe)
+	local ward = nil
+	for _, sp in ctx.Hiding.all() do
+		if sp.Name == "The old wardrobe" then ward = sp end
+	end
+	assert(ward, "the old wardrobe")
+	ctx.Hiding.enter(p, ward)
+	assert(ctx.Hiding.spotOf(p) == ward, "hidden in it")
+	H.flush(6)
+	assert(#inspected >= 1 and inspected[1] == ward, "he goes to my wardrobe first: " .. #inspected .. " " .. tostring(inspected[1] and inspected[1].Name))
+	ctx.Intruder.inspectSpot = realInspect
+	if ctx.Hiding.spotOf(p) then
+		ctx.Hiding.exit(p, true)
+	end
+	-- (v157, the owner: "Keep a pepper spray in attic")
+	local spray = prompt("TakeSpray")
+	assert(spray and spray.Enabled, "a pepper spray up here")
+	rawget(spray, "__signals").Triggered:Fire(p)
+	assert(ctx.Inventory.has(p, "PepperSpray"), "taken: it's mine tonight")
+	assert(not spray.Enabled, "and gone")
 	-- the call from the attic brings the police
 	local fromAttic = prompt("Call911", "SignalBooster")
 	assert(fromAttic and fromAttic.Enabled, "a Call 911 on the booster")
 	ctx.Intruder.adminFreeze(true) -- (the call itself; he's tested elsewhere)
 	rawget(fromAttic, "__signals").Triggered:Fire(p)
 	assert(p:GetAttribute("Calling") == true, "calling from the attic")
+	caps = {}
 	for _ = 1, ctx.Config.Help.CellCallDurationNormal + 2 do root.CFrame = attic; p:SetAttribute("Signal", 3); H.flush(1) end
 	assert(ctx.Escape.helpCalled(), "help is on the way")
+	-- (v157) the dispatcher calls back where she lost you; not "what's your emergency" again
+	assert(idx(ctx.Story.Calls.Redial[1]) and not idx(D[1]), "the redial lines: " .. table.concat(caps, " / "))
+	ctx.Audio.caption = realCaption
 	H.flush(1)
 	local ids = {}
 	for _, o in sent do table.insert(ids, o.Id .. (o.Done and "(done)" or "")) end
@@ -179,6 +224,11 @@ local ok, err = pcall(function()
 	assert(ctx.Rooms.floorOf(ctx.Intruder.position()) == "Attic", "he came up after me (state " .. tostring(ctx.Intruder.getState()) .. ")")
 	assert(t0 >= ctx.Config.Attic.CampAfter, "not before CampAfter: " .. t0)
 	print("camping: he came up after " .. t0 .. " s")
+	-- (v157, the owner: "At the end we must escape through the front door") the police pull up: still inside when it runs out, he takes you
+	ctx.Escape.finalRun()
+	local secs = ctx.Config.Help.FinalRun
+	for _ = 1, secs + 6 do root.CFrame = attic; H.flush(1) end
+	assert(p:GetAttribute("Dead") == true, "still in the attic when the police came in: taken")
 	print("attic ok")
 end)
 print(ok and "ATTIC OK" or ("ATTIC FAIL: " .. tostring(err)))

@@ -20,9 +20,9 @@ local ok, err = pcall(function()
 	for _, p in model:GetChildren() do
 		if p.ClassName == "MeshPart" and p:GetAttribute("SkinPiece") then
 			pieces += 1
-			local sa = p:FindFirstChildOfClass("SurfaceAppearance")
-			assert(sa and tostring(sa.ColorMapContent):find("9324645994"), p.Name .. ": his colour map")
-			assert(sa.Color.R > 0.85, p.Name .. ": pale, barely tinted: " .. tostring(sa.Color))
+			-- (v157: the texture on the MeshPart itself: a SurfaceAppearance made outside Studio drew nothing in the live game)
+			assert(not p:FindFirstChildOfClass("SurfaceAppearance"), p.Name .. ": no SurfaceAppearance")
+			assert(tostring(p.TextureContent):find("9324645994"), p.Name .. ": his colour map: " .. tostring(p.TextureContent))
 			local weld = p:FindFirstChildOfClass("WeldConstraint")
 			assert(weld and weld.Part0 == body, p.Name .. ": welded to the body")
 		end

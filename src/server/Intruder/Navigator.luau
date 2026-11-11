@@ -50,6 +50,11 @@ end
 
 local function inGrid(p: Vector3): boolean
 	local B = NavGrid.Bounds
+	-- (v157) the attic's strip under the ridge is surveyed too
+	local A = NavGrid.Attic
+	if A and p.X >= A.X0 - 1 and p.X <= A.X1 + 1 and p.Z >= A.Z0 - 1 and p.Z <= A.Z1 + 1 and p.Y > A.FloorMin and p.Y < A.FloorMax + 7 then
+		return true
+	end
 	return p.X >= B.X0 and p.X <= B.X1 and p.Z >= B.Z0 and p.Z <= B.Z1 and p.Y > B.Bottom and p.Y < B.Top + 6
 end
 

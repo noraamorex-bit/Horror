@@ -334,6 +334,9 @@ function Haunt.build(ctx, root: Instance): { BasePart }
 		if ctx.Hiding then
 			local chair = attic:FindFirstChild("SheetedChair")
 			if chair and chair:IsA("BasePart") then
+				if ctx.Objectives then
+					ctx.Objectives.setTarget("AtticHide3", V(15.6, AY + 3.4, -1.0))
+				end
 				ctx.Hiding.register(chair, {
 					Name = "Under the dust sheet",
 					Room = "Attic",
@@ -346,6 +349,9 @@ function Haunt.build(ctx, root: Instance): { BasePart }
 			end
 			local trunk = attic:FindFirstChild("Trunk")
 			if trunk and trunk:IsA("BasePart") then
+				if ctx.Objectives then
+					ctx.Objectives.setTarget("AtticHide4", V(-6, AY + 3.0, 5.6))
+				end
 				ctx.Hiding.register(trunk, {
 					Name = "In the old trunk",
 					Room = "Attic",
@@ -355,6 +361,59 @@ function Haunt.build(ctx, root: Instance): { BasePart }
 					Exit = CFrame.lookAt(V(-6, AY + 3, 6.8), V(-6, AY + 3, 12)),
 					PromptOffset = trunk.CFrame:PointToObjectSpace(V(-6, AY + 1.4, 5.3)),
 				})
+			end
+		end
+		-- (v157, the owner: "In the attic there should be wardrobes and all and exclamation point prompting the user to hide") two old
+		-- wardrobes stored up here under the ridge (the roof leaves room for one only near the middle), hideable like the bedrooms'
+		if ctx.Hiding then
+			local WOOD_OLD = Color3.fromRGB(96, 70, 50)
+			local function oldWardrobe(name: string, x0: number, z0: number, x1: number, z1: number, facing: Vector3, tag: string)
+				local center = V((x0 + x1) / 2, AY, (z0 + z1) / 2)
+				local w, d = x1 - x0, z1 - z0
+				local wm, doors = Kit.wardrobe(attic, CFrame.lookAt(center, center + facing), w, d, WOOD_OLD)
+				wm:SetAttribute("HidingFurniture", true) -- (furniture you hide in, not dressing: dress_test keeps dressing clear of it)
+				local frontPos = center + facing * (d / 2 - 0.1)
+				local inside = center + V(0, 3, 0)
+				ctx.Hiding.register(doors, {
+					Name = name,
+					Room = "Attic",
+					Inside = CFrame.lookAt(inside, inside + facing),
+					View = CFrame.lookAt(frontPos - facing * 0.5 + V(0, 4.6, 0), frontPos + facing * 12 + V(0, 4, 0)),
+					Exit = CFrame.lookAt(frontPos + facing * 2.5 + V(0, 3, 0), frontPos + facing * 8 + V(0, 3, 0)),
+				})
+				if ctx.Objectives then
+					ctx.Objectives.setTarget(tag, frontPos + facing * 0.6 + V(0, 4, 0))
+				end
+			end
+			oldWardrobe("The old wardrobe", -9.5, -7.0, -5.5, -4.8, PZ, "AtticHide1")
+			oldWardrobe("The wardrobe by the hatch", 0, 4.8, 4, 7.0, NZ, "AtticHide2")
+		end
+		-- (v157, the owner: "Keep a pepper spray in attic") a can of it on the boards near Dad's booster: take it, and it's yours tonight
+		do
+			local can = Kit.box(attic, "SprayCan", CF(-21.5, AY + 0.62, -6.5), V(0.38, 0.85, 0.38), Color3.fromRGB(176, 28, 30), KM.Metal)
+			Kit.box(attic, "SprayCap", CF(-21.5, AY + 1.12, -6.5), V(0.3, 0.16, 0.3), Color3.fromRGB(24, 24, 26), KM.Plastic)
+			Kit.box(attic, "SprayLabel", CF(-21.5, AY + 0.62, -6.7), V(0.3, 0.4, 0.02), Color3.fromRGB(236, 230, 214), KM.Plastic)
+			can.CanQuery = true
+			if ctx.Interaction and ctx.Inventory then
+				local taken = false
+				local pr
+				pr = ctx.Interaction.prompt(can, { Name = "TakeSpray", Action = "Take", Object = "Pepper spray", Hold = 0, Distance = 6 }, function(player)
+					if taken then
+						return
+					end
+					taken = true
+					ctx.Inventory.give(player, "PepperSpray", 1)
+					for _, n in { "SprayCan", "SprayCap", "SprayLabel" } do
+						local q = attic:FindFirstChild(n)
+						if q and q:IsA("BasePart") then
+							q.Transparency = 1
+							q.CanCollide = false
+						end
+					end
+					if pr then
+						pr.Enabled = false
+					end
+				end)
 			end
 		end
 		-- the baby's crib, with one of Lily's old dolls in it, face down
@@ -555,7 +614,10 @@ function Haunt.build(ctx, root: Instance): { BasePart }
 	local out = {}
 	for _, d in root:GetDescendants() do
 		if d:IsA("BasePart") and not existing[d] then
-			table.insert(out, d)
+			local m = d:FindFirstAncestorOfClass("Model")
+			if not (m and m:GetAttribute("HidingFurniture")) then
+				table.insert(out, d)
+			end
 		end
 	end
 	return out

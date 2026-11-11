@@ -174,12 +174,32 @@ also really scary." Curtis is a gaunt, starved man now: bald, sunken eyes that c
 barefoot, a little too long in the arm and the neck, ~9.8 studs tall. Everything he does stays (the lurching walk, the all-fours scuttle,
 the stare, the head turning right round, the scream with his jaw dropping open, the duck under doorways).
 - Asset: Creator Store 9324817907 through `tools/creature/make_curtis.luau`: Model "Creature" > invisible MeshPart "Body" (the 55 bones)
-  + 14 skinned pieces welded to it, each with a SurfaceAppearance (colour map, `Rig.SkinTint`).
+  + 14 skinned pieces welded to it, each with the colour map as its `TextureContent` (v157: a SurfaceAppearance written by lune
+  drew nothing in the live game, he looked flat grey).
 - SkinPose: the biped's bone names; MERGE (Neck2 → Neck); REST_DIR + K (each limb's rest correction, so gaits written for the old body
   pose this one the same); `Units` (gait offsets in the old mesh's units); finger curl about Z; the jaw for the scream.
 - Server `Rig.skin`: the pieces move and stay visible with the body; the face and chest lights and the eyeshine from his own bones.
   Client `Creature`: names from `SkinPose.Joints`, the fallback hides the pieces; `Prank` copies the pieces into its viewport.
 - Tests: skin_test (pieces, tint, bones, fingers, rest arms ~28 degrees, feet planted, head down on all fours, the jaw), creature_skin_test.
+
+### The attic, done properly (v157)
+The owner, with a screenshot of him standing still in the attic: "He isn't even doing anything.. also check the messages that come up
+either Theres too many to read or dont make sense like your having a conversation with 911 and then they start again from 911 what's
+your emergency just to cut off. In the attic there should be wardrobes and all and exclamation point prompting the user to hide. And he
+should come and really check. At the end we must escape through the front door. Keep a pepper spray in attic."
+- **He moves up there**: NavGrid surveyed one floor per column from above, so the attic (under the roof, over the upstairs ceiling) had no
+  nodes; he climbed up and stood at the hatch. `NavGrid.Attic` (x -39..39, z -12..12) adds a second ray pass from y 35.8 down and keeps
+  floors at 28.4-31 with 5.2 studs of headroom; `Navigator.inGrid` counts those. The client already stoops him under low ceilings.
+- **Hide, and he checks**: two old wardrobes (`Haunt` `oldWardrobe`: by the far wall and by the hatch), the dust sheet and the trunk.
+  When he comes up the objective is "HIDE. He's coming up the ladder" with a "!" on each (`AtticHide1-4`, 22 s). His search goes to the
+  occupied spots first (`Intruder.inspectSpot`: he walks up, listens, the heartbeat); anyone in the open he charges.
+- **Pepper spray** on a crate by the far wall ("Take" → Inventory PepperSpray 1).
+- **The call**: the window call is cut off mid-line: the dispatcher's first line, "Someone's in your house? Okay, stay on the l-",
+  then [Static] CALL DROPPED and one thought 2.4 s later (it used to play the whole call, then drop, then caption twice). The attic
+  call is the same dispatcher calling back (`Calls.Redial`: "you called a minute ago and got cut off. Is this 14 Alder Lane?").
+- **Out the front door**: the final run (GET OUT, `Help.FinalRun` 45 / Hard 35) is required now: whoever is free and still inside at 0
+  is taken (`CaughtHow` FinalRun, a death tip); the ending is Sirens only if someone got out (or is tied up alive), else GotAway.
+- Tests: attic_test (the cut-off order, the markers, the wardrobe inspected first, the spray, the redial lines, the final run kills).
 
 ### What the logs and players said (v155)
 - **The attic part, made to happen**: after the dropped call, everyone at the window is spared `Config.Attic.DropGrace` (20 s, Hard 8)

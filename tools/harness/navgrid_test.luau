@@ -54,7 +54,8 @@ local function reach(label, p, radius)
 	if flat > (radius or 6) then table.insert(failures, label .. " ends " .. flat .. " away") end
 end
 for i, n in ctx.Layout.Nodes do reach("node " .. i .. " " .. n.Room, n.Pos, 3) end
-for _, s in ctx.Hiding.spotsNear(V(0, 0, 0), 1000) do reach("spot exit " .. tostring(s.Name or s.Id), s.Exit.Position, 4) end
+-- (v154/v157: the attic's spots are reached by his ladder climb, AtticRun, not on foot from the hall: attic_test checks them)
+for _, s in ctx.Hiding.spotsNear(V(0, 0, 0), 1000) do if s.Room ~= "Attic" then reach("spot exit " .. tostring(s.Name or s.Id), s.Exit.Position, 4) end end
 local t1 = os.clock()
 local n = 0
 for i, a in ctx.Layout.Nodes do

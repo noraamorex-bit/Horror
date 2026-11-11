@@ -149,6 +149,16 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   the window when the call drops is spared `DropGrace` 20 s (Hard 8) to get to the hatch; Mrs. Okafor waits `OkaforWait` 60 s
   longer while the booster's still out; and the attic is no safe room: stay up there `CampAfter` 18 s (`CampPending` 30 while the
   booster still needs plugging; Hard x0.6) and he comes up the ladder after you (his routes into the attic used to just fail).
+  **v157 (the owner's screenshot: him standing still in the attic, "He isn't even doing anything... the messages... 911 what's your
+  emergency just to cut off. In the attic there should be wardrobes and all and exclamation point prompting the user to hide. And he
+  should come and really check. At the end we must escape through the front door. Keep a pepper spray in attic.")**: NavGrid had no
+  attic floor (he stood at the hatch with no route): `NavGrid.Attic` adds a second ray pass inside its bounds, Navigator counts it as
+  grid. The attic has two old wardrobes (`World/Haunt` `oldWardrobe`, HidingFurniture) + the dust sheet + the trunk, and when he comes up
+  "HIDE. He's coming up the ladder" puts a "!" on each (`AtticHide`, `Attic.HideMarkers` 22 s); he goes straight to the occupied spots
+  (`Intruder.inspectSpot`, the heartbeat), anyone in the open is charged. A pepper spray can lies in the attic ("Take"). The window
+  call is cut off mid-line (the dispatcher's first line, then `Calls.DropCut`, then "CALL DROPPED"), and the attic call is the same
+  dispatcher calling back (`Calls.Redial`, never "911, what's your emergency?" again). The final run is a real escape: anyone free
+  still inside when GET OUT (`Help.FinalRun` 45 / Hard 35) runs out is taken (`CaughtHow` FinalRun); Sirens only if someone got out.
 - **Endings on the card (v155**, players: "Make different endings", "maybe more endings?": there are ten, nobody knew): every result
   card without a new ending says "🏆 2 / 10 endings · next: <hint>" (`Ending.nextHint`, the good ones first, `Story.EndingHints`).
 - It's a horror game, not a chore simulator: few tasks, multi-step, no dead time. No "stay together"
@@ -191,8 +201,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   and regular humanoid looking but also really scary")**: the v112 store creature (the skinless body, the maw splitting his face and
   chest, its bloody colour map that v149 brought back) is gone. He's a gaunt, starved man: Creator Store 9324817907 (14 skinned mesh
   pieces on a 55-bone biped with a jaw and eyelids), rebuilt by `tools/creature/make_curtis.luau` into assets/Creature.rbxm (an
-  invisible "Body" MeshPart holding the bones, the pieces welded to it, each with a SurfaceAppearance: the source's colour map under
-  `Rig.SkinTint` 232,228,226). `Rig.SkinScale` 0.05485 (~9.8 studs). SkinPose keeps every gait: the joints map onto the biped's bones
+  invisible "Body" MeshPart holding the bones, the pieces welded to it, each with the source's colour map as its TextureContent (v157: a
+  SurfaceAppearance made outside Studio drew nothing, he showed grey)). `Rig.SkinScale` 0.05485 (~9.8 studs). SkinPose keeps every gait: the joints map onto the biped's bones
   (Neck2 merges into Neck), each limb has a rest correction K (the biped's A-pose turned into the old body's rest), the gaits' body
   offsets grow by `SkinPose.Units`; the scream drops his jaw (`JawSign`), a little slack when he's agitated; a man's proportions (stretch
   1.08 / 1.12 / neck 1.18); eyeshine on his eye bones. film2 draws the 14 pieces (skin_frames writes `skin.pieces`). **Don't bring the
@@ -515,8 +525,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 
 - **11 Nov (v155)**, the owner: "improve the game, prices and gamepasses". Since 15 Oct 12,282 R$; 10 Nov alone ~3,190 R$. Bought /
   windows: JumpscareAll 431/2,988 (14%), BecomeHim 169/1,441 (11.7%, 10-13% every day), Revive 91/2,569, ReviveAuto 51/2,388,
-  Starter 73/5,236, RocketNight 29/319, NightVision 1/115, ChooseRole 3/132. Done: **Become Him 25 → 35** (an experiment: back to
-  25 if it falls under ~8% bought/asked), **Night Vision pass 25 → 15**. Kept: JumpscareAll 10, Starter 9 (the owner's prices),
+  Starter 73/5,236, RocketNight 29/319, NightVision 1/115, ChooseRole 3/132. Done: **Become Him 25 → 35** (the owner set it back to 25 the same day,
+  v157: keep 25), **Night Vision pass 25 → 15**. Kept: JumpscareAll 10, Starter 9 (the owner's prices),
   Revive 10 (hard rule). Repeat buying is low (89 prank buyers in the house, 110 pranks), so no multi-packs.
 
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
@@ -940,6 +950,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **11 Nov (v157 = place version 157)**, published; the owner's screenshot (him grey and still in the attic) + "He isn't even doing
+  anything..." (see Pacing, v157) and "make become him 25" (done through the API). Can't see the real client: check on a phone that his
+  skin now shows its texture (not flat grey), he walks the attic and stoops under the roof, the "!" markers on the wardrobes/sheet/trunk,
+  the wardrobe views from inside, and that the cut-off call reads in order. Next: `--since=157 --from=2026-11-11`: AtticHunt and
+  captures in the attic, final-run deaths vs OutFront escapes (if far more die, lengthen FinalRun), BecomeHim bought/asked at 25.
 
 - **11 Nov (v156 = place version 156)**, published; the owner: "I already said i don't like this model for monster why did you bring it
   back. Not so gory and regular humanoid looking but also really scary." Done: the new body (see The intruder, v156; GDD "A man, not a
@@ -1638,7 +1654,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 156; the notes' "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 157; the notes' "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

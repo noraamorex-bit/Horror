@@ -3,7 +3,7 @@
 	bring it back. Not so gory and regular humanoid looking but also really scary") his new body: a gaunt, starved man (Creator Store
 	9324817907: 14 skinned mesh pieces on a biped skeleton with a jaw and eyelids), rebuilt into the shape the game expects:
 	Model "Creature" > MeshPart "Body" (invisible, the size of the whole figure) holding the bones, and the 14 pieces welded to it.
-	Each piece gets a SurfaceAppearance with the source's colour map and Rig.SkinTint (pale, cold). Run from the repo root:
+	Each piece keeps the source's colour map as its own texture (v157). Run from the repo root:
 		python3 tools/assets/fetch.py <cache> 9324817907
 		lune run tools/creature/make_curtis.luau <cache>/9324817907.bin assets/Creature.rbxm
 ]]
@@ -12,7 +12,6 @@ local roblox = require("@lune/roblox")
 local process = require("@lune/process")
 local CFrame, Vector3, Instance = roblox.CFrame, roblox.Vector3, roblox.Instance
 
-local TINT = roblox.Color3.fromRGB(232, 228, 226) -- (keep in step with Rig.SkinTint)
 local src = roblox.deserializeModel(fs.readFile(process.args[1]))[1]
 local rootPart = src:FindFirstChild("RootPart")
 assert(rootPart, "no RootPart: not the expected source")
@@ -81,10 +80,9 @@ for _, p in pieces do
 	p.Massless = true
 	p.CastShadow = true
 	p:SetAttribute("SkinPiece", true)
-	local sa = Instance.new("SurfaceAppearance")
-	sa.ColorMapContent = roblox.Content.fromUri("rbxassetid://" .. tex)
-	sa.Color = TINT
-	sa.Parent = p
+	-- (v157: the texture on the MeshPart itself, as the source has it. A SurfaceAppearance made here, outside Studio, lacks the data
+	-- Studio generates for it: in the live game he showed as a plain grey body)
+	p.TextureContent = roblox.Content.fromUri("rbxassetid://" .. tex)
 	local w = Instance.new("WeldConstraint")
 	w.Part0 = body
 	w.Part1 = p

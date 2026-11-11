@@ -153,9 +153,7 @@ function Phone.setupSignalSpot(part: BasePart)
 		Hold = 0.3,
 		Distance = 3.5, -- (close enough that you're standing in the signal when you press it)
 	}, function(player)
-		if Phone.startCall(player) then
-			ctx.Audio.caption("Keep still by the window. Stay on the line...", nil, nil, { player })
-		end
+		Phone.startCall(player) -- (v157: no extra line: the call bar and the dispatcher's first words say it)
 	end)
 	prompt.Enabled = false
 	signalPrompt = prompt
@@ -225,9 +223,24 @@ function Phone.start()
 				if root and math.floor(progress * 4) % (every * 4) == 0 then
 					ctx.Noise.emit(root.Position, hard and ctx.Config.Noise.PhoneCall or (ctx.Config.Noise.PhoneWhisper or ctx.Config.Noise.PhoneCall), "Voice", player)
 				end
-				-- dispatcher lines as captions
-				local lines = ctx.Story.Calls.Dispatch
-				local idx = math.clamp(math.floor(progress / total * #lines) + 1, 1, #lines)
+				-- (v157) the call that's going to drop (AtticRun): her first line, then cut off partway through the second, at 45%
+				local drops = ctx.AtticRun and ctx.AtticRun.willDrop and ctx.AtticRun.willDrop(player)
+				if drops and progress >= total * 0.45 then
+					calling[player] = nil
+					lineShown[player] = nil
+					player:SetAttribute("Calling", nil)
+					player:SetAttribute("CallProgress", nil)
+					ctx.Audio.caption(ctx.Story.Calls.DropCut, nil, nil, { player })
+					task.delay(1.2, function()
+						if ctx.AtticRun.willDrop(player) then
+							ctx.AtticRun.onCallThrough(player)
+						end
+					end)
+					continue
+				end
+				-- dispatcher lines as captions (v157: from the attic, the dispatcher calling back where she lost you)
+				local lines = (ctx.AtticRun and ctx.AtticRun.redial and ctx.AtticRun.redial()) and ctx.Story.Calls.Redial or ctx.Story.Calls.Dispatch
+				local idx = math.clamp(math.floor(progress / total * #lines) + 1, 1, drops and 1 or #lines)
 				lineShown[player] = lineShown[player] or 0
 				if idx > lineShown[player] then
 					lineShown[player] = idx

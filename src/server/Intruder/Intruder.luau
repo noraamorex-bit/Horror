@@ -3454,6 +3454,23 @@ function Intruder.climbInto(at: Vector3, look: Vector3?, target: Player?): boole
 	return true
 end
 
+-- (v157, AtticRun: "he should come and really check") go to this hiding spot and listen at it (the heartbeat if someone's in it)
+function Intruder.inspectSpot(spot): boolean
+	if not S.InHouse or not S.Root or S.Mode ~= "Hunt" or not spot then
+		return false
+	end
+	if ctx.Monster and ctx.Monster.active() then
+		return false
+	end
+	local st = S.State
+	if st == "Retreat" or st == "Stunned" or st == "Trapped" or st == "Gone" or st == "Stopped" or st == "Inspect" or st == "CheckSpot"
+		or st == "Puppet" or st == "Offstage" or st == "Glare" then
+		return false
+	end
+	inspect(spot)
+	return true
+end
+
 -- put him a few steps behind this player (in the house, hunting)
 function Intruder.adminBring(player: Player): boolean
 	local root = ctx.Util.getRoot(player)

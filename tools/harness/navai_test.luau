@@ -139,7 +139,8 @@ local okRun, err = pcall(function()
 		walker.Climbs = 0
 		local goals = {}
 		for _, n in ctx.Layout.Nodes do table.insert(goals, { n.Room, n.Pos }) end
-		for _, sp in ctx.Hiding.spotsNear(V(0, 0, 0), 1000) do table.insert(goals, { "exit:" .. sp.Name, sp.Exit.Position }) end
+		-- (the attic's spots: reached by his ladder climb, AtticRun, not walked to)
+		for _, sp in ctx.Hiding.spotsNear(V(0, 0, 0), 1000) do if sp.Room ~= "Attic" then table.insert(goals, { "exit:" .. sp.Name, sp.Exit.Position }) end end
 		local trips, fails, slow, totalT, wedged = 0, 0, 0, 0, 0
 		local slips0 = 0
 		local cur = goals[1][2]
@@ -161,7 +162,8 @@ local okRun, err = pcall(function()
 				tick(0.1)
 				t += 0.1
 				local p = S.Root.Position
-				if (p - lastP).Magnitude > 0.5 or T < (S.Nav.WaitUntil or 0) then lastP = p; lastMoveT = t end
+				-- (a door's wait, or a deliberate hold (a cutscene, a scripted beat): not a stall)
+				if (p - lastP).Magnitude > 0.5 or T < (S.Nav.WaitUntil or 0) or T < (S.HoldUntil or 0) then lastP = p; lastMoveT = t end
 				maxIdle = math.max(maxIdle, t - lastMoveT)
 			end
 			trips += 1

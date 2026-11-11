@@ -122,7 +122,10 @@ function Escape.callForHelp(method: string, player: Player?)
 				if grace > 0 and ctx.Intruder and ctx.Intruder.spare then
 					ctx.Intruder.spare(p, grace)
 				end
-				if ctx.Director and ctx.Director.think then
+				-- (v157: not from up in the attic, where he's on the ladder or already up: AtticRun says it)
+				local r2 = ctx.Util.getRoot(p)
+				local upHere = r2 and ctx.Rooms.floorOf(r2.Position) == "Attic"
+				if ctx.Director and ctx.Director.think and not upHere then
 					ctx.Director.think(p, "He heard that. He's coming. HIDE. NOW. The shower, the cupboard, anywhere.|hide")
 				end
 			end
@@ -287,8 +290,8 @@ function Escape.finalRun()
 	end
 	ctx.Objectives.complete("Survive")
 	ctx.Objectives.add("GetOut")
+	-- (v157: one message, not the banner and a thought saying the same thing)
 	ctx.Remotes.Notify:FireAllClients(ctx.Story.Hunt.FinalNotice, "danger")
-	ctx.Director.think(ctx.Util.activePlayers(), ctx.Story.Hunt.Final)
 	ctx.Director.logTruthRaw("The police pulled up. He went for whoever was still inside.")
 	if ctx.Journey then
 		ctx.Journey.team("FinalRun")
@@ -319,16 +322,30 @@ function Escape.finalRun()
 			return
 		end
 		workspace:SetAttribute("FinalRunEnd", nil)
-		if #ctx.Util.activePlayers() > 0 then
-			ctx.Remotes.Notify:FireAllClients(ctx.Story.Hunt.FinalStorm, "objective")
-		end
-		local anyFree = false
-		for _, p in ctx.Util.sessionPlayers() do
-			if p:GetAttribute("Escaped") or not p:GetAttribute("Dead") then
-				anyFree = true
+		-- (v157, the owner: "At the end we must escape through the front door") anyone free and still inside when it runs out, he
+		-- takes (the tied-up are still found alive by the police)
+		local taken = false
+		for _, p in ctx.Util.activePlayers() do
+			if not p:GetAttribute("Escaped") and not p:GetAttribute("Captured") and not p:GetAttribute("Dead") then
+				p:SetAttribute("CaughtHow", "FinalRun")
+				if ctx.Capture and ctx.Capture.kill(p) then
+					taken = true
+				end
 			end
 		end
-		ctx.Ending.trigger(anyFree and "Sirens" or "GotAway")
+		if taken then
+			task.wait(2.6) -- (the jumpscare and the cut to black first)
+			if state ~= night or ctx.Ending.isOver() then
+				return
+			end
+		end
+		local anyOut = false
+		for _, p in ctx.Util.sessionPlayers() do
+			if p:GetAttribute("Escaped") or (p:GetAttribute("Captured") and not p:GetAttribute("Dead")) then
+				anyOut = true
+			end
+		end
+		ctx.Ending.trigger(anyOut and "Sirens" or "GotAway")
 	end)
 end
 

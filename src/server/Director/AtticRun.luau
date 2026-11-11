@@ -51,7 +51,7 @@ local function refresh()
 end
 
 function AtticRun.reset()
-	state = { Dropped = false, Fixed = false, HeUp = false, Night = {} }
+	state = { Dropped = false, Fixed = false, HeUp = false, Night = {}, Searched = {}, HideUntil = nil }
 	workspace:SetAttribute("SignalDead", nil)
 	workspace:SetAttribute("BoosterOn", nil)
 	refresh()
@@ -79,13 +79,21 @@ local function everyone(): { Player }
 	return ctx.Util.sessionPlayers()
 end
 
--- PhoneService: a cell call has just got through. true = it dropped (the attic part begins) instead of bringing help
+-- (v157) will this call be the one that drops? (PhoneService cuts it off partway through instead of playing it all out: the owner,
+-- "you're having a conversation with 911 and then they start again from 911 what's your emergency just to cut off")
+function AtticRun.willDrop(player: Player): boolean
+	return AtticRun.enabled() and not state.Dropped and not state.Fixed and not ctx.Escape.helpCalled() and not inAttic(player)
+end
+
+-- (v157) the call from the attic is the dispatcher calling back where she lost you, not a new call
+function AtticRun.redial(): boolean
+	return state.Dropped == true
+end
+
+-- PhoneService: a cell call has just got through (or, v157, been cut off partway). true = it dropped (the attic part begins)
+-- instead of bringing help
 function AtticRun.onCallThrough(player: Player): boolean
-	if not AtticRun.enabled() or state.Dropped or state.Fixed or ctx.Escape.helpCalled() then
-		return false
-	end
-	-- (a call made from up in the attic is never the dropped one)
-	if inAttic(player) then
+	if not AtticRun.willDrop(player) then
 		return false
 	end
 	state.Dropped = true
@@ -101,11 +109,8 @@ function AtticRun.onCallThrough(player: Player): boolean
 			end
 		end
 	end
-	ctx.Audio.caption("\"Nine-one-one, what's your emerg-\"", nil, nil, { player })
-	task.delay(1.3, function()
-		ctx.Audio.caption("[Static] CALL DROPPED. No Service.", nil, nil, { player })
-	end)
-	task.delay(2.6, function()
+	ctx.Audio.caption("[Static] CALL DROPPED. No Service.", nil, nil, { player })
+	task.delay(2.4, function()
 		if state.Dropped and not state.Fixed then
 			ctx.Director.think(nil, ctx.Story.Thoughts.BoosterDead)
 		end
@@ -148,6 +153,11 @@ local function bringDown()
 		I.climbInto(below, below + Vector3.new(0, 0, -10), nil)
 	end
 	state.HeUp = false -- (v155: he can come up again)
+	state.Searched = {}
+	if state.HideUntil then
+		state.HideUntil = nil
+		ctx.Objectives.dismiss("AtticHide")
+	end
 end
 
 -- he heard the booster: up the ladder, through the hatch, into the attic after whoever's there
@@ -168,6 +178,9 @@ local function heComes(by: Player)
 	end
 	if #up > 0 then
 		ctx.Director.think(up, ctx.Story.Thoughts.OnTheLadder)
+		-- (v157) the "!" on every hiding spot up here until he's been up a while
+		ctx.Objectives.add("AtticHide")
+		state.HideUntil = os.clock() + (cfg().ClimbDelay or 4) + (cfg().HideMarkers or 22)
 	end
 	task.delay(cfg().ClimbDelay or 4, function()
 		if state ~= night or ctx.Ending.isOver() then
@@ -240,8 +253,8 @@ function AtticRun.setup(part: BasePart, light: BasePart)
 		Hold = 0.3,
 		Distance = 7,
 	}, function(player)
-		if ctx.Phone and ctx.Phone.startCall(player) then
-			ctx.Audio.caption("Keep still. Whisper. Stay on the line...", nil, nil, { player })
+		if ctx.Phone then
+			ctx.Phone.startCall(player) -- (v157: no extra line: the call bar and the dispatcher say it)
 		end
 	end)
 	refresh()
@@ -287,8 +300,46 @@ function AtticRun.start()
 			else
 				upFor = {}
 			end
+			-- (v157) the hide markers come down once he's been up a while
+			if state.HideUntil and os.clock() > state.HideUntil then
+				state.HideUntil = nil
+				ctx.Objectives.dismiss("AtticHide")
+			end
 			local up = pos and ctx.Rooms.floorOf(pos) == "Attic" and I.isHunting and I.isHunting()
 				and not (I.getState and I.getState() == "Offstage")
+			-- (v157, the owner: "he should come and really check") up here, he goes through the hiding spots: the ones with someone in
+			-- them first, then the rest, listening at each (the heartbeat if you're in it); anyone in the open he goes straight for
+			if up and I.inspectSpot and CLIMB_FROM[I.getState and I.getState() or ""] then
+				local hidden, open = {}, nil
+				for _, p in everyone() do
+					if inAttic(p) and not p:GetAttribute("Captured") and not p:GetAttribute("Dead") then
+						local sp = ctx.Hiding and ctx.Hiding.spotOf(p)
+						if sp then
+							hidden[sp] = true
+						elseif not open then
+							open = p
+						end
+					end
+				end
+				local nextSpot = nil
+				local best = math.huge
+				for _, sp in (ctx.Hiding and ctx.Hiding.all() or {}) do
+					if sp.Room == "Attic" and not state.Searched[sp] then
+						local d = (sp.Position - pos).Magnitude - (hidden[sp] and 1000 or 0)
+						if d < best then
+							best, nextSpot = d, sp
+						end
+					end
+				end
+				if open and not next(hidden) then
+					if I.adminHunt then
+						I.adminHunt(open)
+					end
+				elseif nextSpot and (next(hidden) or open == nil) then
+					state.Searched[nextSpot] = true
+					I.inspectSpot(nextSpot)
+				end
+			end
 			if up then
 				local anyone = false
 				for _, p in everyone() do

@@ -168,6 +168,11 @@ Story.Tasks = {
 		{ Key = "Plug", Text = "Plug Dad's signal booster back in (up in the attic)", Target = "Booster" },
 		{ Key = "Call", Text = "Call 911 from the attic. Full bars up there now", Target = "Booster" },
 	} },
+	-- (v157, the owner: "In the attic there should be wardrobes and all and exclamation point prompting the user to hide") while he
+	-- comes up the ladder: the "!" on every hiding spot up there
+	AtticHide = { Title = "HIDE. He's coming up the ladder", Steps = {
+		{ Key = "Hide", Text = "A wardrobe, the old trunk, under the dust sheet", Target = { "AtticHide1", "AtticHide2", "AtticHide3", "AtticHide4" } },
+	} },
 	-- Act IV
 	Call911 = { Title = "Call 911: he's in the house", Steps = {
 		{ Key = "Call", Text = "Call from the upstairs bathroom window (one bar of signal), or fix the phone line outside", Target = { "SignalSpot", "JunctionBox" } },
@@ -473,6 +478,14 @@ Story.Calls = {
 	},
 	NotYet = {
 		"(You hold the phone for a second. What would you even say? 'I heard a noise'?)",
+	},
+	-- (v157) the call from the window that drops: her first line, then cut off halfway through the second
+	DropCut = "\"Someone's in your house? Okay, stay on the l-\"",
+	-- (v157) the call from the attic: the dispatcher who lost you a minute ago (it doesn't start over from "what's your emergency")
+	Redial = {
+		"911 - you called a minute ago and got cut off. Is this 14 Alder Lane?",
+		"Okay. Someone is in the house with you. Stay on the line and stay hidden.",
+		"Units are on the way. Creek Road is flooded, they're coming by Route 9. Get out the front door when you hear them.",
 	},
 }
 
@@ -827,7 +840,7 @@ Story.Thoughts = {
 	-- (v139: act IV opens on one line: it was four)
 	GuestStart = "He's been living in our attic. And he knows we found out.",
 	-- (v154) the attic: the call from the window drops, the booster, him on the ladder
-	BoosterDead = "No... the call dropped. Zero bars. Dad's signal booster is up in the attic. Somebody unplugged it.|phone",
+	BoosterDead = "Zero bars. Dad's signal booster is up in the attic... somebody unplugged it.|phone",
 	BoosterBack = "Green light. Full bars. Call. NOW.|phone",
 	OnTheLadder = "The ladder. Someone's climbing up. HIDE.|hide",
 	CallHere = "Those footsteps... the man from the news is IN the house. One bar, right here: call 911. NOW.|phone",
@@ -1031,6 +1044,8 @@ Story.DeathTips = {
 	Open = "He's slower than you. When his footsteps speed up, sprint, break his line of sight, then hide.",
 	Hiding = "When he stops at your hiding spot, press each side as its half reaches the heart. Don't hide where he saw you go.",
 	Call = "Calling 911 is loud and he comes running. The second the call goes through, hide. The shower curtain is right there.",
+	-- (v157) out the front door is the only way out when the police come
+	FinalRun = "When the police pull up, the front door opens: RUN for it. Anyone still inside when they come in, he takes.",
 	Default = "Listen for his footsteps: the closer he is, the louder they get. Hide before he turns the corner.",
 }
 -- the one line under it when you're out before the night is over (co-op)

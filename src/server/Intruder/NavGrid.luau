@@ -36,6 +36,10 @@ local ROOT_ABOVE_FEET = 4.9 -- (his HumanoidRootPart centre above the floor: Rig
 
 -- the surveyed area: the house, the garage and the basement (outside, PathfindingService does)
 NavGrid.Bounds = { X0 = -41, X1 = 67, Z0 = -31, Z1 = 31, Top = 27.5, Bottom = -16 }
+-- (v157, the owner's screenshot: him standing still in the attic, "He isn't even doing anything": the survey stopped below the
+-- attic floor, so up there every route failed) the attic strip under the ridge, surveyed from just under the roof, with a lower
+-- headroom band (he stoops under the rafters: the client ducks him)
+NavGrid.Attic = { X0 = -39, X1 = 39, Z0 = -12, Z1 = 12, From = 35.8, FloorMin = 28.4, FloorMax = 31.0, ClearHigh = 5.2 }
 
 local G: any = nil -- the built grid
 local building = false
@@ -231,6 +235,29 @@ function NavGrid.build(exclude: { Instance }?, budget: number?)
 						if #ys < MAX_LEVELS then
 							table.insert(ys, y)
 						end
+					end
+				end
+			end
+			-- (v157) the attic above: only its floor surfaces, from under the ridge (higher up the rays would land on the roof)
+			local At = NavGrid.Attic
+			if At and x >= At.X0 and x <= At.X1 and z >= At.Z0 and z <= At.Z1 then
+				local afilter = table.clone(base)
+				local aboveA = math.huge
+				for _ = 1, 8 do
+					local hit = raycast(V(x, At.From, z), V(0, At.FloorMin - 1 - At.From, 0), afilter)
+					if not hit then
+						break
+					end
+					table.insert(afilter, hit.Instance)
+					local y = hit.Position.Y
+					local covered = aboveA - y < CLEAR_LOW
+					aboveA = math.min(aboveA, y)
+					if y >= At.FloorMin and y <= At.FloorMax and hit.Normal.Y > 0.6 and not covered then
+						local ah = V(BODY, (At.ClearHigh - CLEAR_LOW) / 2, BODY)
+						if not boxBlocked(V(x, y + (CLEAR_LOW + At.ClearHigh) / 2, z), ah) and #ys < MAX_LEVELS then
+							table.insert(ys, 1, y) -- (highest first)
+						end
+						break
 					end
 				end
 			end
