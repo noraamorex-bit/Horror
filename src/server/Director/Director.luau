@@ -2015,7 +2015,8 @@ local function actTick()
 	-- nobody has got help out by now: next door, Mrs. Okafor sees the van and calls the police (a
 	-- night with no call used to drag on past 20 minutes until everyone gave up)
 	if state.Act == "Guest" and not state.OkaforCalled and not ctx.Escape.helpCalled()
-		and actTime >= (ctx.Config.Help.OkaforCallsAfter or 100) * math.max(ctx.Config.TimeScale, 0.25) then
+		and actTime >= ((ctx.Config.Help.OkaforCallsAfter or 100) + (ctx.AtticRun and ctx.AtticRun.pending() and (ctx.Config.Attic.OkaforWait or 0) or 0))
+			* math.max(ctx.Config.TimeScale, 0.25) then
 		state.OkaforCalled = true
 		ctx.Escape.okaforCalls()
 	end

@@ -168,6 +168,15 @@ Doors earns its scares with long quiet stretches: the house's own sounds, then o
 
 After the blackout (act III and the hunt) everything is as before. `quiet_test` walks a player through a whole act I and act II and checks that only those two reach them.
 
+### What the logs and players said (v155)
+- **The attic part, made to happen**: after the dropped call, everyone at the window is spared `Config.Attic.DropGrace` (20 s, Hard 8)
+  to get to the hatch; Mrs. Okafor's fallback call waits `OkaforWait` (60 s) longer while the booster is still out; anyone who stays
+  in the attic `CampAfter` s (18; 30 while the booster still needs plugging; Hard x0.6) brings him up the ladder after them
+  (`AtticRun` watchdog, same scene as after the booster; he goes back down when the attic's empty, and can come again).
+- **Ten endings, said on the card**: "🏆 n / 10 endings · next: <hint>" on every card without a new ending (`Ending.nextHint`).
+- **The welcome card doesn't queue you**: ▶ PLAY or LOOK AROUND FIRST (`Notice` `Secondary`).
+- **Prices**: Become Him 35 (from 25, an experiment), Night Vision pass 15.
+
 ### Into the attic, and he's never caught (v154)
 The owner: "The whole experience is still very short and just gets it over with for the sake of ending it. Get creative and add
 new parts to make it longer. For this story bit consult me first." Asked; the owner picked **Into the attic** and **Never caught**.

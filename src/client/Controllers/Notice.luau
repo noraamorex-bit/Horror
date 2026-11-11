@@ -2,7 +2,8 @@
 	Notice — one message at a time, in a card with a big OK button.
 	Other messages (chapter cards, thoughts) wait until it's dismissed.
 
-	Notice.show({ Title, Body, Button? }, onClose?)
+	Notice.show({ Title, Body, Button?, Secondary? }, onClose?)
+	(v155) Secondary: a second, quiet button that only closes the card (onClose is NOT called; the close key does the same)
 	Notice.isOpen()
 	Notice.whenClear(fn)   runs fn now, or right after the last notice is closed
 ]]
@@ -16,6 +17,7 @@ local card: Frame
 local titleLabel: TextLabel
 local bodyLabel: TextLabel
 local okButton: TextButton
+local secondButton: TextButton
 local current = nil
 
 local function flushWaiting()
@@ -36,16 +38,20 @@ local function showNext()
 	titleLabel.Text = current.Title or ""
 	bodyLabel.Text = current.Body or ""
 	okButton.Text = current.Button or "OK"
+	secondButton.Text = current.Secondary or ""
+	secondButton.Visible = current.Secondary ~= nil
 	card.Visible = true
 	card.Position = UDim2.fromScale(0.5, 0.53)
 	ctx.UI.tween(card, 0.35, { Position = UDim2.fromScale(0.5, 0.5) }, Enum.EasingStyle.Back)
 end
 
-local function close()
+local function close(dismiss: boolean?)
 	if not current then
 		return
 	end
-	local done = current.OnClose
+	-- (v155) a card with a second button: dismissing it (that button, or the close key) doesn't run onClose. The first-visit
+	-- welcome's only button was PLAY, so closing it queued you and 10 s later you were teleported (players: "dont teleport us in")
+	local done = not (dismiss and current.Secondary) and current.OnClose or nil
 	current = nil
 	if done then
 		task.spawn(done)
@@ -130,10 +136,27 @@ function Notice.start()
 		Parent = card,
 	})
 	UI.corner(okButton, 12)
-	okButton.Activated:Connect(close)
+	okButton.Activated:Connect(function()
+		close(false)
+	end)
+	secondButton = UI.new("TextButton", {
+		Size = UDim2.fromOffset(220, 34),
+		Text = "",
+		Font = UI.Font.Bold,
+		TextSize = 14,
+		TextColor3 = Color3.fromRGB(200, 196, 188),
+		BackgroundTransparency = 1,
+		Visible = false,
+		LayoutOrder = 4,
+		ZIndex = 51,
+		Parent = card,
+	})
+	secondButton.Activated:Connect(function()
+		close(true)
+	end)
 	ctx.Input.on("Close", function(began)
 		if began then
-			close()
+			close(true)
 		end
 	end)
 end

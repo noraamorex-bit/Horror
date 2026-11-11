@@ -90,6 +90,17 @@ function AtticRun.onCallThrough(player: Player): boolean
 	end
 	state.Dropped = true
 	workspace:SetAttribute("SignalDead", true)
+	-- (v155) a head start for everyone at the window: the drop is where they died (the bathroom: 1,393 captures)
+	local grace = if workspace:GetAttribute("Difficulty") == "Hard" then (cfg().DropGraceHard or 0) else (cfg().DropGrace or 0)
+	local here = ctx.Util.getRoot(player)
+	if grace > 0 and ctx.Intruder and ctx.Intruder.spare then
+		for _, p in ctx.Util.activePlayers() do
+			local r = ctx.Util.getRoot(p)
+			if p == player or (here and r and (r.Position - here.Position).Magnitude < 14) then
+				ctx.Intruder.spare(p, grace)
+			end
+		end
+	end
 	ctx.Audio.caption("\"Nine-one-one, what's your emerg-\"", nil, nil, { player })
 	task.delay(1.3, function()
 		ctx.Audio.caption("[Static] CALL DROPPED. No Service.", nil, nil, { player })
@@ -136,6 +147,7 @@ local function bringDown()
 		ctx.Audio.playAt("HatchCreak", L.Attic.HatchTop, { CaptionText = "[The ladder creaks. Something going down]", CaptionRange = 40 })
 		I.climbInto(below, below + Vector3.new(0, 0, -10), nil)
 	end
+	state.HeUp = false -- (v155: he can come up again)
 end
 
 -- he heard the booster: up the ladder, through the hatch, into the attic after whoever's there
@@ -237,13 +249,44 @@ end
 
 function AtticRun.start()
 	-- he's up there with nobody left to hunt: back down the ladder; and the prompts follow the night
+	-- (v155, the logs: his routes to the attic failed ~1.7 times a night, he can't walk the ladder, so the attic was a safe
+	-- room) anyone who stays up there CampAfter s (longer while the booster's still to plug) and he comes up after them
+	local CLIMB_FROM = { Patrol = true, Investigate = true, Search = true, Prowl = true, Withdraw = true, CheckSpot = true, Chase = true,
+		Charge = true, Inspect = true, Lurk = true, Stalk = true }
 	task.spawn(function()
 		local empty = 0
+		local upFor: { [Player]: number } = {}
 		while true do
 			task.wait(1)
 			refresh()
 			local I = ctx.Intruder
 			local pos = I and I.position and I.position()
+			-- (v155) camping in the attic
+			if AtticRun.enabled() and not state.HeUp and pos and ctx.Rooms.floorOf(pos) ~= "Attic" and I.isHunting and I.isHunting()
+				and CLIMB_FROM[I.getState and I.getState() or ""] and workspace:GetAttribute("AtticHatchOpen") and not ctx.Ending.isOver() then
+				local need = AtticRun.pending() and (cfg().CampPending or 30) or (cfg().CampAfter or 18)
+				if workspace:GetAttribute("Difficulty") == "Hard" then
+					need = math.max(6, need * 0.6)
+				end
+				local who = nil
+				for _, p in everyone() do
+					if inAttic(p) and not p:GetAttribute("Captured") and not p:GetAttribute("Dead") then
+						upFor[p] = (upFor[p] or 0) + 1
+						if upFor[p] >= need then
+							who = p
+						end
+					else
+						upFor[p] = nil
+					end
+				end
+				if who then
+					upFor = {}
+					ctx.Director.logTruthRaw("Someone stayed in the attic: he came up the ladder after them.")
+					heComes(who)
+				end
+			else
+				upFor = {}
+			end
 			local up = pos and ctx.Rooms.floorOf(pos) == "Attic" and I.isHunting and I.isHunting()
 				and not (I.getState and I.getState() == "Offstage")
 			if up then

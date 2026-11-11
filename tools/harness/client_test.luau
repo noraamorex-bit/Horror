@@ -267,7 +267,24 @@ local ok, err = pcall(function()
 	R.Shake.OnClientEvent:Fire(1, 1)
 	R.Fade.OnClientEvent:Fire(true, 1)
 	R.PlaySound.OnClientEvent:Fire("PhoneVibrate")
+	-- (v155, players: "Make different endings", "maybe more endings?") the card says how many there are and how to find the next
+	player:SetAttribute("StatEndings", 2)
+	player:SetAttribute("StatEndingTotal", 10)
+	player:SetAttribute("StatEndingList", "Sirens,CaseClosed")
+	assert(mods.Ending.nextHint() == ctx.Story.EndingHints.NextDoor, "the next good ending's hint: " .. tostring(mods.Ending.nextHint()))
 	R.Ending.OnClientEvent:Fire({ Kind = "Sirens", Title = "SIRENS", Headline = "YOU SURVIVED", Good = true, Short = "x", Shots = {}, Duration = "10:00", RestartIn = 3 })
+	do
+		local line = false
+		for _ = 1, 40 do
+			for _, d in H.unwrap(pg):GetDescendants() do
+				if d:IsA("TextLabel") and string.find(d.Text, "2 / 10 endings", 1, true) and string.find(d.Text, "next door", 1, true) then line = true end
+			end
+			if line then break end
+			H.task.wait(0.1)
+		end
+		assert(line, "the card: 2 / 10 endings, next: ...")
+		print("endings line ok")
+	end
 	do
 		local asked = false
 		for _ = 1, 40 do

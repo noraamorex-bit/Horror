@@ -130,6 +130,27 @@ local ok, err = pcall(function()
 	H.wrap(H.unwrap(card):FindFirstChild("Play")).Activated:Fire()
 	assert(sent[#sent] == "QuickPlay" and not card.Parent, "PLAY: into a circle, card gone")
 	print("welcome back ok")
+	-- (v155, players: "dont teleport us in", "do not make us spawn in a game") a notice with a second button: that button (and the
+	-- close key) only closes it; PLAY still queues
+	do
+		local played = 0
+		ctx.Notice.show({ Title = "Welcome", Body = "x", Button = "PLAY", Secondary = "LOOK AROUND FIRST" }, function() played += 1 end)
+		local second = nil
+		for _, d in H.unwrap(pg):GetDescendants() do
+			if d:IsA("TextButton") and d.Text == "LOOK AROUND FIRST" and d.Visible then second = d end
+		end
+		assert(second, "the welcome card has LOOK AROUND FIRST")
+		H.wrap(second).Activated:Fire()
+		H.task.wait(0.05)
+		assert(played == 0 and not ctx.Notice.isOpen(), "LOOK AROUND FIRST closes the card without queueing")
+		ctx.Notice.show({ Title = "Welcome", Body = "x", Button = "PLAY", Secondary = "LOOK AROUND FIRST" }, function() played += 1 end)
+		for _, d in H.unwrap(pg):GetDescendants() do
+			if d:IsA("TextButton") and d.Text == "PLAY" and d.Visible then H.wrap(d).Activated:Fire() end
+		end
+		H.task.wait(0.05)
+		assert(played == 1, "PLAY still plays")
+		print("welcome notice ok")
+	end
 	-- (v119, the owner: "dont offer become him in lobby")
 	for _, d in H.unwrap(pg):GetDescendants() do
 		assert(not (d:IsA("TextLabel") and d.Text == "BE HIM"), "no BE HIM in the lobby")

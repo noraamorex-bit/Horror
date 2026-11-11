@@ -170,6 +170,8 @@ window.setFrame = (f, fr, cuts) => {
   let sh = 0;
   if (fr.cap === 'RUN.') sh = 14 + 10 * Math.sin(f);
   for (const c of cuts) if (t >= c && t < c + 0.15) sh = Math.max(sh, 22 * (1 - (t - c) / 0.15));
+  // (reel 74) a quick cut inside a caption: a jolt (fr.jolt = frames since that cut)
+  if (fr.jolt != null && fr.jolt < 5) sh = Math.max(sh, 20 * (1 - fr.jolt / 5));
   const sx = (rnd(f) - .5) * sh, sy = (rnd(f + 9) - .5) * sh;
   $('base').style.transform = 'translate(' + sx + 'px,' + sy + 'px) scale(' + zoom + ')';
   // ---------- hook
@@ -217,6 +219,7 @@ window.setFrame = (f, fr, cuts) => {
   if (t >= scare1) fl = Math.max(fl, 0.9 * (1 - seg(t, scare1, scare1 + 0.15)));
   if (t >= scare2) fl = Math.max(fl, 0.9 * (1 - seg(t, scare2, scare2 + 0.15)));
   for (const c of cuts.slice(1, 8)) if (t >= c) fl = Math.max(fl, 0.25 * (1 - seg(t, c, c + 0.08)));
+  if (fr.jolt != null && fr.jolt < 3) fl = Math.max(fl, 0.2 * (1 - fr.jolt / 3));
   $('flash').style.opacity = fl;
   let bk = 0;
   if (t < 0.15) bk = 1 - seg(t, 0, 0.15);
@@ -228,7 +231,7 @@ window.setFrame = (f, fr, cuts) => {
 };
 </script></body></html>`;
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const browser = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
 await page.setContent(html);
 await page.evaluate(() => document.fonts.ready);

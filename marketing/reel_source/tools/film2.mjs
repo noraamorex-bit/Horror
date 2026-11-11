@@ -419,6 +419,9 @@ for (const fr of spec.frames) {
     for (const m of (window.EXTRAS || [])) m.visible = !(fr.hideExtras || []).some(p => Math.hypot(m.position.x - p[0], m.position.y - p[1] - 0.22, m.position.z - p[2]) < 1.0);
     // (reel 42) or by their index in spec.extras (fr.hideIdx), for props that sit close together
     if (fr.hideIdx) for (const j of fr.hideIdx) if (window.EXTRAS && window.EXTRAS[j]) window.EXTRAS[j].visible = false;
+    // (reel 75) an extra moved on this frame (fr.extrasOver: { index: { pos, rot } }), e.g. a board swinging; it stays there after
+    if (fr.extrasOver) for (const [j, e] of Object.entries(fr.extrasOver)) { const m = window.EXTRAS && window.EXTRAS[+j];
+      if (m) { if (e.pos) m.position.set(...e.pos); if (e.rot) m.rotation.set(...e.rot, 'YXZ'); } }
     // avatars moved and posed per frame (fr.av: [{ i, pos, yaw, pose }]); with fr.av, the ones not listed hide
     if (fr.av && window.AV) {
       for (const g of window.AV) g.visible = false;

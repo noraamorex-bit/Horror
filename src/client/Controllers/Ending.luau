@@ -194,7 +194,9 @@ local function showCard(opts)
 	end
 
 	if opts.NewEnding then
-		local pill = line({ Text = opts.NewEnding, Font = UI.Font.Bold, TextSize = 15, TextColor3 = GOLD })
+		local isNew = string.sub(opts.NewEnding, 1, 3) == "NEW"
+		local pill = line({ Text = opts.NewEnding, Font = UI.Font.Bold, TextSize = isNew and 15 or 13, TextWrapped = true,
+			TextColor3 = isNew and GOLD or Color3.fromRGB(200, 184, 140) })
 		pill.TextTransparency = 1
 		task.delay(0.9, function()
 			UI.tween(pill, 0.5, { TextTransparency = 0 })
@@ -747,6 +749,23 @@ local function onResult(payload)
 	end
 end
 
+-- the hint for an ending this player hasn't found yet (the good ones first; Story.EndingOrder)
+function Ending.nextHint(): string?
+	local found = {}
+	for _, k in string.split(tostring(player:GetAttribute("StatEndingList") or ""), ",") do
+		found[k] = true
+	end
+	for pass = 1, 2 do
+		for _, key in ctx.Story.EndingOrder do
+			local e = ctx.Story.Endings[key]
+			if e and not found[key] and ((pass == 1) == not e.Bad) and ctx.Story.EndingHints[key] then
+				return ctx.Story.EndingHints[key]
+			end
+		end
+	end
+	return nil
+end
+
 local function onEnding(payload)
 	closeCard()
 	stopMusic()
@@ -759,9 +778,12 @@ local function onEnding(payload)
 			playCutscene(payload)
 		end
 		local newEnding = nil
+		local found, total = player:GetAttribute("StatEndings"), player:GetAttribute("StatEndingTotal")
 		if table.find(payload.FirstFor or {}, player.UserId) then
-			local found, total = player:GetAttribute("StatEndings"), player:GetAttribute("StatEndingTotal")
 			newEnding = "NEW ENDING FOUND" .. (found and total and ("  ·  " .. found .. " / " .. total) or "")
+		elseif found and total and found < total then
+			-- (v155, players: "Make different endings", "maybe more endings?": there are ten; say so, and how to find the next)
+			newEnding = "🏆 " .. found .. " / " .. total .. " endings" .. (Ending.nextHint() and ("  ·  next: " .. Ending.nextHint()) or "")
 		end
 		playMusic(payload.Good == true)
 		showCard({

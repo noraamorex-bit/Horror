@@ -130,6 +130,14 @@ for _, f in frames do
 	end
 	out[tostring(f.f)] = fr
 end
-fs.writeFile(process.args[2], serde.encode("json", { skin = { scale = SCALE, half = half, bones = bones, color = mask and mask.color or nil },
+-- (v149+) unmasked, he wears the store colour map under Rig.SkinTint (film2: skin.tint); read from Rig.luau so reels follow the game
+local tint = nil
+if not mask then
+	local r, g, b = fs.readFile("src/server/Intruder/Rig.luau"):match("Rig%.SkinTint%s*=%s*Color3%.fromRGB%((%d+),%s*(%d+),%s*(%d+)%)")
+	if r then
+		tint = { tonumber(r), tonumber(g), tonumber(b) }
+	end
+end
+fs.writeFile(process.args[2], serde.encode("json", { skin = { scale = SCALE, half = half, bones = bones, color = mask and mask.color or nil, tint = tint },
 	parts = mask and mask.parts or nil, frames = out }))
 print("skin_frames:", #frames, "frames")

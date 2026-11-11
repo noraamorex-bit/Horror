@@ -85,6 +85,9 @@ local ok, err = pcall(function()
 	assert(window, "the window's Call 911")
 	H.flush(0.5)
 	p:SetAttribute("Signal", 1)
+	local spared = nil
+	local realSpare = ctx.Intruder.spare
+	ctx.Intruder.spare = function(who, secs, ...) if who == p then spared = secs end; return realSpare(who, secs, ...) end
 	rawget(window, "__signals").Triggered:Fire(p)
 	for _ = 1, ctx.Config.Help.CellCallDurationNormal + 2 do
 		if not workspace_dead() then p:SetAttribute("Signal", 1) end
@@ -93,6 +96,10 @@ local ok, err = pcall(function()
 	local ws = H.unwrap(H.workspaceRoot)
 	assert(not ctx.Escape.helpCalled(), "the first call from the window brings no help")
 	assert(ws:GetAttribute("SignalDead") == true, "zero bars now")
+	-- (v155) a head start to the hatch for whoever was at the window
+	assert(spared and spared >= ctx.Config.Attic.DropGrace, "a head start after the drop: " .. tostring(spared))
+	ctx.Intruder.spare = realSpare
+	assert(ctx.AtticRun.pending(), "the booster's still out: Mrs. Okafor waits longer (Director)")
 	-- (PlayerState's tick isn't driven here: ask its signal function directly)
 	local function bars(at) return ctx.PlayerState._signal(at) end
 	assert(bars(spot) == 0, "zero bars even at the window: " .. bars(spot))
@@ -161,6 +168,17 @@ local ok, err = pcall(function()
 	root.CFrame = R.CFrame.new(0, 18, -20)
 	H.flush(ctx.Config.Attic.LeaveAfter + 2.5)
 	assert(ctx.Rooms.floorOf(ctx.Intruder.position()) ~= "Attic", "back down the hatch: " .. tostring(ctx.Intruder.position()))
+	-- (v155) the attic is no safe room: stay up there and he comes up after you
+	root.CFrame = attic
+	local t0 = 0
+	while ctx.Rooms.floorOf(ctx.Intruder.position()) ~= "Attic" and t0 < ctx.Config.Attic.CampAfter + ctx.Config.Attic.ClimbDelay + 30 do
+		root.CFrame = attic
+		H.flush(1)
+		t0 += 1
+	end
+	assert(ctx.Rooms.floorOf(ctx.Intruder.position()) == "Attic", "he came up after me (state " .. tostring(ctx.Intruder.getState()) .. ")")
+	assert(t0 >= ctx.Config.Attic.CampAfter, "not before CampAfter: " .. t0)
+	print("camping: he came up after " .. t0 .. " s")
 	print("attic ok")
 end)
 print(ok and "ATTIC OK" or ("ATTIC FAIL: " .. tostring(err)))

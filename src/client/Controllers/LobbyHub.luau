@@ -403,6 +403,7 @@ function LobbyHub.start()
 				Title = "Welcome to Hollis Creek",
 				Body = "Someone lives in the attic. Survive the night, alone or with friends.\n\nPLAY puts you in a group with whoever's here. Here are 100 coins to start: spend them at 🛒 on the right.",
 				Button = "▶  PLAY",
+				Secondary = "LOOK AROUND FIRST", -- (v155: closing the card no longer queues you)
 			}, function()
 				ctx.Remotes.QuickPlay:FireServer("Group") -- (ignored if they've already stepped into a circle)
 			end)

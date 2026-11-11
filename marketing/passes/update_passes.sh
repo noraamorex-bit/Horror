@@ -43,3 +43,6 @@ api 2006193593 -F "price=10"   # Pick your role (15; 0 of 20 offers bought)
 api 2045276660 -F "price=25"
 # v149 (9 Nov): the panel got trolls
 api 2044988494 -F "description=Run the night and troll your friends: jumpscare them, fling, freeze, shrink them, set him on them. Skip acts, set off scares, god mode, teleport. Trolls only with friends in the server; no coins on nights you use it."
+# v155 (11 Nov): Become Him developer product 25 -> 35 (169 of 1,441 offers bought at 25, 10-13% every day; back to 25 if it falls
+# under ~8%): PATCH .../developer-products/v2/universes/$U/developer-products/3718593338 -F price=35
+api 2045276660 -F "price=15"   # Night Vision (25; 1 of 115 windows)

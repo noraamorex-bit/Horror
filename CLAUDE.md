@@ -66,6 +66,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   an attribute), the coin pill and the 🎟️ RELEASE chip small. Text that pointed at a label now points at the icon (🎁, 🎟️,
   🔦, 🛒). Don't add text buttons back. **v143 (the owner: "UI should have names under them")**: every icon (the dock's and
   🏆 ⚙️) has its name in small caps under its tile (`Dock.LabelH`, `Dock.CellW`).
+- **The first-visit welcome card (v155**, players: "dont teleport us in", "do not make us spawn in a game"): ▶ PLAY plus a quiet
+  LOOK AROUND FIRST (`Notice` `Secondary`: closes it without queueing; the close key does the same). Its only button used to be
+  PLAY, so closing it queued you and the circle teleported you 10 s later.
 - Queue circles: white **outline** only, spread out so labels don't overlap. **Every circle counts down
   10 s from the moment someone steps in, 3 s once full; at 0 it teleports whoever's on it** (the owner's
   rule; no START NOW, no waiting for players). **v118: once in, you're held in (invisible walls only queued
@@ -142,6 +145,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   there), the ladder creaks and he comes up through the hatch after whoever's there (hide under the dust sheet / in the trunk),
   call from the attic. `Director/AtticRun`, `Config.Attic`, test `attic_test`. **He's never caught**: every ending says he got
   away / was never found (no arrest). New story parts: ask the owner first.
+  **v155 (the v154 logs: 906 drops, then 1,538 captures, 158 plugs, 559 of those nights ended on Mrs. Okafor's call)**: whoever's at
+  the window when the call drops is spared `DropGrace` 20 s (Hard 8) to get to the hatch; Mrs. Okafor waits `OkaforWait` 60 s
+  longer while the booster's still out; and the attic is no safe room: stay up there `CampAfter` 18 s (`CampPending` 30 while the
+  booster still needs plugging; Hard x0.6) and he comes up the ladder after you (his routes into the attic used to just fail).
+- **Endings on the card (v155**, players: "Make different endings", "maybe more endings?": there are ten, nobody knew): every result
+  card without a new ending says "🏆 2 / 10 endings · next: <hint>" (`Ending.nextHint`, the good ones first, `Story.EndingHints`).
 - It's a horror game, not a chore simulator: few tasks, multi-step, no dead time. No "stay together"
   task that solo can't do.
 - Friends speak in dialogue boxes (not texts), **out loud (v106: Roblox text-to-speech, client
@@ -494,6 +503,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   from the same 😱 button, `Remotes.PrankFree`); Night Vision pass 49 → 25 (0/19). Next: Starter bought/asked (want several %), whether
   BecomeHim sales hold.
 
+- **11 Nov (v155)**, the owner: "improve the game, prices and gamepasses". Since 15 Oct 12,282 R$; 10 Nov alone ~3,190 R$. Bought /
+  windows: JumpscareAll 431/2,988 (14%), BecomeHim 169/1,441 (11.7%, 10-13% every day), Revive 91/2,569, ReviveAuto 51/2,388,
+  Starter 73/5,236, RocketNight 29/319, NightVision 1/115, ChooseRole 3/132. Done: **Become Him 25 → 35** (an experiment: back to
+  25 if it falls under ~8% bought/asked), **Night Vision pass 25 → 15**. Kept: JumpscareAll 10, Starter 9 (the owner's prices),
+  Revive 10 (hard rule). Repeat buying is low (89 prank buyers in the house, 110 pranks), so no multi-packs.
+
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
 alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
@@ -660,6 +675,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   → ""3:14 am: breathing."" (him bent over my bed, his head comes round) → "so i slept with the lamp on." → "i woke up in the dark."
   (my door open a crack) → "new recording. 3:16 am." → "it was 3:16 am." (turn from the phone: he's crouched by the bed; the lunge
   on 22.15 s) → RUN. Caption: `don't check your sleep app 👀 game in comments`.
+- **A new run from #1 (11 Nov**, the owner: "prepare the next two reels. Start from part 1 again with the original reel style. Make it
+  high paced tension."): #2's format, look, music and slot lengths, but **cut fast**: every caption holds 2-3 shots, each inner cut a
+  jolt (comp_cantplay `fr.jolt`, the edit.py's SLOTS of sub-shots), and the audio adds a hit on every inner cut plus a heartbeat speeding
+  up to the silence before the scare (`audio.py`, on top of #2's track). His v149+ look (no mask; `skin_frames.luau` now writes
+  `skin.tint` from Rig.SkinTint), the v154 house (`$S/stage154.json`). Reel 74 = **#1** (`cant_play_alone_1_v3.mp4`): footsteps in the
+  ceiling, the hatch jumping, the fridge, the hatch open (him over the edge pulling back into the dark), up the ladder, the dolls facing
+  the hatch, the photos, the tally (a fresh last mark), "then the ladder creaked." (his head and shoulders rise up through the hatch,
+  he comes at you on 22.15 s) → RUN along the walkway. Caption: `he's still up there 👀 game in comments`. Reel 75 = **#2**
+  (`cant_play_alone_2_v3.mp4`): scratching above my bed, the hatch open again, wet footprints to my room, "so we nailed it shut.",
+  "tonight i heard the nails." (a board hanging, the nails on the floor), the hatch open, "he was already down here." (turn round: him
+  stooped right behind you) → RUN. Caption: `he's not in the attic anymore 👀 game in comments`. film2 gained `fr.extrasOver` (move an
+  extra per frame). The compositors find Chromium at /opt/pw-browsers/chromium (PW_CHROME overrides).
 - **Winning format: "ROBLOX HORROR GAMES YOU CAN'T PLAY ALONE #N"** — orange, plain outlined captions,
   case-file card (FEAR LEVEL 10/10), escalating captions ("night 1… night 19… tonight he's coming down"),
   RUN. + flash, end card "SEARCH IT ON ROBLOX". #2 got **115k** views, #5 61k, #7 did well. #8: the secret
@@ -903,6 +930,22 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **11 Nov (v155 = place version 155, reels 74-75 = #1-#2 of a new run)**, published; the owner sent Roblox's feedback CSV again:
+  "Analyze all game statistics deeply and the feedback and improve the game, prices and gamepasses. Also prepare the next two reels.
+  Start from part 1 again with the original reel style. Make it high paced tension." Feedback since v152 (15 comments): mostly
+  positive ("fantastic", "so tuff", "scary"); asks: more/different endings (2), "dont teleport us in" / "do not make us spawn in a
+  game" (2), "even scarier" (1). Logs since 152 (~1 day: 12,490 lobby visits, 5,676 nights, 9,856 players-in-a-night): first-nighters
+  quit mid-night 59%, but **2,090 of 3,473 act I quits are within 15 s of arriving**, and 1,933 of them were back in the lobby within
+  15 min (1,722 queued again; their next night was bigger, 905 saw an ending): group-shoppers sent alone (927) or in a pair (727) by a
+  "2 players" circle's countdown. Solo nights 38% of nights, 90% no ending. v154's attic: of 2,482 nights that reached the blackout,
+  906 called from the window (the drop, a median 48 s in), 158 plugged the booster in, 76 called from the attic; 1,558 ended on Mrs.
+  Okafor's call. Done: the welcome card's LOOK AROUND FIRST, the endings line, the drop grace / Okafor wait / attic camping (see
+  Lobby, Pacing), the two prices (see Economy), reels #1-#2 (see Marketing). `pull_stats.py --from` now lists only those days' keys
+  (by prefix; it listed the whole history before filtering). **For the owner**: the circle rule (10 s, then whoever's on goes) sends
+  lone players into empty houses and they re-queue (2,090 a day); asking whether a 2+ circle may wait for a second player. Next:
+  `--since=155 --from=2026-11-11`: BecomeHim bought/asked at 35 (back to 25 under ~8%), Booster:Plug and Help:Cell per drop (want far
+  more than 158/906), captures after the drop, AtticHunt from camping, the card's endings line (Again rate).
 
 - **10 Nov (v154 = place version 154)**, published; the owner's picks from the v153 consult: "Into the attic" and "Never caught". Done:
   the call drops → the attic chapter, and every ending says he was never found (see Pacing; GDD "Into the attic, and he's never
@@ -1578,7 +1621,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 154; the notes' "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 155; the notes' "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

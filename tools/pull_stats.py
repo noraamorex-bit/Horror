@@ -42,10 +42,22 @@ def get(url):
     raise RuntimeError("gave up: " + url)
 
 
-def keys(store):
+def keys(store, prefix=None):
+    # (--from: the log stores' keys start with YYYYMMDD, so list only those days by prefix instead of the whole history)
+    if prefix is None and FROM_DAY and store in ("NightLog_v1", "LobbyLog_v1"):
+        from datetime import timedelta
+        day = datetime.strptime(FROM_DAY, "%Y%m%d").date()
+        today = datetime.now(timezone.utc).date()
+        out = []
+        while day <= today:
+            out += keys(store, day.strftime("%Y%m%d"))
+            day += timedelta(days=1)
+        return out
     out, cursor = [], ""
     while True:
         q = {"datastoreName": store, "limit": 100}
+        if prefix:
+            q["prefix"] = prefix
         if cursor:
             q["cursor"] = cursor
         try:

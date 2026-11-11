@@ -388,6 +388,15 @@ Config.Attic = {
 	HeHearsAfter = 2.5, -- s after the booster's plugged in: the ladder creaks
 	ClimbDelay = 4, -- then he's up through the hatch
 	LeaveAfter = 6, -- s with nobody left up there: he goes back down
+	-- (v155, the v154 logs: 906 drops, then 1,538 captures; only 158 plugged the booster in and 559 of those nights ended on Mrs.
+	-- Okafor's call instead) whoever's at the window when the call drops gets this long before he comes for them, to get to the
+	-- hatch; and while the booster's still out, Mrs. Okafor waits this much longer before she calls
+	DropGrace = 20,
+	DropGraceHard = 8,
+	OkaforWait = 60,
+	-- (v155) the attic is no safe room: stay up there this long and he comes up the ladder after you (Hard x0.6)
+	CampAfter = 18,
+	CampPending = 30, -- (while the booster still needs plugging in: time to find it)
 }
 
 Config.Help = {
@@ -521,7 +530,7 @@ Config.Shop = {
 		{ Key = "AdminPanel", Id = 2044988494, Price = 249, Name = "Admin panel", Desc = "Troll friends: jumpscare, fling, freeze, set him on them. Run the night: skip acts, god mode. (No coins on nights you use it.)" },
 		-- (v108, 21 Oct: about 8 of 2,714 players own a pass. More things worth wanting at a price a small
 		-- balance covers: the cheap ones down to 15-19, the taser 39, the rocket 79; three new ones)
-		{ Key = "NightVision", Id = 2045276660, Price = 25, Name = "Night Vision", Desc = "Night vision goggles every night: see in the dark for 60 seconds. Spot him before he spots you." },
+		{ Key = "NightVision", Id = 2045276660, Price = 15, Name = "Night Vision", Desc = "Night vision goggles every night: see in the dark for 60 seconds. Spot him before he spots you." },
 		{ Key = "DoubleCoins", Id = 2045798689, Price = 39, Name = "2x Coins", Desc = "Double the coins from every night you play. Stacks with VIP." },
 		{ Key = "Rocket", Id = 2039534472, Price = 79, Name = "Rocket Launcher", Desc = "Start every night with a rocket launcher: 2 rockets. A hit blows him off his feet, then he limps away." },
 		{ Key = "VIP", Id = 2036510399, Price = 99, Name = "VIP", Desc = "Everything in one: +50% coins every night, a VIP tag, pick your role, every flashlight colour, Marathon stamina and a battery that never dies." },
@@ -540,7 +549,7 @@ Config.Shop = {
 	-- 40 R$ with a far bigger brand. 10 R$ = the cheapest pass, an impulse buy for a leftover balance)
 	Revive = { Id = 3716706476, Price = 10, Window = 15, Grace = 10 },
 	-- co-op only, bought again every night: you become him for the rest of the night (MonsterService)
-	BecomeHim = { Id = 3718593338, Price = 25 }, -- (v108: 50 → 25: opened 49 times, bought 0 at 50)
+	BecomeHim = { Id = 3718593338, Price = 35 }, -- (v108: 50 → 25: opened 49 times, bought 0 at 50; v155: 25 → 35, 169 of 1,441 bought at 25 (11.7%): back to 25 if it falls under ~8%)
 	-- one rocket for this night only (the hunt): for anyone without the pass, bought on the spot
 	RocketNight = { Id = 3718739690, Price = 10 }, -- (v110: 25 -> 15, 0 of 10 bought at 25; v118: 15 -> 10, 0 of 13 at 15)
 	-- one time only, for everyone who hasn't had it: coins, a rocket for the next night and a revive
