@@ -17,16 +17,18 @@ Config.Lobby = {
 	GamePlaceId = nil :: number?,
 	LobbyPlaceId = nil :: number?,
 	QueueSizes = { 1, 2, 3, 4 },
-	-- every circle: a 10 s countdown from the moment someone steps in, 3 s once it's full; at 0 it
-	-- goes with whoever's on it, to a house of its own
-	Countdown = 10,
+	-- every circle: a countdown from the moment someone steps in, shorter once it's full; at 0 it goes with
+	-- whoever's on it, to a house of its own. (v159, the owner: "Yes 15 secs. If it's full already start counting
+	-- down from 5": 10 s / 3 s sent group-shoppers in alone before their friend got there, 645 of 1,107 first-night
+	-- act I quits within 15 s of arriving on v157)
+	Countdown = 15,
 	-- (v150, the owner: "many people saying that the people joining your game randomly or joining others
 	-- game randomly is really annoying") strangers are never put into each other's nights any more: no
 	-- circle joins a night that started short, no night lists itself for them (MatchService). Who you
 	-- went in with, Roblox friends (the lobby's JOIN card) and invites still come in. true = the v78-149
 	-- matching back.
 	MatchStrangers = false,
-	FullCountdown = 3,
+	FullCountdown = 5,
 	-- game server: a group night that started short takes late arrivals (up to MaxPlayers) through the
 	-- first two acts, until bedtime, and never past this many seconds. (v78 logs: 150 s caught 1 of 68
 	-- teleports, while 44 of 57 lone departures had someone else leave the lobby within 8 minutes.)

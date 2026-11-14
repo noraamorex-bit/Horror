@@ -73,8 +73,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   ✕ LEAVE sit in a slim bar at the bottom centre (it was at the top left, where Roblox's chat opens on phones and tablets);
   a short circle says "friends: step in now".
 - Queue circles: white **outline** only, spread out so labels don't overlap. **Every circle counts down
-  10 s from the moment someone steps in, 3 s once full; at 0 it teleports whoever's on it** (the owner's
-  rule; no START NOW, no waiting for players). **v118: once in, you're held in (invisible walls only queued
+  15 s from the moment someone steps in, 5 s once full; at 0 it teleports whoever's on it** (the owner's
+  rule; no START NOW. v159, the owner: "Yes 15 secs. If it's full already start counting down from 5"; it was 10 s / 3 s,
+  and 645 of 1,107 first-night act I quits were lone players sent in within 15 s of arriving). **v118: once in, you're held in (invisible walls only queued
   players bump into); ✕ LEAVE is the only way out** (the owner).
 - Returning players get a small "BACK FOR ANOTHER NIGHT?" card (streak, daily reward, quests, NIGHTMARE,
   ▶ PLAY). The dock wraps into two columns. **Never offer Become Him in the lobby** (v119, the owner).
@@ -970,6 +971,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **14 Nov (v159 = place version 159)**, published; the owner answered the circle question: "Yes 15 secs. If it's full already start
+  counting down from 5." Done: `Config.Lobby.Countdown` 15, `FullCountdown` 5 (the queue bar reads them). Next: `--since=159
+  --from=2026-11-14 --sample=5000`: first-night act I quits within 15 s of arriving (v157: 645 of 1,107; want far fewer), solo nights'
+  share, circle picked, queued-but-never-sent (a longer wait may add step-offs).
+
 - **14 Nov (v158 = place version 158, reels 76-77 = #3-#4 of the new run, store art v158)**, published; the owner sent Roblox's
   feedback CSV: "Deeply analyze all game statistics and the given player feedback and find bugs, and highly improve the game. Make next
   2 reels." Feedback since 11 Nov (~60 comments, mostly kids, mostly positive): "AI slop" / "stop using ai" downvotes (3) and "make the
@@ -1689,7 +1695,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 158; the notes' "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 159; the notes' "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

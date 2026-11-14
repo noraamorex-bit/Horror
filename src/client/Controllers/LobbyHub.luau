@@ -49,10 +49,10 @@ local function render(state)
 	end
 	panel.Visible = true
 	queueTitle.Text = (state.Size == 1 and "SOLO" or (state.Size .. "-PLAYER")) .. " QUEUE  ·  " .. state.Count .. " / " .. state.Size
-	-- (v138) the countdown drains a bar: 10 s from the first step in, 3 once the circle's full
+	-- (v138) the countdown drains a bar: Config.Lobby.Countdown from the first step in, FullCountdown once the circle's full
 	if queueBar then
 		local full = state.Count >= state.Size
-		local k = state.Status == "Teleporting" and 0 or (state.Countdown and math.clamp(state.Countdown / (full and 3 or 10), 0, 1) or 1)
+		local k = state.Status == "Teleporting" and 0 or (state.Countdown and math.clamp(state.Countdown / (full and (ctx.Config.Lobby.FullCountdown or 5) or (ctx.Config.Lobby.Countdown or 15)), 0, 1) or 1)
 		ctx.UI.tween(queueBar, 0.9, { Size = UDim2.fromScale(k, 1) }, Enum.EasingStyle.Linear)
 	end
 	if state.Status == "Teleporting" then

@@ -72,7 +72,7 @@ local ok, err = pcall(function()
 	assert(d > 8 and d < 24 and fpos.Z > spawnPos.Z - 10, "near where you spawn, off the walk, not by the circles: " .. tostring(d))
 	-- every circle counts down from Countdown the moment someone steps in; full, it drops to FullCountdown
 	local L = ctx.Config.Lobby
-	assert(L.Countdown == 10 and L.FullCountdown == 3, "10 s, 3 s when full")
+	assert(L.Countdown == 15 and L.FullCountdown == 5, "15 s, 5 s when full (v159)")
 	local function waitFor(sec) local t = os.clock(); while os.clock() - t < sec do end end
 	-- (the last queue state sent to anyone on a circle; players off the circles get nil)
 	local function lastQueue()
@@ -225,7 +225,7 @@ local ok, err = pcall(function()
 	print("friends ok")
 	L.MatchStrangers = false
 	-- (v118) once queued you stay queued until LEAVE: the walls hold you in, anyone pushed out is put back
-	L.Countdown = 10
+	L.Countdown = 15
 	ctx.Match = { find = function() return nil end }
 	for _, gone in { a, b } do -- (the pair sent from Pad2 earlier has left: it's free)
 		rawset(gone, "Parent", nil)

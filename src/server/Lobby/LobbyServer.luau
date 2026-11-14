@@ -952,17 +952,17 @@ local function tick()
 		pad.Members = members
 
 		local counted = math.min(#members, pad.Size)
-		-- every circle: a 10 s countdown from the moment someone steps in, down to 3 s once it's full;
+		-- every circle: a 15 s countdown from the moment someone steps in, down to 5 s once it's full (v159);
 		-- at 0 it goes with whoever's on it (the owner's rule: no waiting for players)
 		local L = ctx.Config.Lobby
 		if counted == 0 or pad.Teleporting then
 			pad.CountdownEnd = nil
 		elseif now >= pad.CooldownUntil then
 			if not pad.CountdownEnd then
-				pad.CountdownEnd = now + (L.Countdown or 10)
+				pad.CountdownEnd = now + (L.Countdown or 15)
 			end
 			if counted >= pad.Size then
-				pad.CountdownEnd = math.min(pad.CountdownEnd, now + (L.FullCountdown or 3))
+				pad.CountdownEnd = math.min(pad.CountdownEnd, now + (L.FullCountdown or 5))
 			end
 		end
 		pad.Short = counted < pad.Size
