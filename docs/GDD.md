@@ -182,6 +182,18 @@ the stare, the head turning right round, the scream with his jaw dropping open, 
   Client `Creature`: names from `SkinPose.Joints`, the fallback hides the pieces; `Prank` copies the pieces into its viewport.
 - Tests: skin_test (pieces, tint, bones, fingers, rest arms ~28 degrees, feet planted, head down on all fours, the jaw), creature_skin_test.
 
+### The ladder, the queue bar, new store art (v158)
+- **He climbs the ladder on his own**: NavGrid surveys the attic and the house as two floors with nothing between them, so on v157
+  every chase after someone in the attic failed (`FailGrid_UpperHall_Attic`, 12 a night) and he stood under the hatch. A route that
+  can't be found between the two now goes to the ladder's end on this floor (`Layout.Attic.HatchBelow` / `HatchTop`), the ladder
+  creaks, `Config.Attic.LadderUp` (3 s) passes (whoever's up there gets the OnTheLadder thought and the "!" on every hiding spot:
+  `AtticRun.ladder`), and he's through; down takes 1.4 s and clears the attic's search (`AtticRun.downAgain`). The camping rule and
+  the booster's scripted climb stay. Test `navai_test ladder`.
+- **The queue bar**: your circle's status and ✕ LEAVE in a slim bar at the bottom centre (320 x 62), clear of the thumbstick and the
+  jump button and of Roblox's chat window (which opens top left on phones and tablets, over where the panel was).
+- **Store art** (`marketing/reel_source/art158/`): real Roblox avatars (film2 avatar_rbx.js) running down the dark upstairs hall from
+  him, a plain bold title; the owner uploads it (players called the old cover AI).
+
 ### The attic, done properly (v157)
 The owner, with a screenshot of him standing still in the attic: "He isn't even doing anything.. also check the messages that come up
 either Theres too many to read or dont make sense like your having a conversation with 911 and then they start again from 911 what's

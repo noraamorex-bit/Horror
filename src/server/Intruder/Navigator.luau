@@ -58,6 +58,13 @@ local function inGrid(p: Vector3): boolean
 	return p.X >= B.X0 and p.X <= B.X1 and p.Z >= B.Z0 and p.Z <= B.Z1 and p.Y > B.Bottom and p.Y < B.Top + 6
 end
 
+-- (v158) the attic's strip under the ridge, as opposed to the house below it
+local function inAttic(p: Vector3): boolean
+	local A = NavGrid.Attic
+	return A ~= nil and p.X >= A.X0 - 1 and p.X <= A.X1 + 1 and p.Z >= A.Z0 - 1 and p.Z <= A.Z1 + 1 and p.Y > A.FloorMin
+end
+Navigator._inAttic = inAttic -- (tests)
+
 function Navigator.new(ctx, humanoid: Humanoid, root: BasePart)
 	local self = setmetatable({}, Navigator)
 	self.ctx = ctx
@@ -151,6 +158,30 @@ function Navigator:_planGrid(): boolean
 		path = near and NavGrid.findPath(near + Vector3.new(0, ROOT, 0), goal, self.Reach) or nil
 		if path then
 			table.insert(path, 1, near)
+		end
+	end
+	if not path and self.OnClimb and inAttic(from) ~= inAttic(goal) then
+		-- (v158) the hatch's ladder: the survey has the attic and the house as two floors with nothing between them, so
+		-- every chase after someone up there failed (FailGrid_UpperHall_Attic, 12 a night on v157) and he stood under
+		-- the hatch. To the ladder's end on this floor, then up (or down) it, then on from there.
+		local L = self.ctx and self.ctx.Layout and self.ctx.Layout.Attic
+		local open = workspace:GetAttribute("AtticHatchOpen") ~= false
+		if L and L.HatchTop and L.HatchBelow and open then
+			local up = inAttic(goal)
+			local foot = up and L.HatchBelow or L.HatchTop
+			local other = up and L.HatchTop or L.HatchBelow
+			local leg = NavGrid.findPath(from, foot + Vector3.new(0, ROOT - 3.2, 0), 4)
+			if leg then
+				self.Stats.Plans += 1
+				self.Stats.PlanMs += (os.clock() - t0) * 1000
+				self.Stats.Ladder = (self.Stats.Ladder or 0) + 1
+				self.Climb = { At = leg[#leg], To = other, Up = up }
+				self.Waypoints = leg
+				self.End = leg[#leg]
+				self.Index = math.min(2, #leg)
+				self:_step()
+				return true
+			end
 		end
 	end
 	if not path and (self.Reach or 0) < 6 then
@@ -312,6 +343,9 @@ function Navigator:_planCross(): boolean
 end
 
 function Navigator:_plan()
+	if not self.ClimbUntil then
+		self.Climb = nil
+	end
 	if not self:_planGrid() and not self:_planCross() then
 		self:_compute()
 	end
@@ -377,6 +411,8 @@ function Navigator:moveDirect(goal: Vector3, speed: number?)
 end
 
 function Navigator:stop()
+	self.Climb = nil
+	self.ClimbUntil = nil
 	self.Version += 1
 	self.Computing = false
 	self.SideUntil = nil
@@ -468,6 +504,26 @@ function Navigator:update()
 	local now = os.clock()
 	local pos = self.Root.Position
 	local target = self.End or goal
+	-- (v158) at the ladder: up or down it (the intruder plays the climb), then the rest of the way
+	local climb = self.Climb
+	if climb and not self.ClimbUntil and flat(pos - climb.At) <= 3 and math.abs(pos.Y - ROOT - climb.At.Y) < 5 then
+		self.Humanoid:MoveTo(pos)
+		self.ClimbUntil = now + (self.OnClimb(climb.To, climb.Up, true) or 2)
+		return
+	end
+	if self.ClimbUntil then
+		if now < self.ClimbUntil then
+			self.LastProgress = now
+			return
+		end
+		self.ClimbUntil = nil
+		self.Climb = nil
+		self.OnClimb(climb.To, climb.Up, false)
+		self.LastPos = self.Root.Position
+		self.LastProgress = now
+		self:_plan()
+		return
+	end
 	if flat(pos - target) <= self.Tolerance and math.abs(pos.Y - target.Y) < 7 then
 		self.Arrived = true
 		self.Humanoid:MoveTo(pos)

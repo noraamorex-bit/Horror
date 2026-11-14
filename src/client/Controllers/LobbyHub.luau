@@ -65,7 +65,7 @@ local function render(state)
 		-- (v111) a short circle goes anyway (the owner's rule), so say so: 15 of 34 lone players left
 		-- their house within 26 s, nearly all brand new: they'd queued for "2 players" and landed alone
 		if state.Countdown and state.Size > 1 and state.Count < state.Size then
-			queueStatus.Text = "Starting in " .. tostring(state.Countdown) .. "... the next player to queue joins your house"
+			queueStatus.Text = "Starting in " .. tostring(state.Countdown) .. "... friends: step in now"
 		end
 	end
 end
@@ -410,22 +410,32 @@ function LobbyHub.start()
 		end
 	end)
 
-	-- your queue: at the top of the left-hand menu, in place of the play buttons
-	panel = glass(UI, { Name = "QueuePanel", LayoutOrder = 2, Size = UDim2.fromOffset(190, 108), BackgroundTransparency = 0.18, Visible = false, Parent = lobbyMenu })
-	queueTitle = UI.label({ Position = UDim2.fromOffset(12, 8), Size = UDim2.new(1, -24, 0, 18), Text = "", Font = UI.Font.Bold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
-	queueStatus = UI.label({ Position = UDim2.fromOffset(12, 27), Size = UDim2.new(1, -24, 0, 28), Text = "", TextSize = 11, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
-	-- (v138) the countdown as a bar draining under the text
-	local track = UI.new("Frame", { Name = "CountdownBar", Position = UDim2.fromOffset(12, 59), Size = UDim2.new(1, -24, 0, 3), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.85, Parent = panel })
+	-- your queue. (v158: a slim bar at the bottom centre, between the thumbstick and the jump button. It was at the top of the
+	-- left-hand menu, where Roblox's chat window opens on phones and tablets; a player asked for a way to leave the circles,
+	-- which already had a LEAVE button there.)
+	panel = glass(UI, {
+		Name = "QueuePanel",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -14),
+		Size = UDim2.fromOffset(320, 62),
+		BackgroundTransparency = 0.12,
+		Visible = false,
+		Parent = UI.Root,
+	})
+	queueTitle = UI.label({ Position = UDim2.fromOffset(12, 7), Size = UDim2.new(1, -128, 0, 18), Text = "", Font = UI.Font.Bold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
+	queueStatus = UI.label({ Position = UDim2.fromOffset(12, 25), Size = UDim2.new(1, -128, 0, 26), Text = "", TextSize = 11, TextWrapped = true, TextColor3 = UI.Color.Dim, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, Parent = panel })
+	-- (v138) the countdown as a bar draining along the bottom edge
+	local track = UI.new("Frame", { Name = "CountdownBar", Position = UDim2.new(0, 12, 1, -6), Size = UDim2.new(1, -128, 0, 3), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.85, Parent = panel })
 	queueBar = UI.new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.new(1, 1, 1), Parent = track })
 	-- (v118) the only way out of a circle once you're in it: the walls hold queued players in
 	local leave = UI.new("TextButton", {
 		Name = "LeaveQueue",
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -10, 1, -10),
-		Size = UDim2.fromOffset(96, 32),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -10, 0.5, 0),
+		Size = UDim2.fromOffset(104, 42),
 		Text = "✕  LEAVE",
 		Font = UI.Font.Bold,
-		TextSize = 13,
+		TextSize = 15,
 		TextColor3 = Color3.fromRGB(255, 236, 232),
 		BackgroundColor3 = Color3.fromRGB(120, 24, 26),
 		Parent = panel,

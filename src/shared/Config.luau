@@ -387,6 +387,7 @@ Config.Attic = {
 	PlugHold = 1.2,
 	HeHearsAfter = 2.5, -- s after the booster's plugged in: the ladder creaks
 	ClimbDelay = 4, -- then he's up through the hatch
+	LadderUp = 3, -- (v158) up the ladder on his own (a chase after someone in the attic): the creak, then he's up 3 s later
 	LeaveAfter = 6, -- s with nobody left up there: he goes back down
 	-- (v155, the v154 logs: 906 drops, then 1,538 captures; only 158 plugged the booster in and 559 of those nights ended on Mrs.
 	-- Okafor's call instead) whoever's at the window when the call drops gets this long before he comes for them, to get to the

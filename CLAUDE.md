@@ -69,6 +69,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **The first-visit welcome card (v155**, players: "dont teleport us in", "do not make us spawn in a game"): ▶ PLAY plus a quiet
   LOOK AROUND FIRST (`Notice` `Secondary`: closes it without queueing; the close key does the same). Its only button used to be
   PLAY, so closing it queued you and the circle teleported you 10 s later.
+- **The queue bar (v158**, a tablet player: "Make it so you can leave the little server circles"): your circle's status and its
+  ✕ LEAVE sit in a slim bar at the bottom centre (it was at the top left, where Roblox's chat opens on phones and tablets);
+  a short circle says "friends: step in now".
 - Queue circles: white **outline** only, spread out so labels don't overlap. **Every circle counts down
   10 s from the moment someone steps in, 3 s once full; at 0 it teleports whoever's on it** (the owner's
   rule; no START NOW, no waiting for players). **v118: once in, you're held in (invisible walls only queued
@@ -159,6 +162,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   call is cut off mid-line (the dispatcher's first line, then `Calls.DropCut`, then "CALL DROPPED"), and the attic call is the same
   dispatcher calling back (`Calls.Redial`, never "911, what's your emergency?" again). The final run is a real escape: anyone free
   still inside when GET OUT (`Help.FinalRun` 45 / Hard 35) runs out is taken (`CaughtHow` FinalRun); Sirens only if someone got out.
+  **v158 (the v157 logs: `FailGrid_UpperHall_Attic` 12 a night: every chase after someone in the attic failed and he stood under the
+  hatch)**: the hatch is a ladder on his routes (`Navigator` `Climb`, `OnClimb` in Intruder): a route between the house and the attic
+  goes to the ladder's end, the creak, `Attic.LadderUp` 3 s (whoever's up there gets the HIDE thought and the "!" markers:
+  `AtticRun.ladder`), then he's up; down again in 1.4 s (`AtticRun.downAgain`). Test `navai_test ladder`. v157's final run is fair
+  (421 out the front door, 43 taken at 0).
 - **Endings on the card (v155**, players: "Make different endings", "maybe more endings?": there are ten, nobody knew): every result
   card without a new ending says "🏆 2 / 10 endings · next: <hint>" (`Ending.nextHint`, the good ones first, `Story.EndingHints`).
 - It's a horror game, not a chore simulator: few tasks, multi-step, no dead time. No "stay together"
@@ -702,7 +710,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   `skin.tint` from Rig.SkinTint), the v154 house (`$S/stage154.json`). Reel 74 = **#1** (`cant_play_alone_1_v3.mp4`): footsteps in the
   ceiling, the hatch jumping, the fridge, the hatch open (him over the edge pulling back into the dark), up the ladder, the dolls facing
   the hatch, the photos, the tally (a fresh last mark), "then the ladder creaked." (his head and shoulders rise up through the hatch,
-  he comes at you on 22.15 s) → RUN along the walkway. Caption: `he's still up there 👀 game in comments`. Reel 75 = **#2**
+  he comes at you on 22.15 s) → RUN along the walkway. Caption: `he's still up there 👀 game in comments`.
+  Reel 76 = **#3** (`cant_play_alone_3_v3.mp4`, 14 Nov): mom's texts (the 115K hook) meet the house's hall camera: "night 13: mom texted
+  "who's in the hall?"" (the phone by my pillow | from my door's crack: nobody) → "nobody was." → "night 14: "why is the hatch open?""
+  (the hatch down | him over the edge pulling back | my door shut) → "mom watches the cameras at work." (the camera in its corner | its
+  view) → "tonight: "he's outside your door."" (my phone | my door) → ""don't open it."" (the camera: him hunched against my door, the
+  zoom) → ""he's not in the hall anymore."" (the camera: my door open | turn in bed: he's there, the lunge on 22.15 s) → RUN. Caption:
+  `mom watches the cameras 👀 game in comments`. Reel 77 = **#4** (`cant_play_alone_4_v3.mp4`): the doorbell cam turned round: "night
+  15: the doorbell cam. 6 am." (our front door opens from inside, him walking away down the walk) → "he left every morning." → "night
+  16: 11 pm. he came back." (up the walk, the steps, at the door) → "with his own key." (a key turning in our lock | the door shutting
+  behind him) → "tonight he didn't leave." → "he's still inside." → "he's been upstairs all day." (the bottom of the stairs: he's on
+  them, he comes down at you) → RUN out the front door. A second camera (`PORCHCAM`, the porch corner) for views of the door itself.
+  Caption: `he has a key to our house 👀 game in comments`. Reel 75 = **#2**
   (`cant_play_alone_2_v3.mp4`): scratching above my bed, the hatch open again, wet footprints to my room, "so we nailed it shut.",
   "tonight i heard the nails." (a board hanging, the nails on the floor), the hatch open, "he was already down here." (turn round: him
   stooped right behind you) → RUN. Caption: `he's not in the attic anymore 👀 game in comments`. film2 gained `fr.extrasOver` (move an
@@ -950,6 +969,22 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **14 Nov (v158 = place version 158, reels 76-77 = #3-#4 of the new run, store art v158)**, published; the owner sent Roblox's
+  feedback CSV: "Deeply analyze all game statistics and the given player feedback and find bugs, and highly improve the game. Make next
+  2 reels." Feedback since 11 Nov (~60 comments, mostly kids, mostly positive): "AI slop" / "stop using ai" downvotes (3) and "make the
+  background NON AI" (the store cover), "let people join with friends first not just straight to the game", "Make it so you can leave
+  the little server circles", "I get stuck", "a little to hard" vs "make it even scarier", "6 players". Logs since 157 (a random
+  sample: `pull_stats.py --sample=5000`, the API gives ~3 entries/s; 1,742 nights, 39,972 lobby visits): first-nighters quit mid-night
+  64%, 1,073 in act I and **645 of those within 15 s of arriving** (group-shoppers sent alone by a 2-player circle; the owner's
+  10 s rule, asked again); solo nights 36%, 93% no ending; deaths 0.18 / player; the attic chapter: AtticDrop 326 → hatch 201 → plug 96
+  → Help:Cell 47, Okafor 487; his routes into the attic failed 12 a night (fixed: the ladder). **Sales 27,934 R$ since 15 Oct, ~4,300-
+  6,000 R$ a day on 11-13 Nov** (JumpscareAll 1,016 / 8,576 asked, BecomeHim 390 / 4,060: 7-8% at 25 since v157, Revive 251 / 8,645).
+  Done: the ladder (see Pacing), the queue bar (see Lobby), reels #3-#4 (see Marketing), new store art: `marketing/attic/icon_v158_512.png`
+  / `_1024.png`, `thumbnail_v158_1.png` / `_2.png` (real Roblox avatars running from him, a plain bold title; `reel_source/art158/`):
+  **the owner uploads them in Creator Hub** (the key can't). Can't see the real client: check that his climb reads (the creak, the HIDE
+  line, him at the top) and the queue bar sits clear of the thumbstick and jump button on a phone. Next: `--since=158 --from=2026-11-14
+  --sample=5000`: FailGrid_*_Attic (want ~0), AtticHunt, captures in the attic, act I quits within 15 s.
 
 - **11 Nov (v157 = place version 157)**, published; the owner's screenshot (him grey and still in the attic) + "He isn't even doing
   anything..." (see Pacing, v157) and "make become him 25" (done through the API). Can't see the real client: check on a phone that his
@@ -1654,7 +1689,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 157; the notes' "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 158; the notes' "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

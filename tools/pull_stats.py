@@ -7,6 +7,7 @@ Usage: python3 tools/pull_stats.py [out.json] [--fresh] [--logs-only] [--since=V
   --fresh       re-fetch player records (night/lobby logs never change, so they stay cached)
   --logs-only   only the night and lobby logs (JourneyService), not the player records
   --since=N     only logs written by place version N or later (logs carry Ver from v74 on)
+  --sample=N    only N random log keys per store (fetching runs at ~3 entries/s)
   --from=DATE   only fetch logs written on DATE (YYYY-MM-DD, UTC) or later: much faster than the whole history
 
 Sections: player records (PlayerStats_v1, Economy_v1), then our own logs: every night
@@ -86,6 +87,8 @@ def entry(store, key):
 
 
 CACHE = {}
+CACHE_PATH = None
+SAMPLE = None
 
 
 FROM_DAY = None  # (--from=YYYY-MM-DD: only log keys written that day or later; they start with YYYYMMDD)
@@ -97,10 +100,25 @@ def dump(store):
     if FROM_DAY and store in ("NightLog_v1", "LobbyLog_v1"):
         ks = [k for k in ks if k[:8] >= FROM_DAY]
     have = CACHE.setdefault(store, {})
+    if SAMPLE and store in ("NightLog_v1", "LobbyLog_v1") and len(ks) > SAMPLE:
+        # (--sample=N: N keys, picked at random (fixed seed), the ones already fetched first; the API allows ~3 entries/s)
+        import random
+        got = [k for k in ks if k in have]
+        rest = [k for k in ks if k not in have]
+        random.Random(7).shuffle(rest)
+        keep = set(got[:SAMPLE] + rest[: max(0, SAMPLE - len(got))])
+        ks = [k for k in ks if k in keep]
     todo = [k for k in ks if k not in have]
-    with ThreadPoolExecutor(3) as ex:
-        for e in ex.map(lambda k: entry(store, k), todo):
+    # (v158: 24 at a time, and saved as it goes: each request takes ~1.4 s through the proxy, so 3 at a time took hours
+    # for a few days of logs, and a stopped run kept nothing)
+    print(f"  {store}: {len(ks)} keys, {len(todo)} to fetch", file=sys.stderr, flush=True)
+    with ThreadPoolExecutor(24) as ex:
+        for n, e in enumerate(ex.map(lambda k: entry(store, k), todo), 1):
             have[e["key"]] = e
+            if n % 2000 == 0:
+                print(f"    {n} / {len(todo)}", file=sys.stderr, flush=True)
+                if CACHE_PATH:
+                    json.dump(CACHE, open(CACHE_PATH, "w"))
     return [have[k] for k in ks if k in have]
 
 
@@ -427,7 +445,10 @@ def main():
     flags = {a for a in sys.argv[1:] if a.startswith("--")}
     out = args[0] if args else "stats_dump.json"
     cache = out + ".cache"
-    global FROM_DAY
+    global FROM_DAY, CACHE_PATH, SAMPLE
+    sm = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--sample=")), None)
+    SAMPLE = int(sm) if sm else None
+    CACHE_PATH = cache
     fr = next((a.split("=", 1)[1] for a in flags if a.startswith("--from=")), None)
     if fr:
         FROM_DAY = fr.replace("-", "")

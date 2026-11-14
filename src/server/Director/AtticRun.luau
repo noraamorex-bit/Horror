@@ -160,6 +160,39 @@ local function bringDown()
 	end
 end
 
+-- (v158) he's on the ladder on his own (the navigator routes through the hatch now): warn whoever's up there, once a climb
+function AtticRun.ladder()
+	if not state or state.HeUp then
+		return
+	end
+	state.HeUp = true
+	local up = {}
+	for _, p in everyone() do
+		if inAttic(p) then
+			table.insert(up, p)
+		end
+	end
+	if #up > 0 then
+		ctx.Director.think(up, ctx.Story.Thoughts.OnTheLadder)
+		ctx.Objectives.add("AtticHide")
+		state.HideUntil = os.clock() + (cfg().LadderUp or 3) + (cfg().HideMarkers or 22)
+		ctx.Director.logTruth("AtticHunt")
+	end
+end
+
+-- (v158) he went back down the ladder by himself
+function AtticRun.downAgain()
+	if not state then
+		return
+	end
+	state.HeUp = false
+	state.Searched = {}
+	if state.HideUntil then
+		state.HideUntil = nil
+		ctx.Objectives.dismiss("AtticHide")
+	end
+end
+
 -- he heard the booster: up the ladder, through the hatch, into the attic after whoever's there
 local function heComes(by: Player)
 	if state.HeUp then

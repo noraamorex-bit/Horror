@@ -231,6 +231,8 @@ local function playTrack(name: string, speed: number?)
 	end
 end
 
+local onClimb: (Vector3, boolean, boolean) -> number? -- (v158, set below: the ladder climb)
+
 local function ensureModel()
 	if S.Model and S.Model.Parent then
 		return
@@ -251,6 +253,11 @@ local function ensureModel()
 		end
 	end
 	S.Nav = Navigator.new(ctx, S.Humanoid, S.Root)
+	-- (v158) the hatch's ladder on a route between the house and the attic: the creak, a beat (whoever's up there is told to
+	-- hide, the "!" on the hiding spots), then he's through. Returns how long the climb takes.
+	S.Nav.OnClimb = function(to: Vector3, up: boolean, starting: boolean): number?
+		return onClimb(to, up, starting)
+	end
 	S.Tracks = {}
 	S.CurrentTrack = nil
 	loadAnims()
@@ -361,6 +368,27 @@ Intruder._speak = speak -- (tests)
 
 local function pos(): Vector3
 	return S.Root.Position
+end
+
+onClimb = function(to: Vector3, up: boolean, starting: boolean): number?
+	local L = ctx.Layout.Attic
+	if starting then
+		ctx.Audio.playAt("HatchCreak", L.HatchTop, {
+			CaptionText = up and "[The ladder creaks. Someone is climbing up]" or "[The ladder creaks. Something going down]",
+			CaptionRange = 60,
+		})
+		if up and ctx.AtticRun and ctx.AtticRun.ladder then
+			ctx.AtticRun.ladder()
+		end
+		return up and ((ctx.Config.Attic and ctx.Config.Attic.LadderUp) or 3) or 1.4
+	end
+	local goal = S.Nav.Goal
+	placeAt(to + V(0, 0.2, 0), goal)
+	S.Progress = { Pos = pos(), T = now() }
+	if not up and ctx.AtticRun and ctx.AtticRun.downAgain then
+		ctx.AtticRun.downAgain()
+	end
+	return nil
 end
 
 local function rootOf(p: Player): BasePart?

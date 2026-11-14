@@ -185,6 +185,43 @@ local okRun, err = pcall(function()
 		end
 		print(("trips %d, failed %d, slow %d, idle>2.5s %d, climbs %d, total blocked %.1fs, avg trip %.1fs"):format(trips, fails, slow, wedged, walker.Climbs, walker.Blocked, totalT / trips))
 		assert(fails == 0 and wedged == 0, "navigation problems")
+	elseif MODE == "ladder" then
+		-- (v158) a route between the house and the attic goes up (and down) the hatch's ladder: the survey alone has no way
+		-- between the two floors (FailGrid_UpperHall_Attic, 12 a night on v157)
+		local a = mkPlayer("Far", 1, V(200, 4, 200))
+		H.services.Players.GetPlayers = function() return { a } end
+		ctx.Director.adminStart("Normal")
+		ctx.Director.startAct("Guest")
+		tick(3)
+		I.setMode("Hunt")
+		tick(1)
+		Sim.addWalker(S.Model, { RootY = 4.9 })
+		I.adminFreeze(true)
+		S.AdminFrozen = nil
+		S.State = "Stopped"
+		S.Model:PivotTo(R.CFrame.new(V(2, 15 + 4.95, -16)))
+		tick(0.5)
+		local creaks = 0
+		local realPlay = ctx.Audio.playAt
+		ctx.Audio.playAt = function(id, ...) if id == "HatchCreak" then creaks += 1 end return realPlay(id, ...) end
+		local goal = V(-18, 29.4 + 4.9, 2)
+		S.Nav:goTo(goal, { Speed = 14 })
+		local t = 0
+		while not S.Nav.Arrived and t < 40 do tick(0.5); t += 0.5 end
+		local p = S.Root.Position
+		assert(ctx.Rooms.floorOf(p) == "Attic", ("up in the attic, not at %.1f %.1f %.1f (failed %s)"):format(p.X, p.Y, p.Z, tostring(S.Nav.Failed)))
+		assert((p - goal).Magnitude < 6, ("at the goal up there: %.1f away"):format((p - goal).Magnitude))
+		assert(creaks >= 1, "the ladder creaked")
+		assert((S.Nav.Stats.Ladder or 0) >= 1, "a ladder route")
+		print(("up the ladder: %.1f s"):format(t))
+		local down = V(2, 15 + 4.9, -18)
+		S.Nav:goTo(down, { Speed = 14 })
+		t = 0
+		while not S.Nav.Arrived and t < 40 do tick(0.5); t += 0.5 end
+		p = S.Root.Position
+		assert(ctx.Rooms.floorOf(p) ~= "Attic" and (p - down).Magnitude < 6, ("back down in the hall: %.1f %.1f %.1f"):format(p.X, p.Y, p.Z))
+		print(("down the ladder: %.1f s"):format(t))
+		print("LADDER OK")
 	elseif MODE == "bench" then
 		-- routes between random spots: how long A* takes, and how close to walls the routes run
 		local goals = {}
