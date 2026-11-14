@@ -1,15 +1,17 @@
 --[[
 	ChatDodge (v164, the owner: "the chat box hides some UI when opened. Make it so that that UI moves up/down when chat box is
-	closed/opened"). Roblox's chat window opens at the top left, over our top-left UI: the house's clock / act / items column (and
-	the 🎲 / 🚀 / 😱 buttons under it), the lobby's ▶ PLAY and its two icons. While the chat window is open those slide down to just
-	under it; closed, they slide back.
+	closed/opened"). Roblox's chat window opens at the top left. Roblox doesn't move a game's own UI out of its way, so this does.
+	(v165, the owner: "only the clickable UI needs to move the time and info can stay. Also the UI kinda blocks my joystick")
+	In the house the buy buttons moved to the right (HUD.OfferColumn), so nothing there needs to dodge any more; in the lobby
+	▶ PLAY and its two icons slide right, beside the chat window, while it's open (down would land them on the thumbstick).
 
 	Is it open? StarterGui:GetCore("ChatActive") (works with TextChatService in the live client); where that isn't available, the
 	chat window's own size (ChatWindowConfiguration.AbsoluteSize). Where it is: ChatWindowConfiguration / ChatInputBarConfiguration
 	AbsolutePosition + AbsoluteSize (the lower of the two), turned into our UI's units (UI.Root's UIScale, the top bar inset).
 	Only things that sit in the same columns as the chat window move.
 
-		ChatDodge.register(gui)   -- remember gui's Position and keep it under the chat window while it's open
+		ChatDodge.register(gui, side?) -- remember gui's Position; while the chat window is open keep it under it, or beside it
+		                               -- with side "right" (v165: the lobby's PLAY, clear of the thumbstick)
 		ChatDodge.offsetFor(gui, baseTop) -- for things placed every frame (the house's clock column): the push down
 		ChatDodge.bottom()        -- the chat window's lower edge in UI units (0 = closed)
 ]]
@@ -22,7 +24,7 @@ local ChatDodge = {}
 local ctx
 
 local GAP = 8
-local items: { { Gui: GuiObject, Base: UDim2 } } = {}
+local items: { { Gui: GuiObject, Base: UDim2, Side: string? } } = {}
 local current = { Bottom = 0, Left = 0, Right = 0 }
 
 local function scale(): number
@@ -106,23 +108,41 @@ function ChatDodge.offsetFor(gui: GuiObject, baseTop: number): number
 	return 0
 end
 
+-- (v165) how far right `gui` (its left edge at baseLeft) must go to sit beside the open chat window (0 if closed or not
+-- level with it): what's at the top left steps aside sideways, never down onto the thumbstick
+function ChatDodge.sideFor(gui: GuiObject, baseLeft: number): number
+	if current.Bottom <= 0 then
+		return 0
+	end
+	local y = gui.AbsolutePosition.Y / scale()
+	if y >= current.Bottom then
+		return 0
+	end
+	return math.max(0, current.Right + GAP - baseLeft)
+end
+
 local function place(item, animate: boolean)
 	local g = item.Gui
 	if not g.Parent then
 		return
 	end
-	local target = item.Base + UDim2.fromOffset(0, ChatDodge.offsetFor(g, item.Base.Y.Offset))
+	local target
+	if item.Side == "right" then
+		target = item.Base + UDim2.fromOffset(ChatDodge.sideFor(g, item.Base.X.Offset), 0)
+	else
+		target = item.Base + UDim2.fromOffset(0, ChatDodge.offsetFor(g, item.Base.Y.Offset))
+	end
 	if g.Position ~= target then
 		if animate and ctx.UI.tween then
-			ctx.UI.tween(g, 0.2, { Position = target })
+			ctx.UI.tween(g, 0.25, { Position = target }, Enum.EasingStyle.Quint)
 		else
 			g.Position = target
 		end
 	end
 end
 
-function ChatDodge.register(gui: GuiObject)
-	local item = { Gui = gui, Base = gui.Position }
+function ChatDodge.register(gui: GuiObject, side: string?)
+	local item = { Gui = gui, Base = gui.Position, Side = side }
 	table.insert(items, item)
 	place(item, false)
 end

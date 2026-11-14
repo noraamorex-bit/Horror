@@ -138,6 +138,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   hotbar hides under a result card too (it sat on the card's bottom line), the hiding/struggle hint sits 16 px up (an iPhone's home bar). Look at the card:
   `ui_dump.luau card|card_dead pc|touch` + `ui_preview.mjs`.
 - Secret-ending HUD is one slim bar at the top (it was "way too big" before).
+- **Buy buttons on the right (v165**, the owner, a screenshot with chat open: "only the clickable UI needs to move the time and info
+  can stay. Also the UI kinda blocks my joystick... The animation of it going down is laggy"): the 🎲 / 🚀 / 😱 / BE HIM / night vision
+  buttons live in `HUD.OfferColumn`: small tiles (icon, short name, price; `HUD._tile` draws whatever Text a controller sets) in a grid
+  stacked up from just above the touch buttons (`MobileControls.clusterTop`), as many columns as the room under the objective needs; on a
+  computer, bottom right. The clock / room / items stay top left (chat may cover them). The lobby's PLAY + icons slide **right**, beside the
+  chat window (`ChatDodge.register(menu, "right")`, a Quint tween), never down onto the thumbstick. Roblox moves none of a game's own UI for
+  its chat. New buy buttons: parent them to `HUD.OfferColumn`.
 - **Out from under the chat (v164**, the owner: "the chat box hides some UI when opened. Make it so that that UI moves up/down when chat
   box is closed/opened"): client `ChatDodge` watches Roblox's chat window (GetCore "ChatActive", else the window's size; where it is from
   ChatWindowConfiguration / ChatInputBarConfiguration AbsolutePosition + AbsoluteSize) and slides what's under it down to just below it,
@@ -526,7 +533,12 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   red flash, shake; then "😱 <name> jumpscared everyone!"; the buyer gets "You jumpscared N players").
   Bought from a small 😱 button under the inventory in the house and a 😱 SCARE dock icon in the lobby,
   only while someone else is in the server. Logged in Sales_v1 as JumpscareAll, night log event Prank.
-  It sells: 8 bought of 51 asked in its first two days (the best rate of anything).
+  It sells: 8 bought of 51 asked in its first two days (the best rate of anything). **v165 (the owner: "make the jumpscare everyone much
+  scarier and also make it so I can be jumpscared i cant even see how it is")**: `Prank.scare` is three beats (~2.6 s): dread (the screen
+  dims, static creeps, a rumble and a speeding heartbeat), black silence with two glimpses of his face (far, then closer), then the slam
+  (his face rushes the lens screaming, the picture shaking apart, a white hit-frame, red pulses, static, five sounds layered, a buzz on
+  controllers/phones that support it), a hard cut to black, then who did it. **The buyer sees it too** (then "You jumpscared N players!"),
+  and the full panel's TROLL tab has "😱 Jumpscare Everyone (just me)" to try it.
 
 - **27 Oct (v120)**, the owner: "put the starter pack on the side and prompt them to buy it with the transaction
   screen without them pressing anything or maybe accidentally pressing". It had been opened 4 times in a week (0 sold).
@@ -999,6 +1011,18 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **14 Nov (v165 = place version 165)**, published; the owner's screenshot (chat open over the moved column) + "the monster keeps
+  randomly teleporting between upstairs and the attic and doesn't properly hunt. Make the jumpscare everyone much scarier and also make it
+  so I can be jumpscared". Found: AtticRun's `bringDown` **teleported him down** 6 s after the attic emptied, and every chase aimed at
+  someone up there sent him up the ladder again (a teleport-like 3 s wait at the foot, then he was on top): up, down, up. And the
+  navigator skipped its update while his root was anchored, so a climb could hang. Done: he **climbs** where you can see it (rung by rung
+  from the foot, through the hatch: `onClimb`, `Intruder.climbInto` too, so the camping scene and bringDown are climbs; the brain waits
+  while `S.Climbing`); no second climb within `Attic.ClimbGap` 10 s; after a climb he picks players on his own floor first for 25 s
+  (`runTarget`); a climb interrupted (stun, capture) finishes where it was going (`Navigator:stop`); `LeaveAfter` 12. Buy buttons moved
+  right (see HUD, v165). Jumpscare Everyone rebuilt (see Economy, v115 note). Can't see / hear the real client: check his climb looks
+  like climbing (he faces the ladder, steps up in jerks), the tiles above CROUCH don't sit on the objective, the lobby's PLAY beside the
+  chat, and the new scare's timing and volume.
 
 - **14 Nov (v164 = place version 164)**, published; the chat window no longer covers the top-left UI (see HUD, v164). Can't see the
   real client: check on a phone that opening chat slides the clock column / PLAY down under it and closing brings them back. If they
@@ -1760,7 +1784,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 164; the notes' "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 165; the notes' "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

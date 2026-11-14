@@ -1,7 +1,7 @@
 --[[
 	WeaponRoll (v161) — the Weapon Roll in the house (server WeaponService, Config.Weapons, product Config.Shop.WeaponRoll).
 
-	• 🎲 WEAPON  R$10, a small button under the inventory (HUD.LeftColumn) while you're free in a night. It opens the roll's
+	• 🎲 WEAPON  R$10, a small button on the right with the other buy buttons (HUD.OfferColumn, v165) while you're free in a night. It opens the roll's
 	  window first: every weapon with its real chance, what each tier does, and the guarantees ("Epic or better in N rolls ·
 	  Legendary in N"). ROLL opens Roblox's purchase window. Never shown where paid random items aren't allowed
 	  (RollRestricted, from the server's PolicyService check).
@@ -478,7 +478,7 @@ function WeaponRoll.start()
 		AutoButtonColor = true,
 		LayoutOrder = 7,
 		Visible = false,
-		Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
+		Parent = ctx.HUD and (ctx.HUD.OfferColumn or ctx.HUD.LeftColumn) or UI.Root,
 	})
 	UI.corner(button :: TextButton, 8)
 	UI.stroke(button :: TextButton, tierOf("Legendary").Color, 1, 0.4)

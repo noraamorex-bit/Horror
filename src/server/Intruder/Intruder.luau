@@ -380,7 +380,42 @@ onClimb = function(to: Vector3, up: boolean, starting: boolean): number?
 		if up and ctx.AtticRun and ctx.AtticRun.ladder then
 			ctx.AtticRun.ladder()
 		end
-		return up and ((ctx.Config.Attic and ctx.Config.Attic.LadderUp) or 3) or 1.4
+		local secs = up and ((ctx.Config.Attic and ctx.Config.Attic.LadderUp) or 3) or 1.4
+		-- (v165) he climbs where you can see it: from the ladder's foot, up through the hatch, onto the attic floor (or the other
+		-- way), in steps, instead of standing still and then being somewhere else
+		if S.Model and S.Root then
+			local foot = up and L.HatchBelow or L.HatchTop
+			local opening = V(L.HatchTop.X, (L.HatchTop.Y + L.HatchBelow.Y) / 2, (L.HatchTop.Z + L.HatchBelow.Z) / 2)
+			local route = { pos(), V(opening.X, foot.Y + 2, opening.Z), V(opening.X, (up and L.HatchTop.Y or L.HatchBelow.Y) - 2, opening.Z), to + V(0, 2, 0) }
+			if not up then
+				route = { pos(), V(opening.X, L.HatchTop.Y + 1, opening.Z), V(opening.X, L.HatchBelow.Y + 4, opening.Z), to + V(0, 2, 0) }
+			end
+			S.Root.Anchored = true
+			S.Climbing = true
+			local start = now()
+			local steps = math.max(6, math.floor(secs * 12))
+			for k = 1, steps do
+				task.delay(secs * k / steps, function()
+					if not S.Climbing or not S.Model then
+						return
+					end
+					-- (along the three legs, a little jerk to every rung)
+					local t = k / steps
+					local seg = math.min(3, math.floor(t * 3) + 1)
+					local u = math.clamp(t * 3 - (seg - 1), 0, 1)
+					local a, b = route[seg], route[seg + 1]
+					local p = a:Lerp(b, u)
+					local face = up and V(0, 0, -1) or V(0, 0, 1)
+					S.Model:PivotTo(CFrame.lookAt(p, p + face))
+				end)
+			end
+			local _ = start
+		end
+		return secs
+	end
+	S.Climbing = nil
+	if S.Root then
+		S.Root.Anchored = false
 	end
 	local goal = S.Nav.Goal
 	placeAt(to + V(0, 0.2, 0), goal)
@@ -2994,10 +3029,14 @@ local function runTarget(ok: ((Player) -> boolean)?): Player?
 		local r = not spared(p) and now() >= (S.LeftAlone[p] or 0) and (not ok or ok(p)) and rootOf(p)
 		if r then
 			local last = (I.LastLifeLast and (tonumber(p:GetAttribute("NightCaught")) or 0) > 0) and 1 or 0
-			local key = { last, S.SensedAt[p] or -1e9, (r.Position - pos()).Magnitude }
+			-- (v165) for a while after a climb, someone on his own floor first (the attic and the house: he went up and down
+			-- after whoever came next)
+			local cross = (S.Nav and S.Nav.LastClimb and os.clock() - S.Nav.LastClimb < 25
+				and Navigator._inAttic(r.Position) ~= Navigator._inAttic(pos())) and 1 or 0
+			local key = { cross, last, S.SensedAt[p] or -1e9, (r.Position - pos()).Magnitude }
 			local better = not bestKey
 			if bestKey then
-				for i = 1, 3 do
+				for i = 1, 4 do
 					if key[i] ~= bestKey[i] then
 						better = key[i] < bestKey[i]
 						break
@@ -3192,6 +3231,10 @@ local function think(dt: number)
 	end
 	local state = S.State
 	if state == "Offstage" or state == "Gone" or state == "Stopped" then
+		return
+	end
+	-- (v165) on the ladder: nothing until he's off it
+	if S.Climbing then
 		return
 	end
 	-- (in a closet, waiting for someone to walk past: nothing to animate, nothing to see)
@@ -3486,8 +3529,10 @@ function Intruder.adminIsFrozen(): boolean
 	return S.AdminFrozen == true
 end
 
--- (v154, AtticRun) he comes up through the attic hatch (or goes back down it): there's no route up the ladder, so the
--- climb is a scene and he's placed at the top; then he hunts, after `target` if given
+-- (v154, AtticRun) he comes up through the attic hatch (or goes back down it); then he hunts, after `target` if given.
+-- (v165, the owner: "the monster keeps randomly teleporting between upstairs and the attic": this placed him at the top
+-- at once) He climbs it now, where you can see it: from the ladder's foot (where he's put first if he's further away; the
+-- ones up there can't see the house), up through the hatch, then off after them.
 function Intruder.climbInto(at: Vector3, look: Vector3?, target: Player?): boolean
 	if not S.Root then
 		return false
@@ -3498,13 +3543,33 @@ function Intruder.climbInto(at: Vector3, look: Vector3?, target: Player?): boole
 	if S.Nav then
 		S.Nav:stop()
 	end
-	placeAt(at, look)
-	S.Progress = { Pos = pos(), T = now() }
 	if target and valid(target) then
 		S.HuntTarget = target
 		S.UnhidAt[target] = nil
 		S.Ignore[target] = nil
 	end
+	local L = ctx.Layout.Attic
+	if not (L and L.HatchTop and L.HatchBelow) or S.Climbing then
+		placeAt(at, look)
+		S.Progress = { Pos = pos(), T = now() }
+		return true
+	end
+	local up = Navigator._inAttic(at)
+	local foot = up and L.HatchBelow or L.HatchTop
+	if (pos() - foot).Magnitude > 6 then
+		placeAt(foot, at)
+	end
+	if S.Nav then
+		S.Nav.LastClimb = os.clock()
+	end
+	local secs = onClimb(at, up, true) or 2
+	task.delay(secs, function()
+		if not S.Climbing then
+			return -- (finished already)
+		end
+		onClimb(at, up, false)
+		S.Progress = { Pos = pos(), T = now() }
+	end)
 	return true
 end
 

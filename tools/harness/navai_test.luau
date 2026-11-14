@@ -207,7 +207,15 @@ local okRun, err = pcall(function()
 		local goal = V(-18, 29.4 + 4.9, 2)
 		S.Nav:goTo(goal, { Speed = 14 })
 		local t = 0
-		while not S.Nav.Arrived and t < 40 do tick(0.5); t += 0.5 end
+		local midway = false
+		while not S.Nav.Arrived and t < 40 do
+			tick(0.5); t += 0.5
+			-- (v165: he climbs where you can see it, not standing at the foot and then appearing up top)
+			local y = S.Root.Position.Y
+			if y > 15 + 4.9 + 3 and y < 29.4 + 4.9 - 2 then midway = true end
+		end
+		assert(midway, "seen part way up the ladder (a climb, not a jump)")
+		assert(not S.Root.Anchored and not S.Climbing, "on his feet again at the top")
 		local p = S.Root.Position
 		assert(ctx.Rooms.floorOf(p) == "Attic", ("up in the attic, not at %.1f %.1f %.1f (failed %s)"):format(p.X, p.Y, p.Z, tostring(S.Nav.Failed)))
 		assert((p - goal).Magnitude < 6, ("at the goal up there: %.1f away"):format((p - goal).Magnitude))
@@ -215,6 +223,11 @@ local okRun, err = pcall(function()
 		assert((S.Nav.Stats.Ladder or 0) >= 1, "a ladder route")
 		print(("up the ladder: %.1f s"):format(t))
 		local down = V(2, 15 + 4.9, -18)
+		-- (v165) not straight back down: a chase re-aimed at the other floor sent him up and down the ladder
+		S.Nav:goTo(down, { Speed = 14 })
+		tick(3)
+		assert(ctx.Rooms.floorOf(S.Root.Position) == "Attic", "no second climb right after the first: " .. tostring(S.Root.Position) .. " " .. tostring(S.Climbing) .. " " .. tostring(S.Nav.Climb ~= nil))
+		tick(ctx.Config.Attic.ClimbGap)
 		S.Nav:goTo(down, { Speed = 14 })
 		t = 0
 		while not S.Nav.Arrived and t < 40 do tick(0.5); t += 0.5 end

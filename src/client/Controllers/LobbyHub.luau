@@ -263,9 +263,9 @@ function LobbyHub.start()
 	})
 	UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = menu })
 	lobbyMenu = menu
-	-- (v164) under Roblox's chat window while it's open
+	-- (v164) out of the way of Roblox's chat window while it's open (v165: beside it, not under it: under it was the thumbstick)
 	if ctx.ChatDodge then
-		ctx.ChatDodge.register(menu)
+		ctx.ChatDodge.register(menu, "right")
 	end
 
 	-- (v140, the owner, crossing out the title, FIND PLAYERS and How to play: "Do UI properly this is so bad.. Make

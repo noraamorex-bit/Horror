@@ -3,10 +3,9 @@
 	developer product (Config.Shop.JumpscareAll) that, the moment it's bought, jumpscares every other
 	player in the server, in the house or in the lobby (ShopService fires Remotes.JumpscareAll).
 
-	What they get: the screen goes black, his porcelain mask (a copy of the real one, in a
-	ViewportFrame over everything) lunges out of the dark at them with its jaw dropped, the screech and
-	a hit, a red flash and a shake; then a line at the bottom saying who did it, so they can pay them
-	back. The buyer gets "You jumpscared N players".
+	What they get (v165): a few seconds of dread, two glimpses of his face in the black, then his face slams into the
+	lens screaming (Prank.scare: the beats are written out there); then a line at the bottom saying who did it, so they
+	can pay them back. The buyer sees it too (v165), then "You jumpscared N players".
 
 	Where you buy it: a small 😱 button under the inventory in the house and a 😱 SCARE icon in the
 	lobby's dock, both only while someone else is in the server to scare.
@@ -166,7 +165,54 @@ local function maskCopy(): (Model?, CFrame?)
 	return m, hcf
 end
 
--- the scare itself
+-- one sound, played now (looped ones stop when told)
+local function play(name: string, volume: number?, speed: number?): Sound?
+	local snd = ctx.Effects and ctx.Effects.localSound(name)
+	if not snd then
+		return nil
+	end
+	if volume then
+		snd.Volume = volume
+	end
+	if speed then
+		snd.PlaybackSpeed = speed
+	end
+	snd:Play()
+	if not snd.Looped then
+		game:GetService("Debris"):AddItem(snd, 10)
+	end
+	return snd
+end
+
+-- a buzz in the hands (a controller's motors; a phone where Roblox allows it)
+local function buzz(strength: number, seconds: number)
+	pcall(function()
+		local HS = game:GetService("HapticService")
+		for _, input in { Enum.UserInputType.Gamepad1, Enum.UserInputType.Touch } do
+			if HS:IsVibrationSupported(input) then
+				for _, motor in { Enum.VibrationMotor.Large, Enum.VibrationMotor.Small } do
+					if HS:IsMotorSupported(input, motor) then
+						HS:SetMotor(input, motor, strength)
+						task.delay(seconds, function()
+							pcall(function()
+								HS:SetMotor(input, motor, 0)
+							end)
+						end)
+					end
+				end
+			end
+		end
+	end)
+end
+
+--[[
+	The scare itself (v165, the owner: "make the jumpscare everyone much scarier"). Three beats, ~2.6 s:
+	1. the dread: the screen dims and creeps with static, a low rumble and a heartbeat speeding up;
+	2. the glimpses: dead black and silence, then his face far off in a cold light for two frames, black, closer, black;
+	3. the slam: his face rushes the lens and fills the screen screaming, jaw dropped, the picture shaking itself apart,
+	   a white hit-frame, red pulses and static tearing across, three screams layered, the controller / phone buzzing;
+	   then a hard cut to black and the line saying who did it.
+]]
 function Prank.scare(from: string, text: string?)
 	if scaring then
 		return
@@ -178,19 +224,31 @@ function Prank.scare(from: string, text: string?)
 	scaring = true
 	local UI = ctx.UI
 	local gui = overlay()
-	local black = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 1, Parent = gui })
+	local dim = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 1, Parent = gui })
 	local vp = UI.new("ViewportFrame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
-		Ambient = Color3.fromRGB(150, 150, 160),
-		LightColor = Color3.fromRGB(255, 244, 232),
-		LightDirection = Vector3.new(-0.3, -0.6, -1),
+		ImageTransparency = 1,
+		Ambient = Color3.fromRGB(70, 80, 100),
+		LightColor = Color3.fromRGB(200, 220, 255),
+		LightDirection = Vector3.new(0.2, -0.9, -0.6),
 		ZIndex = 2,
 		Parent = gui,
 	})
-	local red = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(150, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 3, Parent = gui })
+	-- static: a few grey bars that jump about
+	local bars = {}
+	for i = 1, 7 do
+		bars[i] = UI.new("Frame", {
+			Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = Color3.fromRGB(200, 200, 200), BackgroundTransparency = 1,
+			BorderSizePixel = 0, ZIndex = 4, Parent = gui,
+		})
+	end
+	local red = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(160, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 3, Parent = gui })
+	local white = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 5, Parent = gui })
 	local cam = Instance.new("Camera")
-	cam.FieldOfView = 50
+	cam.FieldOfView = 55
 	cam.Parent = vp
 	vp.CurrentCamera = cam
 	local mask = maskCopy()
@@ -199,16 +257,11 @@ function Prank.scare(from: string, text: string?)
 		mask.Parent = vp
 		jaws = ctx.CreaturePose.jawMeshes(mask)
 	end
-	for _, name in { "Screech", "Jumpscare", "HorrorHitLow" } do
-		local s = ctx.Effects and ctx.Effects.localSound(name)
-		if s then
-			s:Play()
-			game:GetService("Debris"):AddItem(s, 10)
-		end
-	end
-	if ctx.Effects then
-		ctx.Effects.shake(1.2, 0.9)
-	end
+	local rumble = play("Presence", 1.6)
+	local heart = play("Heartbeat", 1, 1.1)
+	-- the timeline (seconds from the start)
+	local DREAD, BLACK, FAR, FAR_END, NEAR, NEAR_END, SLAM, CUT = 0, 0.85, 1.1, 1.18, 1.38, 1.46, 1.66, 2.55
+	local slammed = false
 	local t0 = os.clock()
 	local conn
 	conn = RunService.RenderStepped:Connect(function()
@@ -217,30 +270,106 @@ function Prank.scare(from: string, text: string?)
 			return
 		end
 		local k = os.clock() - t0
-		-- out of the dark at you: fast, then the last stretch slow, the picture jerking
-		local lunge = 1 - (1 - math.min(k / 0.32, 1)) ^ 3
-		local d = 9 - 6.6 * lunge
-		local j = 0.05 * (1 - math.min(k / 1.2, 1))
-		local jerk = CFrame.Angles((math.random() - 0.5) * j, (math.random() - 0.5) * j, (math.random() - 0.5) * 0.25 * math.min(k * 4, 1))
-		cam.CFrame = CFrame.lookAt(Vector3.new(0, -0.05, -d), Vector3.new(0, -0.05, 0)) * jerk
-		ctx.CreaturePose.setJaw(jaws, math.clamp(k / 0.25, 0, 1))
-		if mask and mask:FindFirstChild("Body") and ctx.Creature and ctx.Creature.poseCopy then
-			ctx.Creature.poseCopy(mask, "Stare", k, 4, { Scream = math.clamp(k / 0.22, 0, 1) })
+		-- static bars: a little in the dread, a lot in the slam
+		local staticAmt = (k < BLACK and math.clamp(k / BLACK, 0, 1) * 0.35) or (k >= SLAM and k < CUT and 0.8) or 0
+		for _, b in bars do
+			b.Visible = math.random() < staticAmt
+			b.Position = UDim2.fromScale(0, math.random())
+			b.Size = UDim2.new(1, 0, 0, math.random(2, 10))
+			b.BackgroundTransparency = 0.35 + math.random() * 0.5
 		end
-		red.BackgroundTransparency = 1 - 0.45 * math.max(0, 1 - math.abs(k - 0.3) / 0.25)
+		if k < BLACK then
+			-- 1. the dread
+			dim.BackgroundTransparency = 1 - 0.7 * math.clamp((k - DREAD) / BLACK, 0, 1)
+			if heart then
+				heart.PlaybackSpeed = 1.1 + k
+			end
+			vp.ImageTransparency = 1
+		elseif k < SLAM then
+			-- 2. black, silence, then the glimpses
+			dim.BackgroundTransparency = 0
+			if rumble and rumble.IsPlaying then
+				rumble:Stop()
+			end
+			if heart and heart.IsPlaying then
+				heart:Stop()
+			end
+			local d = nil
+			if k >= FAR and k < FAR_END then
+				d = 14
+			elseif k >= NEAR and k < NEAR_END then
+				d = 6.5
+			end
+			vp.ImageTransparency = d and 0 or 1
+			if d then
+				cam.CFrame = CFrame.lookAt(Vector3.new(0.3, 0.1, -d), Vector3.new(0, 0, 0))
+				if mask and mask:FindFirstChild("Body") and ctx.Creature and ctx.Creature.poseCopy then
+					ctx.Creature.poseCopy(mask, "Stare", k, 4, { Scream = 0 })
+				end
+				ctx.CreaturePose.setJaw(jaws, 0)
+			end
+		elseif k < CUT then
+			-- 3. the slam
+			if not slammed then
+				slammed = true
+				for _, name in { "Screech", "DemonScreech", "Jumpscare", "HorrorHitLow", "BoneRun" } do
+					play(name)
+				end
+				buzz(1, 0.7)
+				white.BackgroundTransparency = 0
+				task.delay(0.05, function()
+					white.BackgroundTransparency = 1
+				end)
+				if ctx.Effects then
+					ctx.Effects.shake(1.6, 1)
+				end
+			end
+			local s2 = k - SLAM
+			vp.ImageTransparency = 0
+			local lunge = 1 - (1 - math.min(s2 / 0.12, 1)) ^ 3
+			local d = 5 - 3.5 * lunge
+			local shakeA = 0.09 * (1 - math.min(s2 / 0.9, 1)) + 0.02
+			local jerk = CFrame.Angles((math.random() - 0.5) * shakeA, (math.random() - 0.5) * shakeA, (math.random() - 0.5) * shakeA * 3)
+			cam.CFrame = CFrame.lookAt(Vector3.new(0, -0.05, -d), Vector3.new(0, -0.05, 0)) * jerk
+			cam.FieldOfView = 55 + 25 * (1 - lunge) - 6 * math.sin(s2 * 40)
+			ctx.CreaturePose.setJaw(jaws, math.clamp(s2 / 0.1, 0, 1))
+			if mask and mask:FindFirstChild("Body") and ctx.Creature and ctx.Creature.poseCopy then
+				ctx.Creature.poseCopy(mask, "Stare", k, 4, { Scream = 1 })
+			end
+			-- the picture itself jumps about, and goes red in pulses
+			local px = math.floor((math.random() - 0.5) * 40 * (1 - math.min(s2, 1)))
+			local py = math.floor((math.random() - 0.5) * 30 * (1 - math.min(s2, 1)))
+			vp.Position = UDim2.new(0.5, px, 0.5, py)
+			vp.Size = UDim2.new(1.08, 0, 1.08, 0)
+			vp.ImageColor3 = (math.floor(s2 * 14) % 2 == 0) and Color3.fromRGB(255, 200, 200) or Color3.new(1, 1, 1)
+			red.BackgroundTransparency = 1 - 0.5 * math.max(0, math.sin(s2 * 22))
+		else
+			-- the hard cut
+			vp.ImageTransparency = 1
+			red.BackgroundTransparency = 1
+			dim.BackgroundTransparency = 0
+			for _, b in bars do
+				b.Visible = false
+			end
+		end
 	end)
-	task.wait(1.25)
+	task.wait(CUT + 0.3)
 	conn:Disconnect()
-	UI.tween(black, 0.35, { BackgroundTransparency = 1 })
-	UI.tween(vp, 0.25, { ImageTransparency = 1 })
-	red.BackgroundTransparency = 1
+	if rumble then
+		rumble:Destroy()
+	end
+	if heart then
+		heart:Destroy()
+	end
+	UI.tween(dim, 0.45, { BackgroundTransparency = 1 })
 	banner(gui, text or ("😱 " .. from .. " jumpscared everyone!"), 4)
 	task.delay(5, function()
 		gui:Destroy()
 	end)
-	task.wait(0.4)
+	task.wait(0.5)
 	scaring = false
 end
+Prank._timeline = 2.85 -- (tests: how long the scare runs)
 
 function Prank.init(c)
 	ctx = c
@@ -266,7 +395,7 @@ function Prank.start()
 			AutoButtonColor = true,
 			LayoutOrder = 11,
 			Visible = false,
-			Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
+			Parent = ctx.HUD and (ctx.HUD.OfferColumn or ctx.HUD.LeftColumn) or UI.Root,
 		})
 		UI.corner(b, 8)
 		UI.stroke(b, Color3.fromRGB(255, 120, 110), 1, 0.55)
@@ -283,11 +412,9 @@ function Prank.start()
 	workspace:GetAttributeChangedSignal("EndingActive"):Connect(refresh)
 	ctx.Remotes.JumpscareAll.OnClientEvent:Connect(function(fromName: string, fromId: number, count: number?)
 		if fromId == player.UserId then
-			local gui = overlay()
-			banner(gui, "😈 You jumpscared " .. tostring(count or others()) .. (count == 1 and " player!" or " players!"), 4)
-			task.delay(5, function()
-				gui:Destroy()
-			end)
+			-- (v165, the owner: "make it so I can be jumpscared I can't even see how it is") the buyer gets it too, then the count
+			local n = tostring(count or others())
+			task.spawn(Prank.scare, fromName, "😈 You jumpscared " .. n .. (count == 1 and " player!" or " players!"))
 			return
 		end
 		task.spawn(Prank.scare, fromName)

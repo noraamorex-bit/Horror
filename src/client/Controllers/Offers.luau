@@ -120,7 +120,7 @@ function Offers.start()
 		AutoButtonColor = true,
 		LayoutOrder = 8,
 		Visible = false,
-		Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
+		Parent = ctx.HUD and (ctx.HUD.OfferColumn or ctx.HUD.LeftColumn) or UI.Root,
 	})
 	UI.corner(rocketButton, 8)
 	UI.stroke(rocketButton, Color3.fromRGB(255, 180, 110), 1, 0.5)
@@ -147,7 +147,7 @@ function Offers.start()
 		AutoButtonColor = true,
 		LayoutOrder = 9,
 		Visible = false,
-		Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
+		Parent = ctx.HUD and (ctx.HUD.OfferColumn or ctx.HUD.LeftColumn) or UI.Root,
 	})
 	UI.corner(nvButton, 8)
 	UI.stroke(nvButton, Color3.fromRGB(120, 255, 140), 1, 0.5)

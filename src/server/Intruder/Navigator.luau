@@ -166,6 +166,13 @@ function Navigator:_planGrid(): boolean
 		-- the hatch. To the ladder's end on this floor, then up (or down) it, then on from there.
 		local L = self.ctx and self.ctx.Layout and self.ctx.Layout.Attic
 		local open = workspace:GetAttribute("AtticHatchOpen") ~= false
+		-- (v165, the owner: "the monster keeps randomly teleporting between upstairs and the attic and doesn't properly hunt": a
+		-- chase re-aimed at someone on the other floor sent him straight back up or down. Not again within ClimbGap of the last
+		-- climb: he waits at the ladder's foot instead)
+		local gap = (self.ctx and self.ctx.Config.Attic and self.ctx.Config.Attic.ClimbGap) or 10
+		if self.LastClimb and os.clock() - self.LastClimb < gap then
+			open = false
+		end
 		if L and L.HatchTop and L.HatchBelow and open then
 			local up = inAttic(goal)
 			local foot = up and L.HatchBelow or L.HatchTop
@@ -411,8 +418,15 @@ function Navigator:moveDirect(goal: Vector3, speed: number?)
 end
 
 function Navigator:stop()
+	-- (v165) stopped halfway up the ladder (stunned, a capture, a new state): finish the climb where it was going, never left
+	-- hanging in the hatch
+	local midClimb = self.ClimbUntil and self.Climb
 	self.Climb = nil
 	self.ClimbUntil = nil
+	if midClimb and self.OnClimb then
+		self.LastClimb = os.clock()
+		self.OnClimb(midClimb.To, midClimb.Up, false)
+	end
 	self.Version += 1
 	self.Computing = false
 	self.SideUntil = nil
@@ -497,6 +511,23 @@ function Navigator:update()
 	if not goal or self.Arrived then
 		return
 	end
+	-- (v165) on the ladder he's anchored (the intruder moves him rung by rung): the climb still ends on time
+	if self.ClimbUntil and self.Climb then
+		local now = os.clock()
+		if now < self.ClimbUntil then
+			self.LastProgress = now
+			return
+		end
+		local climb = self.Climb
+		self.ClimbUntil = nil
+		self.Climb = nil
+		self.LastClimb = now
+		self.OnClimb(climb.To, climb.Up, false)
+		self.LastPos = self.Root.Position
+		self.LastProgress = now
+		self:_plan()
+		return
+	end
 	if self.Root.Anchored or self.Humanoid.WalkSpeed < 0.5 then
 		self:idle()
 		return
@@ -509,19 +540,6 @@ function Navigator:update()
 	if climb and not self.ClimbUntil and flat(pos - climb.At) <= 3 and math.abs(pos.Y - ROOT - climb.At.Y) < 5 then
 		self.Humanoid:MoveTo(pos)
 		self.ClimbUntil = now + (self.OnClimb(climb.To, climb.Up, true) or 2)
-		return
-	end
-	if self.ClimbUntil then
-		if now < self.ClimbUntil then
-			self.LastProgress = now
-			return
-		end
-		self.ClimbUntil = nil
-		self.Climb = nil
-		self.OnClimb(climb.To, climb.Up, false)
-		self.LastPos = self.Root.Position
-		self.LastProgress = now
-		self:_plan()
 		return
 	end
 	if flat(pos - target) <= self.Tolerance and math.abs(pos.Y - target.Y) < 7 then

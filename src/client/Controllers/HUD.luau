@@ -416,7 +416,47 @@ local function bar(parent, width, color)
 	return frame, fill
 end
 
-local chatPush = 0 -- (v164) how far the clock column is slid down under Roblox's chat window
+-- (v165) the buy buttons as tiles: whatever a controller puts in HUD.OfferColumn keeps its own Text ("😱 JUMPSCARE EVERYONE
+-- R$ 10"), drawn as an icon over a short name and the price
+local TILE_W, TILE_H, TILE_GAP = 60, 60, 6
+local TILE_NAMES = { PrankOffer = "SCARE ALL", BecomeHim = "BE HIM", RocketOffer = "ROCKET", NightVisionOffer = "NIGHT VISION", WeaponRollOffer = "WEAPON" }
+function HUD._tile(b: TextButton)
+	if b:GetAttribute("Tiled") then
+		return
+	end
+	b:SetAttribute("Tiled", true)
+	b.TextTransparency = 1
+	b.TextStrokeTransparency = 1
+	b.TextSize = 1
+	b.TextScaled = false
+	local icon = UI.new("TextLabel", {
+		Name = "TileIcon", BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 26),
+		Text = "", TextScaled = true, Font = UI.Font.Bold, TextColor3 = Color3.new(1, 1, 1), Parent = b,
+	})
+	local name = UI.new("TextLabel", {
+		Name = "TileName", BackgroundTransparency = 1, Position = UDim2.new(0, 2, 0, 31), Size = UDim2.new(1, -4, 0, 12),
+		Text = "", TextScaled = true, Font = UI.Font.Bold, TextColor3 = b.TextColor3, Parent = b,
+	})
+	local price = UI.new("TextLabel", {
+		Name = "TilePrice", BackgroundTransparency = 1, Position = UDim2.new(0, 2, 0, 44), Size = UDim2.new(1, -4, 0, 12),
+		Text = "", TextScaled = true, Font = UI.Font.Bold, TextColor3 = Color3.fromRGB(255, 214, 120), Parent = b,
+	})
+	local function sync()
+		local t = b.Text or ""
+		local first, rest = string.match(t, "^%s*(%S+)%s*(.*)$")
+		icon.Text = first or ""
+		local p = string.match(rest or "", "(R%$%s*%d+)") or (string.find(string.lower(rest or ""), "free") and "FREE") or ""
+		price.Text = string.gsub(p, "%s+", "")
+		local n = TILE_NAMES[b.Name] or string.upper((string.gsub(string.gsub(rest or "", "R%$%s*%d+", ""), "%(.-%)", "")))
+		if b.Name == "RocketOffer" and string.find(t, "STOP") then
+			n = "STOP HIM"
+		end
+		name.Text = (string.gsub(n, "^%s+", ""))
+	end
+	sync()
+	b:GetPropertyChangedSignal("Text"):Connect(sync)
+end
+
 local function build()
 	root = UI.new("Frame", { Name = "HUD", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = UI.Root })
 	local inset = GuiService:GetGuiInset()
@@ -433,7 +473,39 @@ local function build()
 	})
 	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = leftCol })
 	HUD.LeftColumn = leftCol -- (other controllers add small things under the inventory: Monster's buy button)
-	-- (v164) under Roblox's chat window while it's open: placed every frame below (ChatDodge.offsetFor)
+	-- (v165, the owner: "only the clickable UI needs to move... the UI kinda blocks my joystick") the buy buttons (🎲 / 🚀 /
+	-- 😱 / BECOME HIM / night vision) live on the right, stacked up from just above the touch buttons (on a computer, the
+	-- bottom right): never under Roblox's chat at the top left, never over the thumbstick at the bottom left
+	local offerCol = UI.new("Frame", {
+		Name = "Offers",
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, -12, 0.62, 0),
+		Size = UDim2.new(),
+		AutomaticSize = Enum.AutomaticSize.XY,
+		BackgroundTransparency = 1,
+		Parent = root,
+	})
+	-- (small square tiles, like the lobby's dock: the icon, the name and the price under it, as many columns as the room
+	-- between the objective and the touch buttons needs)
+	UI.new("UIGridLayout", {
+		CellSize = UDim2.fromOffset(TILE_W, TILE_H),
+		CellPadding = UDim2.fromOffset(TILE_GAP, TILE_GAP),
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		VerticalAlignment = Enum.VerticalAlignment.Bottom,
+		StartCorner = Enum.StartCorner.BottomRight,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Parent = offerCol,
+	})
+	offerCol.AutomaticSize = Enum.AutomaticSize.None
+	pcall(function()
+		offerCol.ChildAdded:Connect(function(c)
+			if c:IsA("TextButton") then
+				HUD._tile(c)
+			end
+		end)
+	end)
+	HUD.OfferColumn = offerCol
 	local clock = UI.box({ LayoutOrder = 1, Parent = leftCol }, { 6, 10 })
 	UI.new("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder, Parent = clock })
 	clockLabel = UI.fitLabel({ Text = "", Font = UI.Font.Bold, TextSize = 21, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 1, Parent = clock }, 240)
@@ -742,14 +814,37 @@ local function update()
 	local insetY = GuiService:GetGuiInset().Y
 	local clock = root:FindFirstChild("Clock") :: Frame?
 	if clock then
-		-- (v164) slid down under Roblox's chat window while it's open, back up when it closes
-		local base = (insetY + 8) / s
-		local want = ctx.ChatDodge and ctx.ChatDodge.offsetFor(clock, base) or 0
-		chatPush += (want - chatPush) * 0.35
-		if math.abs(want - chatPush) < 0.5 then
-			chatPush = want
+		-- (v165: the time and room stay put under the chat; only the buy buttons had to move, and they're on the right now)
+		clock.Position = UDim2.fromOffset(18, (insetY + 8) / s)
+	end
+	local offers = root:FindFirstChild("Offers") :: Frame?
+	if offers then
+		local n = 0
+		for _, c in offers:GetChildren() do
+			if c:IsA("TextButton") and not c:GetAttribute("Tiled") then
+				HUD._tile(c)
+			end
+			if c:IsA("GuiObject") and c.Visible then
+				n += 1
+			end
 		end
-		clock.Position = UDim2.fromOffset(18, base + chatPush)
+		local grid = offers:FindFirstChildOfClass("UIGridLayout")
+		local cols, rows = math.max(1, n), 1
+		if UI.isTouch() and ctx.MobileControls and ctx.MobileControls.clusterTop then
+			-- (between the objective panel's bottom and the touch buttons: as many rows as fit, the rest in more columns)
+			local bottom = (ctx.MobileControls.clusterTop() - 10) / s
+			local objBottom = objPanel.Visible and (objPanel.AbsolutePosition.Y + objPanel.AbsoluteSize.Y) / s + 8 or (insetY + 52) / s
+			local fit = math.max(1, math.floor((bottom - objBottom + TILE_GAP) / (TILE_H + TILE_GAP)))
+			rows = math.min(fit, math.max(1, n))
+			cols = math.max(1, math.ceil(n / rows))
+			offers.Position = UDim2.new(1, -12, 0, bottom)
+		else
+			offers.Position = UDim2.new(1, -18, 1, -24)
+		end
+		if grid then
+			grid.FillDirectionMaxCells = cols
+		end
+		offers.Size = UDim2.fromOffset(cols * (TILE_W + TILE_GAP), math.ceil(math.max(1, n) / cols) * (TILE_H + TILE_GAP))
 	end
 	local topY = (insetY + (UI.isTouch() and 52 or 10)) / s
 	objPanel.Position = UDim2.new(1, -18, 0, topY)

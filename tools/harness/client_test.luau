@@ -467,6 +467,12 @@ local ok, err = pcall(function()
 		S.Players.GetPlayers = function() return { player, other } end
 		ctx.Prank._refresh()
 		assert(btn.Visible and string.find(btn.Text, "R$ 10", 1, true), "with someone else, at 10 R$: " .. btn.Text)
+		-- (v165) on the right with the other buy buttons, drawn as a tile: the icon, a short name, the price
+		assert(btn.Parent == H.unwrap(ctx.HUD.OfferColumn), "in the offer column, not the left (under the chat, over the thumbstick)")
+		ctx.HUD._update()
+		local price = btn:FindFirstChild("TilePrice")
+		local tname = btn:FindFirstChild("TileName")
+		assert(btn:GetAttribute("Tiled") and price and price.Text == "R$10" and tname and tname.Text == "SCARE ALL", "a tile: " .. tostring(price and price.Text) .. " / " .. tostring(tname and tname.Text))
 		ctx.Remotes.JumpscareAll.OnClientEvent:Fire("Sam", 99, 1)
 		local gui = H.unwrap(pg):FindFirstChild("Prank")
 		assert(gui and gui:FindFirstChildOfClass("ViewportFrame"), "the scare covers the screen")

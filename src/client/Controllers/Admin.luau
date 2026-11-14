@@ -271,6 +271,17 @@ RENDER.TROLL = function()
 		c:Disconnect()
 	end
 	table.clear(trollConns)
+	-- (v165, the owner: "make it so I can be jumpscared i cant even see how it is") the full panel can try the scare on itself
+	if not limited() and ctx.Prank and ctx.Prank.scare then
+		section("TRY IT ON YOURSELF", -2)
+		local mine = row(-1)
+		btn(mine, "😱 Jumpscare Everyone (just me)", function()
+			panel.Visible = false
+			task.delay(0.6, function()
+				ctx.Prank.scare(player.DisplayName, "😱 That's what they see.")
+			end)
+		end)
+	end
 	local others = {}
 	for _, p in Players:GetPlayers() do
 		if p ~= player then

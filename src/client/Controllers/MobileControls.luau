@@ -271,6 +271,26 @@ function MobileControls.init(c)
 	ctx.MobileControls = MobileControls
 end
 
+-- (v165) the top of the touch buttons on the right (theirs and Roblox's jump), in screen px from the top: the buy buttons
+-- stack just above it (HUD.OfferColumn)
+function MobileControls.clusterTop(): number
+	local cam = workspace.CurrentCamera
+	local vp = cam and cam.ViewportSize or Vector2.new(844, 390)
+	local top = math.huge
+	for _, entry in buttons do
+		local b = entry.Button
+		if b and b.Visible and b.AbsoluteSize.Y > 0 then
+			top = math.min(top, b.AbsolutePosition.Y)
+		end
+	end
+	local anchor, size = jumpAnchor()
+	top = math.min(top, vp.Y + anchor.Y - size / 2)
+	if top == math.huge or top <= 0 then
+		top = vp.Y * 0.62
+	end
+	return top
+end
+
 function MobileControls.refresh()
 	if gui and gui.Enabled then
 		layout()

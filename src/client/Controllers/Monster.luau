@@ -166,7 +166,7 @@ function Monster.start()
 		AutoButtonColor = true,
 		LayoutOrder = 9,
 		Visible = false,
-		Parent = ctx.HUD and ctx.HUD.LeftColumn or UI.Root,
+		Parent = ctx.HUD and (ctx.HUD.OfferColumn or ctx.HUD.LeftColumn) or UI.Root,
 	})
 	UI.corner(buyButton, 8)
 	UI.stroke(buyButton, Color3.fromRGB(255, 120, 120), 1, 0.5)
