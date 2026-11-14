@@ -70,6 +70,10 @@ ActPose.Kinds = {
 	Call = { Hold = true, Time = 0.3, Prop = "Phone" }, -- (also while "Calling")
 	PhoneOut = { Hold = true, Time = 0.3, Prop = "Phone" }, -- (the phone in your hand: "PhoneOut")
 	Drink = { Time = 1.6 },
+	-- (v161 the rolled weapons: a swing, the glove's slap, a shot)
+	Swing = { Time = 0.45 },
+	Slap = { Time = 0.5 },
+	Shoot = { Time = 0.35 },
 	Tied = { Hold = true, Time = 0.3 }, -- (zip-tied: arms behind your back; struggling shakes you)
 }
 
@@ -228,6 +232,34 @@ function ActPose.targets(kind: string, t: number, fp: boolean?): any
 		out.RWrist = CFrame.Angles(0.9 * k, 0, 0)
 		out.Neck = 0.35 * k
 		out.Weight = bump(x, 0.15, 0.85)
+	elseif kind == "Swing" then
+		-- up over the right shoulder, then hard down and across to the left
+		local wind = math.clamp(x / 0.3, 0, 1)
+		local hit = math.clamp((x - 0.3) / 0.35, 0, 1)
+		hit = 1 - (1 - hit) * (1 - hit)
+		local up = V(0.75, 0.9 + F * 0.1, -0.2 - F * 0.4)
+		local down = V(-0.45, -0.1 + F * 0.95, -1.35 - F * 0.2)
+		out.R = V(0.5, -0.1, -0.8):Lerp(up, wind):Lerp(down, hit)
+		out.RWrist = CFrame.Angles(0.6 * wind - 1.4 * hit, 0, 0)
+		out.Waist = -0.18 * hit
+		out.WaistYaw = 0.35 * wind - 0.55 * hit
+		out.Weight = bump(x, 0.12, 0.8)
+	elseif kind == "Slap" then
+		-- the open glove swept wide from the right, across in front of you
+		local wind = math.clamp(x / 0.3, 0, 1)
+		local hit = math.clamp((x - 0.3) / 0.3, 0, 1)
+		hit = 1 - (1 - hit) * (1 - hit)
+		out.R = V(0.5, 0.2, -0.7):Lerp(V(1.3, 0.45, 0.1), wind):Lerp(V(-0.6, 0.4 + F * 0.6, -1.25 - F * 0.3), hit)
+		out.RWrist = CFrame.Angles(0, -0.9 * wind + 1.2 * hit, 0)
+		out.WaistYaw = 0.45 * wind - 0.7 * hit
+		out.Weight = bump(x, 0.12, 0.8)
+	elseif kind == "Shoot" then
+		-- both hands out in front, the kick of the shot
+		local kick = math.max(0, 1 - x * 4)
+		out.R = V(0.12, 0.5 + F * 0.15 + kick * 0.12, -1.35 - F * 0.1 + kick * 0.25)
+		out.L = V(-0.05, 0.42 + F * 0.15 + kick * 0.12, -1.25 - F * 0.1 + kick * 0.25)
+		out.RWrist = CFrame.Angles(0.3 * kick, 0, 0)
+		out.Weight = bump(x, 0.05, 0.75)
 	elseif kind == "Tied" then
 		-- wrists behind the back; `t` keeps time with the struggle (the client feeds it)
 		local w = sin(t * 18) * 0.06
@@ -334,8 +366,8 @@ ActPose._arm = arm
 function ActPose.solve(rig, tg): { [string]: CFrame }
 	local out = {}
 	local sc = rig.Scale or 1
-	if tg.Waist and rig.Waist then
-		out.Waist = CFrame.Angles(tg.Waist, 0, 0)
+	if (tg.Waist or tg.WaistYaw) and rig.Waist then
+		out.Waist = CFrame.Angles(0, tg.WaistYaw or 0, 0) * CFrame.Angles(tg.Waist or 0, 0, 0)
 	end
 	if (tg.Neck or tg.NeckYaw) and rig.Neck then
 		out.Neck = CFrame.Angles(0, tg.NeckYaw or 0, 0) * CFrame.Angles(tg.Neck or 0, 0, 0)

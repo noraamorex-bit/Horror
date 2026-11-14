@@ -248,11 +248,18 @@ RENDER.SHOP = function()
 	btn(r2, "🥤 Energy drink ×2", function() send("give", "EnergyDrink") end)
 	btn(r2, "🧨 Firecracker ×2", function() send("give", "Firecracker") end)
 	btn(r2, "🔦 Flashlight", function() send("give", "Flashlight") end)
+	section("ROLLED WEAPONS (in a night)", 7)
+	local r4 = row(8)
+	for _, k in (ctx.Config.Weapons and ctx.Config.Weapons.Order) or {} do
+		local wspec = ctx.Config.Weapons.List[k]
+		btn(r4, wspec.Emoji .. " " .. wspec.Name, function() send("give", k) end)
+	end
 	section("PRODUCTS (free for you)", 5)
 	local r3 = row(6)
 	btn(r3, "😈 Become him / stop", function() send("becomehim") end, true)
 	btn(r3, "Saved rocket (next night)", function() send("rocketcredit") end)
 	btn(r3, "Saved revive", function() send("revivecredit") end)
+	btn(r3, "🎲 Weapon roll (spin)", function() send("weaponroll") end)
 	btn(r3, "Revive me now", function() send("me", "revive") end)
 end
 -- trolls (v149): pick a player (or everyone), then what happens to them

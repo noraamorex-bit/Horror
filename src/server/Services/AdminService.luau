@@ -42,7 +42,7 @@ function Admin.isAdmin(player: Player): boolean
 end
 
 -- what a pass holder can't use (the owner's "coins part and some other unfair stuff")
-local OWNER_ONLY = { coins = true, candy = true, pass = true, give = true, becomehim = true, rocketcredit = true, revivecredit = true }
+local OWNER_ONLY = { coins = true, candy = true, pass = true, give = true, becomehim = true, rocketcredit = true, revivecredit = true, weaponroll = true }
 -- what changes the night for everyone in it
 local NIGHT_WIDE = { troll = true, start = true, act = true, nextact = true, restartact = true, restart = true, event = true, ending = true, help = true, finale = true, police = true, ai = true, cut = true }
 
@@ -368,6 +368,11 @@ COMMANDS.pass = function(player, arg)
 end
 COMMANDS.give = function(player, arg)
 	local n = GEAR[arg]
+	-- (v161 the rolled weapons, to try each one)
+	local wspec = ctx.Config.Weapons and type(arg) == "string" and ctx.Config.Weapons.List[arg]
+	if wspec then
+		n = wspec.Ammo or 1
+	end
 	if not n then
 		return "Unknown item."
 	end
@@ -390,6 +395,16 @@ COMMANDS.becomehim = function(player)
 		return "Can't: " .. tostring(why)
 	end
 	return ctx.Monster.grant(player) and "You'll become him (now, or when the lights go)." or "Couldn't."
+end
+-- (v161) a free Weapon Roll: the real roll and spin (it moves your own guarantees on)
+COMMANDS.weaponroll = function(player)
+	if not ctx.Weapons then
+		return "Not here."
+	end
+	if not ctx.Weapons.live(player) then
+		return "Only during a night you're in."
+	end
+	return "Rolling: " .. ctx.Weapons.rollNow(player, "admin")
 end
 COMMANDS.rocketcredit = function(player)
 	if ctx.Stats and ctx.Stats.addRocketCredit and ctx.Stats.addRocketCredit(player) then

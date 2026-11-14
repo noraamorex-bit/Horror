@@ -964,6 +964,33 @@ Notices and the chapter card wait until the shot ends (`Notice.hold`). It exists
 ### Jumpscare Everyone (v115, client `Prank`, 10 R$ developer product)
 The owner asked for "something like" another game's 19 R$ "Jumpscare Everyone", for 10 R$. Bought (from the small 😱 button under the inventory in the house, or the 😱 SCARE dock icon in the lobby, both shown only while someone else is in the server), ShopService fires `Remotes.JumpscareAll` (buyer's name, id, how many were scared) to the whole server. Everyone else gets a full-screen scare over everything: black, his mask and hair (a copy of the real ones, in a ViewportFrame) lunging out of the dark at them with the jaw dropping, the screech and a hit, a red flash and a shake, ~1.3 s; then "😱 <name> jumpscared everyone!" low on the screen for 4 s (so they know who to pay back). The buyer gets "😈 You jumpscared N players!". Never over a real capture or an ending. Logged as JumpscareAll in Sales_v1 and Prank in the night log.
 
+### Weapon Roll (v161, `WeaponService`, client `WeaponRoll`, 10 R$ developer product 3731210089)
+The owner asked for "roll for a random weapon (10 Robux)" with tiers: Normal (bat, axe), Rare (dagger, katana), Epic (gun, scythe) and Legendary (a slap glove that also flings players, a plasma cannon), "adjust the cooldown", a spinning animation, and the Legendary "very hard to get".
+
+- **Buying.** A small 🎲 WEAPON R$10 button sits under the inventory (`HUD.LeftColumn`) while you're free in a night. It opens the roll's window first. The window lists every weapon's real chance and what each tier does, plus the guarantees ("EPIC or better within N rolls · LEGENDARY within N"). ROLL opens Roblox's purchase window. A roll bought where it can't be used (the lobby, or a night that's over) is saved and spins when your next night starts.
+- **The odds** (`Config.Weapons`, also in the product's description): Bat 30%, Axe 30%, Dagger 14%, Katana 14%, Gun 5%, Scythe 5%, Slap Glove 1%, Plasma Cannon 1%.
+- **Guarantees** (`Pity`, saved in PlayerStats_v1 `WeaponPity`): at least one Epic or better every 10 rolls, and a Legendary every 60.
+- **How long a weapon lasts.** A weapon is for tonight; the inventory empties at the next night. A Legendary comes back for 3 nights (`Legend`). The same melee weapon twice pays 50 coins; a gun or the cannon twice adds its shots.
+- **The spin is honest.** The server rolls first (its own RNG). The client's strip of cards slides under a marker and stops on that result. Every other card on the strip is drawn at the same odds, and the stop lands anywhere inside the winning card. **The owner asked for the animation to show the Legendary "just barely missing" so players buy more. That was not built**: a staged near miss misleads players (mostly kids) about their chances. Roblox's rules for paid random items require the real odds to be shown, and a rigged reel breaks that, which risks moderation and refunds. The guarantees are the honest version of "you'll get it soon".
+- **Where it's not offered.** The roll isn't offered where paid random items aren't allowed for a player: PolicyService `ArePaidRandomItemsRestricted` sets the `RollRestricted` attribute.
+- **The weapons** (hotbar tools, client `Gear`). Each has an emoji in its slot, a ring in its tier's colour, and a shade that drains while it cools down. Using one poses your body (ActPose `Swing` / `Slap` / `Shoot`), and everyone sees the effect (`Remotes.WeaponFx`: an arc, a flash, a tracer, the beam).
+
+  | weapon | tier | reach | stun | knockback | slow | cooldown | shots | afterwards |
+  |---|---|---|---|---|---|---|---|---|
+  | Bat | Normal | 8 | 1.6 s | 5 studs | – | 18 s | – | back at you |
+  | Axe | Normal | 8 | 2.2 s | 4 studs | – | 22 s | – | back at you |
+  | Dagger | Rare | 7 | 1.4 s | – | 6 s | 10 s | – | back at you |
+  | Katana | Rare | 10 | 3 s | 6 studs | – | 20 s | – | back at you |
+  | Gun | Epic | 80 (aimed; any facing within 18) | 2.5 s | – | 8 s | 4 s | 6 | back at you, loud |
+  | Scythe | Epic | 12 (100° sweep) | 4 s | 10 studs | – | 25 s | – | he backs off |
+  | Slap Glove | Legendary | 9 | 5 s | 28 studs | – | 30 s | – | he backs off |
+  | Plasma Cannon | Legendary | 140 (0.8 s charge) | 8 s | 12 studs | 15 s | 35 s | 3 | he backs off, loud |
+
+- **Nobody can stun-lock him.** For `StunImmune` (6 s) after a weapon stun wears off, a weapon hit only staggers him (a short shove, no stun). A miss costs only a short wait.
+- **The Slap Glove on players.** When the glove doesn't reach him, it slaps the nearest player in front of you across the room (client Troll `slap`: "🖐️ slapped by <name>"). Slaps are 6 s apart. It never hits the owner, or anyone hiding, tied up or out.
+- **Rare rolls are announced.** An Epic or Legendary is announced to the others in the server after the spin stops.
+- **Logs.** `WeaponRoll` in Sales_v1 (bought / asked); `Roll` and `WeaponHit` in the night log, which pull_stats prints. Test: `weapon_test`. Previews: `ui_dump.luau roll|spin`.
+
 ### Shop & donations (`ShopService`, client `Shop`)
 A **SHOP** button sits on the right edge of the lobby screen. A gold "!" pulses on it until you open it. The panel has two tabs:
 

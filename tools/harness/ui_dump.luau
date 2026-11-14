@@ -49,7 +49,7 @@ ctx.Remotes = setmetatable({}, { __index = function(t, k)
 	rawset(t, k, r)
 	return r
 end })
-local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "WeaponRoll", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
 local mods = {}
 for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 ctx.LobbyHubMod = mods.LobbyHub
@@ -133,7 +133,7 @@ R.Objectives.OnClientEvent:Fire({
 })
 frames(5)
 -- (the side offers: attribute signals don't fire here, so they're refreshed by hand)
-for _, m in { "Offers", "Prank", "Starter" } do
+for _, m in { "Offers", "Prank", "Starter", "WeaponRoll" } do
 	if ctx[m] and ctx[m]._refresh then
 		ctx[m]._refresh()
 	end
@@ -155,6 +155,27 @@ elseif SCENE == "hiding" then
 	R.Caption.OnClientEvent:Fire("[Wet, rasping breathing, very close]")
 elseif SCENE == "settings" then
 	ctx.Settings.open()
+elseif SCENE == "roll" then
+	-- (v161) the Weapon Roll's window
+	player:SetAttribute("RollsSinceEpic", 3)
+	player:SetAttribute("RollsSinceLegendary", 17)
+	ctx.WeaponRoll.open()
+elseif SCENE == "spin" then
+	-- (v161) the spin, part way through (RenderStepped never runs here: the strip as built), and a rolled weapon in the hotbar
+	ctx.WeaponRoll._spin("Katana", "Rare", 4, 12)
+	for _, k in { "Katana", "Gun" } do
+		local t = H.Instance.new("Tool")
+		t.Name = k
+		t:SetAttribute("ItemId", k)
+		t:SetAttribute("Label", k)
+		t:SetAttribute("Emoji", ctx.Config.Weapons.List[k].Emoji)
+		t:SetAttribute("Tier", ctx.Config.Weapons.List[k].Tier)
+		t:SetAttribute("Count", k == "Gun" and 5 or nil)
+		t:SetAttribute("ReadyAt", k == "Gun" and (os.clock() + 2) or nil)
+		t.TextureId = ""
+		t.Parent = H.unwrap(player):FindFirstChildOfClass("Backpack")
+	end
+	frames(3)
 elseif SCENE == "captured" then
 	player:SetAttribute("Captured", true)
 	R.Notify.OnClientEvent:Fire("He's got you. STRUGGLE to get free, or wait for a friend.", "danger")

@@ -72,6 +72,8 @@ local NAMES = {
 	"Admin", -- (cmd, arg) owner test panel (AdminService checks the UserId)
 	"HeartbeatInput", -- (sessionId, beatIndex, hit) one beat of the heartbeat minigame
 	"AdminReply", -- (text) result of an admin command
+	"WeaponRoll", -- (kind, tier, pityE, pityL, extra) v161: your weapon roll's result (client WeaponRoll spins to it)
+	"WeaponFx", -- (userId, kind, fx, a, b) v161: someone used a rolled weapon (swing arc, tracer, beam, slap)
 	"Troll", -- (kind, fromName) v149: the admin panel trolled you (client Troll: fling, spin, freeze, blind, scare...)
 	"PuzzleInput", -- (puzzleId, action, payload) "Slip" | "Click" | "Submit" | "Cancel"
 	"Economy", -- (action, arg) "Buy" itemId | "Crate" crateId | "Equip" cosmeticId | "Unequip" kind | "Daily" | "Code" text

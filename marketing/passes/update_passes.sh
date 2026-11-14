@@ -47,3 +47,5 @@ api 2044988494 -F "description=Run the night and troll your friends: jumpscare t
 # under ~8%): PATCH .../developer-products/v2/universes/$U/developer-products/3718593338 -F price=35
 api 2045276660 -F "price=15"   # Night Vision (25; 1 of 115 windows)
 # v157 (11 Nov): Become Him back to 25 (the owner): PATCH .../developer-products/v2/universes/$U/developer-products/3718593338 -F price=25
+# v161 (14 Nov): "Weapon Roll" developer product 3731210089 (10 R$, icon weapon_roll.png from make_weapon_roll.py), made with
+# POST .../developer-products/v2/universes/$U/developer-products; its description lists the odds and the guarantees (PATCH -F description=...)

@@ -49,6 +49,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   sic him on them, him right behind them, the room scare, flicker their lights (server `AdminService` COMMANDS.troll, client `Troll`;
   the victim sees "😈 trolled by <name>"). The owner anywhere (the lobby too, without the ones that need him); pass holders only in a
   night with friends (it counts as NIGHT_WIDE: that night pays nothing) and never on the owner. One troll per target per 1.5 s.
+- **Paid random items (the Weapon Roll, v161) stay honest**: the real odds shown before buying, the spin lands on the server's roll
+  with filler cards at the real odds, no staged near misses, not offered where PolicyService restricts paid random items.
 - **The owner is left off all leaderboards.**
 - **Revives are Robux only** (10 R$ product since 11 Oct; 25 R$ sold 0 of 35 deaths). No coin revive — it would kill Robux revive sales.
 - Git: develop on the designated branch, `git push -u origin <branch>`. **No PRs unless asked.** No model
@@ -543,6 +545,18 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   v157: keep 25), **Night Vision pass 25 → 15**. Kept: JumpscareAll 10, Starter 9 (the owner's prices),
   Revive 10 (hard rule). Repeat buying is low (89 prank buyers in the house, 110 pranks), so no multi-packs.
 
+- **14 Nov (v161)**, the owner: "roll for a random weapon (10 Robux)... normal- bat, axe, rare- dagger, katana, epic- gun, scythe,
+  legendary- hand flinging thing (like the one from slap battles, can also fling players as troll), plasma cannon... adjust the cooldown...
+  spinning animation... legendary very hard to get but make the animation show it as just barely missing". **Weapon Roll** (developer
+  product 3731210089, 10 R$, `Config.Shop.WeaponRoll`, `Config.Weapons`, server `WeaponService`, client `WeaponRoll`; GDD "Weapon Roll"):
+  a 🎲 WEAPON button under the inventory in a night → a window with every weapon's real chance and the guarantees → Roblox's purchase
+  window → a spin that stops on the server's roll. Odds 30/30 · 14/14 · 5/5 · 1/1; Epic+ guaranteed within 10 rolls, a Legendary within 60
+  (`WeaponPity`, saved); a Legendary stays 3 nights; weapons stun/shove/slow him with cooldowns, and `StunImmune` 6 s stops stun-locks; the
+  glove also slaps players (never the owner). **The near-miss animation was not built, on purpose**: the strip's other cards are drawn
+  at the real odds. A staged near miss misleads kids, and Roblox's paid random items rules want honest, shown odds. Don't add one. Not offered where
+  PolicyService restricts paid random items (`RollRestricted`). Next: `== SALES` WeaponRoll bought / asked, `weapon rolls` in the
+  night logs, deaths/player (weapons make nights easier: if captures drop a lot, lengthen cooldowns).
+
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
 alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
@@ -975,6 +989,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **14 Nov (v161 = place version 161)**, published; the Weapon Roll (see Economy, v161). Can't see the real client here: check on a
+  phone that the 🎲 button sits clear under the inventory, the spin reads (top third, ticks slowing to the stop), each weapon's model sits
+  in the hand the right way up (blades up, guns forward), the swing/slap/shoot poses look right, the glove's fling distance, and that the
+  odds window fits. Next: `--since=161`: WeaponRoll bought / asked, Roll/WeaponHit per night, deaths/player and hunt length.
 
 - **14 Nov (v160 = place version 160)**, published; the owner: "Deeply go through the entire game and fix any and all bugs/issues you find.
   Also make several QoL changes." Found and fixed: **the typecheck had never checked anything** (the downloaded definitions were newer than
@@ -1713,7 +1732,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 160; the notes' "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 161; the notes' "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

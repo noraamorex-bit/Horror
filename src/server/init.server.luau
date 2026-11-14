@@ -124,6 +124,7 @@ ctx.Heartbeat = require(Services.HeartbeatService)
 ctx.Puzzle = require(Services.PuzzleService)
 ctx.Finale = require(Services.FinaleService)
 ctx.Monster = require(Services.MonsterService)
+ctx.Weapons = require(Services.WeaponService)
 ctx.Badges = require(Services.BadgeService)
 ctx.Badges.init(ctx)
 ctx.Halloween = require(Services.HalloweenService)
@@ -132,7 +133,7 @@ ctx.Director = require(script.Director.Director)
 ctx.Intruder = require(script.Intruder.Intruder)
 
 local ORDER = {
-	"Audio", "Noise", "Interaction", "Inventory", "Tools", "Power", "Doors", "PlayerState", "Hiding", "Capture",
+	"Audio", "Noise", "Interaction", "Inventory", "Tools", "Weapons", "Power", "Doors", "PlayerState", "Hiding", "Capture",
 	"Objectives", "Dialogue", "Phone", "Escape", "Chat", "Ending", "Revive", "Admin", "Cutscene", "Heartbeat", "Puzzle", "Finale", "Monster", "Halloween", "World", "Director", "Intruder",
 }
 

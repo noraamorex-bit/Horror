@@ -29,7 +29,8 @@ end
 local cache = {} -- userId -> { Nights, Escapes, Endings = { [kind] = true } }
 
 local function fresh()
-	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, MonsterCredits = 0, RocketCredits = 0, PrankCredits = 0, Tips = 0, Settings = { Music = 1, Sfx = 1, Shake = true, Voice = 1, Captions = false } }
+	return { Nights = 0, Escapes = 0, Endings = {}, Referrals = 0, Referred = false, Beam = "Classic", Best = 0, ReviveCredits = 0, MonsterCredits = 0, RocketCredits = 0, PrankCredits = 0, Tips = 0,
+		WeaponPity = { E = 0, L = 0 }, Legend = nil, RollCredits = 0, Settings = { Music = 1, Sfx = 1, Shake = true, Voice = 1, Captions = false } }
 end
 
 --[[
@@ -117,6 +118,10 @@ local function mirror(player: Player)
 	player:SetAttribute("MonsterCredits", (d.MonsterCredits or 0) > 0 and d.MonsterCredits or nil)
 	player:SetAttribute("RocketCredits", (d.RocketCredits or 0) > 0 and d.RocketCredits or nil)
 	player:SetAttribute("PrankCredits", (d.PrankCredits or 0) > 0 and d.PrankCredits or nil)
+	-- (v161) the Weapon Roll's guarantees, for its panel ("Epic or better in 3 · Legendary in 41")
+	local wp = d.WeaponPity or { E = 0, L = 0 }
+	player:SetAttribute("RollsSinceEpic", wp.E)
+	player:SetAttribute("RollsSinceLegendary", wp.L)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
@@ -151,6 +156,12 @@ local function load(player: Player)
 			d.MonsterCredits = math.max(0, math.floor(tonumber(data.MonsterCredits) or 0))
 			d.RocketCredits = math.max(0, math.floor(tonumber(data.RocketCredits) or 0))
 			d.PrankCredits = math.max(0, math.floor(tonumber(data.PrankCredits) or 0))
+			local wp = type(data.WeaponPity) == "table" and data.WeaponPity or {}
+			d.WeaponPity = { E = math.max(0, math.floor(tonumber(wp.E) or 0)), L = math.max(0, math.floor(tonumber(wp.L) or 0)) }
+			if type(data.Legend) == "table" and type(data.Legend.Kind) == "string" and (tonumber(data.Legend.Left) or 0) > 0 then
+				d.Legend = { Kind = data.Legend.Kind, Left = math.floor(tonumber(data.Legend.Left) or 0) }
+			end
+			d.RollCredits = math.max(0, math.floor(tonumber(data.RollCredits) or 0))
 			d.Tips = math.max(0, math.floor(tonumber(data.Tips) or 0))
 			local set = type(data.Settings) == "table" and data.Settings or {}
 			d.Settings = {
@@ -208,6 +219,10 @@ local function save(userId: number)
 					ReviveCredits = d.ReviveCredits,
 					MonsterCredits = d.MonsterCredits,
 					RocketCredits = d.RocketCredits,
+					PrankCredits = d.PrankCredits, -- (v161: the Starter Pack's free scare was never saved: lost on leaving)
+					WeaponPity = d.WeaponPity,
+					Legend = d.Legend,
+					RollCredits = d.RollCredits,
 					Tips = math.max(tonumber(old.Tips) or 0, d.Tips),
 					RefCoins = tonumber(old.RefCoins), -- (v121: kept for whoever invited, claimed on their next visit)
 				}
@@ -535,6 +550,68 @@ function Stats.spendPrankCredit(player: Player): boolean
 	mirror(player)
 	save(player.UserId)
 	return true
+end
+
+-- (v161) the Weapon Roll's state: rolls since an Epic-or-better / a Legendary (the guarantees), the Legendary that comes back
+-- for more nights, and rolls bought when they couldn't be used (rolled at the start of the next night)
+function Stats.weaponPity(player: Player): { E: number, L: number }?
+	local d = cache[player.UserId]
+	return d and (d.WeaponPity or { E = 0, L = 0 }) or nil
+end
+
+function Stats.setWeaponPity(player: Player, e: number, l: number)
+	local d = cache[player.UserId]
+	if not d then
+		return
+	end
+	d.WeaponPity = { E = e, L = l }
+	mirror(player)
+	save(player.UserId)
+end
+
+function Stats.setLegend(player: Player, kind: string?, left: number?)
+	local d = cache[player.UserId]
+	if not d then
+		return
+	end
+	d.Legend = (kind and (left or 0) > 0) and { Kind = kind, Left = left } or nil
+	save(player.UserId)
+end
+
+-- the Legendary's next night, if one's left: its kind (and one fewer left)
+function Stats.takeLegendNight(player: Player): string?
+	local d = cache[player.UserId]
+	local L = d and d.Legend
+	if not L or (L.Left or 0) <= 0 then
+		return nil
+	end
+	L.Left -= 1
+	local kind = L.Kind
+	if L.Left <= 0 then
+		d.Legend = nil
+	end
+	save(player.UserId)
+	return kind
+end
+
+function Stats.addRollCredit(player: Player): boolean
+	local d = cache[player.UserId]
+	if not d then
+		return false
+	end
+	d.RollCredits = (d.RollCredits or 0) + 1
+	save(player.UserId)
+	return true
+end
+
+function Stats.spendRollCredits(player: Player): number
+	local d = cache[player.UserId]
+	local n = d and (d.RollCredits or 0) or 0
+	if n > 0 then
+		d.RollCredits = 0
+		save(player.UserId)
+	end
+	return n
 end
 
 -- "Rocket (tonight)" bought when it couldn't be used (the night was over): it comes with your next night

@@ -216,6 +216,10 @@ function PlayerState.assignRoles(players: { Player })
 				end
 			end)
 		end
+		-- (v161) a rolled Legendary's nights, and weapon rolls saved for this night
+		if ctx.Weapons then
+			ctx.Weapons.nightStart(p)
+		end
 		-- the taser pass (it was pepper spray: whoever bought that has the taser now): 3 shots a night
 		if p:GetAttribute("Pass_PepperSpray") then
 			ctx.Inventory.give(p, "Taser", ctx.Config.Taser.Charges)
@@ -718,6 +722,8 @@ function PlayerState.start()
 			PlayerState.throwFirecracker(player, aim.Unit)
 		elseif item == "NightVision" and ctx.Inventory.has(player, "NightVision") then
 			PlayerState.setNightVision(player, not player:GetAttribute("NightVision"))
+		elseif ctx.Weapons and ctx.Weapons.isWeapon(item) and ctx.Inventory.has(player, item) then
+			ctx.Weapons.use(player, item, aimed and aim.Unit or nil)
 		end
 	end)
 

@@ -211,6 +211,8 @@ local function productKey(id: number): string
 		return "Starter"
 	elseif S.JumpscareAll and S.JumpscareAll.Id > 0 and id == S.JumpscareAll.Id then
 		return "JumpscareAll"
+	elseif S.WeaponRoll and S.WeaponRoll.Id > 0 and id == S.WeaponRoll.Id then
+		return "WeaponRoll"
 	end
 	local d = donationById(id)
 	if d then
@@ -323,6 +325,19 @@ function onReceipt(info)
 	local scare = ctx.Config.Shop.JumpscareAll
 	if scare and scare.Id > 0 and info.ProductId == scare.Id then
 		return jumpscareReceipt(info)
+	end
+	-- (v161) the Weapon Roll: rolled now in a live night (WeaponService), else saved for the next night
+	local roll = ctx.Config.Shop.WeaponRoll
+	if roll and roll.Id > 0 and info.ProductId == roll.Id then
+		if ctx.Weapons then
+			return ctx.Weapons.receipt(info)
+		end
+		local player = Players:GetPlayerByUserId(info.PlayerId)
+		if player and ctx.Stats and ctx.Stats.addRollCredit and ctx.Stats.addRollCredit(player) then
+			ctx.Remotes.Notify:FireClient(player, "Saved: your weapon roll spins when your next night starts.", "info")
+			return Enum.ProductPurchaseDecision.PurchaseGranted
+		end
+		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	local rocket = ctx.Config.Shop.RocketNight
 	if rocket and rocket.Id > 0 and info.ProductId == rocket.Id then

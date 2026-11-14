@@ -121,6 +121,29 @@ KINDS.fling = function(from)
 	return false
 end
 
+-- (v161) the Slap Glove (a rolled Legendary): sent flying the way the slap went, with a crack
+KINDS.slap = function(from, dir)
+	local _, hum, root = body()
+	if not hum or not root then
+		return false
+	end
+	local d = typeof(dir) == "Vector3" and Vector3.new(dir.X, 0, dir.Z) or Vector3.zero
+	if d.Magnitude < 0.01 then
+		local a = math.random() * math.pi * 2
+		d = Vector3.new(math.cos(a), 0, math.sin(a))
+	end
+	d = d.Unit
+	tumble(hum, 1.6)
+	root.AssemblyLinearVelocity = d * 85 + Vector3.new(0, 38, 0)
+	root.AssemblyAngularVelocity = Vector3.new(math.random(-14, 14), math.random(-6, 6), math.random(-14, 14))
+	sound("Slap")
+	if ctx.Effects and ctx.Effects.shake then
+		pcall(ctx.Effects.shake, 0.5, 0.3)
+	end
+	banner("🖐️ slapped by " .. from)
+	return true
+end
+
 KINDS.launch = function(from)
 	local _, hum, root = body()
 	if not hum or not root then
@@ -267,7 +290,7 @@ function Troll.init(c)
 end
 
 function Troll.start()
-	ctx.Remotes.Troll.OnClientEvent:Connect(function(kind: string, from: string)
+	ctx.Remotes.Troll.OnClientEvent:Connect(function(kind: string, from: string, extra: any)
 		local fn = type(kind) == "string" and KINDS[kind]
 		if not fn then
 			return
@@ -277,7 +300,7 @@ function Troll.start()
 			return
 		end
 		local name = type(from) == "string" and from or "Someone"
-		local ok, own = pcall(fn, name)
+		local ok, own = pcall(fn, name, extra)
 		if ok and not own and kind ~= "creak" then
 			banner("😈 trolled by " .. name)
 		end

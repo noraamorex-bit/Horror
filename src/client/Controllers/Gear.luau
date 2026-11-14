@@ -213,6 +213,33 @@ local function newSlot(i: number): ImageButton
 		Active = false,
 		Parent = b,
 	})
+	-- (v161 rolled weapons have no picture: their emoji, and a dark shade that drains while it's cooling down)
+	UI.new("TextLabel", {
+		Name = "Emoji",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.52),
+		Size = UDim2.fromScale(0.8, 0.8),
+		Text = "",
+		TextScaled = true,
+		Font = UI.Font.Bold,
+		TextColor3 = Color3.new(1, 1, 1),
+		Parent = b,
+	})
+	local shade = UI.new("Frame", {
+		Name = "Cool",
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.35,
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.fromScale(0, 1),
+		Size = UDim2.fromScale(1, 0),
+		BorderSizePixel = 0,
+		Visible = false,
+		Active = false,
+		ZIndex = 3,
+		Parent = b,
+	})
+	UI.corner(shade, 8)
 	UI.new("TextLabel", {
 		Name = "Key",
 		BackgroundTransparency = 1,
@@ -270,13 +297,34 @@ local function drawBar(want: boolean)
 		if icon then
 			icon.Image = t.TextureId
 		end
+		local emoji = b:FindFirstChild("Emoji") :: TextLabel?
+		if emoji then
+			local e = t:GetAttribute("Emoji")
+			emoji.Text = (t.TextureId == "" and type(e) == "string") and e or ""
+		end
+		local cool = b:FindFirstChild("Cool") :: Frame?
+		if cool then
+			local readyAt = tonumber(t:GetAttribute("ReadyAt"))
+			local left = readyAt and (readyAt - workspace:GetServerTimeNow()) or 0
+			local spec = ctx.Config.Weapons and ctx.Config.Weapons.List[t:GetAttribute("ItemId")]
+			local full = spec and math.max(spec.Cooldown, spec.PlayerCooldown or 0) or 10
+			cool.Visible = left > 0
+			cool.Size = UDim2.fromScale(1, math.clamp(left / full, 0, 1))
+		end
 		local on = t == held
 		b.BackgroundTransparency = on and 0.05 or 0.3
 		b.BackgroundColor3 = on and Color3.fromRGB(70, 70, 76) or Color3.fromRGB(16, 16, 20)
 		local stroke = b:FindFirstChildOfClass("UIStroke")
 		if stroke then
-			stroke.Thickness = on and 2 or 1
-			stroke.Transparency = on and 0 or 0.7
+			local tierColor = nil
+			for _, tier in (ctx.Config.Weapons and ctx.Config.Weapons.Tiers) or {} do
+				if tier.Id == t:GetAttribute("Tier") then
+					tierColor = tier.Color
+				end
+			end
+			stroke.Color = tierColor or Color3.new(1, 1, 1)
+			stroke.Thickness = (on or tierColor) and 2 or 1
+			stroke.Transparency = on and 0 or (tierColor and 0.15 or 0.7)
 		end
 		local key = b:FindFirstChild("Key") :: TextLabel?
 		if key then

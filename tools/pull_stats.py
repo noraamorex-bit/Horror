@@ -259,6 +259,11 @@ def report_nights(nights):
             caught = sum(1 for r in group for ev in r[2].get("Ev") or [] if ev[1] == "PeekSeen")
             peekers = sum(1 for r in group if r[2].get("Peeks"))
             print(f"      peeks/player {peeks / n:.2f} (players who peeked {pct(peekers, n)})  caught peeking: {caught}")
+        # (v161) the Weapon Roll: what was rolled, and what the weapons did (kind:stun / stagger / player)
+        rolls = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Roll" and len(ev) > 2)
+        if rolls:
+            whits = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "WeaponHit" and len(ev) > 2)
+            print(f"      weapon rolls: {dict(rolls)}  hits: {dict(whits)}")
         beats = Counter(ev[2] for r in group for ev in r[2].get("Ev") or [] if ev[1] == "Beat" and len(ev) > 2)
         if beats:
             print(f"      heartbeat minigames: {dict(beats)}")

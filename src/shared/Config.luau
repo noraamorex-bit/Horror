@@ -568,6 +568,9 @@ Config.Shop = {
 	-- (v115, the owner: "add something like this for 10 Robux") jumpscares everyone else in the
 	-- server, house or lobby, the moment it's bought (ShopService, client Prank)
 	JumpscareAll = { Id = 3722081951, Price = 10 },
+	-- (v161, the owner: "roll for a random weapon (10 Robux)... several tiers") a weapon for tonight, rolled by the server at
+	-- Config.Weapons' odds, shown before you buy; a spin lands on what you got (WeaponService, client WeaponRoll)
+	WeaponRoll = { Id = 3731210089, Price = 10 },
 	-- the passes VIP includes (it sets their attributes too)
 	VIPIncludes = { "Colours", "Marathon", "Battery", "ChooseRole" },
 	Donations = {
@@ -691,6 +694,46 @@ Config.Firecracker = {
 	Range = 34, -- how far you can throw one
 	Fuse = 1.4,
 	Noise = 75, -- the bang: he goes to see (and leaves whoever he was listening for)
+}
+
+-- (v161) the Weapon Roll (Config.Shop.WeaponRoll, WeaponService, client WeaponRoll). Odds in percent per weapon (they add up to
+-- 100, shown in the game before you buy, as Roblox requires for paid random items); Pity: an Epic or better is certain by the
+-- EpicBy-th roll without one, a Legendary by the LegendaryBy-th. Everything lasts the night; a Legendary comes back for
+-- LegendaryNights nights in all. Each weapon is tuned so he stays dangerous: a hit buys a few seconds (Stun), sometimes a
+-- push back (Knock, studs) or a limp after (Slow, s); Cooldown is per weapon; Ammo nil = as often as the cooldown allows.
+-- Retreat: after the stun he backs off (the big hits) instead of coming straight on.
+Config.Weapons = {
+	Tiers = {
+		{ Id = "Normal", Name = "NORMAL", Color = Color3.fromRGB(190, 190, 196) },
+		{ Id = "Rare", Name = "RARE", Color = Color3.fromRGB(80, 150, 255) },
+		{ Id = "Epic", Name = "EPIC", Color = Color3.fromRGB(176, 90, 255) },
+		{ Id = "Legendary", Name = "LEGENDARY", Color = Color3.fromRGB(255, 196, 40) },
+	},
+	Order = { "Bat", "Axe", "Dagger", "Katana", "Gun", "Scythe", "SlapGlove", "PlasmaCannon" },
+	List = {
+		Bat = { Tier = "Normal", Name = "Bat", Emoji = "🏏", Odds = 30, Kind = "Melee", Range = 8, Cone = 60, Stun = 1.6, Knock = 5, Cooldown = 18,
+			Tip = "Swing when he's close: knocks him back a step." },
+		Axe = { Tier = "Normal", Name = "Axe", Emoji = "🪓", Odds = 30, Kind = "Melee", Range = 8, Cone = 55, Stun = 2.2, Knock = 4, Cooldown = 22,
+			Tip = "Swing when he's close: he staggers." },
+		Dagger = { Tier = "Rare", Name = "Dagger", Emoji = "🗡️", Odds = 14, Kind = "Melee", Range = 7, Cone = 50, Stun = 1.4, Slow = 6, Cooldown = 10,
+			Tip = "Quick stab up close: he limps for a few seconds." },
+		Katana = { Tier = "Rare", Name = "Katana", Emoji = "⚔️", Odds = 14, Kind = "Melee", Range = 10, Cone = 70, Stun = 3, Knock = 6, Cooldown = 20,
+			Tip = "A long slash: he reels back." },
+		Gun = { Tier = "Epic", Name = "Gun", Emoji = "🔫", Odds = 5, Kind = "Shot", Range = 80, Cone = 12, AutoRange = 18, Stun = 2.5, Slow = 8,
+			Ammo = 6, Cooldown = 4, Noise = 60, Tip = "Aim at him and click: 6 shots. LOUD." },
+		Scythe = { Tier = "Epic", Name = "Scythe", Emoji = "☠️", Odds = 5, Kind = "Melee", Range = 12, Cone = 100, Stun = 4, Knock = 10, Cooldown = 25,
+			Retreat = true, Tip = "A wide sweep: throws him back across the room." },
+		SlapGlove = { Tier = "Legendary", Name = "Slap Glove", Emoji = "🖐️", Odds = 1, Kind = "Slap", Range = 9, Cone = 70, Stun = 5, Knock = 28,
+			Cooldown = 30, PlayerCooldown = 6, Retreat = true, Tip = "SLAP him across the house. Slaps friends too." },
+		PlasmaCannon = { Tier = "Legendary", Name = "Plasma Cannon", Emoji = "☄️", Odds = 1, Kind = "Beam", Range = 140, Cone = 10, AutoRange = 20,
+			Charge = 0.8, Stun = 8, Slow = 15, Knock = 12, Ammo = 3, Cooldown = 35, Noise = 80, Retreat = true,
+			Tip = "Aim, hold still a moment: a beam that drops him. 3 shots." },
+	},
+	Pity = { EpicBy = 10, LegendaryBy = 60 },
+	LegendaryNights = 3,
+	DuplicateCoins = 50, -- (a melee weapon you already have tonight: coins instead)
+	SpinTime = 5.6, -- the client's spin, seconds
+	StunImmune = 6, -- after a weapon stun wears off, weapons only stagger him this long (nobody stun-locks him)
 }
 
 if Config.Debug then

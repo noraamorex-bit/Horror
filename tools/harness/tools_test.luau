@@ -60,12 +60,19 @@ local ok, err = pcall(function()
 		assert(t.Parent == H.unwrap(backpack) or t.Parent == backpack, item .. ": in the backpack")
 		assert(t:GetAttribute("ItemId") == item and #t.ToolTip > 10, item .. ": knows what it is and says how to use it")
 		-- (v100) a picture in the hotbar, and the count for the line above it
-		assert(string.match(t.TextureId, "^rbxassetid://%d+$"), item .. ": has its hotbar icon")
-		assert(t:GetAttribute("Label") and (item == "Flashlight" or item == "NightVision" or t:GetAttribute("Count") == 2), item .. ": its name and what's left")
+		local wspec = ctx.Config.Weapons.List[item]
+		if wspec then
+			-- (v161 rolled weapons: an emoji instead of a picture; melee ones show no count)
+			assert(t:GetAttribute("Emoji") == wspec.Emoji and t:GetAttribute("Tier") == wspec.Tier, item .. ": its emoji and tier")
+			assert(t:GetAttribute("Label") and (wspec.Ammo and t:GetAttribute("Count") == 2 or (not wspec.Ammo and t:GetAttribute("Count") == nil)), item .. ": its name and what's left")
+		else
+			assert(string.match(t.TextureId, "^rbxassetid://%d+$"), item .. ": has its hotbar icon")
+			assert(t:GetAttribute("Label") and (item == "Flashlight" or item == "NightVision" or t:GetAttribute("Count") == 2), item .. ": its name and what's left")
+		end
 	end
 	local icons = {}
 	for _, item in ctx.Tools.Items do
-		local id = ctx.Tools.Info[item].Icon
+		local id = ctx.Tools.Info[item].Icon or ctx.Tools.Info[item].Emoji
 		assert(not icons[id], "every item its own icon")
 		icons[id] = true
 	end

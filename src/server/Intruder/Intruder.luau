@@ -2640,6 +2640,32 @@ STATES.Stunned = function()
 		end
 		return
 	end
+	-- (v161 a rolled weapon: down for the weapon's Stun, slowed if it slows, then back at you or off to lick his wounds;
+	-- and for a few seconds after, weapons only stagger him: nobody stun-locks him)
+	if d.Weapon then
+		local W = d.Weapon
+		if now() - S.StateStart >= (W.Stun or 2) then
+			S.WeaponImmuneUntil = now() + ((ctx.Config.Weapons and ctx.Config.Weapons.StunImmune) or 6)
+			if W.Slow then
+				S.SlowUntil = now() + W.Slow
+				if S.Model then
+					S.Model:SetAttribute("Slowed", true)
+					task.delay(W.Slow, function()
+						if S.Model and now() >= (S.SlowUntil or 0) then
+							S.Model:SetAttribute("Slowed", nil)
+						end
+					end)
+				end
+			end
+			S.Humanoid.WalkSpeed = tune().WalkSpeed
+			if W.Retreat then
+				retreat(d.From, tune().RetreatAfterStun, nil, tune().RetreatBlindStun or 10)
+			else
+				resume()
+			end
+		end
+		return
+	end
 	if now() - S.StateStart >= tune().StunTime then
 		S.Humanoid.WalkSpeed = tune().WalkSpeed
 		retreat(d.From, tune().RetreatAfterStun, nil, tune().RetreatBlindStun or 10)
@@ -4115,6 +4141,132 @@ function Intruder._explode(at: Vector3, player: Player?)
 		end
 	end
 	return true
+end
+
+--[[
+	v161 the rolled weapons (WeaponService decides who may use what, and when). weaponTarget says whether a swing or a shot
+	reaches him and where it lands; weaponHit does it: a shove (stopped by walls, never off a floor), the stun, a slow.
+	Right after a weapon stun wears off he's immune to weapon stuns for Weapons.StunImmune: a hit then only staggers him.
+]]
+local function weaponable(): boolean
+	return huntable() and S.InHouse == true and S.Head ~= nil and S.Root ~= nil
+		and S.State ~= "Trapped" and S.State ~= "Gone" and S.State ~= "Stopped" and S.State ~= "Closet"
+end
+
+Intruder.weaponable = weaponable
+
+function Intruder.weaponTarget(player: Player, aim: Vector3?, spec: any): (boolean, Vector3?)
+	if not weaponable() then
+		return false, nil
+	end
+	local r = rootOf(player)
+	local char = player.Character
+	local head = char and char:FindFirstChild("Head") :: BasePart?
+	if not r or not head or not char then
+		return false, nil
+	end
+	local chest = S.Root.Position + V(0, 1.5, 0)
+	local seen = Perception.clear(head.Position, chest, { char :: Instance }, S.Model)
+		or Perception.clear(head.Position, S.Head.Position, { char :: Instance }, S.Model)
+	if not seen then
+		return false, nil
+	end
+	local look = aim or r.CFrame.LookVector
+	if spec.Kind == "Melee" or spec.Kind == "Slap" then
+		-- (up close: his body's ~1.5 studs round, so measure to its edge; within 4 studs any facing hits)
+		local flat = V(S.Root.Position.X - r.Position.X, 0, S.Root.Position.Z - r.Position.Z)
+		local dist = flat.Magnitude - 1.5
+		if math.abs(S.Root.Position.Y - r.Position.Y) > 7 or dist > spec.Range then
+			return false, nil
+		end
+		local lookFlat = V(look.X, 0, look.Z)
+		if dist <= 4 or lookFlat.Magnitude < 0.01
+			or lookFlat.Unit:Dot(flat.Unit) >= math.cos(math.rad((spec.Cone or 60) / 2)) then
+			return true, chest
+		end
+		return false, nil
+	end
+	-- shots and beams: aimed (a cone) up to Range, or anywhere in plain sight within AutoRange
+	local from = head.Position
+	local toHim = chest - from
+	if toHim.Magnitude <= spec.Range and look.Magnitude > 0.01
+		and look.Unit:Dot(toHim.Unit) >= math.cos(math.rad(spec.Cone or 12)) then
+		return true, chest
+	end
+	if toHim.Magnitude <= (spec.AutoRange or 0) then
+		return true, chest
+	end
+	return false, nil
+end
+
+-- shove him d studs along dir (flat), stopped short of walls, never off the floor
+local function shove(dir: Vector3, d: number)
+	if not S.Model or not S.Root or d <= 0.2 then
+		return
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore = { S.Model :: Instance }
+	for _, p in ctx.Util.activePlayers() do
+		if p.Character then
+			table.insert(ignore, p.Character)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	local start = S.Root.Position + V(0, 1, 0)
+	local hit = workspace:Raycast(start, dir * (d + 2), params)
+	local go = hit and math.max(0, hit.Distance - 2) or d
+	-- (the floor where he'd land: within a step of the floor he stands on now)
+	local under = workspace:Raycast(start, V(0, -14, 0), params)
+	if not under then
+		return
+	end
+	while go > 0.5 do
+		local floor = workspace:Raycast(start + dir * go, V(0, -14, 0), params)
+		if floor and math.abs(floor.Position.Y - under.Position.Y) < 2.5 then
+			break
+		end
+		go -= 1.5
+	end
+	if go > 0.5 then
+		S.Model:PivotTo(S.Root.CFrame + dir * go) -- (the root is his PrimaryPart: his pivot)
+	end
+end
+
+function Intruder.weaponHit(player: Player, spec: any): string
+	if not weaponable() then
+		return "none"
+	end
+	local r = rootOf(player)
+	local from = r and r.Position or S.Root.Position
+	local dir = V(S.Root.Position.X - from.X, 0, S.Root.Position.Z - from.Z)
+	dir = dir.Magnitude > 0.01 and dir.Unit or V(0, 0, 1)
+	if ctx.Monster and ctx.Monster.active() then
+		ctx.Monster.stun(math.min(spec.Stun or 2, ctx.Config.Monster.TaserStun or 6))
+		return "stun"
+	end
+	local immune = S.State ~= "Stunned" and now() < (S.WeaponImmuneUntil or 0)
+	S.Nav:stop()
+	shove(dir, immune and math.min(3, spec.Knock or 0) or (spec.Knock or 0))
+	ctx.Audio.playAt("Roar", S.Head.Position, { Caption = false })
+	if spec.Kind == "Beam" then
+		zapFx(spec.Stun or 3)
+	end
+	if immune then
+		return "stagger"
+	end
+	if S.State ~= "Stunned" then
+		S.Humanoid.WalkSpeed = 0
+		setState("Stunned", { From = from, Weapon = spec })
+	elseif S.Data and S.Data.Weapon then
+		-- (another weapon hit while he's down from one: the longer stun wins, it doesn't stack)
+		local left = (S.Data.Weapon.Stun or 0) - (now() - S.StateStart)
+		if (spec.Stun or 0) > left then
+			S.Data = { From = from, Weapon = spec }
+			S.StateStart = now()
+		end
+	end
+	return "stun"
 end
 
 function Intruder.onPepperSpray(player: Player, aim: Vector3?)

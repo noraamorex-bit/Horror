@@ -62,6 +62,69 @@ local function piece(tool: Tool, handle: BasePart, name: string, size: Vector3, 
 	return p
 end
 
+-- (v161) the rolled weapons' models: blades and the bat stand up from the grip (+Y), guns point ahead (-Z)
+local function buildWeapon(tool: Tool, handle: BasePart, item: string)
+	local wood = Color3.fromRGB(150, 104, 62)
+	local steel = Color3.fromRGB(196, 200, 210)
+	local black = Color3.fromRGB(24, 24, 28)
+	handle.Size = Vector3.new(0.26, 0.9, 0.26)
+	handle.Color = black
+	if item == "Bat" then
+		handle.Color = Color3.fromRGB(40, 36, 34)
+		piece(tool, handle, "Barrel", Vector3.new(0.38, 2.2, 0.38), CFrame.new(0, 1.5, 0), wood, Enum.Material.Wood)
+		piece(tool, handle, "End", Vector3.new(0.44, 0.5, 0.44), CFrame.new(0, 2.7, 0), wood, Enum.Material.Wood)
+		piece(tool, handle, "Knob", Vector3.new(0.34, 0.1, 0.34), CFrame.new(0, -0.48, 0), black)
+	elseif item == "Axe" then
+		handle.Color = wood
+		handle.Material = Enum.Material.Wood
+		piece(tool, handle, "Haft", Vector3.new(0.22, 2.2, 0.22), CFrame.new(0, 1.4, 0), wood, Enum.Material.Wood)
+		piece(tool, handle, "Head", Vector3.new(0.14, 0.7, 0.9), CFrame.new(0, 2.25, -0.4), steel, Enum.Material.Metal)
+		piece(tool, handle, "Edge", Vector3.new(0.06, 0.9, 0.12), CFrame.new(0, 2.25, -0.9), Color3.fromRGB(235, 238, 245), Enum.Material.Metal)
+		piece(tool, handle, "Back", Vector3.new(0.2, 0.4, 0.3), CFrame.new(0, 2.25, 0.2), Color3.fromRGB(60, 60, 66), Enum.Material.Metal)
+	elseif item == "Dagger" then
+		handle.Size = Vector3.new(0.2, 0.6, 0.2)
+		piece(tool, handle, "Guard", Vector3.new(0.6, 0.1, 0.18), CFrame.new(0, 0.35, 0), Color3.fromRGB(80, 150, 255), Enum.Material.Metal)
+		piece(tool, handle, "Blade", Vector3.new(0.18, 1.0, 0.05), CFrame.new(0, 0.9, 0), steel, Enum.Material.Metal)
+		piece(tool, handle, "Tip", Vector3.new(0.1, 0.2, 0.05), CFrame.new(0, 1.48, 0), steel, Enum.Material.Metal)
+	elseif item == "Katana" then
+		handle.Color = Color3.fromRGB(30, 30, 60)
+		piece(tool, handle, "Tsuba", Vector3.new(0.5, 0.08, 0.5), CFrame.new(0, 0.5, 0), Color3.fromRGB(80, 150, 255), Enum.Material.Metal)
+		piece(tool, handle, "Blade", Vector3.new(0.06, 3.2, 0.2), CFrame.new(0, 2.15, -0.06) * CFrame.Angles(math.rad(-3), 0, 0), steel, Enum.Material.Metal)
+		piece(tool, handle, "Edge", Vector3.new(0.03, 3.1, 0.04), CFrame.new(0, 2.15, -0.2) * CFrame.Angles(math.rad(-3), 0, 0), Color3.fromRGB(150, 200, 255), Enum.Material.Neon)
+	elseif item == "Gun" then
+		handle.Size = Vector3.new(0.24, 0.6, 0.32)
+		handle.CFrame = CFrame.new()
+		piece(tool, handle, "Slide", Vector3.new(0.26, 0.3, 1.1), CFrame.new(0, 0.38, -0.32), Color3.fromRGB(46, 46, 52), Enum.Material.Metal)
+		piece(tool, handle, "Barrel", Vector3.new(0.12, 0.12, 0.2), CFrame.new(0, 0.42, -0.95), black, Enum.Material.Metal)
+		piece(tool, handle, "Sight", Vector3.new(0.06, 0.08, 0.08), CFrame.new(0, 0.57, -0.8), Color3.fromRGB(176, 90, 255), Enum.Material.Neon)
+	elseif item == "Scythe" then
+		handle.Color = Color3.fromRGB(46, 30, 24)
+		piece(tool, handle, "Pole", Vector3.new(0.2, 4.6, 0.2), CFrame.new(0, 2.2, 0), Color3.fromRGB(46, 30, 24), Enum.Material.Wood)
+		piece(tool, handle, "Blade", Vector3.new(0.06, 0.5, 2.6), CFrame.new(0, 4.25, -1.25) * CFrame.Angles(math.rad(-12), 0, 0), Color3.fromRGB(150, 150, 160), Enum.Material.Metal)
+		piece(tool, handle, "Edge", Vector3.new(0.04, 0.1, 2.5), CFrame.new(0, 4.0, -1.25) * CFrame.Angles(math.rad(-12), 0, 0), Color3.fromRGB(176, 90, 255), Enum.Material.Neon)
+	elseif item == "SlapGlove" then
+		local gold = Color3.fromRGB(255, 196, 40)
+		handle.Size = Vector3.new(0.4, 0.5, 0.4)
+		handle.Color = Color3.fromRGB(200, 140, 30)
+		piece(tool, handle, "Palm", Vector3.new(1.3, 1.3, 0.4), CFrame.new(0, 0.95, -0.1), gold)
+		for i, x in { -0.45, -0.15, 0.15, 0.45 } do
+			local len = (i == 2 or i == 3) and 0.85 or 0.7
+			piece(tool, handle, "Finger", Vector3.new(0.26, len, 0.34), CFrame.new(x, 1.6 + len / 2, -0.1), gold)
+		end
+		piece(tool, handle, "Thumb", Vector3.new(0.3, 0.6, 0.34), CFrame.new(-0.8, 1.0, -0.1) * CFrame.Angles(0, 0, math.rad(35)), gold)
+		piece(tool, handle, "Cuff", Vector3.new(0.9, 0.3, 0.6), CFrame.new(0, 0.3, -0.1), Color3.fromRGB(150, 30, 30))
+	elseif item == "PlasmaCannon" then
+		local cyan = Color3.fromRGB(80, 230, 255)
+		handle.Size = Vector3.new(0.26, 0.6, 0.3)
+		piece(tool, handle, "Body", Vector3.new(0.7, 0.7, 2.6), CFrame.new(0, 0.55, -0.6), Color3.fromRGB(40, 40, 54), Enum.Material.Metal)
+		for k = 0, 2 do
+			piece(tool, handle, "Coil", Vector3.new(0.82, 0.82, 0.14), CFrame.new(0, 0.55, -0.9 - k * 0.45), cyan, Enum.Material.Neon)
+		end
+		piece(tool, handle, "Muzzle", Vector3.new(0.5, 0.5, 0.3), CFrame.new(0, 0.55, -2.0), Color3.fromRGB(255, 196, 40), Enum.Material.Neon)
+		piece(tool, handle, "Tank", Vector3.new(0.4, 0.4, 0.8), CFrame.new(0, 1.05, 0.2), cyan, Enum.Material.Glass)
+	end
+end
+
 -- the model in your hand: the Handle is the grip; -Z points where you face, +Y up (Roblox's
 -- tool-holding pose)
 local function build(item: string): Tool
@@ -69,8 +132,13 @@ local function build(item: string): Tool
 	tool.CanBeDropped = false
 	tool.RequiresHandle = true
 	tool.ToolTip = INFO[item].Tip
-	tool.TextureId = "rbxassetid://" .. INFO[item].Icon
+	if INFO[item].Icon then
+		tool.TextureId = "rbxassetid://" .. INFO[item].Icon
+	end
 	tool:SetAttribute("ItemId", item)
+	-- (v161 rolled weapons: an emoji for the hotbar slot and the tier's colour round it, client Gear)
+	tool:SetAttribute("Emoji", INFO[item].Emoji)
+	tool:SetAttribute("Tier", INFO[item].Tier)
 	tool:SetAttribute("Label", INFO[item].Name)
 	tool:SetAttribute("Unit", INFO[item].Unit)
 	local handle = Instance.new("Part")
@@ -124,6 +192,8 @@ local function build(item: string): Tool
 			piece(tool, handle, "Tube", Vector3.new(0.22, 0.22, 0.34), CFrame.new(x, 0, -0.28), Color3.fromRGB(36, 38, 36), Enum.Material.Metal)
 			piece(tool, handle, "Lens", Vector3.new(0.18, 0.18, 0.04), CFrame.new(x, 0, -0.46), Color3.fromRGB(90, 255, 120), Enum.Material.Neon)
 		end
+	elseif ctx and ctx.Config.Weapons and ctx.Config.Weapons.List[item] then
+		buildWeapon(tool, handle, item)
 	elseif item == "Firecracker" then
 		handle.Size = Vector3.new(0.22, 0.22, 0.8)
 		handle.Color = Color3.fromRGB(200, 30, 30)
@@ -201,8 +271,9 @@ function Tools.refresh(p: Player, item: string)
 		tool.Parent = backpack
 	end
 	local name = INFO[item].Name
-	tool.Name = (item == "Flashlight" or item == "NightVision" or n <= 1) and name or (name .. " (" .. n .. ")")
-	tool:SetAttribute("Count", (item ~= "Flashlight" and item ~= "NightVision") and n or nil)
+	local single = item == "Flashlight" or item == "NightVision" or (INFO[item].Emoji ~= nil and not INFO[item].Unit)
+	tool.Name = (single or n <= 1) and name or (name .. " (" .. n .. ")")
+	tool:SetAttribute("Count", (not single) and n or nil)
 end
 
 function Tools.refreshAll(p: Player)
@@ -221,6 +292,18 @@ end
 function Tools.init(c)
 	ctx = c
 	ctx.Tools = Tools
+	-- (v161) the rolled weapons are tools too
+	local Wp = ctx.Config.Weapons
+	if Wp then
+		for _, k in Wp.Order do
+			local spec = Wp.List[k]
+			if not IS_TOOL[k] then
+				table.insert(Tools.Items, k)
+				IS_TOOL[k] = true
+			end
+			INFO[k] = { Name = spec.Name, Emoji = spec.Emoji, Tier = spec.Tier, Unit = spec.Ammo and "shot" or nil, Tip = spec.Tip }
+		end
+	end
 end
 
 function Tools.start()

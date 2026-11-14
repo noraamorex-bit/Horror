@@ -218,6 +218,19 @@ Sounds.Library = {
 	NotifyLow = { Id = "rbxassetid://17208372272", Volume = 0.35 },
 	NotifyHigh = { Id = "rbxassetid://17208361335", Volume = 0.35 },
 	CountBeep = { Id = "rbxassetid://9113399926", Volume = 0.4 },
+
+	-- v161 the weapon roll (ProSoundEffects / APM, licensed): swings, hits, the gun, the plasma cannon, the slap glove, the spin
+	WeaponSwing = { Id = "rbxassetid://9120972321", Volume = 0.8, Range = 50 },
+	WeaponSwing2 = { Id = "rbxassetid://9120972444", Volume = 0.8, Range = 50 },
+	BatHit = { Id = "rbxassetid://9125380872", Volume = 1, Range = 90, Caption = "[A heavy hit]" },
+	BladeHit = { Id = "rbxassetid://9125672726", Volume = 0.9, Range = 80, Caption = "[Metal striking]" },
+	GunShot = { Id = "rbxassetid://9117402631", Fallback = ENGINE_THUD, Volume = 1, Range = 260, Caption = "[A gunshot]" },
+	PlasmaBlast = { Id = "rbxassetid://1841352043", Fallback = ENGINE_THUD, Volume = 1, Range = 260, Caption = "[A plasma blast]" },
+	Slap = { Id = "rbxassetid://9114788747", Volume = 1, Range = 120, Caption = "[A huge slap]" },
+	SlapCrack = { Id = "rbxassetid://9120663217", Volume = 0.8, Range = 120 },
+	RollDice = { Id = "rbxassetid://9114073627", Volume = 0.6 },
+	RollWin = { Id = "rbxassetid://9042409054", Volume = 0.6 },
+	RollLegendary = { Id = "rbxassetid://9044820101", Volume = 0.7 },
 }
 
 -- The dark house (client Dread, v104: a player wrote '"horror game" but almost no audio for it'):
