@@ -962,7 +962,30 @@ At the start of each night, for a player's first 3 nights, the camera holds on t
 Notices and the chapter card wait until the shot ends (`Notice.hold`). It exists for retention: players see the threat in the first seconds, while the acts keep their slow build.
 
 ### Jumpscare Everyone (v115, client `Prank`, 10 R$ developer product)
+**v165:** the scare is three beats.
+1. **Dread:** the screen dims, static creeps in, a rumble and a heartbeat that speeds up.
+2. **Glimpses:** black and silence, then his face far off for two frames, then closer.
+3. **The slam:** his face rushes the lens screaming, the picture shakes apart, a white hit-frame, red pulses and static, five sounds layered, and a buzz on devices that support it.
+
+Then a hard cut to black. The buyer sees it too. The full panel's TROLL tab has "😱 Jumpscare Everyone (just me)" to try it. The older description below is the v115 version.
 The owner asked for "something like" another game's 19 R$ "Jumpscare Everyone", for 10 R$. Bought (from the small 😱 button under the inventory in the house, or the 😱 SCARE dock icon in the lobby, both shown only while someone else is in the server), ShopService fires `Remotes.JumpscareAll` (buyer's name, id, how many were scared) to the whole server. Everyone else gets a full-screen scare over everything: black, his mask and hair (a copy of the real ones, in a ViewportFrame) lunging out of the dark at them with the jaw dropping, the screech and a hit, a red flash and a shake, ~1.3 s; then "😱 <name> jumpscared everyone!" low on the screen for 4 s (so they know who to pay back). The buyer gets "😈 You jumpscared N players!". Never over a real capture or an ending. Logged as JumpscareAll in Sales_v1 and Prank in the night log.
+
+### The attic ladder, climbed (v165)
+- **The bug.** The owner said he kept "randomly teleporting between upstairs and the attic" and didn't properly hunt. Two things caused it:
+  - `AtticRun.bringDown` put him back downstairs instantly 6 s after the attic emptied.
+  - Every chase aimed at someone up there routed him up the ladder: a wait at the foot, then he was on top.
+- **He climbs now.** Every climb (the navigator's ladder routes, `Intruder.climbInto` for the camping scene and the trip back down) moves him rung by rung from the ladder's foot, through the hatch, onto the other floor. He's anchored while he climbs, and the brain waits (`S.Climbing`).
+- **No ping-pong.** No second climb within `Attic.ClimbGap` (10 s). For 25 s after a climb, `runTarget` puts players on his own floor first.
+- **Interrupted climbs.** A climb that gets interrupted finishes where it was going (`Navigator:stop`).
+- **Climbs end on time.** The navigator now ends a climb even though he's anchored; before, it skipped its update and the climb could hang.
+- **Test:** `navai_test ladder` checks that he's seen part way up and that there's no climb straight back.
+
+### Buy buttons on the right (v165)
+- **Where they are.** The owner's screenshot showed Roblox's chat window over the top-left column, and the column also sat over the thumbstick. The buy buttons (🎲 / 🚀 / 😱 / BE HIM / night vision) now live in `HUD.OfferColumn`.
+- **How they look.** Small tiles (the icon, a short name, the price), drawn by `HUD._tile` from the button's own Text.
+- **How they're laid out.** A grid stacked up from just above the touch buttons (`MobileControls.clusterTop`), with as many columns as the room under the objective needs. On a computer, the bottom right.
+- **What stays.** The time, room and items stay top left.
+- **The lobby.** ▶ PLAY and its icons slide beside the chat window while it's open (`ChatDodge`, side "right").
 
 ### Weapon Roll (v161, `WeaponService`, client `WeaponRoll`, 10 R$ developer product 3731210089)
 The owner asked for "roll for a random weapon (10 Robux)" with tiers: Normal (bat, axe), Rare (dagger, katana), Epic (gun, scythe) and Legendary (a slap glove that also flings players, a plasma cannon), "adjust the cooldown", a spinning animation, and the Legendary "very hard to get".
