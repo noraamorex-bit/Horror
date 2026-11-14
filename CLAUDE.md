@@ -552,7 +552,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   a 🎲 WEAPON button under the inventory in a night → a window with every weapon's real chance and the guarantees → Roblox's purchase
   window → a spin that stops on the server's roll. Odds 30/30 · 14/14 · 5/5 · 1/1; Epic+ guaranteed within 10 rolls, a Legendary within 60
   (`WeaponPity`, saved); a Legendary stays 3 nights; weapons stun/shove/slow him with cooldowns, and `StunImmune` 6 s stops stun-locks; the
-  glove also slaps players (never the owner). **The near-miss animation was not built, on purpose**: the strip's other cards are drawn
+  glove also slaps every player its hitbox touches (v162; never the owner). **The near-miss animation was not built, on purpose**: the strip's other cards are drawn
   at the real odds. A staged near miss misleads kids, and Roblox's paid random items rules want honest, shown odds. Don't add one. Not offered where
   PolicyService restricts paid random items (`RollRestricted`). Next: `== SALES` WeaponRoll bought / asked, `weapon rolls` in the
   night logs, deaths/player (weapons make nights easier: if captures drop a lot, lengthen cooldowns).
@@ -989,6 +989,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **14 Nov (v162 = place version 162)**, published; the owner: "Make slap glove work on other players when it touches their hit box.
+  Also bloc fruits and many big games do that faking part." Done: the glove slaps every player its hitbox touches (a 6x6x6 box 3.5 studs
+  in front of you along the swing, plus a box round the glove's palm; `slapTargets`), in the same swing as hitting him, 3 s apart
+  (`PlayerCooldown`), flung away from you; never the owner or anyone hiding / tied up / out. **The faked near miss stays out** (asked a
+  second time; the hard rule above stands: answered the owner why). Can't see the real client: check the glove's reach feels like a touch,
+  not too long.
 
 - **14 Nov (v161 = place version 161)**, published; the Weapon Roll (see Economy, v161). Can't see the real client here: check on a
   phone that the 🎲 button sits clear under the inventory, the spin reads (top third, ticks slowing to the stop), each weapon's model sits
@@ -1732,7 +1739,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 161; the notes' "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 162; the notes' "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

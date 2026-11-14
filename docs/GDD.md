@@ -987,7 +987,7 @@ The owner asked for "roll for a random weapon (10 Robux)" with tiers: Normal (ba
   | Plasma Cannon | Legendary | 140 (0.8 s charge) | 8 s | 12 studs | 15 s | 35 s | 3 | he backs off, loud |
 
 - **Nobody can stun-lock him.** For `StunImmune` (6 s) after a weapon stun wears off, a weapon hit only staggers him (a short shove, no stun). A miss costs only a short wait.
-- **The Slap Glove on players.** When the glove doesn't reach him, it slaps the nearest player in front of you across the room (client Troll `slap`: "🖐️ slapped by <name>"). Slaps are 6 s apart. It never hits the owner, or anyone hiding, tied up or out.
+- **The Slap Glove on players (v162: by touch).** Every player whose body the glove touches goes flying across the room: a 6x6x6 hitbox 3.5 studs in front of you along the swing, plus a box round the glove's palm (`WeaponService` `slapTargets`, a spatial query on players' characters; client Troll `slap`: "🖐️ slapped by <name>"). It works in the same swing as slapping him. Player slaps are 3 s apart (`PlayerCooldown`). It never hits the owner, or anyone hiding, tied up or out.
 - **Rare rolls are announced.** An Epic or Legendary is announced to the others in the server after the spin stops.
 - **Logs.** `WeaponRoll` in Sales_v1 (bought / asked); `Roll` and `WeaponHit` in the night log, which pull_stats prints. Test: `weapon_test`. Previews: `ui_dump.luau roll|spin`.
 

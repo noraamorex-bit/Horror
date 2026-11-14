@@ -301,20 +301,57 @@ local ok, err = pcall(function()
 		ro.CFrame = R.CFrame.new(spot + V(2, 0, 0.5))
 		local _ = p
 	end
+	-- (v162: the glove hits whoever its hitbox touches: a box in front of you. Spatial queries are stubs in here: the parts
+	-- inside a turned box, from the characters it's allowed to look at)
+	H.boundsInBox = function(cf, size, params)
+		local out = {}
+		for _, ch in (params and params.FilterDescendantsInstances) or {} do
+			for _, part in ch:GetChildren() do
+				if part:IsA("BasePart") then
+					local l = cf:PointToObjectSpace(part.Position)
+					if math.abs(l.X) <= size.X / 2 and math.abs(l.Y) <= size.Y / 2 and math.abs(l.Z) <= size.Z / 2 then
+						table.insert(out, part)
+					end
+				end
+			end
+		end
+		return out
+	end
+	local cyHead = H.wrap(H.unwrap(b.Character)):FindFirstChild("Head")
+	if cyHead then cyHead.CFrame = R.CFrame.new(ctx.Phone.signalSpot() + V(3, 1.5, 0)) end
 	local trolls = #(fired.Troll or {})
 	S.WeaponImmuneUntil = 0
 	res = Wp.use(a, "SlapGlove", V(1, 0, 0))
-	if res ~= "slapped" then print("(glove: " .. tostring(res) .. ")", b:GetAttribute("Captured"), b:GetAttribute("Hiding"), b:GetAttribute("Dead"), b:GetAttribute("InGame"), rb.Position, ra.Position) end
+	if res ~= "slapped" then print("(glove: " .. tostring(res) .. ")", rb.Position, ra.Position) end
 	local last = fired.Troll and fired.Troll[#fired.Troll]
-	assert(res == "slapped" and #fired.Troll == trolls + 1 and last[1] == b and last[2] == "slap", "the glove slaps the friend, not the owner")
+	assert(res == "slapped" and #fired.Troll == trolls + 1 and last[1] == b and last[2] == "slap", "the glove slaps the friend it touches, not the owner beside them")
+	assert(typeof(last[4]) == "Vector3" and last[4].X > 0.5, "flung away from the slapper")
 	assert(Wp.use(a, "SlapGlove", V(1, 0, 0)) == "cooldown", "slaps are spaced out")
 	H.flush(W.List.SlapGlove.PlayerCooldown + 0.2)
+	-- swinging the other way: the friend behind you isn't touched
+	trolls = #fired.Troll
+	assert(Wp.use(a, "SlapGlove", V(-1, 0, 0)) ~= "slapped" and #fired.Troll == trolls, "a swing away from them doesn't touch them")
+	H.flush(1.5)
+	-- out of reach (just past the hitbox): not touched
+	rb.CFrame = R.CFrame.new(ctx.Phone.signalSpot() + V(8, 0, 0))
+	if cyHead then cyHead.CFrame = R.CFrame.new(ctx.Phone.signalSpot() + V(8, 1.5, 0)) end
+	assert(Wp.use(a, "SlapGlove", V(1, 0, 0)) ~= "slapped" and #fired.Troll == trolls, "out of the glove's reach: not touched")
+	H.flush(1.5)
+	-- two friends in front: both fly
+	local d, rd = mkPlayer("Di", 24, ctx.Phone.signalSpot() + V(2.5, 0, 1.5))
+	rb.CFrame = R.CFrame.new(ctx.Phone.signalSpot() + V(3, 0, -1))
+	if cyHead then cyHead.CFrame = R.CFrame.new(ctx.Phone.signalSpot() + V(3, 1.5, -1)) end
+	trolls = #fired.Troll
+	assert(Wp.use(a, "SlapGlove", V(1, 0, 0)) == "slapped" and #fired.Troll == trolls + 2, "everyone the glove touches goes flying")
+	H.flush(W.List.SlapGlove.PlayerCooldown + 0.2)
 	b:SetAttribute("Hiding", true)
-	rb.CFrame = R.CFrame.new(ctx.Phone.signalSpot() + V(30, 0, 0))
+	d:SetAttribute("Hiding", true)
 	trolls = #fired.Troll
 	Wp.use(a, "SlapGlove", V(1, 0, 0))
-	assert(#fired.Troll == trolls, "nobody slapped: the owner's off limits, the friend's hiding")
+	assert(#fired.Troll == trolls, "nobody slapped: the owner's off limits, the friends are hiding")
 	b:SetAttribute("Hiding", nil)
+	d:SetAttribute("Hiding", nil)
+	local _ = rd
 	print("glove ok")
 
 	-- 13. a Legendary comes back for its nights; a duplicate melee weapon pays coins

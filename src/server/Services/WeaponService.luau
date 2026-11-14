@@ -12,8 +12,9 @@
 	• Where paid random items aren't allowed for a player (PolicyService ArePaidRandomItemsRestricted) the roll isn't offered
 	  (attribute RollRestricted) and a purchase is refused.
 	• Using one (Remotes.UseItem → Weapons.use): each has its cooldown; Shot / Beam spend a shot; a miss only costs a short
-	  cooldown. Hits go through Intruder.weaponTarget / weaponHit. The Slap Glove also sends other players flying
-	  (client Troll "slap"), PlayerCooldown apart, never the owner, never someone hiding / tied up / out.
+	  cooldown. Hits go through Intruder.weaponTarget / weaponHit. The Slap Glove also sends flying every player
+	  whose body it touches (v162: a hitbox in front of you and round the glove; client Troll "slap"), PlayerCooldown apart,
+	  never the owner, never someone hiding / tied up / out.
 ]]
 
 local Players = game:GetService("Players")
@@ -240,28 +241,52 @@ local function slappable(target: Player, by: Player): boolean
 		and not target:GetAttribute("Monster") and not table.find(ctx.Config.Admins or {}, target.UserId)
 end
 
--- the nearest player the glove reaches (in front, within Range)
-local function slapTarget(player: Player, aim: Vector3, s): Player?
+-- (v162) whoever the glove touches: every player whose body is inside the space the glove sweeps through in front of you
+-- (a box HitBox wide/high/deep, HitAhead in front of your chest, turned the way you swing) or around the glove itself
+local function slapTargets(player: Player, aim: Vector3, s): { Player }
 	local r = ctx.Util.getRoot(player)
 	if not r then
-		return nil
+		return {}
 	end
-	local best, bestD = nil, math.huge
 	local look = Vector3.new(aim.X, 0, aim.Z)
 	look = look.Magnitude > 0.01 and look.Unit or Vector3.new(r.CFrame.LookVector.X, 0, r.CFrame.LookVector.Z).Unit
+	local chars = {}
+	local owner: { [Instance]: Player } = {}
 	for _, q in Players:GetPlayers() do
-		local qr = slappable(q, player) and ctx.Util.getRoot(q)
-		if qr then
-			local flat = Vector3.new(qr.Position.X - r.Position.X, 0, qr.Position.Z - r.Position.Z)
-			local d = flat.Magnitude
-			if d <= s.Range and math.abs(qr.Position.Y - r.Position.Y) < 5 and d < bestD
-				and (d < 2.5 or look:Dot(flat.Unit) >= math.cos(math.rad(s.Cone / 2))) then
-				best, bestD = q, d
-			end
+		if slappable(q, player) and q.Character then
+			table.insert(chars, q.Character)
+			owner[q.Character] = q
 		end
 	end
-	return best
+	if #chars == 0 then
+		return {}
+	end
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = chars
+	local box = s.HitBox or Vector3.new(6, 6, 6)
+	local centre = r.Position + Vector3.new(0, 0.5, 0) + look * (s.HitAhead or 3.5)
+	local found = workspace:GetPartBoundsInBox(CFrame.lookAt(centre, centre + look), box, params)
+	-- (the glove in your hand: a little box round its palm)
+	local tool = ctx.Tools and ctx.Tools.find and ctx.Tools.find(player, "SlapGlove")
+	local palm = tool and tool.Parent == player.Character and tool:FindFirstChild("Palm") :: BasePart?
+	if palm then
+		for _, part in workspace:GetPartBoundsInBox(palm.CFrame, palm.Size + Vector3.new(2, 2, 2), params) do
+			table.insert(found, part)
+		end
+	end
+	local out, seen = {}, {}
+	for _, part in found do
+		local model = part:FindFirstAncestorOfClass("Model")
+		local q = model and owner[model]
+		if q and not seen[q] then
+			seen[q] = true
+			table.insert(out, q)
+		end
+	end
+	return out
 end
+Weapons._slapTargets = slapTargets -- (tests)
 
 local function fx(player: Player, kind: string, what: string, a: any?, b: any?)
 	ctx.Remotes.WeaponFx:FireAllClients(player.UserId, kind, what, a, b)
@@ -330,20 +355,29 @@ function Weapons.use(player: Player, kind: string, aim: Vector3?): string
 				end
 			end
 		end
-		-- the glove on players (it only goes for one when it didn't reach him)
-		if s.Kind == "Slap" and not hit and now() >= (slapAt[player] or 0) then
-			local q = slapTarget(player, look, s)
-			if q then
+		-- the glove on players: everyone it touches goes flying (him too, in the same swing)
+		local slapped = 0
+		if s.Kind == "Slap" and now() >= (slapAt[player] or 0) then
+			for _, q in slapTargets(player, look, s) do
 				local qr = ctx.Util.getRoot(q)
 				local dir = qr and (qr.Position - r.Position) or look
-				ctx.Remotes.Troll:FireClient(q, "slap", player.DisplayName, Vector3.new(dir.X, 0, dir.Z))
+				dir = Vector3.new(dir.X, 0, dir.Z)
+				-- (flung away from you, a little along your swing so a friend right beside you still flies forward)
+				local fling = (dir.Magnitude > 0.01 and dir.Unit or look) + look * 0.6
+				ctx.Remotes.Troll:FireClient(q, "slap", player.DisplayName, fling)
 				ctx.Audio.playAt("Slap", qr and qr.Position or r.Position, { Caption = false })
-				slapAt[player] = now() + (s.PlayerCooldown or 6)
-				setCooldown(player, kind, s.PlayerCooldown or 6)
+				slapped += 1
 				if ctx.Journey then
 					ctx.Journey.event(player, "WeaponHit", kind .. ":player")
 				end
-				return "slapped"
+			end
+			if slapped > 0 then
+				slapAt[player] = now() + (s.PlayerCooldown or 3)
+				ctx.Audio.playAt("SlapCrack", r.Position + look * 3, { Caption = false })
+				if not hit then
+					setCooldown(player, kind, s.PlayerCooldown or 3)
+					return "slapped"
+				end
 			end
 		end
 		if hit and result ~= "none" then
