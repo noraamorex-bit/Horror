@@ -49,7 +49,7 @@ ctx.Remotes = setmetatable({}, { __index = function(t, k)
 	rawset(t, k, r)
 	return r
 end })
-local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "WeaponRoll", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale" }
+local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "WeaponRoll", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Admin" }
 local mods = {}
 for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 ctx.LobbyHubMod = mods.LobbyHub
@@ -155,6 +155,14 @@ elseif SCENE == "hiding" then
 	R.Caption.OnClientEvent:Fire("[Wet, rasping breathing, very close]")
 elseif SCENE == "settings" then
 	ctx.Settings.open()
+elseif SCENE == "admin_testers" then
+	-- (v163) the owner's TESTERS tab
+	player:SetAttribute("IsOwner", true)
+	player:SetAttribute("IsAdmin", true)
+	R.AdminReply.OnClientEvent:Fire(nil, { TesterList = { { Id = 1, Name = "SamTheTester" }, { Id = 2, Name = "bo_plays" }, { Id = 3, Name = "lazytoast" } } })
+	mods.Admin._open(process.env.TAB or "TESTERS")
+	R.AdminReply.OnClientEvent:Fire(nil, { TesterList = { { Id = 1, Name = "SamTheTester" }, { Id = 2, Name = "bo_plays" }, { Id = 3, Name = "lazytoast" } } })
+	R.AdminReply.OnClientEvent:Fire("✅ SamTheTester is a tester: full admin panel + every pass, in any server they join.")
 elseif SCENE == "roll" then
 	-- (v161) the Weapon Roll's window
 	player:SetAttribute("RollsSinceEpic", 3)

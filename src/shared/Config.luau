@@ -41,6 +41,9 @@ Config.Lobby = {
 
 -- The owner's test panel (AdminService): these UserIds (plus the experience owner, plus Studio).
 Config.Admins = { 915496194 }
+-- (v163) testers: the owner's friends with the full admin panel and every pass. Added / removed by the owner in the admin
+-- panel's TESTERS tab (saved in DataStore Testers_v1); UserIds here are testers too, always
+Config.Testers = {}
 
 Config.MinPlayers = 1 -- 2-4 recommended; 1 is allowed so the game can be tested solo
 Config.MaxPlayers = 4

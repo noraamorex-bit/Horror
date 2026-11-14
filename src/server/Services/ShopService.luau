@@ -123,6 +123,32 @@ local function checkPasses(player: Player)
 	end
 end
 
+-- (v163) the owner's testers: every pass on for them (attributes only, nothing owned or saved); taken off the list, back to
+-- what they really own
+local function testerPasses(player: Player, on: boolean)
+	if not player.Parent then
+		return
+	end
+	if on then
+		for _, pass in ctx.Config.Shop.Passes do
+			grant(player, pass, false)
+		end
+		ctx.Remotes.Notify:FireClient(player, "🧪 Tester: every game pass and the admin panel are on for you. Thanks for testing!", "done")
+	else
+		for _, pass in ctx.Config.Shop.Passes do
+			player:SetAttribute("Pass_" .. pass.Key, nil)
+		end
+		for _, k in ctx.Config.Shop.VIPIncludes or {} do
+			player:SetAttribute("Pass_" .. k, nil)
+		end
+		checkPasses(player)
+		if ctx.Stats and ctx.Stats.refresh then
+			ctx.Stats.refresh(player)
+		end
+	end
+end
+Shop._testerPasses = testerPasses -- (tests)
+
 ---------------------------------------------------------------------------
 -- Donations
 ---------------------------------------------------------------------------
@@ -493,6 +519,10 @@ function Shop.init(c)
 end
 
 function Shop.start()
+	-- (v163) testers' passes follow the list
+	if ctx.Testers then
+		ctx.Testers.onChanged(testerPasses)
+	end
 	pcall(function()
 		receipts = DataStoreService:GetDataStore("DonationReceipts_v1")
 		totals = DataStoreService:GetOrderedDataStore("Donations_v1")

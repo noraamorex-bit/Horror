@@ -416,6 +416,10 @@ local function offBoards(userId: number): boolean
 	if ctx and ctx.Config and table.find(ctx.Config.Admins or {}, userId) then
 		return true
 	end
+	-- (v163) the owner's testers too: their nights use god mode and free coins
+	if ctx and ctx.Testers and ctx.Testers.isId(userId) then
+		return true
+	end
 	return game.CreatorType == Enum.CreatorType.User and game.CreatorId ~= 0 and userId == game.CreatorId
 end
 Stats.offBoards = offBoards

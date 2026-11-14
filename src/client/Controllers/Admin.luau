@@ -40,6 +40,7 @@ local current = "NIGHT"
 local info = { Rooms = {}, Events = {}, Endings = {}, Acts = { "Evening", "SmallThings", "SomeoneElse", "Guest" } }
 local xray: Highlight? = nil
 local built = false
+local testerList: { any }? = nil -- (v163) the owner's testers, from the server
 -- a pass holder, not the owner
 local function limited(): boolean
 	return not player:GetAttribute("IsAdmin")
@@ -358,6 +359,59 @@ RENDER.TROLL = function()
 	table.insert(trollConns, Players.PlayerAdded:Connect(again))
 	table.insert(trollConns, Players.PlayerRemoving:Connect(again))
 end
+-- (v163) the owner only: friends who get this full panel and every pass, in any server (saved)
+RENDER.TESTERS = function()
+	section("ADD A TESTER (Roblox username): full admin panel + every game pass", 1)
+	local r = row(2)
+	local box = ctx.UI.new("TextBox", {
+		Text = "",
+		PlaceholderText = "username",
+		ClearTextOnFocus = false,
+		Font = ctx.UI.Font.Bold,
+		TextSize = 14,
+		TextColor3 = ctx.UI.Color.Text,
+		BackgroundColor3 = Color3.fromRGB(22, 22, 26),
+		Parent = r,
+	})
+	ctx.UI.corner(box, 8)
+	btn(r, "➕ Add tester", function()
+		local name = (box.Text:gsub("^%s+", ""):gsub("%s+$", ""))
+		if name == "" then
+			status.Text = "Type their Roblox username."
+			return
+		end
+		send("testeradd", name)
+		box.Text = ""
+	end)
+	-- people in this server, one tap each
+	local here = {}
+	for _, p in Players:GetPlayers() do
+		if p ~= player and not p:GetAttribute("IsAdmin") then
+			table.insert(here, p)
+		end
+	end
+	if #here > 0 then
+		section("IN THIS SERVER", 3)
+		local r2 = row(4)
+		for _, p in here do
+			btn(r2, "➕ " .. p.DisplayName, function() send("testeradd", p.Name) end)
+		end
+	end
+	section("TESTERS (tap to remove)", 5)
+	local r3 = row(6)
+	if testerList == nil then
+		send("testers")
+		ctx.UI.label({ Text = "Loading...", TextSize = 13, TextColor3 = ctx.UI.Color.Dim, Parent = r3 })
+	elseif #testerList == 0 then
+		ctx.UI.label({ Text = "None yet.", TextSize = 13, TextColor3 = ctx.UI.Color.Dim, Parent = r3 })
+	else
+		for _, t in testerList do
+			btn(r3, "✕ " .. tostring(t.Name), function() send("testerremove", tostring(t.Id)) end, true)
+		end
+	end
+	section("Saved for every server. Testers are left off the boards; they can't troll you.", 7)
+end
+
 RENDER.ENDINGS = function()
 	local r = row(1)
 	for _, k in info.Endings do
@@ -375,11 +429,29 @@ function show(tab: string)
 	RENDER[tab]()
 end
 
+-- (v163) what was built, so it can be built again when you become (or stop being) a tester mid-visit
+local builtFull: boolean? = nil
+local live: { RBXScriptConnection } = {}
+local liveGui: { Instance } = {}
+local function teardown()
+	for _, c in live do
+		c:Disconnect()
+	end
+	for _, g in liveGui do
+		g:Destroy()
+	end
+	live, liveGui = {}, {}
+	tabs = {}
+	built = false
+	setXray(false)
+end
+
 local function build()
 	if built then
 		return
 	end
 	built = true
+	builtFull = not limited()
 	local UI = ctx.UI
 	local pill = UI.new("TextButton", {
 		Name = "AdminPill",
@@ -427,7 +499,7 @@ local function build()
 	UI.padding(panel, 14)
 	UI.modal(panel)
 	local head = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, Parent = panel })
-	UI.label({ Size = UDim2.new(1, -40, 1, 0), Text = limited() and "ADMIN PANEL" or "ADMIN  ·  owner only", Font = UI.Font.Bold, TextSize = 18, TextColor3 = Color3.fromRGB(255, 200, 120), TextXAlignment = Enum.TextXAlignment.Left, Parent = head })
+	UI.label({ Size = UDim2.new(1, -40, 1, 0), Text = limited() and "ADMIN PANEL" or (player:GetAttribute("IsOwner") and "ADMIN  ·  owner" or "ADMIN  ·  tester"), Font = UI.Font.Bold, TextSize = 18, TextColor3 = Color3.fromRGB(255, 200, 120), TextXAlignment = Enum.TextXAlignment.Left, Parent = head })
 	local close = UI.new("TextButton", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.fromOffset(30, 30), Text = "✕", Font = UI.Font.Bold, TextSize = 16, TextColor3 = UI.Color.Text, BackgroundColor3 = Color3.fromRGB(30, 30, 36), Parent = head })
 	UI.corner(close, 8)
 	close.Activated:Connect(function()
@@ -441,8 +513,13 @@ local function build()
 		debugLine.Visible = false
 	end
 	local names = lobby and { "COINS", "TROLL" } or (limited() and { "NIGHT", "HIM", "TROLL", "ME", "EVENTS", "ENDINGS" } or { "NIGHT", "HIM", "TROLL", "ME", "SHOP", "EVENTS", "ENDINGS", "COINS" })
+	-- (v163) the owner manages testers, in the lobby or a night
+	if player:GetAttribute("IsOwner") then
+		names = table.clone(names)
+		table.insert(names, "TESTERS")
+	end
 	for i, name in names do
-		local b = UI.new("TextButton", { Size = UDim2.new(1 / #names, -6, 0, 32), Text = name, Font = UI.Font.Bold, TextSize = #names > 7 and 11 or 12, BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
+		local b = UI.new("TextButton", { Size = UDim2.new(1 / #names, -6, 0, 32), Text = name, Font = UI.Font.Bold, TextSize = #names > 8 and 9 or (#names > 7 and 11 or 12), BackgroundColor3 = Color3.fromRGB(30, 30, 36), TextColor3 = UI.Color.Text, LayoutOrder = i, Parent = tabRow })
 		UI.corner(b, 8)
 		b.Activated:Connect(function()
 			show(name)
@@ -468,14 +545,22 @@ local function build()
 		end
 	end
 	pill.Activated:Connect(toggle)
-	UserInputService.InputBegan:Connect(function(io, processed)
+	table.insert(liveGui, pill)
+	table.insert(liveGui, debugLine)
+	table.insert(liveGui, panel)
+	table.insert(live, UserInputService.InputBegan:Connect(function(io, processed)
 		if not processed and io.KeyCode == Enum.KeyCode.F2 then
 			toggle()
 		end
-	end)
+	end))
 
-	ctx.Remotes.AdminReply.OnClientEvent:Connect(function(text, data)
-		if type(data) == "table" then
+	table.insert(live, ctx.Remotes.AdminReply.OnClientEvent:Connect(function(text, data)
+		if type(data) == "table" and data.TesterList then
+			testerList = data.TesterList
+			if panel.Visible and current == "TESTERS" then
+				show(current)
+			end
+		elseif type(data) == "table" then
 			info = data
 			if panel.Visible then
 				show(current)
@@ -484,7 +569,7 @@ local function build()
 		if type(text) == "string" then
 			status.Text = text
 		end
-	end)
+	end))
 	ctx.Remotes.Admin:FireServer("info")
 	if limited() then
 		status.Text = "Nights you use this on pay no coins and don't count for records."
@@ -492,7 +577,7 @@ local function build()
 
 	-- live debug line
 	local acc = 0
-	RunService.Heartbeat:Connect(function(dt)
+	table.insert(live, RunService.Heartbeat:Connect(function(dt)
 		acc += dt
 		if acc < 0.25 then
 			return
@@ -511,22 +596,36 @@ local function build()
 		if xray and not xray.Parent then
 			setXray(true)
 		end
-	end)
+	end))
 end
 
 function Admin.init(c)
 	ctx = c
 end
 
+-- (tests / ui_dump) build the panel and open a tab
+function Admin._open(tab: string)
+	build()
+	panel.Visible = true
+	current = tab
+	show(tab)
+end
+
 function Admin.start()
 	local function check()
 		-- (the pass: only in a night's server, never the lobby)
-		if player:GetAttribute("IsAdmin") or (player:GetAttribute("Pass_AdminPanel") and ctx.Mode ~= "Lobby") then
+		local want = player:GetAttribute("IsAdmin") or (player:GetAttribute("Pass_AdminPanel") and ctx.Mode ~= "Lobby")
+		-- (v163: made a tester or taken off the list mid-visit: the panel is rebuilt as the right one)
+		if built and (not want or builtFull ~= (not limited())) then
+			teardown()
+		end
+		if want then
 			build()
 		end
 	end
 	check()
 	player:GetAttributeChangedSignal("IsAdmin"):Connect(check)
+	player:GetAttributeChangedSignal("IsOwner"):Connect(check)
 	player:GetAttributeChangedSignal("Pass_AdminPanel"):Connect(check)
 end
 

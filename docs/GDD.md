@@ -991,6 +991,20 @@ The owner asked for "roll for a random weapon (10 Robux)" with tiers: Normal (ba
 - **Rare rolls are announced.** An Epic or Legendary is announced to the others in the server after the spin stops.
 - **Logs.** `WeaponRoll` in Sales_v1 (bought / asked); `Roll` and `WeaponHit` in the night log, which pull_stats prints. Test: `weapon_test`. Previews: `ui_dump.luau roll|spin`.
 
+### Testers (v163, `TesterService`, the admin panel's TESTERS tab)
+The owner asked: "I wanna give my friends all gamepasses and the same admin panel I have so they can test for issues."
+
+- **Adding and removing.** Only the owner can do it. Open the ADMIN pill → TESTERS, type a Roblox username (or tap someone under IN THIS SERVER) and press ➕ Add tester. Tap a name in the list to remove it. This works in the lobby and in a night.
+- **Where the list lives.** It's saved in DataStore `Testers_v1`, so it applies in every server. A tester who's already online gets it at once. `Config.Testers` can also hold fixed UserIds.
+- **What a tester gets:**
+  - the owner's full panel (`IsAdmin`; titled "ADMIN · tester"), including COINS, SHOP and every night-wide command, with no friends-only check;
+  - every game pass switched on (`Pass_*` attributes; nothing is bought or saved as owned);
+  - the note "🧪 Tester: every game pass and the admin panel are on for you".
+- **What stays the owner's alone.** Managing testers (`OWNER_STRICT` on the server), and being off-limits to trolls and to the Slap Glove.
+- **Boards.** Testers are kept off the leaderboards (`Stats.offBoards`), since their nights use god mode and free coins.
+- **Taking someone off the list.** The panel is torn down and rebuilt (client `Admin` teardown), and their passes fall back to what they really own (`checkPasses`).
+- **Test:** `tester_test`. **Preview:** `ui_dump.luau admin_testers touch` (`TAB=` picks another tab).
+
 ### Shop & donations (`ShopService`, client `Shop`)
 A **SHOP** button sits on the right edge of the lobby screen. A gold "!" pulses on it until you open it. The panel has two tabs:
 

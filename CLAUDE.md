@@ -37,7 +37,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **Never spend Robux.** Badges only from the free quota: `tools/mkbadge.sh <Key>` (checks the quota,
   `expectedCost=0`). Icons in `marketing/badges/`, names in `tools/badges.tsv`.
 - **The full admin panel is only for the owner** — UserId **915496194** (`Config.Admins`), checked on the
-  server for every command. **Admin panel pass (v106**, the owner: "a new gamepass for 249 Robux called
+  server for every command — **and the owner's testers (v163**, the owner: "give my friends all gamepasses and the same admin panel I
+  have so they can test for issues"): added / removed only by the owner in the panel's **TESTERS** tab (by username, lobby or night;
+  saved in DataStore `Testers_v1`, plus fixed ids in `Config.Testers`; server `TesterService`). A tester gets the full panel (every tab,
+  coins too) and every pass switched on (attributes only, nothing owned); can't manage testers, can't troll the owner or slap them, is
+  kept off the boards; taken off the list, the panel goes and the passes fall back to what they own. **Admin panel pass (v106**, the owner: "a new gamepass for 249 Robux called
   admin panel… except maybe not the coins part and some other unfair stuff"): id 2044988494, 249 R$;
   buyers get the panel in a night without COINS/SHOP (no coins, candy, passes, paid gear, Become Him,
   saved credits) and no free revive; anything that changes the night only when everyone else in the
@@ -991,6 +995,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **14 Nov (v163 = place version 163)**, published; the owner: "I wanna give my friends all gamepasses and the same admin panel I have
+  so they can test for issues. Make a way for this". Done: testers (see Hard rules; GDD "Testers (v163)"; test `tester_test`). How: open
+  the ADMIN pill → TESTERS → type a friend's username (or tap them under IN THIS SERVER) → ➕ Add tester; tap a name to remove. It works in
+  every server; a tester already in a server gets it at once. Can't see the real client: check the 9 tabs fit on a phone (TESTERS is the
+  last) and that a friend sees "🧪 Tester: every game pass and the admin panel are on for you".
+
 - **14 Nov (v162 = place version 162)**, published; the owner: "Make slap glove work on other players when it touches their hit box.
   Also bloc fruits and many big games do that faking part." Done: the glove slaps every player its hitbox touches (a 6x6x6 box 3.5 studs
   in front of you along the swing, plus a box round the glove's palm; `slapTargets`), in the same swing as hitting him, 3 s apart
@@ -1740,7 +1750,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 162; the notes' "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 163; the notes' "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

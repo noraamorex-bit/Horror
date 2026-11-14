@@ -3,7 +3,8 @@
 	help, boss the intruder around, teleport, give yourself items, become invisible to him, and the
 	shop: any pass on/off, the paid gear, become him, saved rockets/revives (SHOP tab).
 
-	Only for the people in Config.Admins (and the experience's owner, and anyone in Studio).
+	Only for the people in Config.Admins (and the experience's owner, and anyone in Studio), and (v163) the owner's testers
+	(TesterService: the same full panel; only the owner manages the TESTERS tab, and testers can't troll the owner).
 	Every command is checked here, on the server, against the player's UserId: the client panel
 	only exists for admins, but even a hand-made remote call from anyone else does nothing.
 
@@ -28,7 +29,8 @@ function Admin.init(c)
 	ctx.Admin = Admin
 end
 
-function Admin.isAdmin(player: Player): boolean
+-- the owner themself (Config.Admins, the creator, Studio)
+function Admin.isOwner(player: Player): boolean
 	if not player or not player.Parent then
 		return false
 	end
@@ -41,8 +43,18 @@ function Admin.isAdmin(player: Player): boolean
 	return RunService:IsStudio()
 end
 
+-- the full panel: the owner, or one of the owner's testers (v163)
+function Admin.isAdmin(player: Player): boolean
+	if Admin.isOwner(player) then
+		return true
+	end
+	return player ~= nil and player.Parent ~= nil and ctx.Testers ~= nil and ctx.Testers.is(player)
+end
+
 -- what a pass holder can't use (the owner's "coins part and some other unfair stuff")
 local OWNER_ONLY = { coins = true, candy = true, pass = true, give = true, becomehim = true, rocketcredit = true, revivecredit = true, weaponroll = true }
+-- (v163) only the owner: who's a tester
+local OWNER_STRICT = { testers = true, testeradd = true, testerremove = true }
 -- what changes the night for everyone in it
 local NIGHT_WIDE = { troll = true, start = true, act = true, nextact = true, restartact = true, restart = true, event = true, ending = true, help = true, finale = true, police = true, ai = true, cut = true }
 
@@ -495,7 +507,7 @@ local function trollOne(player: Player, kind: string, t: Player): (boolean, stri
 	if not t.Parent or not t.Character then
 		return false, "not here"
 	end
-	if not Admin.isAdmin(player) and Admin.isAdmin(t) then
+	if not Admin.isOwner(player) and Admin.isOwner(t) then
 		return false, "the owner can't be trolled"
 	end
 	if inNight() and not t:GetAttribute("InGame") then
@@ -632,15 +644,45 @@ COMMANDS.troll = function(player, arg)
 	return "😈 " .. kind .. " → " .. name
 end
 
+-- (v163) testers: the owner's friends with the full panel and every pass (TesterService)
+COMMANDS.testers = function()
+	local list = ctx.Testers and ctx.Testers.list() or {}
+	local names = {}
+	for _, t in list do
+		table.insert(names, t.Name)
+	end
+	return #names == 0 and "No testers yet." or ("Testers: " .. table.concat(names, ", "))
+end
+COMMANDS.testeradd = function(_, arg)
+	if not ctx.Testers then
+		return "Not here."
+	end
+	local _, text = ctx.Testers.add(arg or "")
+	return text
+end
+COMMANDS.testerremove = function(_, arg)
+	if not ctx.Testers then
+		return "Not here."
+	end
+	local _, text = ctx.Testers.remove(arg or "")
+	return text
+end
+
 COMMANDS.events = function()
 	return "Events: " .. table.concat(ctx.Director.adminEventIds(), ", ")
 end
 
 function Admin.start()
 	local function mark(player: Player)
-		if Admin.isAdmin(player) then
-			player:SetAttribute("IsAdmin", true)
-		end
+		-- (IsOwner first: the client builds its panel when IsAdmin lands)
+		player:SetAttribute("IsOwner", Admin.isOwner(player) or nil)
+		player:SetAttribute("IsAdmin", Admin.isAdmin(player) or nil)
+	end
+	-- (a tester added or removed while they're here: the panel follows)
+	if ctx.Testers then
+		ctx.Testers.onChanged(function(p)
+			mark(p)
+		end)
 	end
 	-- the first time a pass holder's panel changes the night: everyone hears it pays nothing
 	local function taint(player: Player, nightWide: boolean)
@@ -668,6 +710,19 @@ function Admin.start()
 			return -- (not the owner and no pass: ignored)
 		end
 		if type(cmd) ~= "string" or (arg ~= nil and type(arg) ~= "string") then
+			return
+		end
+		if OWNER_STRICT[cmd] then
+			-- (managing testers: the owner only, lobby or night)
+			if not Admin.isOwner(player) then
+				reply(player, "Only the owner manages testers.")
+				return
+			end
+			local ok, result = pcall(COMMANDS[cmd], player, arg)
+			reply(player, ok and tostring(result) or "Error: " .. tostring(result))
+			if ok then
+				ctx.Remotes.AdminReply:FireClient(player, nil, { TesterList = ctx.Testers and ctx.Testers.list() or {} })
+			end
 			return
 		end
 		if not owner and (not ctx.Director or OWNER_ONLY[cmd]) then
