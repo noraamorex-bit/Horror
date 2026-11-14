@@ -50,7 +50,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   the victim sees "😈 trolled by <name>"). The owner anywhere (the lobby too, without the ones that need him); pass holders only in a
   night with friends (it counts as NIGHT_WIDE: that night pays nothing) and never on the owner. One troll per target per 1.5 s.
 - **Paid random items (the Weapon Roll, v161) stay honest**: the real odds shown before buying, the spin lands on the server's roll
-  with filler cards at the real odds, no staged near misses, not offered where PolicyService restricts paid random items.
+  with filler cards at the real odds (not uniform: equal odds put a Legendary beside your result ~44% of spins vs ~4% real, the
+  same near miss; the owner asked for both, v161-162, declined), no staged near misses, not offered where PolicyService restricts paid random items.
 - **The owner is left off all leaderboards.**
 - **Revives are Robux only** (10 R$ product since 11 Oct; 25 R$ sold 0 of 35 deaths). No coin revive — it would kill Robux revive sales.
 - Git: develop on the designated branch, `git push -u origin <branch>`. **No PRs unless asked.** No model
