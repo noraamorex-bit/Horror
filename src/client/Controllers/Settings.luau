@@ -195,9 +195,19 @@ local function build()
 	-- (v152, a player: "how do i leave it": in the house there was no way back to the lobby but quitting Roblox.
 	-- Tap once to arm, again to go; the night goes on for anyone else in it)
 	if ctx.Mode ~= "Lobby" then
-		local leave = pill(panel, "LEAVE TO LOBBY", 9, 220)
+		-- (v160) the night's two ways out of trouble side by side: I'M STUCK (was only in the journal; a player: "I get
+		-- stuck") and LEAVE TO LOBBY
+		local pair = UI.new("Frame", { Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, LayoutOrder = 9, ZIndex = 31, Parent = panel })
+		UI.new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = pair })
+		local stuck = pill(pair, "I'M STUCK", 1, 150)
+		stuck.Name = "Unstuck"
+		stuck.Activated:Connect(function()
+			ctx.Remotes.Unstuck:FireServer()
+			Settings.close()
+		end)
+		local leave = pill(pair, "LEAVE TO LOBBY", 2, 200)
 		leave.Name = "LeaveToLobby"
-		leave.Size = UDim2.fromOffset(220, 40)
+		leave.Size = UDim2.fromOffset(200, 40)
 		leave.TextColor3 = Color3.fromRGB(255, 150, 140)
 		local armed = 0
 		leave.Activated:Connect(function()

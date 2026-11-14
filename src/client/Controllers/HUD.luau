@@ -579,7 +579,7 @@ local function build()
 	meterFill = fill
 	hintBox = UI.box({
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -6),
+		Position = UDim2.new(0.5, 0, 1, -16), -- (v160: was 6 px off the bottom, under an iPhone's home bar)
 		BackgroundTransparency = 0.45,
 		Visible = false,
 		Parent = root,
@@ -628,7 +628,7 @@ function HUD.setBottomLift(lift: number)
 	end
 	staminaBar.Position = UDim2.new(0.5, 0, 1, -28 - lift)
 	meterFrame.Position = UDim2.new(0.5, 0, 1, -60 - lift)
-	hintBox.Position = UDim2.new(0.5, 0, 1, -6 - lift)
+	hintBox.Position = UDim2.new(0.5, 0, 1, -16 - lift)
 end
 
 local function hintText(): string

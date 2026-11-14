@@ -2,7 +2,9 @@
 	Friends — a small name tag over each friend in the house, seen through walls, so a group
 	can find each other in the dark. It fades out up close (you can see them), and turns red
 	("TIED UP") when he's taken them, so the others know where to go.
-	Nothing for friends who are out of the night (escaped / dead), and nothing outside a night.
+	Nothing for friends who are out of the night (escaped / dead).
+	(v160) In the lobby: a "👥 Name" tag over each of your Roblox friends, so you can find them and step into their circle
+	(players: "let people join with friends first").
 ]]
 
 local Players = game:GetService("Players")
@@ -13,6 +15,7 @@ local player = Players.LocalPlayer
 
 local NEAR = 14 -- closer than this: no tag (you can see them)
 local tags: { [Player]: { Gui: BillboardGui, Name: TextLabel, Info: TextLabel } } = {}
+local robloxFriend: { [Player]: boolean } = {} -- (lobby: who's a Roblox friend)
 local folder: Folder
 
 local function make(p: Player)
@@ -46,6 +49,25 @@ local function make(p: Player)
 	info.Parent = gui
 	gui.Parent = folder
 	tags[p] = { Gui = gui, Name = name, Info = info }
+end
+
+-- (v160) the lobby: only Roblox friends, "👥 Name", whatever circle they're in
+local function updateLobby()
+	local cam = workspace.CurrentCamera
+	local from = cam and cam.CFrame.Position or Vector3.zero
+	for p, t in tags do
+		local char = p.Character
+		local head = char and char:FindFirstChild("Head") :: BasePart?
+		local show = robloxFriend[p] == true and head ~= nil
+		if show and head then
+			t.Gui.Adornee = head
+			t.Name.Text = "👥 " .. p.DisplayName
+			t.Name.TextColor3 = Color3.fromRGB(150, 220, 255)
+			t.Info.Text = "FRIEND"
+			show = (head.Position - from).Magnitude > 6
+		end
+		t.Gui.Enabled = show == true
+	end
 end
 
 local function update()
@@ -82,6 +104,14 @@ function Friends.start()
 	local function added(p: Player)
 		if p ~= player then
 			make(p)
+			if ctx.Mode == "Lobby" then
+				task.spawn(function()
+					local ok, yes = pcall(function()
+						return player:IsFriendsWith(p.UserId)
+					end)
+					robloxFriend[p] = ok and yes == true
+				end)
+			end
 		end
 	end
 	for _, p in Players:GetPlayers() do
@@ -94,11 +124,14 @@ function Friends.start()
 			t.Gui:Destroy()
 			tags[p] = nil
 		end
+		robloxFriend[p] = nil
 	end)
 	task.spawn(function()
 		while true do
 			-- (only while you're still in the night yourself: spectating has its own labels)
-			if player:GetAttribute("InGame") and not player:GetAttribute("Dead") and not player:GetAttribute("Escaped") then
+			if ctx.Mode == "Lobby" then
+				updateLobby()
+			elseif player:GetAttribute("InGame") and not player:GetAttribute("Dead") and not player:GetAttribute("Escaped") then
 				update()
 			else
 				for _, t in tags do

@@ -615,10 +615,18 @@ function PlayerState.start()
 		rushUntil[p] = nil
 	end)
 
-	-- wedged somewhere: back to the nearest open spot on your floor (not while hidden or tied up)
+	-- wedged somewhere: back to the nearest open spot on your floor (not while hidden or tied up).
+	-- (v160, a player: "I get stuck") the nearest walkable spot on his own survey first (a step or two off whatever
+	-- holds you, on your floor); the old patrol nodes only if the survey isn't ready, and never with him close: the
+	-- button used to move you to the nearest node, a room away, a free escape from a chase. Logged (Unstuck, the room).
 	local lastUnstuck = {}
+	local NavGrid = nil
+	pcall(function()
+		NavGrid = require(script.Parent.Parent.Intruder.NavGrid)
+	end)
 	ctx.Remotes.Unstuck.OnServerEvent:Connect(function(player)
-		if not player:GetAttribute("InGame") or player:GetAttribute("Hiding") or player:GetAttribute("Captured") or player:GetAttribute("Escaped") then
+		if not player:GetAttribute("InGame") or player:GetAttribute("Hiding") or player:GetAttribute("Captured") or player:GetAttribute("Escaped")
+			or player:GetAttribute("Dead") then
 			return
 		end
 		if os.clock() - (lastUnstuck[player] or 0) < 15 then
@@ -629,17 +637,35 @@ function PlayerState.start()
 		if not root then
 			return
 		end
+		local here = root.Position
+		local hisPos = ctx.Intruder and ctx.Intruder.position and ctx.Intruder.position()
+		if hisPos and (hisPos - here).Magnitude < 18 and ctx.Intruder.isHunting and ctx.Intruder.isHunting() then
+			ctx.Remotes.Notify:FireClient(player, "Not now. He's right there.", "danger")
+			return
+		end
 		lastUnstuck[player] = os.clock()
-		local best, bestD = nil, math.huge
-		for _, n in ctx.Layout.Nodes do
-			local d = (n.Pos - root.Position).Magnitude + math.abs(n.Pos.Y - root.Position.Y) * 2
-			if d > 2 and d < bestD then
-				best, bestD = n, d
+		local feet = here - Vector3.new(0, 3, 0)
+		local target: Vector3? = nil
+		if NavGrid and NavGrid.ready() then
+			local g = NavGrid.nearest(feet, 10)
+			target = g and (g + Vector3.new(0, 2.5, 0)) -- (the survey's points are on the floor; the patrol nodes 3 up)
+		end
+		if not target then
+			local bestD = math.huge
+			for _, n in ctx.Layout.Nodes do
+				local d = (n.Pos - here).Magnitude + math.abs(n.Pos.Y - here.Y) * 2
+				if d > 2 and d < bestD then
+					target, bestD = n.Pos, d
+				end
 			end
 		end
-		if best then
+		if target then
 			ctx.Util.unseat(player)
-			PlayerState.placeStanding(player, CFrame.new(best.Pos + Vector3.new(0, 0.5, 0)))
+			PlayerState.placeStanding(player, CFrame.new(target + Vector3.new(0, 0.5, 0)) * (root.CFrame - root.Position))
+			if ctx.Journey and ctx.Journey.event then
+				local room = ctx.Rooms and ctx.Rooms.find(here)
+				ctx.Journey.event(player, "Unstuck", room and room.Name or "?")
+			end
 		end
 	end)
 

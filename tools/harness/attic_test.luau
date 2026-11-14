@@ -61,7 +61,9 @@ local ok, err = pcall(function()
 	local p, root = mkPlayer("Caller")
 	H.services.Players.GetPlayers = function() return { p } end
 	local sent = nil
+	local sentTo = {}
 	ctx.Remotes.Objectives.FireAllClients = function(_, list) sent = list end
+	ctx.Remotes.Objectives.FireClient = function(_, who, list) sentTo[who] = list; if who == p then sent = list end end
 	local thoughts = {}
 	ctx.Remotes.Thought.FireClient = function(_, who, text) table.insert(thoughts, text) end
 	local spot = ctx.Phone.signalSpot()
@@ -160,6 +162,12 @@ local ok, err = pcall(function()
 	-- (v157) and the "!" on every hiding spot up here
 	local hideObj = has(sent, "AtticHide")
 	assert(hideObj and #hideObj.Targets >= 4, "the hide markers on the attic's hiding spots: " .. tostring(hideObj and #hideObj.Targets))
+	-- (v160) only for whoever's up there: someone downstairs isn't sent up into him
+	local q = mkPlayer("Downstairs")
+	rawset(q, "UserId", 99)
+	H.services.Players.PlayerAdded:Fire(q)
+	H.flush(2.5)
+	assert(sentTo[q] and not has(sentTo[q], "AtticHide"), "the HIDE objective isn't sent to a player downstairs")
 	local inspected = {}
 	local realInspect = ctx.Intruder.inspectSpot
 	ctx.Intruder.inspectSpot = function(spot) table.insert(inspected, spot); return realInspect(spot) end

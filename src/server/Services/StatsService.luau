@@ -322,7 +322,7 @@ checkReferral = function(player: Player)
 		for _, other in Players:GetPlayers() do
 			if other ~= player then
 				local okF, isFriend = pcall(function()
-					return player:IsFriendsWithAsync(other.UserId)
+					return player:IsFriendsWith(other.UserId)
 				end)
 				if okF and isFriend then
 					referrer = other.UserId

@@ -71,7 +71,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   PLAY, so closing it queued you and the circle teleported you 10 s later.
 - **The queue bar (v158**, a tablet player: "Make it so you can leave the little server circles"): your circle's status and its
   ✕ LEAVE sit in a slim bar at the bottom centre (it was at the top left, where Roblox's chat opens on phones and tablets);
-  a short circle says "friends: step in now".
+  a short circle says "friends: step in now". **v160**: the circle's sign and your queue bar say who's on it ("Starting in 9... ·
+  Sam, Bo"), and a "👥 Name" tag floats over each of your Roblox friends in the lobby (client `Friends`, lobby mode).
 - Queue circles: white **outline** only, spread out so labels don't overlap. **Every circle counts down
   15 s from the moment someone steps in, 5 s once full; at 0 it teleports whoever's on it** (the owner's
   rule; no START NOW. v159, the owner: "Yes 15 secs. If it's full already start counting down from 5"; it was 10 s / 3 s,
@@ -124,7 +125,10 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
 - **v152 (players' feedback, a PC downvote: "Way too many UIs overlapping, not enough time to read anything")**: nothing of the HUD
   shows under a result card (out early, the card sat on the objective, notes and act label: `HUD` root hides while
   `EndingUI.isShowing()`); notes 4 s apart, up 7 s, two on screen at most; the card's Starter offer is one short line.
-  **LEAVE TO LOBBY** in the house's settings (from the journal; two taps; a player: "how do i leave it"). Look at the card:
+  **LEAVE TO LOBBY** in the house's settings (from the journal; two taps; a player: "how do i leave it"). **v160**: **I'M STUCK** beside
+  it (a player: "I get stuck"; it was only in the journal): a step onto the nearest walkable spot of his survey, refused while he's
+  within 18 studs (the old version moved you to a patrol node, a room away: a free escape), logged as `Unstuck` with the room. The
+  hotbar hides under a result card too (it sat on the card's bottom line), the hiding/struggle hint sits 16 px up (an iPhone's home bar). Look at the card:
   `ui_dump.luau card|card_dead pc|touch` + `ui_preview.mjs`.
 - Secret-ending HUD is one slim bar at the top (it was "way too big" before).
 - **Less talk (v139**, a PC downvote: "bro too many voicelines, crappy jumpscares"; the owner: "reduce the amount of
@@ -166,7 +170,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   **v158 (the v157 logs: `FailGrid_UpperHall_Attic` 12 a night: every chase after someone in the attic failed and he stood under the
   hatch)**: the hatch is a ladder on his routes (`Navigator` `Climb`, `OnClimb` in Intruder): a route between the house and the attic
   goes to the ladder's end, the creak, `Attic.LadderUp` 3 s (whoever's up there gets the HIDE thought and the "!" markers:
-  `AtticRun.ladder`), then he's up; down again in 1.4 s (`AtticRun.downAgain`). Test `navai_test ladder`. v157's final run is fair
+  `AtticRun.ladder`), then he's up; down again in 1.4 s (`AtticRun.downAgain`). (v160: the HIDE objective and its "!" go only to whoever
+  is up there: `Objectives.add(id, optional, only)`; it used to send players downstairs up into him.) Test `navai_test ladder`. v157's final run is fair
   (421 out the front door, 43 taken at 0).
 - **Endings on the card (v155**, players: "Make different endings", "maybe more endings?": there are ten, nobody knew): every result
   card without a new ending says "🏆 2 / 10 endings · next: <hint>" (`Ending.nextHint`, the good ones first, `Story.EndingHints`).
@@ -971,6 +976,17 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **14 Nov (v160 = place version 160)**, published; the owner: "Deeply go through the entire game and fix any and all bugs/issues you find.
+  Also make several QoL changes." Found and fixed: **the typecheck had never checked anything** (the downloaded definitions were newer than
+  luau-lsp 1.53: all 101 "baseline" lines were syntax errors in them; see Workflow); with real checking, StatsService called
+  `IsFriendsWithAsync` (doesn't exist, inside a pcall: the friend-in-the-lobby referral never credited anyone); the attic HIDE objective
+  went to everyone (see Pacing); the hotbar showed under result cards; the hiding hint under the home bar; endings hints spilled out of
+  their rows; I'M STUCK teleported you a room away. New: chaos_test (players leaving mid-hide / tied up / in a call / last one out: all
+  clean), navai_test `probe` (FROM=/TO= one route). QoL: names on the circles and the queue bar, friend tags in the lobby, I'M STUCK in
+  Settings (see Lobby, HUD). Logs since 158 (~0.5 day): his failed routes 16.2 → 3.5 a night (the ladder), wedges 18.8 a night (UpperHall
+  6.6); routes from upstairs to the garage still fail ~0.9 a night (fine in the sim: probably players on the car or shelves). Next:
+  `--since=160`: Unstuck events by room (where players get stuck), act I quits within 15 s (v159's longer countdown), the garage routes.
+
 - **14 Nov (v159 = place version 159)**, published; the owner answered the circle question: "Yes 15 secs. If it's full already start
   counting down from 5." Done: `Config.Lobby.Countdown` 15, `FullCountdown` 5 (the queue bar reads them). Next: `--since=159
   --from=2026-11-14 --sample=5000`: first-night act I quits within 15 s of arriving (v157: 645 of 1,107; want far fewer), solo nights'
@@ -1681,10 +1697,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 Paths: repo `/home/user/Horror`. `/tmp` scratch space does **not** survive sessions — anything worth
 keeping goes in the repo.
 
-- **Typecheck** (baseline = same error count as HEAD, currently 101 lines matching `Error|Warn` with luau-lsp 1.53; never add new ones):
+- **Typecheck** (baseline = same error count as HEAD, currently 101 lines matching `Error|Warn` (52 unique: type-inference noise in
+  non-strict code) with luau-lsp 1.53; never add new ones. **v160: the definitions must be the 1.53.0 tag's** (`.../luau-lsp/1.53.0/scripts/
+  globalTypes.d.luau`): main's newer file is all syntax errors to 1.53, which hit the error limit before our code was ever checked):
   `rojo sourcemap -o sm.json && luau-lsp analyze --definitions=globalTypes.d.luau --sourcemap=sm.json src`
   (`globalTypes.d.luau` from the luau-lsp repo's `scripts/globalTypes.d.luau`, e.g.
-  `curl -sL https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau -o globalTypes.d.luau`
+  `curl -sL https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/1.53.0/scripts/globalTypes.d.luau -o globalTypes.d.luau`
   (gitignored-worthy, don't commit); tools in `/root/bin`. A fresh container may lack them: download
   the release zips (the API is blocked, direct downloads work) into /root/bin:
   `github.com/rojo-rbx/rojo/releases/download/v7.5.1/rojo-7.5.1-linux-x86_64.zip` (7.5.1 or newer: 7.4.4 silently drops Content-typed properties such as the creature's MeshContent and SurfaceAppearance maps),
@@ -1695,7 +1713,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 159; the notes' "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 160; the notes' "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

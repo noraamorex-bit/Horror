@@ -706,8 +706,27 @@ local function padOf(player: Player)
 	return nil
 end
 
+-- (v160) who's on a circle, so friends can see where each other are waiting: up to two display names, short, then "+N"
+local function nameList(list: { Player }, except: Player?): string?
+	local out, more = {}, 0
+	for _, p in list do
+		if p ~= except and p.Parent then
+			if #out < 2 then
+				local n = p.DisplayName ~= "" and p.DisplayName or p.Name
+				table.insert(out, #n > 12 and (string.sub(n, 1, 11) .. "…") or n)
+			else
+				more += 1
+			end
+		end
+	end
+	if #out == 0 then
+		return nil
+	end
+	return table.concat(out, ", ") .. (more > 0 and (" +" .. more) or "")
+end
+
 local function send(player: Player, payload)
-	local key = payload and string.format("%d|%d|%s|%s", payload.Size, payload.Count, tostring(payload.Countdown), payload.Status) or "none"
+	local key = payload and string.format("%d|%d|%s|%s|%s", payload.Size, payload.Count, tostring(payload.Countdown), payload.Status, tostring(payload.Names)) or "none"
 	if lastSent[player] == key then
 		return
 	end
@@ -970,7 +989,8 @@ local function tick()
 			pad.Status.Text = "Heading to 14 Alder Lane..."
 		elseif pad.CountdownEnd then
 			local left = math.max(0, math.ceil(pad.CountdownEnd - now))
-			pad.Status.Text = "Starting in " .. left .. "..."
+			local who = nameList(members)
+			pad.Status.Text = "Starting in " .. left .. "..." .. (who and ("  ·  " .. who) or "")
 			if now >= pad.CountdownEnd and not pad.Matching then
 				local group = {}
 				for i = 1, counted do
@@ -1023,6 +1043,7 @@ local function tick()
 				Countdown = pad.CountdownEnd and math.max(0, math.ceil(pad.CountdownEnd - now)) or nil,
 				Status = status,
 				Short = pad.Short or nil,
+				Names = nameList(members, p), -- (v160: who else is on it)
 			})
 		end
 	end

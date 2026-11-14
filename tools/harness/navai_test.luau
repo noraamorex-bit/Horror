@@ -222,6 +222,29 @@ local okRun, err = pcall(function()
 		assert(ctx.Rooms.floorOf(p) ~= "Attic" and (p - down).Magnitude < 6, ("back down in the hall: %.1f %.1f %.1f"):format(p.X, p.Y, p.Z))
 		print(("down the ladder: %.1f s"):format(t))
 		print("LADDER OK")
+	elseif MODE == "probe" then
+		-- (a single trip, for looking into a failing route: FROM=x,y,z TO=x,y,z, his root positions)
+		local function vec(sv) local t = string.split(sv, ","); return V(tonumber(t[1]), tonumber(t[2]), tonumber(t[3])) end
+		local a = mkPlayer("Far", 1, V(200, 4, 200))
+		H.services.Players.GetPlayers = function() return { a } end
+		ctx.Director.adminStart("Normal")
+		ctx.Director.startAct("Guest")
+		tick(3)
+		I.setMode("Hunt")
+		tick(1)
+		Sim.addWalker(S.Model, { RootY = 4.9 })
+		I.adminFreeze(true)
+		S.AdminFrozen = nil
+		S.State = "Stopped"
+		S.Model:PivotTo(R.CFrame.new(vec(process.env.FROM)))
+		tick(0.5)
+		local goal = vec(process.env.TO)
+		S.Nav:goTo(goal, { Speed = 14 })
+		local t = 0
+		while not S.Nav.Arrived and not S.Nav.Failed and t < 60 do tick(0.5); t += 0.5 end
+		local p = S.Root.Position
+		print(("probe: arrived %s failed %s at %.1f %.1f %.1f after %.1f s; fails %d"):format(tostring(S.Nav.Arrived), tostring(S.Nav.Failed), p.X, p.Y, p.Z, t, S.Nav.Stats.Fail))
+		for k, v in S.Nav.Stats do if string.sub(k, 1, 4) == "Fail" and k ~= "Fail" then print("  ", k, v) end end
 	elseif MODE == "bench" then
 		-- routes between random spots: how long A* takes, and how close to walls the routes run
 		local goals = {}

@@ -77,6 +77,10 @@ local function blocked(): boolean
 	if workspace:GetAttribute("EndingActive") then
 		return true
 	end
+	-- (v160) nothing of the HUD under a result card (v152's rule): the hotbar and "TASER · 3 LEFT" sat on the card's bottom line
+	if ctx.EndingUI and ctx.EndingUI.isShowing and ctx.EndingUI.isShowing() then
+		return true
+	end
 	if ctx.Cutscene and ctx.Cutscene.isPlaying and ctx.Cutscene.isPlaying() then
 		return true
 	end

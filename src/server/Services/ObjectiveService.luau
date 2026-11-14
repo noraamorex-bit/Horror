@@ -47,9 +47,13 @@ local function currentStep(o)
 	return nil, #o.Steps
 end
 
-local function payload()
+local function payload(viewer: Player?)
 	local out = {}
 	for _, o in list do
+		-- (v160) an objective for some players only (the attic's HIDE: not for whoever's downstairs)
+		if o.Only and not (viewer and o.Only[viewer.UserId]) then
+			continue
+		end
 		local steps = {}
 		local doneCount = 0
 		for _, s in o.Steps do
@@ -74,7 +78,19 @@ local function payload()
 end
 
 local function broadcast()
-	ctx.Remotes.Objectives:FireAllClients(payload())
+	local private = false
+	for _, o in list do
+		if o.Only then
+			private = true
+		end
+	end
+	if not private then
+		ctx.Remotes.Objectives:FireAllClients(payload())
+		return
+	end
+	for _, p in game:GetService("Players"):GetPlayers() do
+		ctx.Remotes.Objectives:FireClient(p, payload(p))
+	end
 end
 
 local function make(id: string, optional: boolean?)
@@ -109,16 +125,29 @@ function Objectives.set(ids: { string }, optional: { [string]: boolean }?)
 	broadcast()
 end
 
-function Objectives.add(id: string, optional: boolean?)
+-- only: (v160) just these players see it (and its markers); nil = everyone
+function Objectives.add(id: string, optional: boolean?, only: { Player }?)
 	for _, o in list do
 		if o.Id == id then
 			return
 		end
 	end
 	local o = make(id, optional)
+	if only then
+		o.Only = {}
+		for _, p in only do
+			o.Only[p.UserId] = true
+		end
+	end
 	table.insert(list, o)
 	broadcast()
-	ctx.Remotes.Notify:FireAllClients("New objective: " .. o.Text, "objective")
+	if only then
+		for _, p in only do
+			ctx.Remotes.Notify:FireClient(p, "New objective: " .. o.Text, "objective")
+		end
+	else
+		ctx.Remotes.Notify:FireAllClients("New objective: " .. o.Text, "objective")
+	end
 end
 
 local function find(id: string)
@@ -261,7 +290,7 @@ end
 function Objectives.start()
 	Players.PlayerAdded:Connect(function(p)
 		task.wait(2)
-		ctx.Remotes.Objectives:FireClient(p, payload())
+		ctx.Remotes.Objectives:FireClient(p, payload(p))
 	end)
 end
 

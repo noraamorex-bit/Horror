@@ -182,6 +182,18 @@ the stare, the head turning right round, the scream with his jaw dropping open, 
   Client `Creature`: names from `SkinPose.Joints`, the fallback hides the pieces; `Prank` copies the pieces into its viewport.
 - Tests: skin_test (pieces, tint, bones, fingers, rest arms ~28 degrees, feet planted, head down on all fours, the jaw), creature_skin_test.
 
+### The bug sweep and QoL (v160)
+- **Found**: StatsService's friend referral called a method that doesn't exist (`IsFriendsWithAsync`, swallowed by a pcall); the attic's
+  HIDE objective went to everyone (now `Objectives.add(id, optional, only)`: per-player payloads while a private objective is up); the
+  hotbar showed under result cards; the hiding / struggle hint sat 6 px off the bottom (under an iPhone's home bar); two-line endings
+  hints spilled out of their rows; I'M STUCK moved you to the nearest patrol node (often a room away, an escape from a chase).
+- **I'M STUCK** (Settings, beside LEAVE TO LOBBY, and the journal): the nearest walkable spot of NavGrid within 10 studs of your feet;
+  refused while he's hunting within 18 studs; 15 s apart; logged `Unstuck` with the room.
+- **Friends in the lobby**: the circle's sign and the queue bar name who's on it (two display names, then "+N"); a "👥 Name" tag over each
+  Roblox friend (client `Friends` runs in the lobby too).
+- **Tests**: chaos_test (three players; one leaves mid-heartbeat in a hiding spot, one tied up, one finishes the call and runs out;
+  then the last one leaves); navai_test `probe` (FROM=x,y,z TO=x,y,z: one route, its failure keys).
+
 ### The ladder, the queue bar, new store art (v158)
 - **He climbs the ladder on his own**: NavGrid surveys the attic and the house as two floors with nothing between them, so on v157
   every chase after someone in the attic failed (`FailGrid_UpperHall_Attic`, 12 a night) and he stood under the hatch. A route that

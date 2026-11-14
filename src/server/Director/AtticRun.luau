@@ -174,7 +174,7 @@ function AtticRun.ladder()
 	end
 	if #up > 0 then
 		ctx.Director.think(up, ctx.Story.Thoughts.OnTheLadder)
-		ctx.Objectives.add("AtticHide")
+		ctx.Objectives.add("AtticHide", nil, up) -- (v160: only for whoever is up there)
 		state.HideUntil = os.clock() + (cfg().LadderUp or 3) + (cfg().HideMarkers or 22)
 		ctx.Director.logTruth("AtticHunt")
 	end
@@ -212,7 +212,7 @@ local function heComes(by: Player)
 	if #up > 0 then
 		ctx.Director.think(up, ctx.Story.Thoughts.OnTheLadder)
 		-- (v157) the "!" on every hiding spot up here until he's been up a while
-		ctx.Objectives.add("AtticHide")
+		ctx.Objectives.add("AtticHide", nil, up) -- (v160: only for whoever is up there)
 		state.HideUntil = os.clock() + (cfg().ClimbDelay or 4) + (cfg().HideMarkers or 22)
 	end
 	task.delay(cfg().ClimbDelay or 4, function()

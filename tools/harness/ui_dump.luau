@@ -153,6 +153,8 @@ elseif SCENE == "heartbeat" then
 elseif SCENE == "hiding" then
 	player:SetAttribute("Hiding", "Hall closet")
 	R.Caption.OnClientEvent:Fire("[Wet, rasping breathing, very close]")
+elseif SCENE == "settings" then
+	ctx.Settings.open()
 elseif SCENE == "captured" then
 	player:SetAttribute("Captured", true)
 	R.Notify.OnClientEvent:Fire("He's got you. STRUGGLE to get free, or wait for a friend.", "danger")

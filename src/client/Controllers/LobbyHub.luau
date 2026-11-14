@@ -67,6 +67,10 @@ local function render(state)
 		if state.Countdown and state.Size > 1 and state.Count < state.Size then
 			queueStatus.Text = "Starting in " .. tostring(state.Countdown) .. "... friends: step in now"
 		end
+		-- (v160) who's on it with you
+		if state.Countdown and state.Names then
+			queueStatus.Text = "Starting in " .. tostring(state.Countdown) .. "... with " .. state.Names
+		end
 	end
 end
 
@@ -370,8 +374,10 @@ function LobbyHub.start()
 		for i, key in ctx.Story.EndingOrder do
 			local e = ctx.Story.Endings[key]
 			if e then
-				local row = ctx.Dock.row(list, i, 46)
-				UI.label({ Position = UDim2.fromOffset(14, 0), Size = UDim2.new(1, -28, 1, 0), Text = found[key] and string.format("<b>✓  %s</b>", e.Title) or string.format("<font color=\"#77736c\">???   %s</font>", ctx.Story.EndingHints[key] or ""), RichText = true, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 43, Parent = row })
+				-- (v160: two-line hints spilled out of their rows: taller rows, wrapped)
+				local hint = found[key] and "" or (ctx.Story.EndingHints[key] or "")
+				local row = ctx.Dock.row(list, i, #hint > 48 and 56 or 46)
+				UI.label({ Position = UDim2.fromOffset(14, 0), Size = UDim2.new(1, -28, 1, 0), TextWrapped = true, Text = found[key] and string.format("<b>✓  %s</b>", e.Title) or string.format("<font color=\"#77736c\">???   %s</font>", ctx.Story.EndingHints[key] or ""), RichText = true, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 43, Parent = row })
 				if found[key] then
 					UI.stroke(row, Color3.new(1, 1, 1), 1, 0.75)
 				end

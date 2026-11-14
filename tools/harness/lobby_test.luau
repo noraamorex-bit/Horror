@@ -92,6 +92,14 @@ local ok, err = pcall(function()
 	rb.CFrame = roblox.CFrame.new(pad2.CFrame.Position + roblox.Vector3.new(1, 3, 1))
 	hb:Fire(0.3)
 	assert(lastQueue() == "Queue:Starting 2/2", "two players, got " .. tostring(lastQueue()))
+	-- (v160) the circle says who's on it, so friends can find each other
+	local named = false
+	for _, d in lobby:GetDescendants() do
+		if d.Name == "Status" and d:IsA("TextLabel") and string.find(d.Text, "Starting", 1, true) and string.find(d.Text, "A", 1, true) and string.find(d.Text, "B", 1, true) then
+			named = true
+		end
+	end
+	assert(named, "the circle's sign names who's on it")
 	waitFor(L.FullCountdown + 0.3)
 	hb:Fire(0.3)
 	assert(#teleports == 1 and teleports[1][2] == 2, "full: off with both after 3 s, not 10")
