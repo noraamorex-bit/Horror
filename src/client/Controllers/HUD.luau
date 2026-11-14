@@ -416,6 +416,7 @@ local function bar(parent, width, color)
 	return frame, fill
 end
 
+local chatPush = 0 -- (v164) how far the clock column is slid down under Roblox's chat window
 local function build()
 	root = UI.new("Frame", { Name = "HUD", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = UI.Root })
 	local inset = GuiService:GetGuiInset()
@@ -432,6 +433,7 @@ local function build()
 	})
 	UI.new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = leftCol })
 	HUD.LeftColumn = leftCol -- (other controllers add small things under the inventory: Monster's buy button)
+	-- (v164) under Roblox's chat window while it's open: placed every frame below (ChatDodge.offsetFor)
 	local clock = UI.box({ LayoutOrder = 1, Parent = leftCol }, { 6, 10 })
 	UI.new("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder, Parent = clock })
 	clockLabel = UI.fitLabel({ Text = "", Font = UI.Font.Bold, TextSize = 21, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 1, Parent = clock }, 240)
@@ -740,7 +742,14 @@ local function update()
 	local insetY = GuiService:GetGuiInset().Y
 	local clock = root:FindFirstChild("Clock") :: Frame?
 	if clock then
-		clock.Position = UDim2.fromOffset(18, (insetY + 8) / s)
+		-- (v164) slid down under Roblox's chat window while it's open, back up when it closes
+		local base = (insetY + 8) / s
+		local want = ctx.ChatDodge and ctx.ChatDodge.offsetFor(clock, base) or 0
+		chatPush += (want - chatPush) * 0.35
+		if math.abs(want - chatPush) < 0.5 then
+			chatPush = want
+		end
+		clock.Position = UDim2.fromOffset(18, base + chatPush)
 	end
 	local topY = (insetY + (UI.isTouch() and 52 or 10)) / s
 	objPanel.Position = UDim2.new(1, -18, 0, topY)

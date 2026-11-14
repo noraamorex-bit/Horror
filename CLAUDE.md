@@ -138,6 +138,11 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   hotbar hides under a result card too (it sat on the card's bottom line), the hiding/struggle hint sits 16 px up (an iPhone's home bar). Look at the card:
   `ui_dump.luau card|card_dead pc|touch` + `ui_preview.mjs`.
 - Secret-ending HUD is one slim bar at the top (it was "way too big" before).
+- **Out from under the chat (v164**, the owner: "the chat box hides some UI when opened. Make it so that that UI moves up/down when chat
+  box is closed/opened"): client `ChatDodge` watches Roblox's chat window (GetCore "ChatActive", else the window's size; where it is from
+  ChatWindowConfiguration / ChatInputBarConfiguration AbsolutePosition + AbsoluteSize) and slides what's under it down to just below it,
+  back up when it closes: the house's clock / items column with the 🎲 / 🚀 / 😱 buttons (HUD, `offsetFor`, eased), the lobby's ▶ PLAY +
+  icons (`register`). New top-left UI: register it too. Preview: `CHAT=1 lune run ui_dump.luau <scene> touch`; test `chatdodge_test`.
 - **Less talk (v139**, a PC downvote: "bro too many voicelines, crappy jumpscares"; the owner: "reduce the amount of
   information constantly coming and make it more relevant"): thoughts are read, not spoken (`Config.Thoughts.Spoken`); his
   voice lines rare (`Story.HisLines` Gap 35, each kind 60-150 s; Sense no longer forced); the friends' banter one per act + 2
@@ -995,6 +1000,11 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
 
 ## Where we left off (update this at the end of every session)
 
+- **14 Nov (v164 = place version 164)**, published; the chat window no longer covers the top-left UI (see HUD, v164). Can't see the
+  real client: check on a phone that opening chat slides the clock column / PLAY down under it and closing brings them back. If they
+  don't move at all, GetCore("ChatActive") isn't answering for TextChatService and the size fallback isn't either (look at
+  `ChatDodge.isOpen`); if they move to the wrong height, the inset guess in `rect()` is off.
+
 - **14 Nov (v163 = place version 163)**, published; the owner: "I wanna give my friends all gamepasses and the same admin panel I have
   so they can test for issues. Make a way for this". Done: testers (see Hard rules; GDD "Testers (v163)"; test `tester_test`). How: open
   the ADMIN pill → TESTERS → type a friend's username (or tap them under IN THIS SERVER) → ➕ Add tester; tap a name to remove. It works in
@@ -1750,7 +1760,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 163; the notes' "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 164; the notes' "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

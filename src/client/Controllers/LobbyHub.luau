@@ -263,6 +263,10 @@ function LobbyHub.start()
 	})
 	UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = menu })
 	lobbyMenu = menu
+	-- (v164) under Roblox's chat window while it's open
+	if ctx.ChatDodge then
+		ctx.ChatDodge.register(menu)
+	end
 
 	-- (v140, the owner, crossing out the title, FIND PLAYERS and How to play: "Do UI properly this is so bad.. Make
 	-- everything smaller… Use only icons..") one small PLAY, then two icons: the endings and the settings

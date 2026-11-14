@@ -49,7 +49,7 @@ ctx.Remotes = setmetatable({}, { __index = function(t, k)
 	rawset(t, k, r)
 	return r
 end })
-local ORDER = LOBBY and { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub" } or { "UI", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "WeaponRoll", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Admin" }
+local ORDER = LOBBY and { "UI", "ChatDodge", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "LobbyHub" } or { "UI", "ChatDodge", "Input", "Notice", "Social", "Thoughts", "Effects", "Atmosphere", "Dread", "Movement", "Prompts", "HUD", "Monster", "Offers", "WeaponRoll", "Prank", "Starter", "Gear", "Documents", "Phone", "HidingCam", "Lobby", "Ending", "MobileControls", "Markers", "Acoustics", "Ambience", "Dialogue", "Spectate", "Creature", "Intro", "Vote", "Friends", "Settings", "TVVoice", "Cutscene", "HeartbeatGame", "Puzzle", "Finale", "Admin" }
 local mods = {}
 for _, n in ORDER do mods[n] = H.load("Client/Controllers/" .. n) end
 ctx.LobbyHubMod = mods.LobbyHub
@@ -199,6 +199,12 @@ if SCENE == "card" or SCENE == "card_dead" then
 	})
 end
 frames(12)
+end
+
+-- (v164) CHAT=1: Roblox's chat window open at the top left (340 x 230): what sits under it moves down
+if process.env.CHAT and mods.ChatDodge then
+	mods.ChatDodge._force(true, { 0, 340, 230 })
+	frames(6)
 end
 
 -- the tree, as plain data
