@@ -1215,3 +1215,5 @@ wait for the whole avatar (late hair and faces stayed small otherwise), which al
 6.1 studs, and its measurement used the Head part found at spawn, which could be stale by then and push the scale to its x1.4 cap.
 Now the height is measured from the parts there at that moment (head top to feet), a reading outside 3.5-9 studs is ignored, the
 target is 5.6 studs and the most it scales anyone is x1.2. Test `height_test`.
+- **v170 (the owner: "jumpscare other people in the server only, not the user")**: the buyer of Jumpscare Everyone isn't scared any more
+  (v165-169 they were), only told how many they got; the admin panel's "Jumpscare Everyone (just me)" is the way to see it.

@@ -6,7 +6,7 @@
 	What they get (v167, the owner: "Jumpscare looks terrible i don't even see him. Make it so that he comes up to your face and
 	shakes and screams"): the lights die, he's standing there in the dark in front of you, he rushes up to your face and shakes
 	and screams right into the lens (Prank.scare: the beats are written out there), a hard cut to black, then a line at the bottom
-	saying who did it, so they can pay them back. The buyer sees it too (v165), then "You jumpscared N players".
+	saying who did it, so they can pay them back. The buyer isn't scared (v170; v165-169 scared them too), only told "You jumpscared N players!".
 	(v165-166 drew him in a ViewportFrame from a copy of whichever model of him was nearby: in the lobby only the far-off
 	watcher, maybe not streamed in, and his skinned body didn't show there: the owner saw nothing. Now he's his real 3D model,
 	built on this device from ReplicatedStorage.Assets.Creature, in the world right in front of your camera.)
@@ -732,9 +732,12 @@ function Prank.start()
 	workspace:GetAttributeChangedSignal("EndingActive"):Connect(refresh)
 	ctx.Remotes.JumpscareAll.OnClientEvent:Connect(function(fromName: string, fromId: number, count: number?)
 		if fromId == player.UserId then
-			-- (v165, the owner: "make it so I can be jumpscared I can't even see how it is") the buyer gets it too, then the count
-			local n = tostring(count or others())
-			task.spawn(Prank.scare, fromName, "😈 You jumpscared " .. n .. (count == 1 and " player!" or " players!"))
+			-- (v170, the owner: "Make jumpscare everyone jumpscare other people in the server only, not the user": v165 scared the buyer
+			-- too. The buyer only hears how many they got; the admin panel's "Jumpscare Everyone (just me)" still shows what it looks like.)
+			local n = tonumber(count) or others()
+			if ctx.HUD and ctx.HUD.notify then
+				ctx.HUD.notify("😈 You jumpscared " .. n .. (n == 1 and " player!" or " players!"), "done")
+			end
 			return
 		end
 		task.spawn(Prank.scare, fromName)
