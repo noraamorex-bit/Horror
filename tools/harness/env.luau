@@ -321,7 +321,8 @@ services = {
 	TweenService = { Create = function() return { Play = function() end, Cancel = function() end, Completed = signal() } end },
 	Players = { GetPlayers = function() return {} end, PlayerAdded = signal(), PlayerRemoving = signal(), LocalPlayer = nil },
 	Debris = { AddItem = function() end },
-	RunService = { IsServer = function() return true end, IsClient = function() return false end, Heartbeat = signal(), RenderStepped = signal(), Stepped = signal(), BindToRenderStep = function(_, _, _, fn) table.insert(M.renderSteps, fn) end },
+	RunService = { IsServer = function() return true end, IsClient = function() return false end, Heartbeat = signal(), RenderStepped = signal(), Stepped = signal(), BindToRenderStep = function(_, name, _, fn) table.insert(M.renderSteps, fn); M.renderNamed = M.renderNamed or {}; M.renderNamed[name] = fn end,
+		UnbindFromRenderStep = function(_, name) local fn = M.renderNamed and M.renderNamed[name]; if fn then local i = table.find(M.renderSteps, fn); if i then table.remove(M.renderSteps, i) end; M.renderNamed[name] = nil end end },
 	PathfindingService = stub("PathfindingService"),
 	TextChatService = stub("TextChatService"),
 	CollectionService = (function()

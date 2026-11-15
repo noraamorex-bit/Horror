@@ -3,9 +3,13 @@
 	developer product (Config.Shop.JumpscareAll) that, the moment it's bought, jumpscares every other
 	player in the server, in the house or in the lobby (ShopService fires Remotes.JumpscareAll).
 
-	What they get (v165): a few seconds of dread, two glimpses of his face in the black, then his face slams into the
-	lens screaming (Prank.scare: the beats are written out there); then a line at the bottom saying who did it, so they
-	can pay them back. The buyer sees it too (v165), then "You jumpscared N players".
+	What they get (v167, the owner: "Jumpscare looks terrible i don't even see him. Make it so that he comes up to your face and
+	shakes and screams"): the lights die, he's standing there in the dark in front of you, he rushes up to your face and shakes
+	and screams right into the lens (Prank.scare: the beats are written out there), a hard cut to black, then a line at the bottom
+	saying who did it, so they can pay them back. The buyer sees it too (v165), then "You jumpscared N players".
+	(v165-166 drew him in a ViewportFrame from a copy of whichever model of him was nearby: in the lobby only the far-off
+	watcher, maybe not streamed in, and his skinned body didn't show there: the owner saw nothing. Now he's his real 3D model,
+	built on this device from ReplicatedStorage.Assets.Creature, in the world right in front of your camera.)
 
 	Where you buy it: a small 😱 button under the inventory in the house and a 😱 SCARE icon in the
 	lobby's dock, both only while someone else is in the server to scare.
@@ -16,6 +20,10 @@ local RunService = game:GetService("RunService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local Prank = {}
+-- (tests: a stand-in body, a clock to drive, frames to step)
+Prank._testSource = nil :: Instance?
+Prank._clock = nil :: (() -> number)?
+Prank._testSteps = nil :: { (any) -> () }?
 local ctx
 local player = Players.LocalPlayer
 
@@ -205,6 +213,286 @@ local function buzz(strength: number, seconds: number)
 	end)
 end
 
+-- (v167) his real body for the scare: ReplicatedStorage.Assets.Creature, scaled as the server's Rig does (Rig.SkinScale), every
+-- piece anchored, in the world on this device only; with where his eyes are relative to its pivot
+local SKIN_SCALE = 0.05485 -- (= server Intruder/Rig.SkinScale)
+local function bodyCopy(): (Model?, Vector3?)
+	local assets = game:GetService("ReplicatedStorage"):FindFirstChild("Assets")
+	local src = Prank._testSource or (assets and assets:FindFirstChild("Creature"))
+	if not src or typeof(src) ~= "Instance" or not src:FindFirstChild("Body") then
+		return nil, nil
+	end
+	local ok, m = pcall(function()
+		local c = (src :: Model):Clone()
+		c:ScaleTo(SKIN_SCALE)
+		return c
+	end)
+	if not ok or not m then
+		return nil, nil
+	end
+	local model = m :: Model
+	model.Name = "PrankHim"
+	model:SetAttribute("Skinned", true)
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Anchored = true
+			d.CanCollide = false
+			d.CanQuery = false
+			d.CanTouch = false
+			d.CastShadow = false
+		elseif d:IsA("JointInstance") or d:IsA("WeldConstraint") or d:IsA("Script") or d:IsA("LocalScript") or d:IsA("Sound") then
+			d:Destroy()
+		end
+	end
+	local body = model:FindFirstChild("Body") :: BasePart
+	model.PrimaryPart = body
+	body.Transparency = 1
+	local eyeL = body:FindFirstChild("Base HumanLEye", true) :: Bone?
+	local eyeR = body:FindFirstChild("Base HumanHeadREye", true) :: Bone?
+	local pivot = model:GetPivot()
+	local eyes
+	if eyeL and eyeR then
+		eyes = pivot:PointToObjectSpace((eyeL.WorldPosition + eyeR.WorldPosition) / 2)
+	else
+		eyes = Vector3.new(0, body.Size.Y * 0.44, -0.5)
+	end
+	return model, eyes
+end
+Prank._bodyCopy = bodyCopy -- (tests)
+
+-- where your eyes are and which way you look: your head in the house; in the lobby's third person, from your head along the
+-- camera's look (so your own avatar isn't between you and him)
+local function viewpoint(): CFrame
+	local cam = workspace.CurrentCamera
+	local char = player.Character
+	local head = char and char:FindFirstChild("Head") :: BasePart?
+	if head and (cam.CFrame.Position - head.Position).Magnitude > 2 then
+		local look = cam.CFrame.LookVector
+		return CFrame.lookAt(head.Position + Vector3.new(0, 0.3, 0), head.Position + Vector3.new(0, 0.3, 0) + look)
+	end
+	return cam.CFrame
+end
+
+--[[
+	(v167) The scare, in the world: ~2.5 s.
+	1. the lights die: the room goes dark around you, a low rumble and a heartbeat; he's standing a few steps in front of you
+	   in a cold light, twitching in stop-motion;
+	2. he rushes you: 0.28 s, faster and faster, a screech;
+	3. in your face: his face an arm's length from the lens, jaw torn open, shaking violently and screaming (five sounds
+	   layered), the picture jerking with him, a white hit-frame, red pulses, the controller / phone buzzing;
+	4. a hard cut to black, everything put back, then who did it.
+	False if he can't be built here (the old viewport scare runs instead).
+]]
+local function scareWorld(from: string, text: string?): boolean
+	if not workspace.CurrentCamera then
+		return false
+	end
+	local model, eyes = bodyCopy()
+	if not model or not eyes then
+		return false
+	end
+	local UI = ctx.UI
+	local Lighting = game:GetService("Lighting")
+	local cam = workspace.CurrentCamera
+	local gui = overlay()
+	local black = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 5, Parent = gui })
+	local red = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(170, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 3, Parent = gui })
+	local white = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 4, Parent = gui })
+	-- the dark: the world's light drops away (put back after), a cold grade
+	local saved = { Brightness = Lighting.Brightness, Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient, ExposureCompensation = Lighting.ExposureCompensation }
+	local atmo = Lighting:FindFirstChildOfClass("Atmosphere")
+	local savedAtmo = atmo and { Density = atmo.Density, Color = atmo.Color, Decay = atmo.Decay, Haze = atmo.Haze, Glare = atmo.Glare } or nil
+	local grade = Instance.new("ColorCorrectionEffect")
+	grade.Name = "PrankGrade"
+	grade.Saturation = -0.5
+	grade.Contrast = 0.35
+	grade.Parent = Lighting
+	local function darken(k: number)
+		Lighting.Brightness = saved.Brightness * (1 - k)
+		Lighting.Ambient = saved.Ambient:Lerp(Color3.new(0, 0, 0), k)
+		Lighting.OutdoorAmbient = saved.OutdoorAmbient:Lerp(Color3.new(0, 0, 0), k)
+		Lighting.ExposureCompensation = saved.ExposureCompensation - 1.2 * k
+		if atmo and savedAtmo then
+			atmo.Density = savedAtmo.Density + (0.62 - savedAtmo.Density) * k
+			atmo.Color = savedAtmo.Color:Lerp(Color3.new(0, 0, 0), k)
+			atmo.Decay = savedAtmo.Decay:Lerp(Color3.new(0, 0, 0), k)
+			atmo.Glare, atmo.Haze = savedAtmo.Glare * (1 - k), savedAtmo.Haze * (1 - k)
+		end
+	end
+	-- the camera holds still where you're looking (moved only by the shaking)
+	local oldType, oldFov = cam.CameraType, cam.FieldOfView
+	local base = viewpoint()
+	cam.CameraType = Enum.CameraType.Scriptable
+	cam.CFrame = base
+	local char = player.Character
+	local hidden = {}
+	if char then
+		for _, d in char:GetDescendants() do
+			if d:IsA("BasePart") or d:IsA("Decal") then
+				hidden[d] = d.LocalTransparencyModifier
+			end
+		end
+	end
+	-- how far in front of you he starts: never inside a wall
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { char, model }
+	local hit = workspace:Raycast(base.Position, base.LookVector * 9, params)
+	local startD = hit and math.clamp(hit.Distance - 1, 2.6, 7.5) or 7.5
+	local NEAR = 1.25
+	-- his light: a cold lamp from just over your shoulder, so he reads in the dark
+	local lamp = Instance.new("Part")
+	lamp.Name = "PrankLamp"
+	lamp.Anchored, lamp.CanCollide, lamp.CanQuery, lamp.CanTouch = true, false, false, false
+	lamp.Transparency = 1
+	lamp.Size = Vector3.one * 0.2
+	local spot = Instance.new("SpotLight")
+	spot.Face = Enum.NormalId.Front
+	spot.Brightness = 7
+	spot.Range = 18
+	spot.Angle = 55
+	spot.Color = Color3.fromRGB(200, 215, 255)
+	spot.Shadows = false
+	spot.Parent = lamp
+	local fill = Instance.new("PointLight")
+	fill.Brightness = 1.4
+	fill.Range = 6
+	fill.Color = Color3.fromRGB(255, 120, 110)
+	lamp.Parent = workspace
+	model.Parent = workspace
+	Prank._him = model -- (tests)
+	fill.Parent = model.PrimaryPart
+	-- put him so his eyes are at `d` studs in front of you (a touch below the middle), facing you
+	local function stand(d: number, jerk: CFrame)
+		local target = (base * CFrame.new(0, -0.12, -d)).Position
+		local face = CFrame.lookAt(target, base.Position)
+		local pivotAt = face * CFrame.new(-eyes) -- (the pivot placed so its eyes land on the target)
+		model:PivotTo(pivotAt * jerk)
+	end
+	local rumble = play("Presence", 1.6)
+	local heart = play("Heartbeat", 1, 1.2)
+	local RUSH, FACE, CUT = 0.55, 0.83, 2.15
+	local clock = Prank._clock or os.clock -- (tests drive it)
+	local t0 = clock()
+	local hitDone, screeched = false, false
+	local jerk, camJerk, nextJerk = CFrame.identity, CFrame.identity, 0
+	local stop = false
+	local warned = false
+	local frame
+	RunService:BindToRenderStep("PrankScare", Enum.RenderPriority.Last.Value, function()
+		if stop then
+			return
+		end
+		local ok, err = pcall(frame)
+		Prank._frames = (Prank._frames or 0) + 1
+		if not ok and not warned then
+			warned = true
+			Prank._frameError = err
+			warn("[Prank] " .. tostring(err))
+		end
+	end)
+	frame = function()
+		local k = clock() - t0
+		for d in hidden do
+			if d.Parent then
+				d.LocalTransparencyModifier = 1
+			end
+		end
+		local d, gait, scream
+		if k < RUSH then
+			-- 1. the lights die; he's there, still, twitching
+			darken(math.clamp(k / 0.2, 0, 1))
+			d, gait, scream = startD, "Stare", 0
+			if heart then
+				heart.PlaybackSpeed = 1.2 + k * 1.5
+			end
+		elseif k < FACE then
+			-- 2. the rush (accelerating), stepped like stop-motion
+			if not screeched then
+				screeched = true
+				play("Screech", 1.4)
+				if heart then
+					heart:Stop()
+				end
+			end
+			local u = math.floor(((k - RUSH) / (FACE - RUSH)) * 9) / 9
+			d, gait, scream = startD - (startD - NEAR) * (u * u), "Stare", u
+			cam.FieldOfView = oldFov - 10 * u
+		else
+			-- 3. in your face: shaking, screaming
+			if not hitDone then
+				hitDone = true
+				for _, name in { "DemonScreech", "Jumpscare", "HorrorHitLow", "BoneRun", "Screech" } do
+					play(name, 1.6)
+				end
+				buzz(1, 1.2)
+				white.BackgroundTransparency = 0
+				task.delay(0.05, function()
+					white.BackgroundTransparency = 1
+				end)
+			end
+			local s2 = k - FACE
+			d = NEAR - 0.18 * math.sin(s2 * 30) - 0.1
+			gait, scream = "Stare", 1
+			cam.FieldOfView = oldFov - 18 + 4 * math.sin(s2 * 45)
+			red.BackgroundTransparency = 1 - 0.45 * math.max(0, math.sin(s2 * 20))
+		end
+		-- the shaking: him and the picture, in fits
+		if clock() >= nextJerk then
+			local amt = (k >= FACE) and 1 or (k >= RUSH and 0.25 or 0.05)
+			nextJerk = clock() + (k >= FACE and 0.035 or 0.08) + math.random() * 0.03
+			jerk = CFrame.new((math.random() - 0.5) * 0.35 * amt, (math.random() - 0.5) * 0.3 * amt, 0)
+				* CFrame.Angles((math.random() - 0.5) * 0.35 * amt, (math.random() - 0.5) * 0.4 * amt, (math.random() - 0.5) * 0.5 * amt)
+			camJerk = CFrame.Angles((math.random() - 0.5) * 0.06 * amt, (math.random() - 0.5) * 0.06 * amt, (math.random() - 0.5) * 0.12 * amt)
+		end
+		if ctx.Creature and ctx.Creature.poseCopy then
+			pcall(ctx.Creature.poseCopy, model, gait, k, 4, { Scream = scream })
+		end
+		stand(d, jerk)
+		cam.CFrame = base * camJerk
+		lamp.CFrame = base * CFrame.new(0.4, 0.5, 0.3)
+	end
+	if Prank._clock then
+		-- (tests: every beat stepped through by hand)
+		for _, fn in Prank._testSteps or {} do
+			fn(frame)
+		end
+	end
+	task.wait(CUT)
+	-- 4. the hard cut
+	stop = true
+	black.BackgroundTransparency = 0
+	RunService:UnbindFromRenderStep("PrankScare")
+	model:Destroy()
+	lamp:Destroy()
+	grade:Destroy()
+	if rumble then
+		rumble:Destroy()
+	end
+	if heart then
+		heart:Destroy()
+	end
+	darken(0)
+	Lighting.Brightness, Lighting.Ambient, Lighting.OutdoorAmbient, Lighting.ExposureCompensation = saved.Brightness, saved.Ambient, saved.OutdoorAmbient, saved.ExposureCompensation
+	for dd, v in hidden do
+		if dd.Parent then
+			dd.LocalTransparencyModifier = v
+		end
+	end
+	cam.FieldOfView = oldFov
+	cam.CameraType = oldType
+	red.BackgroundTransparency = 1
+	task.wait(0.35)
+	UI.tween(black, 0.45, { BackgroundTransparency = 1 })
+	banner(gui, text or ("😱 " .. from .. " jumpscared everyone!"), 4)
+	task.delay(5, function()
+		gui:Destroy()
+	end)
+	task.wait(0.5)
+	return true
+end
+Prank._scareWorld = scareWorld
+
 --[[
 	The scare itself (v165, the owner: "make the jumpscare everyone much scarier"). Three beats, ~2.6 s:
 	1. the dread: the screen dims and creeps with static, a low rumble and a heartbeat speeding up;
@@ -222,6 +510,17 @@ function Prank.scare(from: string, text: string?)
 		return
 	end
 	scaring = true
+	-- (v167) his real body, in front of you; the old viewport scare only if he can't be built here
+	local okW, done = pcall(scareWorld, from, text)
+	if okW and done then
+		scaring = false
+		return
+	elseif not okW then
+		warn("[Prank] " .. tostring(done))
+		pcall(function()
+			RunService:UnbindFromRenderStep("PrankScare")
+		end)
+	end
 	local UI = ctx.UI
 	local gui = overlay()
 	local dim = UI.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 1, Parent = gui })
@@ -369,7 +668,7 @@ function Prank.scare(from: string, text: string?)
 	task.wait(0.5)
 	scaring = false
 end
-Prank._timeline = 2.85 -- (tests: how long the scare runs)
+Prank._timeline = 3.1 -- (tests: how long the scare runs)
 
 function Prank.init(c)
 	ctx = c

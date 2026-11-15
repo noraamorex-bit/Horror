@@ -304,9 +304,15 @@ function Creature.focusFor(part: Instance?): (() -> CFrame)?
 		return nil
 	end
 	local mask = (m :: Model):GetAttribute("Masked") and (m :: Model):FindFirstChild("Head") :: BasePart?
+	-- (v167, the owner: "Jumpscare looks terrible i don't even see him": the camera still aimed between his neck and head, where
+	-- the v112 creature's maw was; on the v156 man that's his throat, his face off the top of the picture. His eyes now.)
+	local eyeL = body:FindFirstChild("Base HumanLEye", true) :: Bone?
+	local eyeR = body:FindFirstChild("Base HumanHeadREye", true) :: Bone?
 	return function()
 		-- (v114: his face is the mask again; before, the maw down his throat)
-		local at = mask and mask.Position or neck.TransformedWorldCFrame.Position:Lerp(head.TransformedWorldCFrame.Position, 0.35)
+		local at = mask and mask.Position
+			or ((eyeL and eyeR) and (eyeL.TransformedWorldCFrame.Position + eyeR.TransformedWorldCFrame.Position) / 2 - Vector3.new(0, 0.12, 0))
+			or neck.TransformedWorldCFrame.Position:Lerp(head.TransformedWorldCFrame.Position, 0.35)
 		local fwd = body.CFrame.LookVector
 		return CFrame.lookAt(at, at + Vector3.new(fwd.X, 0, fwd.Z))
 	end

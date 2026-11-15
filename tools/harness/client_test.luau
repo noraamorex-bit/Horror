@@ -475,8 +475,51 @@ local ok, err = pcall(function()
 		assert(btn:GetAttribute("Tiled") and price and price.Text == "R$10" and tname and tname.Text == "SCARE ALL", "a tile: " .. tostring(price and price.Text) .. " / " .. tostring(tname and tname.Text))
 		ctx.Remotes.JumpscareAll.OnClientEvent:Fire("Sam", 99, 1)
 		local gui = H.unwrap(pg):FindFirstChild("Prank")
-		assert(gui and gui:FindFirstChildOfClass("ViewportFrame"), "the scare covers the screen")
+		assert(gui and gui:FindFirstChildOfClass("ViewportFrame"), "no body asset here: the old viewport scare covers the screen")
 		gui:Destroy()
+		-- (v167) with his body: in the world in front of you, then everything put back
+		do
+			local src = H.Instance.new("Model")
+			local body = H.Instance.new("Part", src)
+			body.Name = "Body"
+			body.Size = H.roblox.Vector3.new(4, 9.8, 2)
+			body.CFrame = H.roblox.CFrame.new(0, 5, 0)
+			local realWas = H.realModels
+			H.realModels = true
+			local lighting = H.services.Lighting
+			local b0 = lighting.Brightness
+			ctx.Prank._testSource = src
+			local hadCam = H.camera
+			H.camera = H.camera or H.Instance.new("Camera")
+			local cam = H.camera
+			local type0 = cam and cam.CameraType
+			-- (frames stepped by hand on a fake clock: the dark, the rush, the shaking in your face)
+			local fake = 0
+			local placed = {}
+			ctx.Prank._clock = function() return fake end
+			ctx.Prank._testSteps = { function(frame)
+				for i = 1, 60 do
+					fake = i * 0.04
+					frame()
+					local him = ctx.Prank._him
+					local b = him and him:FindFirstChild("Body")
+					if b and (i == 5 or i == 40) then placed[i] = (b.Position - cam.CFrame.Position).Magnitude end
+				end
+			end }
+			local ok2, done = pcall(ctx.Prank._scareWorld, "Sam", nil)
+			ctx.Prank._clock, ctx.Prank._testSteps = nil, nil
+			H.realModels = realWas
+			print("world scare: far", placed[5], "in your face", placed[40])
+			assert(placed[5] and placed[40] and placed[5] > 2.5 and placed[40] < 2.2, "he stands off, then he's in your face")
+			ctx.Prank._testSource = nil
+			assert(ok2 and done, "the scare in the world: " .. tostring(done))
+			assert(ctx.Prank._him and not ctx.Prank._him.Parent, "he is gone after")
+			assert(lighting.Brightness == b0, "the light put back")
+			assert(not cam or cam.CameraType == type0, "the camera given back")
+			local g2 = H.unwrap(pg):FindFirstChild("Prank")
+			if g2 then g2:Destroy() end
+			H.camera = hadCam
+		end
 		S.Players.GetPlayers = wasGet
 		ctx.Prank._refresh()
 		player:SetAttribute("InGame", wasIn)

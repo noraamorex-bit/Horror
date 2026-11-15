@@ -1193,3 +1193,14 @@ without making the version live.
 - **Smaller fixes:** the low-nerve camera tremor (a console player: "my screen moves by itself") is a fifth as strong and only near
   the bottom; a first night on Normal allows one more heartbeat miss (40% of first-night heartbeats failed); during the attic climb
   gap he walks to the ladder's foot and waits instead of a failed route.
+
+## The jumpscares, in your face (v167)
+
+The owner: "Jumpscare looks terrible i don't even see him. Make it so that he comes up to your face and shakes and screams."
+- **Jumpscare Everyone** (`Prank.scare`) no longer draws him in a ViewportFrame (a copy of whatever model of him was nearby: in the
+  lobby, the far watcher, often not loaded; his skinned body didn't show in a viewport). He's his real 3D body, built on the device from
+  ReplicatedStorage.Assets.Creature, placed in the world in front of the frozen camera: the room goes dark (Lighting / Atmosphere
+  darkened, restored), he stands a few steps away in a cold light, rushes you in stop-motion, then shakes and screams with his face an
+  arm's length from the lens (jaw open, red pulses, layered screams, a buzz), a hard cut to black, then who did it. ~2.5 s.
+- **The capture jumpscare** aims at his eyes (it aimed at the old creature's maw, his throat on the v156 body), ends 1.45 studs from his
+  face, and lasts 1.7 s with repeated lunges and a second scream.

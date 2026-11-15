@@ -367,6 +367,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   prompt's action (search = a drawer, read/look = paper, code = keypad beep, switches/breaker clicks, splice = tape, cut =
   scissors, take = pickup, drive = keys), items out of your pocket (the flashlight clicks) and back, the phone out/away,
   crouching (a floorboard), landing a real drop. Doors, hiding, the call keep the server's sounds.
+- **The capture jumpscare (v167**, the owner: "i don't even see him... comes up to your face and shakes and screams"): aimed at his eyes
+  (`Creature.focusFor`; it aimed at his throat), it ends 1.45 studs from his face (was 2.2), stays 1.7 s (`ScareTime`, CaptureService
+  waits the same), lunging at the lens again and again with a second scream half way and a harder shake.
 - **The jumpscare (v139**, "crappy jumpscares"): a beat of silence and black, his face lit cold from the lens slamming in, a
   white hit-frame + blur punch, the shudder, then a hard cut to black that the capture fade takes over (`Effects.jumpscare`,
   `ScareTime` 1.05, CaptureService waits for it). The room scare: a string stab as the lights come up, he lunges at you, then
@@ -539,6 +542,13 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   (his face rushes the lens screaming, the picture shaking apart, a white hit-frame, red pulses, static, five sounds layered, a buzz on
   controllers/phones that support it), a hard cut to black, then who did it. **The buyer sees it too** (then "You jumpscared N players!"),
   and the full panel's TROLL tab has "😱 Jumpscare Everyone (just me)" to try it.
+  **v167 (the owner: "Jumpscare looks terrible i don't even see him. Make it so that he comes up to your face and shakes and screams")**:
+  `Prank.scare` is his real 3D body (built on the device from ReplicatedStorage.Assets.Creature, scaled like Rig.SkinScale, anchored,
+  in the world in front of your camera; `scareWorld`): the lights die around you (Lighting and the Atmosphere darkened, put back after),
+  he stands a few steps away in a cold light (never inside a wall: a ray decides how far), rushes you in stop-motion with a screech,
+  then his face an arm's length from the lens, jaw open, shaking violently, five screams layered, red pulses, a buzz; a hard cut to
+  black, then who did it. The camera holds still at your eyes (in the lobby: your head, not behind your avatar). The old viewport scare
+  only if his body can't be built. Test: client_test steps its frames on a fake clock.
 
 - **27 Oct (v120)**, the owner: "put the starter pack on the side and prompt them to buy it with the transaction
   screen without them pressing anything or maybe accidentally pressing". It had been opened 4 times in a week (0 sold).
@@ -1020,6 +1030,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **15 Nov (v167 = place version 167)**, published; the owner: "Jumpscare looks terrible i don't even see him. Make it so that he comes
+  up to your face and shakes and screams." Found: Jumpscare Everyone drew him in a ViewportFrame from a copy of whichever model of him
+  was nearby (in the lobby only the far-off watcher, maybe not streamed in; his skinned body didn't show there), and the capture
+  jumpscare's camera still aimed between his neck and head (the v112 creature's maw), his face off the top of the picture. Done: see
+  Economy (v115 note, v167) and The intruder's jumpscare line (v167). Can't see the real client: check both on a phone (his face fills
+  the screen, the shake, the room really goes dark behind him in the lobby and the house, the camera and lights come back after).
 
 - **15 Nov (v166 = place version 166)**, published; the owner sent Roblox's feedback CSV + a screenshot of glowing card-art weapons:
   "Analyze all game statistics and gamepass statistics and improve them. Also the weapon models look bad make it look much better and
@@ -1823,7 +1840,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 166; the notes' "v166" = place version 166, "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 167; the notes' "v167" = place version 167, "v166" = place version 166, "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680
