@@ -36,9 +36,28 @@ end
 -- The house is built big (13-stud ceilings, counters and cupboards at real proportions), so a
 -- default-sized avatar feels like a child in it. Every character is scaled up to a grown-up's
 -- height; already-tall avatars are left as they are.
-local TARGET_HEIGHT = 6.1
+local TARGET_HEIGHT = 5.6 -- (v169: 6.1; the owner: "Why is player so tall now")
 
-local function normalizeHeight(player: Player, char: Model, hum: Humanoid, head: BasePart)
+-- how tall a character stands right now, feet to the top of the head, from its current parts (nil if it can't tell)
+local function measure(char: Model, hum: Humanoid): (number?, number?)
+	local root = hum.RootPart
+	local head = char:FindFirstChild("Head")
+	if not root or not head or not head:IsA("BasePart") then
+		return nil, nil
+	end
+	local top = head.Position.Y + head.Size.Y / 2
+	local bottom
+	local lf, rf = char:FindFirstChild("LeftFoot"), char:FindFirstChild("RightFoot")
+	if lf and rf and lf:IsA("BasePart") and rf:IsA("BasePart") then
+		bottom = math.min(lf.Position.Y - lf.Size.Y / 2, rf.Position.Y - rf.Size.Y / 2)
+	else
+		bottom = root.Position.Y - root.Size.Y / 2 - hum.HipHeight
+	end
+	return top - bottom, root.Position.Y - bottom
+end
+PlayerState._measure = measure -- (tests)
+
+local function normalizeHeight(player: Player, char: Model, hum: Humanoid)
 	-- (v166, players: "wheres my hair and face bro??", "fix avatars items") wait for the whole avatar first: ScaleTo only scales
 	-- what's there, so hair, a face or a head that arrived after it (a slow device: this used to give up after 6 s) stayed the
 	-- old size, sunk inside the bigger body
@@ -50,34 +69,32 @@ local function normalizeHeight(player: Player, char: Model, hum: Humanoid, head:
 		-- (the last accessories are parented a beat after the event)
 		task.wait(0.3)
 	end
-	if player.Character ~= char or not char.Parent then
+	if player.Character ~= char or not char.Parent or not hum.RootPart then
 		return
 	end
-	local root = hum.RootPart
-	if not root or not char.Parent then
+	-- (v169, the owner: "Why is player so tall now": v166 measured with the Head part found at spawn; waiting for the avatar,
+	-- that part could be swapped out or left where the character first stood, the height came out tiny and everyone got the
+	-- most it allows, x1.4. Measured from the parts there now, and nothing outside a person's range is trusted.)
+	local height, rootToFeet = measure(char, hum)
+	if not height or height < 3.5 or height > 9 then
 		return
 	end
-	local feet = root.Position.Y - root.Size.Y / 2 - hum.HipHeight
-	local height = head.Position.Y + head.Size.Y / 2 - feet
-	if height <= 0.5 then
-		return
-	end
-	local factor = math.clamp(TARGET_HEIGHT / height, 1, 1.4)
+	local factor = math.clamp(TARGET_HEIGHT / height, 1, 1.2)
 	if factor > 1.02 then
 		pcall(function()
 			-- scaling happens about the root, so the feet would sink into the floor: lift the
 			-- character by the same amount first
-			local rootToFeet = root.Position.Y - feet
-			char:PivotTo(char:GetPivot() + Vector3.new(0, rootToFeet * (factor - 1) + 0.05, 0))
+			char:PivotTo(char:GetPivot() + Vector3.new(0, (rootToFeet :: number) * (factor - 1) + 0.05, 0))
 			char:ScaleTo(char:GetScale() * factor)
 		end)
 	end
 end
+PlayerState._normalizeHeight = normalizeHeight -- (tests)
 
 local function setupCharacter(player: Player, char: Model)
 	local hum = char:WaitForChild("Humanoid") :: Humanoid
 	local head = char:WaitForChild("Head") :: BasePart
-	task.spawn(pcall, normalizeHeight, player, char, hum, head)
+	task.spawn(pcall, normalizeHeight, player, char, hum)
 	hum.BreakJointsOnDeath = false
 	hum.WalkSpeed = ctx.Config.Movement.Walk
 	hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)

@@ -411,7 +411,8 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   and two pieces under dust sheets. Ceiling globes dimmer and warmer (rooms 1.2 / 24, halls 0.95 / 19) so lamps and sconces make
   pools. Lit house renders: the scratchpad's `map143/look/views.py` + film2 (stage_dump first).
 - Warm, cozy, polished interior; real textures; models from anywhere (Creator Store/UGC) when they look
-  better; no z-fighting, floating/sunken props, blocked doorways or 90° flipped props. Taller players.
+  better; no z-fighting, floating/sunken props, blocked doorways or 90° flipped props. Taller players (v169: to 5.6 studs, x1.2 at most;
+  6.1 / x1.4 looked "so tall" once the scale stuck).
 - Rain sound and occasional thunder; fog outside.
 - **The house haunts you (v131**, the owner: "Seriously rework the whole map and perfect it. Add way more scares. Actually scary
   and creepy stuff"): the floor plan stays (nav, hiding, tasks hang on it); `World/Haunt` adds the attic as a real attic (sheeted
@@ -1033,6 +1034,13 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **15 Nov (v169 = place version 169)**, published; the owner: "Why is player so tall now". v166 made the house's height scaling wait
+  for the whole avatar (the hair/face fix), but it still measured with the Head part found at spawn: stale by then (moved or swapped),
+  so the height could come out tiny and the scale hit its x1.4 cap; and scaling that now sticks (before, a scale-up made before the
+  avatar loaded was mostly undone by it) made everyone the full 6.1 studs. Now: measured from the parts there now (head top to the
+  feet), nothing outside 3.5-9 studs trusted, target **5.6** (was 6.1), x1.2 at most (was 1.4) (`PlayerStateService` measure /
+  normalizeHeight; test `height_test`). Can't see the real client: check on a phone that players look a normal adult height.
 
 - **15 Nov (v168 = place version 168)**, published; the owner: "Make the jumpscare faster and scarier. Also place a big light over the
   lobby circles that area is quite dark". Done: Jumpscare Everyone ~1.5 s (was ~2.5): the lights stutter and show him in two flashes,
@@ -1849,7 +1857,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 168; the notes' "v168" = place version 168, "v167" = place version 167, "v166" = place version 166, "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 169; the notes' "v169" = place version 169, "v168" = place version 168, "v167" = place version 167, "v166" = place version 166, "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

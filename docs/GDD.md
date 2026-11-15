@@ -1207,3 +1207,11 @@ The owner: "Jumpscare looks terrible i don't even see him. Make it so that he co
 - **v168 (the owner: "faster and scarier")**: Jumpscare Everyone runs ~1.5 s: two flashes of him in the dark, a 0.12 s lunge, then he
   thrashes against the lens (head whipping, a blur punch, a second scream, the lamp buzzing). The capture jumpscare is 1.3 s with a 0.1 s
   slam. **The lobby's circles** have a floodlight gantry behind them: two poles, a crossbar, one big lamp aimed at each circle.
+
+## Player height (v169)
+
+The owner: "Why is player so tall now". The house scales characters up to a grown-up's height (`PlayerStateService`). v166 made it
+wait for the whole avatar (late hair and faces stayed small otherwise), which also made the scale stick, so everyone stood the full
+6.1 studs, and its measurement used the Head part found at spawn, which could be stale by then and push the scale to its x1.4 cap.
+Now the height is measured from the parts there at that moment (head top to feet), a reading outside 3.5-9 studs is ignored, the
+target is 5.6 studs and the most it scales anyone is x1.2. Test `height_test`.
