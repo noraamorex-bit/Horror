@@ -727,8 +727,10 @@ function Effects.start()
 		end
 		local t = os.clock()
 		local mag = 0
-		if inGame and nerve < heavy then
-			mag += (1 - nerve / heavy) * 0.25
+		-- (v166, a console player: "Mon écran bouge tout seul", my screen moves by itself) the fear tremor drifted the camera
+		-- whenever nerve was low; now only near the bottom, and a fifth as much
+		if inGame and nerve < heavy * 0.5 then
+			mag += (1 - nerve / (heavy * 0.5)) * 0.05
 		end
 		if t < shakeUntil then
 			mag += shakeMag * ((shakeUntil - t) / 0.6)

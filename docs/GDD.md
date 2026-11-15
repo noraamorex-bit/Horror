@@ -1170,3 +1170,26 @@ without making the version live.
 - `Acts`: min/max minutes per act.
 - `Intruder.*`: speeds, sight ranges, chase limits, grab range.
 - `Help.*`: police response timers.
+
+## Proper weapons, a card that fits, whole avatars (v166)
+
+- **The rolled weapons are real models.** Each `Config.Weapons.List[k].Model` names a textured Creator Store mesh (checked for scripts
+  and private meshes): a bat with nails, a fire axe, a Daedric dagger, a glowing cyan katana, a purple laser pistol, a red-and-black
+  reaper scythe, the Slap Battles glove, a rainbow blaster. ToolService loads them once when the server starts, pulls every part out
+  of its container (three are Tools), keeps only meshes and textures, and fits it to the hand with `shared/WeaponFit` (its length axis
+  and tip, the grip point in its box, a turn about its length, a pre-turn for a crooked model, a gun pointing ahead). The fitted copy
+  goes in ReplicatedStorage.WeaponModels. Until a model has loaded, the v161 block model is used. The glove keeps an invisible Palm box
+  for its slap. The roll's strip and the hotbar show each model's thumbnail (`rbxthumb://type=Asset`), preloaded; when the spin stops,
+  the strip gives way to the weapon you got turning in 3D, in the same spot (top third).
+- **Seen more:** the 🎲 tile flashes gold as the hunt begins and when he comes after you, if you carry no weapon (45 s apart). The
+  Starter Pack adds a free Weapon Roll (spun at your next night's start), never where PolicyService restricts paid random items (the
+  lobby checks that now too).
+- **Cards fit the screen.** The survival tips ("HE'S IN THE HOUSE", at the start of the hunt) were five long bullets; translated, the
+  card ran off a phone's screen and couldn't be closed while he hunted (two downvotes). Four short lines now; every Notice card
+  shrinks itself to 92% of the screen's height and has a ✕.
+- **Whole avatars.** The house scales characters to 6.1 studs; ScaleTo only scales what's there, and it waited at most 6 s for the
+  avatar, so hair, faces and heads that arrived later stayed small inside the bigger body ("wheres my hair and face bro??"). It waits
+  up to 30 s for the appearance now. The lobby lets you zoom right in (the 9-stud minimum only for the first second).
+- **Smaller fixes:** the low-nerve camera tremor (a console player: "my screen moves by itself") is a fifth as strong and only near
+  the bottom; a first night on Normal allows one more heartbeat miss (40% of first-night heartbeats failed); during the attic climb
+  gap he walks to the ladder's foot and waits instead of a failed route.

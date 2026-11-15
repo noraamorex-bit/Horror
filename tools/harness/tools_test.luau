@@ -64,6 +64,8 @@ local ok, err = pcall(function()
 		if wspec then
 			-- (v161 rolled weapons: an emoji instead of a picture; melee ones show no count)
 			assert(t:GetAttribute("Emoji") == wspec.Emoji and t:GetAttribute("Tier") == wspec.Tier, item .. ": its emoji and tier")
+			-- (v166) the model's thumbnail in the hotbar
+			assert(not wspec.Model or t.TextureId == "rbxthumb://type=Asset&id=" .. wspec.Model.Id .. "&w=150&h=150", item .. ": its picture: " .. t.TextureId)
 			assert(t:GetAttribute("Label") and (wspec.Ammo and t:GetAttribute("Count") == 2 or (not wspec.Ammo and t:GetAttribute("Count") == nil)), item .. ": its name and what's left")
 		else
 			assert(string.match(t.TextureId, "^rbxassetid://%d+$"), item .. ": has its hotbar icon")

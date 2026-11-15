@@ -39,11 +39,19 @@ end
 local TARGET_HEIGHT = 6.1
 
 local function normalizeHeight(player: Player, char: Model, hum: Humanoid, head: BasePart)
+	-- (v166, players: "wheres my hair and face bro??", "fix avatars items") wait for the whole avatar first: ScaleTo only scales
+	-- what's there, so hair, a face or a head that arrived after it (a slow device: this used to give up after 6 s) stayed the
+	-- old size, sunk inside the bigger body
 	if not player:HasAppearanceLoaded() then
 		local t0 = os.clock()
-		while not player:HasAppearanceLoaded() and os.clock() - t0 < 6 and char.Parent do
+		while not player:HasAppearanceLoaded() and os.clock() - t0 < 30 and char.Parent do
 			task.wait(0.2)
 		end
+		-- (the last accessories are parented a beat after the event)
+		task.wait(0.3)
+	end
+	if player.Character ~= char or not char.Parent then
+		return
 	end
 	local root = hum.RootPart
 	if not root or not char.Parent then

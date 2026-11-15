@@ -24,16 +24,21 @@ function Heartbeat.init(c)
 	ctx.Heartbeat = Heartbeat
 end
 
-local function settings()
+local function settings(player: Player?)
 	local cfg = table.clone(ctx.Config.Heartbeat)
 	local hard = ctx.Config.Difficulty and ctx.Config.Difficulty.Hard
 	if workspace:GetAttribute("Difficulty") == "Hard" and hard and hard.Heartbeat then
 		for k, v in hard.Heartbeat do
 			cfg[k] = v
 		end
+	elseif player and (tonumber(player:GetAttribute("StatNights")) or 0) < 1 then
+		-- (v166 logs: first-nighters failed it 1,164 times in 2,905 on Normal, 40%; most of a night's captures) one more miss
+		-- on your first night
+		cfg.Misses += cfg.RookieMisses or 0
 	end
 	return cfg
 end
+Heartbeat._settings = settings -- (tests)
 
 local function finish(s, result: string)
 	if sessions[s.Player] ~= s then
@@ -88,7 +93,7 @@ end
 
 function Heartbeat.begin(player: Player, seconds: number, onFail: () -> ())
 	Heartbeat.stop(player)
-	local cfg = settings()
+	local cfg = settings(player)
 	local beats = {}
 	local t = cfg.Lead
 	-- (the last one lands at least 1.2 s before he gives up, so its press is in before he decides)

@@ -365,6 +365,7 @@ Config.Heartbeat = {
 	-- only Q / E to go on), and on Normal the first wrong-side press on a beat is forgiven: press
 	-- the other side in time and it still counts. Doing nothing still fails. Hard: no forgiveness.)
 	ForgiveWrong = true,
+	RookieMisses = 1, -- (v166) a first night on Normal: one more miss allowed (first-nighters failed 40%)
 }
 
 Config.Hiding = {
@@ -568,7 +569,7 @@ Config.Shop = {
 	-- (v130: 19 -> 9 R$, 2 sold of 906 windows; WasPrice shows struck through in the shop)
 	-- (v145: 14 bought of 1,840 windows with coins + a rocket + a revive. Now it also holds what people do buy, once:
 	-- a free Become Him night and a free Jumpscare Everyone)
-	Starter = { Id = 3721088307, Price = 9, WasPrice = 19, Coins = 500, Rockets = 1, Revives = 1, Monster = 1, Pranks = 1 },
+	Starter = { Id = 3721088307, Price = 9, WasPrice = 19, Coins = 500, Rockets = 1, Revives = 1, Monster = 1, Pranks = 1, Rolls = 1 }, -- (v166: + a Weapon Roll)
 	-- (v115, the owner: "add something like this for 10 Robux") jumpscares everyone else in the
 	-- server, house or lobby, the moment it's bought (ShopService, client Prank)
 	JumpscareAll = { Id = 3722081951, Price = 10 },
@@ -713,26 +714,44 @@ Config.Weapons = {
 		{ Id = "Epic", Name = "EPIC", Color = Color3.fromRGB(176, 90, 255) },
 		{ Id = "Legendary", Name = "LEGENDARY", Color = Color3.fromRGB(255, 196, 40) },
 	},
+	-- (v166) Model: the textured Creator Store mesh in your hand and on the roll's cards (shared/WeaponFit; checked for scripts
+	-- and private meshes, previewed with tools/harness/fit_weapon.luau + tools/assets/preview.mjs). The old block model stays as the fallback.
 	Order = { "Bat", "Axe", "Dagger", "Katana", "Gun", "Scythe", "SlapGlove", "PlasmaCannon" },
 	List = {
 		Bat = { Tier = "Normal", Name = "Bat", Emoji = "🏏", Odds = 30, Kind = "Melee", Range = 8, Cone = 60, Stun = 1.6, Knock = 5, Cooldown = 18,
-			Tip = "Swing when he's close: knocks him back a step." },
+			Tip = "Swing when he's close: knocks him back a step.",
+			Model = { Id = 10365570926, Axis = "Z", Tip = -1, Len = 4, Grip = { 0, 0, 0.8 } }, -- "Baseball bat with nails in it"
+		},
 		Axe = { Tier = "Normal", Name = "Axe", Emoji = "🪓", Odds = 30, Kind = "Melee", Range = 8, Cone = 55, Stun = 2.2, Knock = 4, Cooldown = 22,
-			Tip = "Swing when he's close: he staggers." },
+			Tip = "Swing when he's close: he staggers.",
+			Model = { Id = 13074348727, Axis = "Y", Tip = 1, Len = 3.4, Grip = { 0, -0.8, 0.5 }, Spin = 180, Pre = { -40, 0, 0 } }, -- "Fire Axe"
+		},
 		Dagger = { Tier = "Rare", Name = "Dagger", Emoji = "🗡️", Odds = 14, Kind = "Melee", Range = 7, Cone = 50, Stun = 1.4, Slow = 6, Cooldown = 10,
-			Tip = "Quick stab up close: he limps for a few seconds." },
+			Tip = "Quick stab up close: he limps for a few seconds.",
+			Model = { Id = 9644828051, Axis = "Y", Tip = 1, Len = 2.6, Grip = { 0, -0.7, 0 } }, -- "Daedric Dagger"
+		},
 		Katana = { Tier = "Rare", Name = "Katana", Emoji = "⚔️", Odds = 14, Kind = "Melee", Range = 10, Cone = 70, Stun = 3, Knock = 6, Cooldown = 20,
-			Tip = "A long slash: he reels back." },
+			Tip = "A long slash: he reels back.",
+			Model = { Id = 8286185899, Axis = "Z", Tip = 1, Len = 5.2, Grip = { 0, 0, -0.7 } }, -- "glowing katana"
+		},
 		Gun = { Tier = "Epic", Name = "Gun", Emoji = "🔫", Odds = 5, Kind = "Shot", Range = 80, Cone = 12, AutoRange = 18, Stun = 2.5, Slow = 8,
-			Ammo = 6, Cooldown = 4, Noise = 60, Tip = "Aim at him and click: 6 shots. LOUD." },
+			Ammo = 6, Cooldown = 4, Noise = 60, Tip = "Aim at him and click: 6 shots. LOUD.",
+			Model = { Id = 8886621180, Axis = "Z", Tip = 1, Len = 2, Grip = { 0, -0.5, -0.5 }, Gun = true }, -- "Purple Laser Blast"
+		},
 		Scythe = { Tier = "Epic", Name = "Scythe", Emoji = "☠️", Odds = 5, Kind = "Melee", Range = 12, Cone = 100, Stun = 4, Knock = 10, Cooldown = 25,
-			Retreat = true, Tip = "A wide sweep: throws him back across the room." },
+			Retreat = true, Tip = "A wide sweep: throws him back across the room.",
+			Model = { Id = 8186983320, Axis = "Y", Tip = 1, Len = 6.5, Grip = { 0, -0.55, -0.55 } }, -- "Scythe" (red and black)
+		},
 		SlapGlove = { Tier = "Legendary", Name = "Slap Glove", Emoji = "🖐️", Odds = 1, Kind = "Slap", Range = 9, Cone = 70, Stun = 5, Knock = 28,
 			Cooldown = 30, PlayerCooldown = 3, HitBox = Vector3.new(6, 6, 6), HitAhead = 3.5, Retreat = true,
-			Tip = "SLAP him across the house. Anyone it touches goes flying." },
+			Tip = "SLAP him across the house. Anyone it touches goes flying.",
+			Model = { Id = 15255642371, Axis = "Y", Tip = 1, Len = 2.4, Grip = { 0, -0.85, 0 } }, -- "Slap Battles - Glove"
+		},
 		PlasmaCannon = { Tier = "Legendary", Name = "Plasma Cannon", Emoji = "☄️", Odds = 1, Kind = "Beam", Range = 140, Cone = 10, AutoRange = 20,
 			Charge = 0.8, Stun = 8, Slow = 15, Knock = 12, Ammo = 3, Cooldown = 35, Noise = 80, Retreat = true,
-			Tip = "Aim, hold still a moment: a beam that drops him. 3 shots." },
+			Tip = "Aim, hold still a moment: a beam that drops him. 3 shots.",
+			Model = { Id = 344218444, Axis = "Z", Tip = -1, Len = 3.4, Grip = { 0, -0.4, 0.3 }, Gun = true, Pre = { -32, 0, 0 } }, -- "RainbowBlaster"
+		},
 	},
 	Pity = { EpicBy = 10, LegendaryBy = 60 },
 	LegendaryNights = 3,

@@ -184,6 +184,9 @@ elseif SCENE == "spin" then
 		t.Parent = H.unwrap(player):FindFirstChildOfClass("Backpack")
 	end
 	frames(3)
+elseif SCENE == "tips" then
+	-- (v166) the survival tips' card as the hunt starts
+	R.Notice.OnClientEvent:Fire(table.clone(ctx.Story.SurvivalTips))
 elseif SCENE == "captured" then
 	player:SetAttribute("Captured", true)
 	R.Notify.OnClientEvent:Fire("He's got you. STRUGGLE to get free, or wait for a friend.", "danger")

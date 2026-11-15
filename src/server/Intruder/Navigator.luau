@@ -170,15 +170,25 @@ function Navigator:_planGrid(): boolean
 		-- chase re-aimed at someone on the other floor sent him straight back up or down. Not again within ClimbGap of the last
 		-- climb: he waits at the ladder's foot instead)
 		local gap = (self.ctx and self.ctx.Config.Attic and self.ctx.Config.Attic.ClimbGap) or 10
-		if self.LastClimb and os.clock() - self.LastClimb < gap then
-			open = false
-		end
+		-- (v166: that wait used to fall through to a failed route, FailGrid_UpperHall_Attic 3.2 a night on v165, and he stood
+		-- wherever he was. Now he goes to the ladder's foot and waits there: the next plan after the gap climbs)
+		local waiting = self.LastClimb ~= nil and os.clock() - self.LastClimb < gap
 		if L and L.HatchTop and L.HatchBelow and open then
 			local up = inAttic(goal)
 			local foot = up and L.HatchBelow or L.HatchTop
 			local other = up and L.HatchTop or L.HatchBelow
 			local leg = NavGrid.findPath(from, foot + Vector3.new(0, ROOT - 3.2, 0), 4)
-			if leg then
+			if leg and waiting then
+				self.Stats.Plans += 1
+				self.Stats.PlanMs += (os.clock() - t0) * 1000
+				self.Stats.LadderWait = (self.Stats.LadderWait or 0) + 1
+				self.Climb = nil
+				self.Waypoints = leg
+				self.End = leg[#leg]
+				self.Index = math.min(2, #leg)
+				self:_step()
+				return true
+			elseif leg then
 				self.Stats.Plans += 1
 				self.Stats.PlanMs += (os.clock() - t0) * 1000
 				self.Stats.Ladder = (self.Stats.Ladder or 0) + 1

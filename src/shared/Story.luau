@@ -976,9 +976,11 @@ Story.Endings = {
 
 -- shown once, the first night someone plays, when he starts moving around the house
 Story.SurvivalTipsVersion = 4 -- (bump when the tips change: everyone sees them once more) (v126: 4)
+-- (v166: five long bullets, opened as the hunt starts, were taller than a phone's screen once translated, and couldn't be
+-- closed: two downvotes. Four short lines.)
 Story.SurvivalTips = {
 	Title = "HE'S IN THE HOUSE",
-	Body = "• The way out: CALL 911. One bar of signal by the upstairs bathroom window. When the police pull up, RUN for the front door.\n• He knows where you are. Every half minute he comes straight for one of you: hear him running, MOVE.\n• Don't camp one hiding spot: stay too long and he smells you there. Hide, then hide somewhere else.\n• He hunts by SOUND. CROUCH near him. Running is loud.\n• If he stops at your hiding spot, keep your heartbeat steady: press the side each half-heart comes from.",
+	Body = "• Get out: CALL 911 by the upstairs bathroom window.\n• He hunts by SOUND. Crouch near him.\n• Hide, but not too long in one spot.\n• He stops at your spot? Press the side each half-heart comes from.",
 	Button = "GOT IT",
 }
 

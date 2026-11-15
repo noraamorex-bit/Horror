@@ -227,6 +227,9 @@ local okRun, err = pcall(function()
 		S.Nav:goTo(down, { Speed = 14 })
 		tick(3)
 		assert(ctx.Rooms.floorOf(S.Root.Position) == "Attic", "no second climb right after the first: " .. tostring(S.Root.Position) .. " " .. tostring(S.Climbing) .. " " .. tostring(S.Nav.Climb ~= nil))
+		-- (v166) and not a failed route: he waits at the ladder's top for the gap
+		assert(not S.Nav.Failed and (S.Nav.Stats.LadderWait or 0) >= 1, "waits at the ladder, not a failed route")
+		assert(not S.Nav.Stats.FailGrid_Attic_Attic and not S.Nav.Stats.FailGrid_UpperHall_Attic, "no failure logged")
 		tick(ctx.Config.Attic.ClimbGap)
 		S.Nav:goTo(down, { Speed = 14 })
 		t = 0

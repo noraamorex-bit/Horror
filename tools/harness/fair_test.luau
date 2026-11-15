@@ -154,6 +154,17 @@ local ok, err = pcall(function()
 	end
 	assert(hints <= 3, "at most 3 \"What next\" reminders in 5 min, got " .. hints)
 	print(("reminders: %d in %d s"):format(hints, math.floor(T - startT)))
+	-- (v166) the heartbeat on a first night (Normal) allows one more miss; Hard never does
+	b:SetAttribute("StatNights", 0)
+	local rookie = ctx.Heartbeat._settings(b).Misses
+	b:SetAttribute("StatNights", 3)
+	local vet = ctx.Heartbeat._settings(b).Misses
+	assert(rookie == vet + ctx.Config.Heartbeat.RookieMisses and rookie > vet, ("a first night's heartbeat allows one more miss: %d vs %d"):format(rookie, vet))
+	H.unwrap(H.workspaceRoot):SetAttribute("Difficulty", "Hard")
+	b:SetAttribute("StatNights", 0)
+	assert(ctx.Heartbeat._settings(b).Misses == ctx.Config.Difficulty.Hard.Heartbeat.Misses, "not on Hard")
+	H.unwrap(H.workspaceRoot):SetAttribute("Difficulty", "Normal")
+	print(("heartbeat misses: first night %d, after %d"):format(rookie, vet))
 end)
 print(ok and "FAIR OK" or ("FAIR FAIL: " .. tostring(err)))
 for _, e in H.errors do print(e) end

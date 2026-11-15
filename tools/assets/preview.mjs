@@ -1,4 +1,4 @@
-// node preview.mjs <inspect.json> <cacheDir> <out.png> [label]
+// node preview.mjs <inspect.json> <cacheDir> <out.png> [label] (a label with "noperson" leaves out the scale figure)
 // A model from the Creator Store, seen before it goes in the game: four views (its -Z front, its
 // +X side, its back, from above) on a 1-stud grid with a 5.5-stud person for scale and an arrow
 // on the floor pointing along -Z (Roblox's "forward"). Meshes and textures are downloaded with
@@ -119,7 +119,7 @@ const shot = await page.evaluate(async ([model, meshes, textures, W, H, label]) 
   const grid = new T.GridHelper(Math.ceil(span), Math.ceil(span), 0x333333, 0x555555); grid.position.set(center.x, floorY, center.z); scene.add(grid);
   const arrow = new T.ArrowHelper(new T.Vector3(0, 0, -1), new T.Vector3(center.x, floorY + 0.02, bb.min.z - 0.3), 2.5, 0xff3030, 0.8, 0.5); scene.add(arrow);
   const person = new T.Mesh(new T.BoxGeometry(1.4, 5.5, 0.8), new T.MeshStandardMaterial({ color: 0x3a6ea5 }));
-  person.position.set(bb.max.x + 1.8, floorY + 2.75, center.z); scene.add(person);
+  person.position.set(bb.max.x + 1.8, floorY + 2.75, center.z); if (!(label || "").includes("noperson")) scene.add(person);
   const views = [
     ['FRONT (-Z)', new T.Vector3(0.18, 0.25, -1)], ['SIDE (+X)', new T.Vector3(1, 0.25, 0.1)],
     ['BACK (+Z)', new T.Vector3(-0.15, 0.3, 1)], ['TOP', new T.Vector3(0.001, 1, -0.25)],

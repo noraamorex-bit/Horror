@@ -106,6 +106,12 @@ function Lobby.start()
 			player.CameraMode = Enum.CameraMode.Classic
 			player.CameraMaxZoomDistance = 22
 			player.CameraMinZoomDistance = 9
+			-- (v166: out behind you first, then you can zoom right in)
+			task.delay(1, function()
+				if player.CameraMode == Enum.CameraMode.Classic and not player:GetAttribute("InGame") then
+					player.CameraMinZoomDistance = 0.5
+				end
+			end)
 		end
 	end
 	camera()

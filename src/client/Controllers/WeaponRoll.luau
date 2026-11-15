@@ -17,6 +17,8 @@ local Players = game:GetService("Players")
 local MarketplaceService = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ContentProvider = game:GetService("ContentProvider")
 
 local WeaponRoll = {}
 local ctx
@@ -84,6 +86,39 @@ local function refresh()
 	end
 end
 WeaponRoll._refresh = refresh
+
+-- (v166 logs: 190 bought of 493 windows opened, the best rate of anything; the small tile was simply rarely seen) a gold
+-- flash on the 🎲 tile when the hunt starts and when he comes after you, while you've no weapon: nothing said, nothing opened
+local HUNT = { SomeoneElse = true, Guest = true }
+local CHASE = { Chase = true, Charge = true }
+local lastFlash = -1e9
+local function armed(): boolean
+	for _, k in W().Order do
+		if player:GetAttribute("Item_" .. k) then
+			return true
+		end
+	end
+	return false
+end
+local function flash()
+	if not button or not button.Visible or armed() or os.clock() - lastFlash < 45 then
+		return false
+	end
+	lastFlash = os.clock()
+	local b = button :: TextButton
+	local base = Color3.fromRGB(70, 50, 8)
+	for i = 0, 2 do
+		task.delay(i * 0.5, function()
+			if b.Parent then
+				b.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
+				ctx.UI.tween(b, 0.45, { BackgroundColor3 = base })
+			end
+		end)
+	end
+	return true
+end
+WeaponRoll._flash = flash
+WeaponRoll._armed = armed
 
 local function buy()
 	local p = ctx.Config.Shop.WeaponRoll
@@ -192,6 +227,68 @@ function WeaponRoll.isOpen(): boolean
 	return panel ~= nil and panel.Visible
 end
 
+-- (v166) a weapon's picture: its Creator Store model's thumbnail (Config.Weapons.List[k].Model.Id)
+function WeaponRoll.thumb(kind: string): string?
+	local s = W().List[kind]
+	local id = s and s.Model and s.Model.Id
+	return id and ("rbxthumb://type=Asset&id=" .. tostring(id) .. "&w=150&h=150") or nil
+end
+
+-- (v166) the weapon you got, turning slowly in 3D where the strip was (ReplicatedStorage.WeaponModels: the server's fitted copy
+-- of the very model in your hand); nothing if it isn't there
+local function reveal(parent: GuiObject, kind: string, tier): ViewportFrame?
+	local folder = ReplicatedStorage:FindFirstChild("WeaponModels")
+	local src = folder and folder:FindFirstChild(kind)
+	if not src then
+		return nil
+	end
+	local UI = ctx.UI
+	local vp = UI.new("ViewportFrame", {
+		Name = "Reveal", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(10, 10, 14), BackgroundTransparency = 0.05,
+		Ambient = Color3.fromRGB(150, 150, 160), LightColor = Color3.new(1, 1, 1), LightDirection = Vector3.new(-0.4, -1, -0.6),
+		ImageTransparency = 1, ZIndex = 35, Parent = parent,
+	})
+	UI.corner(vp, 8)
+	UI.stroke(vp, tier.Color, 2, 0)
+	local model = src:Clone()
+	local parts, boxes = {}, {}
+	for _, d in model:GetChildren() do
+		if d:IsA("BasePart") then
+			table.insert(parts, { Part = d, Base = d.CFrame })
+			table.insert(boxes, { CFrame = d.CFrame, Size = d.Size })
+		end
+	end
+	if #parts == 0 then
+		vp:Destroy()
+		return nil
+	end
+	local mn, mx = ctx.WeaponFit.bounds(boxes)
+	local centre, size = (mn + mx) / 2, (mx - mn).Magnitude
+	-- laid on its side, so its length runs across the wide box
+	local lay = CFrame.Angles(0, 0, math.rad(-62)) * CFrame.new(-centre)
+	model.Parent = vp
+	local cam = Instance.new("Camera")
+	cam.FieldOfView = 30
+	cam.CFrame = CFrame.lookAt(Vector3.new(0, 0, size * 1.45), Vector3.new())
+	cam.Parent = vp
+	vp.CurrentCamera = cam
+	UI.tween(vp, 0.3, { ImageTransparency = 0 })
+	local t0 = os.clock()
+	local conn
+	conn = RunService.RenderStepped:Connect(function()
+		if not vp.Parent then
+			conn:Disconnect()
+			return
+		end
+		local spinCF = CFrame.Angles(0, (os.clock() - t0) * 1.6, 0) * lay
+		for _, e in parts do
+			e.Part.CFrame = spinCF * e.Base
+		end
+	end)
+	return vp
+end
+WeaponRoll._reveal = reveal
+
 -- a filler card for the strip, drawn at the same odds as the roll itself
 local rng = Random.new()
 local function drawKind(): string
@@ -235,10 +332,25 @@ local function card(parent: Instance, kind: string, x: number): Frame
 		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 22),
 		BackgroundColor3 = tier.Color, BackgroundTransparency = 0.55, BorderSizePixel = 0, Parent = c,
 	})
-	UI.new("TextLabel", {
+	local emoji = UI.new("TextLabel", {
 		Position = UDim2.fromOffset(0, 6), Size = UDim2.new(1, 0, 0, 44), BackgroundTransparency = 1, Text = s.Emoji,
 		TextScaled = true, Font = UI.Font.Bold, TextColor3 = Color3.new(1, 1, 1), Parent = c,
 	})
+	-- (v166) the weapon's own picture (its Creator Store thumbnail); the emoji only until it has loaded
+	local pic = WeaponRoll.thumb(kind)
+	if pic then
+		local img = UI.new("ImageLabel", {
+			Position = UDim2.fromOffset(4, 2), Size = UDim2.new(1, -8, 0, CARD - 14), BackgroundTransparency = 1, Image = pic,
+			ScaleType = Enum.ScaleType.Fit, Parent = c,
+		})
+		local function loaded()
+			if img.IsLoaded then
+				emoji.Visible = false
+			end
+		end
+		img:GetPropertyChangedSignal("IsLoaded"):Connect(loaded)
+		loaded()
+	end
 	UI.new("TextLabel", {
 		AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 2, 1, -3), Size = UDim2.new(1, -4, 0, 16), BackgroundTransparency = 1,
 		Text = string.upper(s.Name), TextScaled = true, Font = UI.Font.Bold, TextColor3 = Color3.new(1, 1, 1), Parent = c,
@@ -334,6 +446,11 @@ local function spin(kind: string, tierId: string, pityE: number?, pityL: number?
 			UI.corner(glow, 10)
 			UI.tween(glow, 1.2, { BackgroundTransparency = 1 })
 		end
+		task.delay(0.45, function()
+			if clip.Parent then
+				reveal(clip, kind, tier)
+			end
+		end)
 		local P = W().Pity
 		if pityE and pityL then
 			foot.Text = string.format("EPIC+ within %d  ·  LEGENDARY within %d", math.max(1, P.EpicBy - pityE), math.max(1, P.LegendaryBy - pityL))
@@ -344,7 +461,7 @@ local function spin(kind: string, tierId: string, pityE: number?, pityL: number?
 					.. (legendary and (" It's yours for " .. W().LegendaryNights .. " nights.") or ""), "done")
 			end
 		end)
-		task.delay(2.6, function()
+		task.delay(3.4, function()
 			UI.tween(holder, 0.35, { BackgroundTransparency = 1 })
 			task.delay(0.4, function()
 				holder:Destroy()
@@ -466,6 +583,16 @@ end
 
 function WeaponRoll.start()
 	local UI = ctx.UI
+	-- (v166) the cards' pictures ready before anyone spins
+	task.spawn(function()
+		local list = {}
+		for _, k in W().Order do
+			table.insert(list, WeaponRoll.thumb(k))
+		end
+		pcall(function()
+			ContentProvider:PreloadAsync(list)
+		end)
+	end)
 	button = UI.new("TextButton", {
 		Name = "WeaponRollOffer",
 		Size = UDim2.fromOffset(150, 30),
@@ -494,6 +621,19 @@ function WeaponRoll.start()
 	end
 	workspace:GetAttributeChangedSignal("Act"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("EndingActive"):Connect(refresh)
+	local lastAct = workspace:GetAttribute("Act")
+	workspace:GetAttributeChangedSignal("Act"):Connect(function()
+		local act = workspace:GetAttribute("Act")
+		if HUNT[act or ""] and not HUNT[lastAct or ""] then
+			task.delay(4, flash)
+		end
+		lastAct = act
+	end)
+	workspace:GetAttributeChangedSignal("IntruderState"):Connect(function()
+		if HUNT[workspace:GetAttribute("Act") or ""] and CHASE[workspace:GetAttribute("IntruderState") or ""] then
+			flash()
+		end
+	end)
 	ctx.Remotes.WeaponRoll.OnClientEvent:Connect(WeaponRoll.onResult)
 	ctx.Remotes.WeaponFx.OnClientEvent:Connect(function(...)
 		pcall(WeaponRoll.fx, ...)

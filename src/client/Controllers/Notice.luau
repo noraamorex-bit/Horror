@@ -18,7 +18,28 @@ local titleLabel: TextLabel
 local bodyLabel: TextLabel
 local okButton: TextButton
 local secondButton: TextButton
+local cardScale: UIScale
 local current = nil
+
+-- (v166, two phone downvotes: "the instructions block my view... why doesn't it go away? I died because of it", "the
+-- writing didn't go away so I couldn't see anything") the survival tips' card, translated into Spanish / German, was taller
+-- than a phone's screen: its button was off the bottom and it couldn't be closed while he hunted you. Every card now
+-- shrinks to fit the screen, and has a ✕ in its corner.
+local function fit()
+	if not card.Visible then
+		return
+	end
+	local cam = workspace.CurrentCamera
+	local vp = cam and cam.ViewportSize or Vector2.new(844, 390)
+	local now = cardScale.Scale
+	local h = card.AbsoluteSize.Y / math.max(now, 0.01)
+	local w = card.AbsoluteSize.X / math.max(now, 0.01)
+	local want = math.min(1, (vp.Y * 0.92) / math.max(h, 1), (vp.X * 0.94) / math.max(w, 1))
+	if math.abs(want - now) > 0.005 then
+		cardScale.Scale = want
+	end
+end
+Notice._fit = fit
 
 local function flushWaiting()
 	local list = waiting
@@ -41,6 +62,8 @@ local function showNext()
 	secondButton.Text = current.Secondary or ""
 	secondButton.Visible = current.Secondary ~= nil
 	card.Visible = true
+	cardScale.Scale = 1
+	task.defer(fit)
 	card.Position = UDim2.fromScale(0.5, 0.53)
 	ctx.UI.tween(card, 0.35, { Position = UDim2.fromScale(0.5, 0.5) }, Enum.EasingStyle.Back)
 end
@@ -121,8 +144,24 @@ function Notice.start()
 	UI.stroke(card, Color3.new(1, 1, 1), 1.5, 0.75)
 	UI.padding(card, 26)
 	UI.modal(card)
+	cardScale = UI.new("UIScale", { Scale = 1, Parent = card })
+	card:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
 	UI.new("UIListLayout", { Padding = UDim.new(0, 16), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = card })
 	titleLabel = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = UI.Font.Title, TextSize = 30, LayoutOrder = 1, ZIndex = 51, Parent = card })
+	-- the ✕ (in the title, out of the card's list): closes it like the close key (a card with a second button: that button's way, onClose not run)
+	local x = UI.new("TextButton", {
+		Name = "Close",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, 14, 0, -18),
+		Size = UDim2.fromOffset(36, 36),
+		Text = "✕",
+		Font = UI.Font.Bold,
+		TextSize = 20,
+		TextColor3 = Color3.fromRGB(220, 216, 208),
+		BackgroundTransparency = 1,
+		ZIndex = 52,
+		Parent = titleLabel,
+	})
 	bodyLabel = UI.label({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, TextSize = 18, TextColor3 = Color3.fromRGB(215, 210, 200), LayoutOrder = 2, ZIndex = 51, Parent = card })
 	okButton = UI.new("TextButton", {
 		Size = UDim2.fromOffset(220, 64),
@@ -154,11 +193,18 @@ function Notice.start()
 	secondButton.Activated:Connect(function()
 		close(true)
 	end)
+	x.Activated:Connect(function()
+		close(true)
+	end)
 	ctx.Input.on("Close", function(began)
 		if began then
 			close(true)
 		end
 	end)
+	local cam = workspace.CurrentCamera
+	if cam then
+		cam:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+	end
 end
 
 return Notice

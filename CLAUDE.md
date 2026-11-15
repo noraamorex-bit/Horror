@@ -578,6 +578,15 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   at the real odds. A staged near miss misleads kids, and Roblox's paid random items rules want honest, shown odds. Don't add one. Not offered where
   PolicyService restricts paid random items (`RollRestricted`). Next: `== SALES` WeaponRoll bought / asked, `weapon rolls` in the
   night logs, deaths/player (weapons make nights easier: if captures drop a lot, lengthen cooldowns).
+  **v166 (the owner: "the weapon models look bad make it look much better and proper like the ones shown in image")**: each weapon is a
+  textured Creator Store mesh (`Config.Weapons.List[k].Model`: nail bat 10365570926, fire axe 13074348727, Daedric dagger 9644828051,
+  glowing cyan katana 8286185899, purple laser pistol 8886621180, red-black reaper scythe 8186983320, Slap Battles glove 15255642371,
+  rainbow blaster 344218444), loaded when the server starts, every part pulled out of whatever held it, everything but meshes and
+  textures thrown away, fitted to the grip by `shared/WeaponFit` (Axis / Tip / Len / Grip / Spin / Gun / Pre) in ToolService; the
+  fitted copy sits in ReplicatedStorage.WeaponModels for the roll's 3D reveal; the old block models stay as the fallback. The hotbar
+  and the roll's cards show each model's Creator Store thumbnail. Check a new one: inspect.luau for scripts, then
+  `lune run tools/harness/fit_weapon.luau <Key> <cache> out.json` + `preview.mjs out.json <cache> out.png "<Key> noperson"` (the red box
+  is the hand, the grey bar the forearm; forward is -Z). Test `weaponfit_test`.
 
 **Secret ending "Down Here"** (2+ players, everyone zip-tied at once): the dinner (struggle while his back
 is turned), he really leaves up the ladder for a while, signposted tunnels, notes give the cellar code,
@@ -1011,6 +1020,36 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **15 Nov (v166 = place version 166)**, published; the owner sent Roblox's feedback CSV + a screenshot of glowing card-art weapons:
+  "Analyze all game statistics and gamepass statistics and improve them. Also the weapon models look bad make it look much better and
+  proper like the ones shown in image. Also analyze all feedback and make valuable changes." **Sales: 48,233 R$ since 15 Oct; 14 Nov
+  alone 15,289 R$** (BecomeHim 5,572, JumpscareAll 4,830, Revive 1,485, WeaponRoll 1,055). Bought / windows since the funnel: WeaponRoll
+  **190 / 493 (38%, the best rate of anything)**, JumpscareAll 1,630 / 18,277 (9%), BecomeHim 697 / 8,364 (8%), RocketNight 130 / 1,688,
+  Revive 464 / 18,371, Starter 266 / 20,495 (1.3%), NightVision 10 / 749, ChooseRole 9 / 730. Logs since 161 (a 4,000-key sample: 36,684
+  lobby visits, 3,317 nights): consoles 19% of visits; first-nighters quit mid-night 59% (act I 1,587, **481 of them within 15 s: 30%, was
+  58% before v159's 15 s countdown**); solo nights 24%, 92% no ending; heartbeat failed 1,164 of 2,905 first-night tries (40%), 271 of
+  the 1,307 fails quit within 90 s; v165's climb gap logged 3.2 failed attic routes a night (he stood still instead of waiting at the
+  ladder). Feedback (~130 new comments, mostly kids, mostly positive): two phone downvotes in Spanish / German ("the instructions block
+  my view, it says to tap to remove it, why doesn't it go away? I died because of it", "the writing didn't go away so I couldn't see
+  anything"), "too much things pop out at the same time", "wheres my hair and face bro??" / "fix avatars items" (PC), "zoom all the
+  way in to my avatar", "my screen moves by itself" + "very laggy" (console), "more than 4 players" / "make slots" / "6 people" (3),
+  "no one to play with" / "I need friends" (3), scarier vs scared (mixed). Done: **the weapons are textured Creator Store meshes**
+  (see Economy, v166), with their thumbnails on the roll's cards and in the hotbar and a turning 3D reveal of what you won; **the
+  survival tips' card** ("HE'S IN THE HOUSE", opened as the hunt starts) was taller than a phone once translated, its GOT IT off the
+  screen: four short lines now, and every notice card shrinks to fit the screen and has a ✕ (`Notice` fit); **avatars**: the house
+  scales everyone to adult height and gave up waiting for the avatar after 6 s, so hair / a face / a head that loaded later stayed small,
+  sunk in the body: it waits for the whole avatar now (30 s); the lobby lets you zoom right in (min zoom 9 for the first second, then
+  0.5); the fear tremor that drifted the camera at low nerve is a fifth as strong and only near the bottom; a first night's heartbeat on
+  Normal allows one more miss (`Heartbeat.RookieMisses`); he waits at the ladder's foot during the climb gap instead of failing the
+  route (`LadderWait`); the 🎲 tile flashes gold when the hunt starts and when he comes after you, if you've no weapon (45 s apart);
+  the Starter Pack now holds a free Weapon Roll too (`Starter.Rolls`, its Roblox description updated; never where paid random items
+  are restricted: the lobby checks PolicyService now too). Kept: WeaponRoll 10 (a day and a half of data), every other price. **For
+  the owner**: more than 4 a night (3 asks) needs the game place's max players raised in Creator Hub (the key can't) plus roles / the
+  secret ending's seats for 6: say if you want it. Can't see the real client: check each weapon in the hand on a phone (the fire axe,
+  the nail bat, the reaper scythe, the glove, the two blasters), the roll's card pictures and the reveal, and that the tips card fits.
+  Next: `--since=166`: WeaponRoll bought / asked (the flash should raise "asked"), Starter bought / asked (the roll in it), heartbeat
+  fails per first-nighter, LadderWait vs FailGrid_UpperHall_Attic.
 
 - **14 Nov (v165 = place version 165)**, published; the owner's screenshot (chat open over the moved column) + "the monster keeps
   randomly teleporting between upstairs and the attic and doesn't properly hunt. Make the jumpscare everyone much scarier and also make it
@@ -1784,7 +1823,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 165; the notes' "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 166; the notes' "v166" = place version 166, "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

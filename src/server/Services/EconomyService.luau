@@ -997,13 +997,23 @@ function Economy.onReceipt(info): Enum.ProductPurchaseDecision
 					ctx.Stats.addPrankCredit(player)
 				end
 			end
+			-- (v166) a free Weapon Roll, spun when your next night starts (WeaponService.nightStart); never where paid random
+			-- items aren't allowed
+			if not player:GetAttribute("RollRestricted") then
+				for _ = 1, pack.Starter.Rolls or 0 do
+					if ctx.Stats and ctx.Stats.addRollCredit then
+						ctx.Stats.addRollCredit(player)
+					end
+				end
+			end
 		end
 		if player then
 			result(player, { Kind = "Pack", Coins = pack.Coins })
 			if ctx.Telemetry and docs[userId] then
 				ctx.Telemetry.coins(player, pack.Coins, docs[userId].Coins, "IAP", pack.Starter and "Starter" or ("Pack" .. pack.Coins))
 			end
-			ctx.Remotes.Notify:FireClient(player, pack.Starter and ("Starter Pack: +" .. pack.Coins .. " coins, a rocket, a revive, a free Become Him night and a free Jumpscare Everyone. Thank you!")
+			ctx.Remotes.Notify:FireClient(player, pack.Starter and ("Starter Pack: +" .. pack.Coins .. " coins, a rocket, a revive, a free Become Him night, a free Jumpscare Everyone"
+				.. ((pack.Starter.Rolls and not player:GetAttribute("RollRestricted")) and " and a free Weapon Roll (next night)" or "") .. ". Thank you!")
 				or ("+" .. pack.Coins .. " coins. Thank you!"), "done")
 		end
 	end
@@ -1156,6 +1166,21 @@ function Economy.init(c)
 end
 
 function Economy.start()
+	-- (v166) paid random items' policy in every server (the lobby sells the Starter Pack, which holds a Weapon Roll)
+	local function policy(p: Player)
+		task.spawn(function()
+			local ok, info = pcall(function()
+				return game:GetService("PolicyService"):GetPolicyInfoForPlayerAsync(p)
+			end)
+			if ok and type(info) == "table" and info.ArePaidRandomItemsRestricted then
+				p:SetAttribute("RollRestricted", true)
+			end
+		end)
+	end
+	for _, p in Players:GetPlayers() do
+		policy(p)
+	end
+	Players.PlayerAdded:Connect(policy)
 	ctx.Remotes.Economy.OnServerEvent:Connect(function(player, action, arg)
 		local now = os.clock()
 		if lastAction[player] and now - lastAction[player] < 0.35 then

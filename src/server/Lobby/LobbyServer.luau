@@ -1108,7 +1108,8 @@ function LobbyServer.run(c)
 		end
 		-- third person here; the house itself is first person
 		player.CameraMode = Enum.CameraMode.Classic
-		-- a minimum zoom forces the camera out behind the character (the game itself is first person)
+		-- a minimum zoom forces the camera out behind the character (the game itself is first person); the client lowers it a
+		-- moment later so you can zoom right in (v166, LobbyHub)
 		player.CameraMaxZoomDistance = 22
 		player.CameraMinZoomDistance = 9
 		player.CharacterAdded:Connect(function(char)

@@ -221,6 +221,13 @@ local function thirdPerson()
 	if cam then
 		cam.CameraType = Enum.CameraType.Custom
 	end
+	-- (v166, a player: "I want to be able to zoom all the way in to my avatar pls") the minimum only pushes the camera out of
+	-- the house's first person; a moment later you can zoom right in
+	task.delay(1, function()
+		if player.CameraMode == Enum.CameraMode.Classic and not player:GetAttribute("InGame") then
+			player.CameraMinZoomDistance = 0.5
+		end
+	end)
 end
 
 -- (v138) the lobby's look: dark glass, hairlines, one dried-blood red for accents

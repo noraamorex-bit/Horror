@@ -12,6 +12,8 @@
 ]]
 
 local Players = game:GetService("Players")
+local AssetService = game:GetService("AssetService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tools = {}
 local ctx
@@ -62,8 +64,150 @@ local function piece(tool: Tool, handle: BasePart, name: string, size: Vector3, 
 	return p
 end
 
+--[[
+	(v166, the owner: "the weapon models look bad make it look much better and proper") The rolled weapons are textured Creator Store
+	meshes (Config.Weapons.List[k].Model), loaded once when the server starts: every part pulled out of whatever held it (three are
+	Tools), everything but the meshes and their textures thrown away (scripts, sounds, lights, welds, GUIs), then fitted to the hand
+	by shared/WeaponFit. The fitted copy, in the tool's own frame (the grip at the origin), is kept in ReplicatedStorage.WeaponModels
+	so the client shows the same model on the roll's cards and in the hotbar. Until it's loaded (or if it never loads) the old
+	block-built model is used.
+]]
+local KEEP = { "BasePart", "SpecialMesh", "Decal", "Texture", "SurfaceAppearance" }
+local fitted: { [string]: Model } = {}
+
+local function keep(d: Instance): boolean
+	for _, cls in KEEP do
+		if d:IsA(cls) then
+			return true
+		end
+	end
+	return false
+end
+
+-- one weapon's mesh: load, clean, fit; nil if it can't
+local function fitModel(item: string, spec): Model?
+	local ok, container = pcall(function()
+		return (AssetService :: any):LoadAssetAsync(spec.Id)
+	end)
+	if not ok or not container then
+		warn("[Tools] weapon model " .. item .. " didn't load: " .. tostring(container))
+		return nil
+	end
+	local model = Instance.new("Model")
+	model.Name = item
+	local parts = {}
+	for _, d in (container :: Instance):GetDescendants() do
+		if d:IsA("BasePart") then
+			table.insert(parts, d)
+		end
+	end
+	for _, part in parts do
+		part.Parent = model
+	end
+	for _, d in model:GetDescendants() do
+		if d.Parent and not keep(d) then
+			d:Destroy()
+		end
+	end
+	local boxes, list = {}, {}
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") then
+			if part.Transparency < 0.99 then
+				table.insert(boxes, { CFrame = part.CFrame, Size = part.Size })
+				table.insert(list, part)
+			else
+				part:Destroy()
+			end
+		end
+	end
+	if #list == 0 then
+		return nil
+	end
+	local map, k = ctx.WeaponFit.solve(boxes, spec)
+	for _, part in list do
+		local cf = map(part.CFrame)
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.Massless = true
+		part.CastShadow = false
+		part.Size *= k
+		part.CFrame = cf
+		local mesh = part:FindFirstChildOfClass("SpecialMesh")
+		if mesh then
+			mesh.Scale *= k
+			mesh.Offset *= k
+		end
+	end
+	container:Destroy()
+	return model
+end
+
+-- load every weapon's mesh (once, in the background)
+local function loadModels()
+	local weapons = ctx.Config.Weapons
+	if not weapons or not ctx.WeaponFit then
+		return
+	end
+	local folder = ReplicatedStorage:FindFirstChild("WeaponModels") or Instance.new("Folder")
+	folder.Name = "WeaponModels"
+	folder.Parent = ReplicatedStorage
+	for _, item in weapons.Order do
+		local spec = weapons.List[item]
+		if spec and spec.Model then
+			task.spawn(function()
+				local ok, model = pcall(fitModel, item, spec.Model)
+				if ok and model then
+					fitted[item] = model
+					local shared = model:Clone()
+					shared.Parent = folder
+				elseif not ok then
+					warn("[Tools] weapon model " .. item .. ": " .. tostring(model))
+				end
+			end)
+		end
+	end
+end
+Tools._fitModel = fitModel -- (tests)
+Tools._fitted = fitted
+
+-- the fitted mesh welded onto the handle (true), or false: no mesh yet, build the blocks
+local function meshWeapon(tool: Tool, handle: BasePart, item: string): boolean
+	local model = fitted[item]
+	if not model then
+		return false
+	end
+	handle.Size = Vector3.new(0.3, 0.3, 0.3)
+	handle.Transparency = 1
+	local boxes = {}
+	for _, src in model:GetChildren() do
+		if src:IsA("BasePart") then
+			table.insert(boxes, { CFrame = src.CFrame, Size = src.Size })
+			local p = src:Clone()
+			p.Anchored = false
+			p.CFrame = handle.CFrame * src.CFrame
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = handle
+			w.Part1 = p
+			w.Parent = p
+			p.Parent = tool
+		end
+	end
+	if item == "SlapGlove" and #boxes > 0 then
+		-- (WeaponService slaps whoever the glove's palm touches: an invisible box round the glove)
+		local mn, mx = ctx.WeaponFit.bounds(boxes)
+		local palm = piece(tool, handle, "Palm", (mx - mn):Max(Vector3.new(0.5, 0.5, 0.5)), CFrame.new((mn + mx) / 2), Color3.new(1, 1, 1))
+		palm.Transparency = 1
+	end
+	return true
+end
+
 -- (v161) the rolled weapons' models: blades and the bat stand up from the grip (+Y), guns point ahead (-Z)
 local function buildWeapon(tool: Tool, handle: BasePart, item: string)
+	if meshWeapon(tool, handle, item) then
+		return
+	end
 	local wood = Color3.fromRGB(150, 104, 62)
 	local steel = Color3.fromRGB(196, 200, 210)
 	local black = Color3.fromRGB(24, 24, 28)
@@ -134,6 +278,9 @@ local function build(item: string): Tool
 	tool.ToolTip = INFO[item].Tip
 	if INFO[item].Icon then
 		tool.TextureId = "rbxassetid://" .. INFO[item].Icon
+	elseif INFO[item].Thumb then
+		-- (v166 rolled weapons: the model's own thumbnail in the hotbar, the same picture as the roll's card)
+		tool.TextureId = "rbxthumb://type=Asset&id=" .. tostring(INFO[item].Thumb) .. "&w=150&h=150"
 	end
 	tool:SetAttribute("ItemId", item)
 	-- (v161 rolled weapons: an emoji for the hotbar slot and the tier's colour round it, client Gear)
@@ -301,12 +448,13 @@ function Tools.init(c)
 				table.insert(Tools.Items, k)
 				IS_TOOL[k] = true
 			end
-			INFO[k] = { Name = spec.Name, Emoji = spec.Emoji, Tier = spec.Tier, Unit = spec.Ammo and "shot" or nil, Tip = spec.Tip }
+			INFO[k] = { Name = spec.Name, Emoji = spec.Emoji, Tier = spec.Tier, Unit = spec.Ammo and "shot" or nil, Tip = spec.Tip, Thumb = spec.Model and spec.Model.Id }
 		end
 	end
 end
 
 function Tools.start()
+	task.spawn(loadModels)
 	local function added(p: Player)
 		p.CharacterAdded:Connect(function()
 			-- (a new character comes with an empty backpack)
