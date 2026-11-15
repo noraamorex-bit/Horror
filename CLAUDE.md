@@ -80,6 +80,9 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   ✕ LEAVE sit in a slim bar at the bottom centre (it was at the top left, where Roblox's chat opens on phones and tablets);
   a short circle says "friends: step in now". **v160**: the circle's sign and your queue bar say who's on it ("Starting in 9... ·
   Sam, Bo"), and a "👥 Name" tag floats over each of your Roblox friends in the lobby (client `Friends`, lobby mode).
+- **Floodlights over the circles (v168**, the owner: "place a big light over the lobby circles that area is quite dark"): a dark gantry
+  along the patio's back edge (two 20-stud poles at x ±33.2, a crossbar) with a big lamp aimed at each circle (SpotLight 4.5 / 42 / 62°,
+  one with shadows) and a soft fill over the patio (LobbyServer). Look at it: `dump_lobby.luau` + `marketing/reel_source/tools/render.mjs`.
 - Queue circles: white **outline** only, spread out so labels don't overlap. **Every circle counts down
   15 s from the moment someone steps in, 5 s once full; at 0 it teleports whoever's on it** (the owner's
   rule; no START NOW. v159, the owner: "Yes 15 secs. If it's full already start counting down from 5"; it was 10 s / 3 s,
@@ -368,7 +371,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   scissors, take = pickup, drive = keys), items out of your pocket (the flashlight clicks) and back, the phone out/away,
   crouching (a floorboard), landing a real drop. Doors, hiding, the call keep the server's sounds.
 - **The capture jumpscare (v167**, the owner: "i don't even see him... comes up to your face and shakes and screams"): aimed at his eyes
-  (`Creature.focusFor`; it aimed at his throat), it ends 1.45 studs from his face (was 2.2), stays 1.7 s (`ScareTime`, CaptureService
+  (`Creature.focusFor`; it aimed at his throat), it ends 1.45 studs from his face (was 2.2), stays 1.3 s (`ScareTime`, v168; CaptureService
   waits the same), lunging at the lens again and again with a second scream half way and a harder shake.
 - **The jumpscare (v139**, "crappy jumpscares"): a beat of silence and black, his face lit cold from the lens slamming in, a
   white hit-frame + blur punch, the shudder, then a hard cut to black that the capture fade takes over (`Effects.jumpscare`,
@@ -543,7 +546,7 @@ Design detail lives in `docs/GDD.md` (keep it current). Test notes in `tools/har
   controllers/phones that support it), a hard cut to black, then who did it. **The buyer sees it too** (then "You jumpscared N players!"),
   and the full panel's TROLL tab has "😱 Jumpscare Everyone (just me)" to try it.
   **v167 (the owner: "Jumpscare looks terrible i don't even see him. Make it so that he comes up to your face and shakes and screams")**:
-  `Prank.scare` is his real 3D body (built on the device from ReplicatedStorage.Assets.Creature, scaled like Rig.SkinScale, anchored,
+  `Prank.scare` (v168: ~1.5 s, faster and scarier: the lights stutter twice on him, a 0.12 s lunge, then he thrashes and screams) is his real 3D body (built on the device from ReplicatedStorage.Assets.Creature, scaled like Rig.SkinScale, anchored,
   in the world in front of your camera; `scareWorld`): the lights die around you (Lighting and the Atmosphere darkened, put back after),
   he stands a few steps away in a cold light (never inside a wall: a ray decides how far), rushes you in stop-motion with a screech,
   then his face an arm's length from the lens, jaw open, shaking violently, five screams layered, red pulses, a buzz; a hard cut to
@@ -1030,6 +1033,12 @@ alcoves to hide in, cellar hatch out. Endings Not Your Family / Forever Family.
   audio to the game's name).
 
 ## Where we left off (update this at the end of every session)
+
+- **15 Nov (v168 = place version 168)**, published; the owner: "Make the jumpscare faster and scarier. Also place a big light over the
+  lobby circles that area is quite dark". Done: Jumpscare Everyone ~1.5 s (was ~2.5): the lights stutter and show him in two flashes,
+  he's at your face in 0.12 s, then thrashes and screams against the lens (harder shake, his head whipping, a blur punch, a second
+  scream, the light buzzing); the capture jumpscare 1.3 s (was 1.7), a faster slam; a floodlight gantry behind the circles (see Lobby,
+  v168). Can't see the real client: check the gantry's light on the circles at night (not blown out, no harsh shadow) and the scare's pace.
 
 - **15 Nov (v167 = place version 167)**, published; the owner: "Jumpscare looks terrible i don't even see him. Make it so that he comes
   up to your face and shakes and screams." Found: Jumpscare Everyone drew him in a ViewportFrame from a copy of whichever model of him
@@ -1840,7 +1849,7 @@ keeping goes in the repo.
 - **Build + publish:**
   `rojo build -o HomeAlone.rbxl && python3 tools/place_flags.py HomeAlone.rbxl` (needs `pip install lz4`) then
   `curl -X POST "https://apis.roblox.com/universes/v1/$ROBLOX_UNIVERSE_ID/places/$ROBLOX_PLACE_ID/versions?versionType=Published" -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" --data-binary @HomeAlone.rbxl`
-  (last published: version 167; the notes' "v167" = place version 167, "v166" = place version 166, "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
+  (last published: version 168; the notes' "v168" = place version 168, "v167" = place version 167, "v166" = place version 166, "v165" = place version 165, "v164" = place version 164, "v163" = place version 163, "v162" = place version 162, "v161" = place version 161, "v160" = place version 160, "v159" = place version 159, "v158" = place version 158, "v157" = place version 157, "v156" = place version 156, "v155" = place version 155, "v154" = place version 154, "v153" = place version 153, "v152" = place version 152, "v151" = place version 151, "v150" = place version 150, "v149" = place version 149, "v148" = place version 148, "v147" = place version 147, "v146" = place version 146, "v145" = place version 145, "v144" = place version 144, "v143" = place version 143, "v142" = place version 142, "v141" = place version 141, "v140" = place version 140, "v139" = place versions 138-139, "v138" = place version 137, "v137" = place version 136, "v136" = place version 135, "v135" = place version 134, "v134" = place version 133, "v133" = place version 132, "v132" = place version 131, "v131" = place version 130, "v130" = place version 129, "v129" = place version 128, "v128" = place version 127, "v127" = place version 126, "v126" = place version 125, "v125" = place version 124, "v124" = place version 123, "v123" = place version 122, "v122" = place version 121, "v121" = place version 120, "v120" = place version 119, "v119" = place version 118, "v118" = place version 117, "v117" = place version 116, "v116" = place version 115, "v115" = place version 114, "v114" = place version 113, "v113" = place version 112, "v112" = place version 111, "v111" = place version 110, "v110" = 109, "v109" = 108, "v108" = 107, "v107" = 106).
 - **Player feedback**: Roblox's own window only (no API); read any CSV the owner exports into `marketing/feedback/`.
 - **Player data** (read-only key scopes added by the owner): `python3 tools/pull_stats.py <scratch>/dump.json`
   dumps PlayerStats_v1 + Economy_v1 and prints nights played, endings, returners. Snapshot 10 Oct (680

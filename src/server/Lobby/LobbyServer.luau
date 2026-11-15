@@ -595,6 +595,44 @@ local function build(root: Folder)
 		end)
 	end
 
+	-- (v168, the owner: "place a big light over the lobby circles that area is quite dark") a floodlight gantry along the back of
+	-- the patio: two tall dark poles, a crossbar, and over each circle a big lamp aimed down at it
+	do
+		local POLE = Color3.fromRGB(28, 28, 30)
+		local TOP, ZB = 20, -22.6
+		for _, px in { -33.2, 33.2 } do
+			B.part(root, { Name = "FloodPole", Size = V(0.8, TOP, 0.8), CFrame = CFrame.new(ORIGIN + V(px, 0.7 + TOP / 2, ZB)), Color = POLE, Material = Enum.Material.Metal })
+			B.part(root, { Name = "FloodFoot", Size = V(1.6, 0.4, 1.6), CFrame = CFrame.new(ORIGIN + V(px, 0.9, ZB)), Color = POLE, Material = Enum.Material.Metal })
+		end
+		B.part(root, { Name = "FloodBar", Size = V(67.2, 0.6, 0.6), CFrame = CFrame.new(ORIGIN + V(0, 0.7 + TOP - 0.6, ZB)), Color = POLE, Material = Enum.Material.Metal, CastShadow = false })
+		for i in ctx.Config.Lobby.QueueSizes do
+			local cx = (i - (#ctx.Config.Lobby.QueueSizes + 1) / 2) * 18
+			local at = ORIGIN + V(cx, 0.7 + TOP - 1.3, ZB + 0.6)
+			local aim = ORIGIN + V(cx, 0.7, -14)
+			local cf = CFrame.lookAt(at, aim)
+			-- the lamp: a dark box, a glowing face, a hood over it
+			B.part(root, { Name = "FloodLamp", Size = V(3.4, 2.2, 1.2), CFrame = cf, Color = POLE, Material = Enum.Material.Metal, CastShadow = false })
+			B.part(root, { Name = "FloodHood", Size = V(3.8, 0.2, 1.1), CFrame = cf * CFrame.new(0, 1.2, -0.9), Color = POLE, Material = Enum.Material.Metal, CastShadow = false })
+			local lens = B.part(root, { Name = "FloodLens", Size = V(3.0, 1.8, 0.1), CFrame = cf * CFrame.new(0, 0, -0.62), Color = Color3.fromRGB(255, 244, 222), Material = Enum.Material.Neon, CastShadow = false, CanCollide = false })
+			local spot = Instance.new("SpotLight")
+			spot.Face = Enum.NormalId.Front
+			spot.Range = 42
+			spot.Angle = 62
+			spot.Brightness = 4.5
+			spot.Color = Color3.fromRGB(255, 240, 215)
+			spot.Shadows = i == 2 -- (one casting shadows: the people on the circles under the lamps)
+			spot.Parent = lens
+		end
+		-- a soft fill so the whole patio reads, not four pools
+		local fill = B.part(root, { Name = "FloodFill", Size = V(1, 1, 1), CFrame = CFrame.new(ORIGIN + V(0, 12, -13)), Transparency = 1, CanCollide = false, CanQuery = false, CastShadow = false })
+		local pl = Instance.new("PointLight")
+		pl.Range = 40
+		pl.Brightness = 1.1
+		pl.Color = Color3.fromRGB(255, 236, 210)
+		pl.Shadows = false
+		pl.Parent = fill
+	end
+
 	-- queue circles on the patio: plain white outlines
 	for i, size in ctx.Config.Lobby.QueueSizes do
 		-- (spread out, with room to walk between: the signs over them never overlap)

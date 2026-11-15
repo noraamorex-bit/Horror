@@ -274,7 +274,7 @@ local function viewpoint(): CFrame
 end
 
 --[[
-	(v167) The scare, in the world: ~2.5 s.
+	(v167) The scare, in the world (v168: faster, ~1.5 s; the beats below in the code).
 	1. the lights die: the room goes dark around you, a low rumble and a heartbeat; he's standing a few steps in front of you
 	   in a cold light, twitching in stop-motion;
 	2. he rushes you: 0.28 s, faster and faster, a screech;
@@ -369,15 +369,20 @@ local function scareWorld(from: string, text: string?): boolean
 		local pivotAt = face * CFrame.new(-eyes) -- (the pivot placed so its eyes land on the target)
 		model:PivotTo(pivotAt * jerk)
 	end
-	local rumble = play("Presence", 1.6)
-	local heart = play("Heartbeat", 1, 1.2)
-	local RUSH, FACE, CUT = 0.55, 0.83, 2.15
+	-- (v168, the owner: "Make the jumpscare faster and scarier") ~1.5 s: no slow build. The lights stutter and show him in flashes,
+	-- he's at your face in a blink, then he screams and thrashes right against the lens
+	local heart = play("Heartbeat", 1.2, 1.9)
+	local RUSH, FACE, CUT = 0.26, 0.38, 1.5
 	local clock = Prank._clock or os.clock -- (tests drive it)
 	local t0 = clock()
-	local hitDone, screeched = false, false
+	local hitDone, screeched, screamed2 = false, false, false
 	local jerk, camJerk, nextJerk = CFrame.identity, CFrame.identity, 0
 	local stop = false
 	local warned = false
+	local blur = Instance.new("BlurEffect")
+	blur.Name = "PrankBlur"
+	blur.Size = 0
+	blur.Parent = Lighting
 	local frame
 	RunService:BindToRenderStep("PrankScare", Enum.RenderPriority.Last.Value, function()
 		if stop then
@@ -400,50 +405,68 @@ local function scareWorld(from: string, text: string?): boolean
 		end
 		local d, gait, scream
 		if k < RUSH then
-			-- 1. the lights die; he's there, still, twitching
-			darken(math.clamp(k / 0.2, 0, 1))
+			-- 1. the lights stutter: dark, him lit, dark, him lit
+			local on = (k < 0.07) or (k > 0.13 and k < 0.19)
+			darken(1)
+			spot.Brightness = on and 9 or 0
+			fill.Brightness = on and 1.6 or 0
 			d, gait, scream = startD, "Stare", 0
-			if heart then
-				heart.PlaybackSpeed = 1.2 + k * 1.5
-			end
 		elseif k < FACE then
-			-- 2. the rush (accelerating), stepped like stop-motion
+			-- 2. the lunge: a blink, faster and faster
+			spot.Brightness, fill.Brightness = 9, 1.6
 			if not screeched then
 				screeched = true
-				play("Screech", 1.4)
+				play("Screech", 1.8)
+				play("HorrorHitLow", 1.4)
 				if heart then
 					heart:Stop()
 				end
 			end
-			local u = math.floor(((k - RUSH) / (FACE - RUSH)) * 9) / 9
-			d, gait, scream = startD - (startD - NEAR) * (u * u), "Stare", u
-			cam.FieldOfView = oldFov - 10 * u
+			local u = (k - RUSH) / (FACE - RUSH)
+			d, gait, scream = startD - (startD - NEAR) * (u * u * u), "Stare", u
+			cam.FieldOfView = oldFov + 12 * u
 		else
-			-- 3. in your face: shaking, screaming
+			-- 3. in your face: thrashing, screaming
+			local s2 = k - FACE
 			if not hitDone then
 				hitDone = true
 				for _, name in { "DemonScreech", "Jumpscare", "HorrorHitLow", "BoneRun", "Screech" } do
-					play(name, 1.6)
+					play(name, 1.8)
 				end
-				buzz(1, 1.2)
+				buzz(1, 1)
 				white.BackgroundTransparency = 0
-				task.delay(0.05, function()
+				task.delay(0.04, function()
 					white.BackgroundTransparency = 1
 				end)
+				blur.Size = 22
+				grade.Brightness = 0.4
+				ctx.UI.tween(blur, 0.3, { Size = 3 })
+				ctx.UI.tween(grade, 0.25, { Brightness = 0, TintColor = Color3.fromRGB(255, 190, 186) })
 			end
-			local s2 = k - FACE
-			d = NEAR - 0.18 * math.sin(s2 * 30) - 0.1
+			if not screamed2 and s2 > 0.5 then
+				-- (again: he isn't done with you)
+				screamed2 = true
+				play("DemonScreech", 1.6, 1.15)
+				play("Screech", 1.4, 0.9)
+				blur.Size = 14
+				ctx.UI.tween(blur, 0.25, { Size = 3 })
+			end
+			-- lunging at the lens again and again
+			d = NEAR - 0.35 * math.abs(math.sin(s2 * 16)) - 0.05
 			gait, scream = "Stare", 1
-			cam.FieldOfView = oldFov - 18 + 4 * math.sin(s2 * 45)
-			red.BackgroundTransparency = 1 - 0.45 * math.max(0, math.sin(s2 * 20))
+			-- (the FOV slams in on contact, then pumps)
+			cam.FieldOfView = oldFov - 22 + 6 * math.sin(s2 * 50) + 30 * math.max(0, 0.08 - s2) / 0.08
+			red.BackgroundTransparency = 1 - 0.5 * math.max(0, math.sin(s2 * 28))
+			spot.Brightness = (math.random() < 0.12) and 2 or 9 -- (the light buzzing as he thrashes)
 		end
 		-- the shaking: him and the picture, in fits
 		if clock() >= nextJerk then
-			local amt = (k >= FACE) and 1 or (k >= RUSH and 0.25 or 0.05)
-			nextJerk = clock() + (k >= FACE and 0.035 or 0.08) + math.random() * 0.03
+			local amt = (k >= FACE) and 1.4 or (k >= RUSH and 0.3 or 0.08)
+			nextJerk = clock() + (k >= FACE and 0.03 or 0.06) + math.random() * 0.025
+			-- (his head whipping side to side, the picture jerking with him)
 			jerk = CFrame.new((math.random() - 0.5) * 0.35 * amt, (math.random() - 0.5) * 0.3 * amt, 0)
-				* CFrame.Angles((math.random() - 0.5) * 0.35 * amt, (math.random() - 0.5) * 0.4 * amt, (math.random() - 0.5) * 0.5 * amt)
-			camJerk = CFrame.Angles((math.random() - 0.5) * 0.06 * amt, (math.random() - 0.5) * 0.06 * amt, (math.random() - 0.5) * 0.12 * amt)
+				* CFrame.Angles((math.random() - 0.5) * 0.35 * amt, (math.random() - 0.5) * 0.5 * amt, (math.random() - 0.5) * 0.7 * amt)
+			camJerk = CFrame.Angles((math.random() - 0.5) * 0.07 * amt, (math.random() - 0.5) * 0.07 * amt, (math.random() - 0.5) * 0.14 * amt)
 		end
 		if ctx.Creature and ctx.Creature.poseCopy then
 			pcall(ctx.Creature.poseCopy, model, gait, k, 4, { Scream = scream })
@@ -466,9 +489,7 @@ local function scareWorld(from: string, text: string?): boolean
 	model:Destroy()
 	lamp:Destroy()
 	grade:Destroy()
-	if rumble then
-		rumble:Destroy()
-	end
+	blur:Destroy()
 	if heart then
 		heart:Destroy()
 	end
@@ -482,8 +503,8 @@ local function scareWorld(from: string, text: string?): boolean
 	cam.FieldOfView = oldFov
 	cam.CameraType = oldType
 	red.BackgroundTransparency = 1
-	task.wait(0.35)
-	UI.tween(black, 0.45, { BackgroundTransparency = 1 })
+	task.wait(0.25)
+	UI.tween(black, 0.35, { BackgroundTransparency = 1 })
 	banner(gui, text or ("😱 " .. from .. " jumpscared everyone!"), 4)
 	task.delay(5, function()
 		gui:Destroy()
@@ -668,7 +689,7 @@ function Prank.scare(from: string, text: string?)
 	task.wait(0.5)
 	scaring = false
 end
-Prank._timeline = 3.1 -- (tests: how long the scare runs)
+Prank._timeline = 2.3 -- (tests: how long the scare runs)
 
 function Prank.init(c)
 	ctx = c

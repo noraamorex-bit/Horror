@@ -261,7 +261,7 @@ end
 -- over from (never back to the game camera first).
 local scaring = false
 local SFX_GROUP = "EffectsGroup" -- (Settings)
-Effects.ScareTime = 1.7 -- (v167: 1.05; the owner: "Make it so that he comes up to your face and shakes and screams": longer in your face)
+Effects.ScareTime = 1.3 -- (v167: 1.05 -> 1.7, "comes up to your face and shakes and screams"; v168: 1.3, "faster and scarier")
 function Effects.jumpscare(head: BasePart?)
 	if scaring or not head or not head.Parent then
 		return
@@ -332,14 +332,14 @@ function Effects.jumpscare(head: BasePart?)
 		end
 	end
 	if ctx.Creature then
-		ctx.Creature.scream(1.9) -- (the mouth stretched wide open, the whole time he is in your face)
+		ctx.Creature.scream(1.5) -- (the mouth stretched wide open, the whole time he is in your face)
 	end
 	local t0 = os.clock()
 	local hit = false
 	local screamed2 = false
 	local jerk = CFrame.identity
 	local nextJerk = 0
-	local SLAM, TOTAL = 0.16, Effects.ScareTime - 0.12
+	local SLAM, TOTAL = 0.1, Effects.ScareTime - 0.12
 	while os.clock() - t0 < TOTAL and head.Parent do
 		local t = os.clock() - t0
 		local reach
@@ -360,7 +360,7 @@ function Effects.jumpscare(head: BasePart?)
 			-- pressed right up against you, lunging at the lens again and again, screaming
 			reach = near - 0.3 * math.abs(math.sin((t - SLAM) * 18))
 			cam.FieldOfView = 46 + 5 * math.sin((t - SLAM) * 40)
-			if not screamed2 and t - SLAM > 0.55 then
+			if not screamed2 and t - SLAM > 0.42 then
 				-- (a second scream half way: he isn't done with you)
 				screamed2 = true
 				for _, name in { "DemonScreech", "Screech" } do

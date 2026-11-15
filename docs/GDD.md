@@ -1204,3 +1204,6 @@ The owner: "Jumpscare looks terrible i don't even see him. Make it so that he co
   arm's length from the lens (jaw open, red pulses, layered screams, a buzz), a hard cut to black, then who did it. ~2.5 s.
 - **The capture jumpscare** aims at his eyes (it aimed at the old creature's maw, his throat on the v156 body), ends 1.45 studs from his
   face, and lasts 1.7 s with repeated lunges and a second scream.
+- **v168 (the owner: "faster and scarier")**: Jumpscare Everyone runs ~1.5 s: two flashes of him in the dark, a 0.12 s lunge, then he
+  thrashes against the lens (head whipping, a blur punch, a second scream, the lamp buzzing). The capture jumpscare is 1.3 s with a 0.1 s
+  slam. **The lobby's circles** have a floodlight gantry behind them: two poles, a crossbar, one big lamp aimed at each circle.
