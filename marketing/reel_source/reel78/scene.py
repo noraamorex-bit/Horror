@@ -60,6 +60,9 @@ SHOTS = {
     "hall": {"center": [0, U + 6, 18], "radius": 32, "lampRadius": 0, "maxLamps": 0, "door": JDOOR, "lights": HALL},
     "room": {"center": [-26, U + 5, 20], "radius": 30, "lampRadius": 0, "maxLamps": 0, "door": JDOOR, "door2": WARD, "lights": MOONLIT},
     "roomHall": {"center": [-10, U + 5, 20], "radius": 34, "lampRadius": 0, "maxLamps": 0, "door": JDOOR, "door2": WARD, "lights": MOONLIT + HALL},
+    # (from inside the wardrobe: no moonlight behind it lighting the leaf by the lens; the room out there lit instead)
+    "crack": {"center": [-10, U + 5, 20], "radius": 34, "lampRadius": 0, "maxLamps": 0, "door": JDOOR, "door2": WARD,
+              "lights": MOONLIT[1:] + HALL + [{"p": [-24, U + 8, 15], "col": MOON, "b": 7.0, "r": 22, "decay": 1.0}, {"p": [-12, U + 7, 18], "col": COLD, "b": 3.0, "r": 14}]},
 }
 for _s in SHOTS.values(): _s["hide"] = _s.get("hide", []) + NOCANDY
 DARK = {"ambient": 0.02, "bg": 0x010102}
@@ -158,7 +161,7 @@ def crackview(i, look=None, door=0.6, crack=CRACK, extra=None):
     cam = add(EYEIN, hand(i, 0.12))
     lk = look or [-19.5, U + 4.2, 17.0]
     if os.environ.get("LOOKIN"): lk = json.loads(os.environ["LOOKIN"])
-    fr = dict(DARK, shot="roomHall", cam={"pos": cam, "look": lk, "fov": 62}, exposure=3.4, door=door, door2=crack)
+    fr = dict(DARK, shot="crack", cam={"pos": cam, "look": lk, "fov": 62}, exposure=3.4, door=door, door2=crack)
     if extra: fr.update(extra)
     return fr
 def s_in(i, k):
@@ -206,7 +209,7 @@ def s_found(i, k):
     p = lerp(OUTSIDE, [-16.15, U, 23.15], lunge)
     cr = him(p, facing(p, cam), "Stare", t=3.0 + i / FPS, Duck=1.5, Scream=0.3 + 0.7 * lunge, Look=[0.0, -0.6])
     camw = add(cam, [0.12 * math.sin(i * 2.1), 0.1 * math.sin(i * 1.7), 0])
-    return (dict(DARK, shot="roomHall", cam={"pos": camw, "look": lerp([-19.5, U + 4.2, 17.0], [p[0], U + 6.4 + 1.6 * lunge, p[2]], w), "fov": 62 + 10 * lunge},
+    return (dict(DARK, shot="crack", cam={"pos": camw, "look": lerp([-19.5, U + 4.2, 17.0], [p[0], U + 6.4 + 1.6 * lunge, p[2]], w), "fov": 62 + 10 * lunge},
                  exposure=3.0, door=1.7, door2=open_, glow=4.0, flash=fl(camw, [p[0], U + 6.4, p[2]], 4.0 * w, 0.5)), cr)
 shot("found", 50, s_found)
 

@@ -20,7 +20,7 @@ SLOTS = [
     (["run"], "clip", "RUN."),
     (["card"], "end", ""),
 ]
-BRIGHT = {'count': 1.3, 'lward': 1.2, 'lward2': 1.2, 'corner': 1.3, 'hall': 1.2, 'in': 1.3, 'dopen': 1.3, 'dway': 1.3, 'asleep': 1.2, 'nothing': 1.2, 'legs': 1.3}
+BRIGHT = {"count": 1.3, "lward": 1.2, "lward2": 1.2, "corner": 1.3, "hall": 1.2, "in": 1.6, "dopen": 1.6, "dway": 1.6, "asleep": 1.6, "nothing": 1.6, "legs": 1.6}
 CAM = {}
 out, lens = [], []
 for names, section, cap in SLOTS:
@@ -44,6 +44,8 @@ for names, section, cap in SLOTS:
         fr = {"src": f"{S}/{R}/raw/{src:04d}.png", "section": section, "cap": cap, "k": i / max(1, n - 1), "i": i}
         if section == "clip" and x in BRIGHT:
             fr["bright"] = BRIGHT[x]
+        if section == "clip" and x == "found" and q < 34:
+            fr["bright"] = 1.6                                # (through the crack, until the doors whip open)
         if section == "clip" and x in CAM:
             lab, clock, rain, date = CAM[x]
             fr["cam"] = {"label": lab, "clock": clock, "rain": rain, "date": date}
