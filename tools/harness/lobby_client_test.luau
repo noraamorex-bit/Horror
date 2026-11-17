@@ -39,7 +39,7 @@ local ok, err = pcall(function()
 		return r
 	end })
 	-- (the client's lobby list, init.client.luau; the owner's panel too)
-	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "Troll", "LobbyHub", "Admin" }
+	local ORDER = { "UI", "Input", "Notice", "Social", "Effects", "Settings", "Atmosphere", "Dock", "Shop", "Starter", "Store", "Locker", "Rewards", "Codes", "Prank", "WeaponRoll", "Troll", "LobbyHub", "Admin" }
 	player:SetAttribute("IsAdmin", true)
 	player:SetAttribute("Coins", 1234)
 	player:SetAttribute("Candy", 7)
@@ -174,15 +174,48 @@ local ok, err = pcall(function()
 	S.ProximityPromptService.PromptTriggered:Fire({ Name = "FeedbackPrompt" })
 	H.task.wait(0.05)
 	assert(feedbackAsked == 1, "the mailbox opens the feedback window once, got " .. feedbackAsked)
-	-- (v138) codes: the CODES icon and the gold chip until RELEASE is used; USE asks the server; the answer shows
+	-- (v171) the Weapon Roll in the lobby: a 🎲 ROLL icon, the odds window says it's for the next night, ROLL opens the purchase
+	-- window; saved rolls show on the icon; never where paid random items are restricted
+	local rollDock = H.unwrap(pg):FindFirstChild("RollDock", true)
+	assert(rollDock and rollDock.Visible, "a ROLL icon in the lobby dock")
+	local prompted = nil
+	local oldPrompt = S.MarketplaceService.PromptProductPurchase
+	S.MarketplaceService.PromptProductPurchase = function(_, _, id) prompted = id end
+	H.wrap(rollDock).Activated:Fire()
+	local rp = H.unwrap(pg):FindFirstChild("WeaponRollPanel", true)
+	assert(rp and rp.Visible, "the odds window opens")
+	local saysNext = false
+	for _, d in rp:GetDescendants() do
+		if d:IsA("TextLabel") and string.find(d.Text, "next night") then saysNext = true end
+	end
+	assert(saysNext, "the lobby's window says the roll is for the next night")
+	H.wrap(rp:FindFirstChild("Roll", true)).Activated:Fire()
+	assert(prompted == ctx.Config.Shop.WeaponRoll.Id, "ROLL opens the purchase window: " .. tostring(prompted))
+	rp.Visible = false
+	player:SetAttribute("RollCredits", 2)
+	ctx.WeaponRoll._refresh()
+	local hasTwo = false
+	for _, d in rollDock:GetDescendants() do
+		if d:IsA("TextLabel") and d.Text == "2" and d.Parent.Visible then hasTwo = true end
+	end
+	assert(hasTwo, "two saved rolls on the icon")
+	player:SetAttribute("RollRestricted", true)
+	ctx.WeaponRoll._refresh()
+	assert(not rollDock.Visible, "no ROLL where paid random items are restricted")
+	H.wrap(rollDock).Activated:Fire()
+	assert(not rp.Visible, "and its window doesn't open")
+	player:SetAttribute("RollRestricted", nil)
+	S.MarketplaceService.PromptProductPurchase = oldPrompt
+	print("lobby roll ok")
+	-- (v138) codes: the CODES icon and the gold chip until the newest code is used (v171: HIDE); USE asks the server
 	local codesDock = H.unwrap(pg):FindFirstChild("CodesDock", true)
 	local chip = H.unwrap(pg):FindFirstChild("CodeChip", true)
-	assert(codesDock and chip and chip.Visible and string.find(chip.Text, "RELEASE"), "the CODES icon and the RELEASE chip")
+	assert(codesDock and chip and chip.Visible and string.find(chip.Text, "HIDE"), "the CODES icon and the HIDE chip")
 	player:SetAttribute("Eco", '{"Owned":[]}')
 	ctx.Codes._refresh()
 	H.wrap(chip).Activated:Fire()
 	local cp = H.unwrap(pg):FindFirstChild("Featured", true)
-	assert(cp and string.find(cp:FindFirstChild("Code").Text, "RELEASE"), "the panel shows the code")
+	assert(cp and string.find(cp:FindFirstChild("Code").Text, "HIDE"), "the panel shows the newest code")
 	local like = H.unwrap(pg):FindFirstChild("LikeAsk", true)
 	assert(like, "the panel asks for a like")
 	local ns = #sent
@@ -192,6 +225,9 @@ local ok, err = pcall(function()
 	local st = H.unwrap(pg):FindFirstChild("Status", true)
 	assert(st and string.find(st.Text, "300") and string.find(st.Text, "Day One"), "the answer: " .. tostring(st and st.Text))
 	player:SetAttribute("Eco", '{"Owned":["Code_RELEASE","Title_DayOne"]}')
+	ctx.Codes._refresh()
+	assert(chip.Visible, "RELEASE used: HIDE's chip stays")
+	player:SetAttribute("Eco", '{"Owned":["Code_RELEASE","Title_DayOne","Code_HIDE"]}')
 	ctx.Codes._refresh()
 	assert(not chip.Visible, "used: the chip goes")
 	ctx.Remotes.EconomyResult.OnClientEvent:Fire({ Kind = "Code", Ok = false, Text = "You've already used RELEASE." })

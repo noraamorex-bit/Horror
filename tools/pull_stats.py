@@ -112,8 +112,18 @@ def dump(store):
     # (v158: 24 at a time, and saved as it goes: each request takes ~1.4 s through the proxy, so 3 at a time took hours
     # for a few days of logs, and a stopped run kept nothing)
     print(f"  {store}: {len(ks)} keys, {len(todo)} to fetch", file=sys.stderr, flush=True)
+    def safe(k):
+        # (one entry the API keeps refusing no longer ends the whole run: it's skipped, the rest still counts)
+        try:
+            return entry(store, k)
+        except Exception as err:
+            print(f"    skipped {k}: {err}", file=sys.stderr, flush=True)
+            return None
+
     with ThreadPoolExecutor(24) as ex:
-        for n, e in enumerate(ex.map(lambda k: entry(store, k), todo), 1):
+        for n, e in enumerate(ex.map(safe, todo), 1):
+            if e is None:
+                continue
             have[e["key"]] = e
             if n % 2000 == 0:
                 print(f"    {n} / {len(todo)}", file=sys.stderr, flush=True)

@@ -25,6 +25,8 @@ local ctx
 local player = Players.LocalPlayer
 
 local button: TextButton? = nil
+local dockButton: TextButton? = nil
+local dockBadge: Frame? = nil
 local panel: Frame? = nil
 local pityLine: TextLabel? = nil
 local spinning = false
@@ -55,6 +57,11 @@ local function sound(name: string, pitch: number?)
 end
 
 local function canRoll(): boolean
+	-- (v171) in the lobby: bought now, it spins when your next night starts (the server saves it as a roll credit)
+	if ctx.Mode == "Lobby" then
+		local p = ctx.Config.Shop.WeaponRoll
+		return p ~= nil and p.Id > 0 and not player:GetAttribute("RollRestricted")
+	end
 	local act = workspace:GetAttribute("Act")
 	return player:GetAttribute("InGame") == true and act ~= nil and act ~= "Lobby"
 		and not workspace:GetAttribute("EndingActive") and not player:GetAttribute("Dead")
@@ -73,9 +80,20 @@ end
 WeaponRoll._pityText = pityText
 
 local function refresh()
+	if dockButton then
+		dockButton.Visible = canRoll()
+		local n = tonumber(player:GetAttribute("RollCredits")) or 0
+		if dockBadge then
+			dockBadge.Visible = n > 0
+			local t = dockBadge:FindFirstChild("Text")
+			if t and t:IsA("TextLabel") then
+				t.Text = tostring(n)
+			end
+		end
+	end
 	if button then
 		local p = ctx.Config.Shop.WeaponRoll
-		button.Visible = p ~= nil and p.Id > 0 and canRoll() and not player:GetAttribute("Captured")
+		button.Visible = ctx.Mode ~= "Lobby" and p ~= nil and p.Id > 0 and canRoll() and not player:GetAttribute("Captured")
 		button.Text = "🎲 WEAPON  R$" .. tostring(p and p.Price or 10)
 	end
 	if pityLine then
@@ -129,6 +147,13 @@ local function buy()
 	end
 end
 
+function WeaponRoll._blurb(): string
+	if ctx.Mode == "Lobby" then
+		return "One random weapon for your next night: it spins when the night starts. These are the real chances."
+	end
+	return "One random weapon for tonight. These are the real chances."
+end
+
 -- the roll's window: the odds, the guarantees, ROLL
 local function buildPanel()
 	local UI = ctx.UI
@@ -163,7 +188,7 @@ local function buildPanel()
 	UI.new("Frame", { Size = UDim2.fromOffset(40, 2), BackgroundColor3 = UI.Color.Blood, BorderSizePixel = 0, LayoutOrder = 2, ZIndex = 20, Parent = f })
 	UI.new("TextLabel", {
 		Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, LayoutOrder = 3, TextWrapped = true, ZIndex = 20,
-		Text = "One random weapon for tonight. These are the real chances.", Font = UI.Font.Body, TextSize = 12,
+		Text = WeaponRoll._blurb(), Font = UI.Font.Body, TextSize = 12,
 		TextColor3 = UI.Color.Dim, Parent = f,
 	})
 	-- one row per tier: its name and chance, its weapons and theirs
@@ -593,6 +618,17 @@ function WeaponRoll.start()
 			ContentProvider:PreloadAsync(list)
 		end)
 	end)
+	-- (v171 logs: 614 bought of 1,419 windows, 43%, but only 1,419 windows against 53,000 lobby visits) the lobby sells it too
+	if ctx.Mode == "Lobby" and ctx.Dock then
+		dockButton, dockBadge = ctx.Dock.add({ Order = ctx.Dock.Order.Roll, Glyph = "🎲", Label = "ROLL", Color = tierOf("Legendary").Color, OnClick = function()
+			if WeaponRoll.isOpen() then
+				(panel :: Frame).Visible = false
+			else
+				WeaponRoll.open()
+			end
+		end })
+		;(dockButton :: TextButton).Name = "RollDock"
+	end
 	button = UI.new("TextButton", {
 		Name = "WeaponRollOffer",
 		Size = UDim2.fromOffset(150, 30),
@@ -616,7 +652,7 @@ function WeaponRoll.start()
 			WeaponRoll.open()
 		end
 	end)
-	for _, a in { "InGame", "Captured", "Dead", "Escaped", "Monster", "RollRestricted", "RollsSinceEpic", "RollsSinceLegendary" } do
+	for _, a in { "InGame", "Captured", "Dead", "Escaped", "Monster", "RollRestricted", "RollsSinceEpic", "RollsSinceLegendary", "RollCredits" } do
 		player:GetAttributeChangedSignal(a):Connect(refresh)
 	end
 	workspace:GetAttributeChangedSignal("Act"):Connect(refresh)

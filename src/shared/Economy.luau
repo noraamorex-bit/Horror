@@ -215,8 +215,9 @@ end
 ]]
 Economy.Codes = {
 	{ Code = "RELEASE", Coins = 300, Title = "Title_DayOne" },
+	{ Code = "HIDE", Coins = 400 }, -- (v171) the 200 likes code (201 up on 17 Nov)
 }
-Economy.LikeMilestones = { 50, 100, 250 } -- more likes on the page: the next code (the CODES panel says so)
+Economy.LikeMilestones = { 250, 500, 1000 } -- more likes on the page: the next code (the CODES panel says so)
 
 -- the code `text` names (spaces and case don't matter), or nil
 function Economy.code(text: any, now: number?): any

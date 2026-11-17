@@ -1217,3 +1217,17 @@ Now the height is measured from the parts there at that moment (head top to feet
 target is 5.6 studs and the most it scales anyone is x1.2. Test `height_test`.
 - **v170 (the owner: "jumpscare other people in the server only, not the user")**: the buyer of Jumpscare Everyone isn't scared any more
   (v165-169 they were), only told how many they got; the admin panel's "Jumpscare Everyone (just me)" is the way to see it.
+
+## The roll in the lobby, the 200-likes code, the traffic cliff (v171)
+
+The owner: "Analyze all game and gamepass statistics and improve each. Give ways to increase player count", then "Player count dipped
+a lot (peaked at 1350 now 30)". The logs (versions 165-170, a 5,000-key sample: 53,438 lobby visits, 4,932 nights, 9,921
+players-in-a-night) show traffic climbing for 38 hours after the last publish (15 Nov 14:40 UTC) and then dropping tenfold in one
+hour (17 Nov 05:00 UTC: 433 lobby visits an hour to 50). Over that hour no script errors appeared, quit rates held and nothing
+in the game changed, so Roblox's recommendations stopped sending players. A bug would show up in the logs. Rating then: 201 up / 224 down (47%).
+
+- **🎲 ROLL in the lobby dock** (`Dock.Order.Roll`, client `WeaponRoll` in lobby mode): the Weapon Roll sold 614 of 1,419 windows
+  (43%, the best rate of anything) but was only seen in a night. The same odds window, saying the roll spins when your next night
+  starts. The lobby server saves it as a roll credit (`Stats.addRollCredit`), shown as a number on the icon (`RollCredits`
+  attribute). Never shown where PolicyService restricts paid random items. Test: lobby_client_test.
+- **Code HIDE** (400 coins) for passing 200 likes; the CODES panel's next milestones are 250 · 500 · 1,000.

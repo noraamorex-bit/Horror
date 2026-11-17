@@ -17,7 +17,7 @@ Dock.Icon = 48 -- (v140, the owner: "Make everything smaller… Use only icons")
 Dock.LabelH = 14
 Dock.CellW = 58
 -- the dock's icon order (a second column wraps in after four)
-Dock.Order = { Starter = 0, Store = 10, Rewards = 20, Codes = 25, Locker = 30, Shop = 40, Scare = 50, Invite = 60 }
+Dock.Order = { Starter = 0, Store = 10, Rewards = 20, Codes = 25, Locker = 30, Shop = 40, Roll = 45, Scare = 50, Invite = 60 }
 local column: Frame
 local openPanel: Frame? = nil
 

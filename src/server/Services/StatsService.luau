@@ -122,6 +122,7 @@ local function mirror(player: Player)
 	local wp = d.WeaponPity or { E = 0, L = 0 }
 	player:SetAttribute("RollsSinceEpic", wp.E)
 	player:SetAttribute("RollsSinceLegendary", wp.L)
+	player:SetAttribute("RollCredits", (d.RollCredits or 0) > 0 and d.RollCredits or nil)
 	player:SetAttribute("SetMusic", d.Settings.Music)
 	player:SetAttribute("SetSfx", d.Settings.Sfx)
 	player:SetAttribute("SetShake", d.Settings.Shake)
@@ -604,6 +605,7 @@ function Stats.addRollCredit(player: Player): boolean
 		return false
 	end
 	d.RollCredits = (d.RollCredits or 0) + 1
+	player:SetAttribute("RollCredits", d.RollCredits)
 	save(player.UserId)
 	return true
 end
@@ -613,6 +615,7 @@ function Stats.spendRollCredits(player: Player): number
 	local n = d and (d.RollCredits or 0) or 0
 	if n > 0 then
 		d.RollCredits = 0
+		player:SetAttribute("RollCredits", 0)
 		save(player.UserId)
 	end
 	return n
